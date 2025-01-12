@@ -16,10 +16,16 @@
 
 #### [checkstyle.xml](https://github.com/yi5oyu/Study/blob/main/SpringBoot/%EC%BB%A8%EB%B2%A4%EC%85%98/checkstyle.xml)
     임포트, 주석, 구조 등을 생략한 checkstyle 설정 파일
-    writemd/backend/checkstyle/checkstyle.xml
+    writemd/backend/checkstyle/checkstyle-writemd.xml
+
+**주요 특징**  
+ - 들여쓰기(tabSize) 변경(2 > 4)
+ - [build.gradle](https://github.com/yi5oyu/Study/blob/main/SpringBoot/%EC%BB%A8%EB%B2%A4%EC%85%98/build.gradle) 파일에 checkstyle 설정 추가  
+
+ > ./gradlew check
 
 #### [settings.json](https://github.com/yi5oyu/Study/blob/main/IDE/VScode/%EB%B6%84%EC%84%9D%EB%8F%84%EA%B5%AC/settings.json)
-    VSCode 설정 파일(포메팅등 플러그인 설정)
+    VSCode 설정 파일(오토 포메팅, 테마 등 플러그인 설정)
     .vscode/settings.json
 
  - `VSCode 플러그인`

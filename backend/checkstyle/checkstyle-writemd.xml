@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="warning"/>
+
+    <!-- 
+        줄 길이 
+        최대 120자
+        적용되는 파일: .java
+        패키지, 임포트 등 제외
+    -->
+    <module name="LineLength">
+        <property name="max" value="120" />
+        <property name="fileExtensions" value="java" />
+        <property name="ignorePattern" value="^package.*|^import.*|http://|https://|ftp://" />
+    </module>
+
+    <module name="TreeWalker">
+        <!-- 이름 -->
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="ConstantName"/>
+        <module name="LocalVariableName"/>
+        <module name="ParameterName"/>
+        <module name="PackageName"/>
+        <module name="MemberName"/>
+
+        <!-- 들여쓰기 GoogleStyle -->
+        <module name="Indentation">
+            <property name="basicOffset" value="4" />
+            <property name="braceAdjustment" value="0" />
+            <property name="caseIndent" value="4" />
+            <property name="throwsIndent" value="4" />
+            <property name="lineWrappingIndentation" value="4" />
+            <property name="arrayInitIndent" value="4" />
+        </module>
+
+        <!-- 복잡도 제한 -->
+        <!-- 메서드 복잡도 제한  -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+        </module>
+        <!-- 메서드 길이 제한 -->
+        <module name="MethodLength">
+            <property name="max" value="50"/>
+        </module>
+        <!-- 메서드 파라미터 수 제한 -->
+        <module name="ParameterNumber">
+            <property name="max" value="5"/>
+        </module>
+
+        <!-- 
+            코드 중복 방지   
+            한 줄에 하나의 변수만 선언 
+            한 줄에 하나의 문장만 있도록 함 
+        -->
+        <module name="MultipleVariableDeclarations"/>
+        <module name="OneStatementPerLine"/>
+        <!-- 임포트, 주석, 포메팅, 구조 생략 -->
+    </module>
+</module>

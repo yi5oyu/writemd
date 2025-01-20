@@ -34,7 +34,7 @@ const MarkDownInputBox = ({ markdownText, setMarkdownText }) => {
       h="100%"
       w="100%"
       fontSize="md"
-      p={4}
+      p="4"
       variant="unstyled"
     />
   )

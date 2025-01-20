@@ -1,7 +1,12 @@
 import { useState } from 'react'
+import Homepage from './components/pages/Home'
 
 function App() {
-  return <></>
+  return (
+    <>
+      <Homepage />
+    </>
+  )
 }
 
 export default App

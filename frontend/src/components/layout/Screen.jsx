@@ -12,7 +12,7 @@ const Screen = () => {
         <MarkDownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
       </Box>
 
-      <Box w="640px" h="100%" bg="gray.200" Flex="1">
+      <Box p="1" w="640px" h="100%" bg="gray.200" Flex="1">
         <MarkdownPreview markdownText={markdownText} />
       </Box>
     </Flex>

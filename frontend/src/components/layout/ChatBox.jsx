@@ -10,7 +10,7 @@ const ChatBox = ({ messages }) => {
       {messages.length > 0 ? (
         messages.map((m, index) => (
           <Box key={index} p="2" mb="2" bg="gray.50" borderRadius="md">
-            {m.content}
+            {m}
           </Box>
         ))
       ) : (

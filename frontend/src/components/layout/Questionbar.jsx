@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Box, Textarea, Icon, Flex } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 
-const Questionbar = ({ questionText, setQuestionText }) => {
+const Questionbar = ({ questionText, setQuestionText, onSendMessage }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
   const [borderColor, setBorderColor] = useState('gray.300')
@@ -11,8 +11,8 @@ const Questionbar = ({ questionText, setQuestionText }) => {
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
 
-  const handleInput = (event) => {
-    const textarea = event.target
+  const handleInput = (e) => {
+    let textarea = e.target
     textarea.style.height = '24px'
     textarea.style.height = `${textarea.scrollHeight}px`
 
@@ -40,6 +40,21 @@ const Questionbar = ({ questionText, setQuestionText }) => {
     setBorderColor('gray.300')
   }
 
+  const handleSendMessage = () => {
+    if (questionText.trim()) {
+      onSendMessage()
+      setScrollFlow('hidden')
+      setTextWidth('600px')
+      setBorderRadius('2xl')
+      setIsTextFlow(false)
+      document.querySelector('#questionText').style.height = '24px'
+    }
+  }
+
+  const handleQuestionBox = () => {
+    document.getElementById('questionText').focus()
+  }
+
   return (
     <Box
       zIndex="1000"
@@ -51,8 +66,10 @@ const Questionbar = ({ questionText, setQuestionText }) => {
       borderRadius={borderRadius}
       border="2px solid"
       borderColor={borderColor}
+      onClick={handleQuestionBox}
     >
       <Textarea
+        id="questionText"
         placeholder="질문"
         value={questionText}
         onChange={(e) => setQuestionText(e.target.value)}
@@ -82,6 +99,7 @@ const Questionbar = ({ questionText, setQuestionText }) => {
             color="gray.400"
             boxSize="8"
             cursor="pointer"
+            onClick={handleSendMessage}
             _hover={{
               color: 'blue.400',
               bg: 'gray.200',
@@ -98,6 +116,7 @@ const Questionbar = ({ questionText, setQuestionText }) => {
             color="gray.400"
             boxSize="8"
             cursor="pointer"
+            onClick={handleSendMessage}
             _hover={{
               color: 'blue.400',
               bg: 'gray.200',

@@ -1,23 +1,34 @@
 import React, { useState } from 'react'
-import { Box, Textarea } from '@chakra-ui/react'
+import { Box, Textarea, Icon, Flex } from '@chakra-ui/react'
+import { ArrowForwardIcon } from '@chakra-ui/icons'
 
 const Questionbar = ({ questionText, setQuestionText }) => {
+  const MAX_TEXTAREA_HEIGHT = 168
+
   const [borderColor, setBorderColor] = useState('gray.300')
   const [textWidth, setTextWidth] = useState('600px')
   const [borderRadius, setBorderRadius] = useState('2xl')
+  const [isTextFlow, setIsTextFlow] = useState(false)
+  const [scrollFlow, setScrollFlow] = useState('hidden')
 
   const handleInput = (event) => {
     const textarea = event.target
     textarea.style.height = '24px'
     textarea.style.height = `${textarea.scrollHeight}px`
 
-    const currentHeight = parseInt(textarea.style.height, 10)
-    if (currentHeight > 72) {
-      setTextWidth('640px')
+    if (textarea.scrollHeight > MAX_TEXTAREA_HEIGHT) {
+      setScrollFlow('visible')
+    } else {
+      setScrollFlow('hidden')
+    }
+    if (textarea.value.length > 32 || textarea.scrollHeight > 24) {
+      setTextWidth('630px')
       setBorderRadius('md')
+      setIsTextFlow(true)
     } else {
       setTextWidth('600px')
       setBorderRadius('2xl')
+      setIsTextFlow(false)
     }
   }
 
@@ -33,7 +44,7 @@ const Questionbar = ({ questionText, setQuestionText }) => {
     <Box
       zIndex="1000"
       bg="white"
-      boxShadow="xl"
+      boxShadow="md"
       p="4"
       w={textWidth}
       position="relative"
@@ -55,12 +66,45 @@ const Questionbar = ({ questionText, setQuestionText }) => {
         style={{
           height: '24px',
           minHeight: '24px',
-          maxHeight: '120px',
+          maxHeight: MAX_TEXTAREA_HEIGHT + 'px',
           fontSize: '16px',
           lineHeight: '24px',
+          overflow: scrollFlow,
         }}
         p="0"
       />
+      {!isTextFlow ? (
+        <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
+          <Icon
+            borderRadius="2xl"
+            bg="gray.100"
+            as={ArrowForwardIcon}
+            color="gray.400"
+            boxSize="8"
+            cursor="pointer"
+            _hover={{
+              color: 'blue.400',
+              bg: 'gray.200',
+            }}
+          />
+        </Box>
+      ) : (
+        <Flex justify="space-between" mt="2">
+          <Box></Box>
+          <Icon
+            as={ArrowForwardIcon}
+            borderRadius="2xl"
+            bg="gray.100"
+            color="gray.400"
+            boxSize="8"
+            cursor="pointer"
+            _hover={{
+              color: 'blue.400',
+              bg: 'gray.200',
+            }}
+          />
+        </Flex>
+      )}
     </Box>
   )
 }

@@ -4,6 +4,7 @@ import MarkDownInputBox from './MarkDownInputBox'
 import MarkdownPreview from './MarkdownPreview'
 import Questionbar from './Questionbar'
 import ChatBox from './ChatBox'
+import UtilityBox from './UtilityBox'
 
 const Screen = () => {
   const [markdownText, setMarkdownText] = useState('')
@@ -33,8 +34,8 @@ const Screen = () => {
         </Box>
       </Flex>
       <Flex
+        flexDirection="column"
         justify="center"
-        boxShadow="sm"
         position="absolute"
         bottom="5"
         left="50%"
@@ -46,6 +47,7 @@ const Screen = () => {
           setQuestionText={setQuestionText}
           onSendMessage={handleSendMessage}
         />
+        <UtilityBox />
       </Flex>
     </Flex>
   )

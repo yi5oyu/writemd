@@ -7,6 +7,7 @@ import ChatBox from './ChatBox'
 import axios from 'axios'
 
 const Screen = () => {
+  const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
@@ -17,7 +18,7 @@ const Screen = () => {
       setMessages((m) => [...m, { role: 'user', content: questionText }])
       try {
         let response = await axios.post('http://localhost:8888/api/chat/lmstudio', {
-          model: 'llama-3.2-korean-blossom-3b',
+          model: aiModel,
           messages: [{ role: 'user', content: questionText }],
         })
 

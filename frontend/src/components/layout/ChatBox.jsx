@@ -4,18 +4,25 @@ import { Box, Flex } from '@chakra-ui/react'
 const ChatBox = ({ messages }) => {
   return (
     <>
-      <Box fontWeight="bold" mb="2">
-        메시지
-      </Box>
-      {messages.length > 0 ? (
-        messages.map((m, index) => (
-          <Box key={index} p="2" mb="2" bg="gray.50" borderRadius="md">
-            {m.content}
-          </Box>
-        ))
-      ) : (
-        <></>
-      )}
+      <Flex flexDirection="column">
+        {messages.length > 0 ? (
+          messages.map((m, index) => (
+            <Box
+              key={index}
+              p="2"
+              mb="2"
+              bg={m.role === 'user' ? 'gray.100' : 'gray.300'}
+              alignSelf={m.role === 'user' ? 'flex-end' : 'flex-start'}
+              w={m.role == 'user' ? '' : '630px'}
+              borderRadius="md"
+            >
+              {m.content}
+            </Box>
+          ))
+        ) : (
+          <></>
+        )}
+      </Flex>
     </>
   )
 }

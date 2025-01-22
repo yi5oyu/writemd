@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Box, Text, Button } from '@chakra-ui/react'
+import { Box, Text, Flex } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import SideBtn from '../ui/button/SideBtn'
+import { BsLayoutSidebarInset, BsLayoutSidebarInsetReverse } from 'react-icons/bs'
 
 const MotionBox = motion(Box)
 
@@ -22,16 +23,18 @@ const Sidebar = () => {
           transition="width 0.2s"
           display={{ base: 'none', md: 'block' }}
         >
-          <SideBtn toggleBox={toggleBox} />
-          <Text fontSize="xl" p="4" fontWeight="bold">
-            사이드바
-          </Text>
+          <Flex justifyContent="space-between" alignItems="center">
+            <Text fontSize="xl" p="4" fontWeight="bold">
+              사이드바
+            </Text>
+            <SideBtn icon={BsLayoutSidebarInsetReverse} toggleBox={toggleBox} />
+          </Flex>
           <Text p="4">1</Text>
           <Text p="4">2</Text>
         </Box>
       ) : (
         <Box>
-          <SideBtn toggleBox={toggleBox} />
+          <SideBtn icon={BsLayoutSidebarInset} toggleBox={toggleBox} />
         </Box>
       )}
     </>

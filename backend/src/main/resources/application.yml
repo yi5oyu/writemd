@@ -1,6 +1,12 @@
 spring:
   application:
     name: backend
+  # devtools 설정
+  devtools:
+    livereload:
+      enabled: false
+    restart:
+      enabled: true
 
 server:
   port: 8888

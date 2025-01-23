@@ -1,10 +1,10 @@
-import { Box, Icon } from '@chakra-ui/react'
+import { Flex, Icon } from '@chakra-ui/react'
 
 const SideBtn = ({ icon, toggleBox }) => {
   return (
-    <Box p="2">
-      <Icon as={icon} onClick={toggleBox} m="2" w="6" h="6" />
-    </Box>
+    <Flex px="2" alignItems="center">
+      <Icon as={icon} onClick={toggleBox} w="6" h="6" cursor="pointer" />
+    </Flex>
   )
 }
 

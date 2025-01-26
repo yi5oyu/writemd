@@ -1,13 +1,10 @@
-import { InputGroup, Button, Icon } from '@chakra-ui/react'
-import { AddIcon } from '@chakra-ui/icons'
+import { Flex, Icon } from '@chakra-ui/react'
 
-const SideBtn = ({ toggleBox }) => {
+const SideBtn = ({ icon, toggleBox }) => {
   return (
-    <InputGroup>
-      <Button onClick={toggleBox} m="4" colorScheme="teal" leftIcon={<AddIcon />}>
-        버튼
-      </Button>
-    </InputGroup>
+    <Flex mr="2" px="2" alignItems="center">
+      <Icon as={icon} onClick={toggleBox} w="6" h="6" cursor="pointer" />
+    </Flex>
   )
 }
 

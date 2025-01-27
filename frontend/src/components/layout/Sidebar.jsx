@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer } from '@chakra-ui/react'
+import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
   BsLayoutSidebarInset,
@@ -9,15 +9,19 @@ import {
 } from 'react-icons/bs'
 import { FiHome, FiPlus, FiFolder, FiSearch } from 'react-icons/fi'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
-
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
+import useAuth from '../../hooks/useAuth'
+import LogInfoForm from '../../features/auth/LogInfoForm'
 
 const MotionBox = motion(Box)
 
 const Sidebar = () => {
+  const user = useAuth()
+
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
+  const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
 
   const SIDEBAR_WIDTH = 250
 
@@ -27,7 +31,11 @@ const Sidebar = () => {
 
   return (
     <>
-      <LoginForm isOpen={isOpen} onClose={onClose} />
+      {user ? (
+        <LogInfoForm isOpen={isOpenLogInfo} onClose={onCloseLogInfo} user={user} />
+      ) : (
+        <LoginForm isOpen={isOpenLogin} onClose={onCloseLogin} />
+      )}
       {isSideBoxVisible ? (
         <Box
           bg="gray.50"
@@ -114,24 +122,43 @@ const Sidebar = () => {
             <Spacer />
 
             {/* 하단 */}
-            <Flex
-              px="2"
-              py="1"
-              mx="5"
-              cursor="pointer"
-              borderRadius="xl"
-              alignItems="center"
-              mb="3"
-              _hover={{
-                bg: 'blue.400',
-                color: 'white',
-              }}
-              h="40px"
-              bg="blue.200"
-              onClick={onOpen}
-            >
-              <Text m="0 auto">로그인/회원가입</Text>
-            </Flex>
+            {!user ? (
+              <Flex
+                px="2"
+                py="1"
+                mx="5"
+                cursor="pointer"
+                borderRadius="xl"
+                alignItems="center"
+                mb="3"
+                _hover={{
+                  bg: 'blue.400',
+                  color: 'white',
+                }}
+                h="40px"
+                bg="blue.200"
+                onClick={onOpenLogin}
+              >
+                <Text m="0 auto">로그인/회원가입</Text>
+              </Flex>
+            ) : (
+              <Flex
+                alignItems="center"
+                bg="gray.200"
+                borderRadius="md"
+                p="2"
+                mb="3"
+                mx="2"
+                h="45px"
+                boxShadow="md"
+                cursor="pointer"
+                onClick={onOpenLogInfo}
+              >
+                <Avatar name={user.login || user.name} src={user.avatar_url} size="sm" mr="2" />
+
+                <Text fontWeight="medium">{user.login || user.name}</Text>
+              </Flex>
+            )}
             <Flex
               cursor="pointer"
               borderTop="1px"

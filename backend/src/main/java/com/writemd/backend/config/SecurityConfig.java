@@ -1,7 +1,5 @@
 package com.writemd.backend.config;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,27 +31,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/error", "/oauth2/**" , "/login/oauth2/**", "/actuator/**").permitAll()
-                .requestMatchers("/h2-console/**", "/profile/**").authenticated()
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                    .loginPage("/oauth2/authorization/github")
-//                    .defaultSuccessUrl("http://localhost:5173/thymeleaf", true)
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("http://localhost:5173")
-                .invalidateHttpSession(true)
-                .clearAuthentication(true)
-            )
-            .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.disable())
-            );
+        http.csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**", "/a")
+                        .permitAll().requestMatchers("/h2-console/**", "/profile/**")
+                        .authenticated().anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
+                // .defaultSuccessUrl("http://localhost:5173/thymeleaf", true)
+                )
+                .logout(logout -> logout.logoutUrl("/logout")
+                        .logoutSuccessUrl("http://localhost:5173").invalidateHttpSession(true)
+                        .clearAuthentication(true))
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
     }

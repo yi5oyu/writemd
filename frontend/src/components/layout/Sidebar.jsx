@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import { Box, Text, Flex, Icon, Spacer } from '@chakra-ui/react'
+import { useDisclosure, Box, Text, Flex, Icon, Spacer } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import SideBtn from '../ui/button/SideBtn'
 import {
   BsLayoutSidebarInset,
   BsLayoutSidebarInsetReverse,
@@ -11,10 +10,15 @@ import {
 import { FiHome, FiPlus, FiFolder, FiSearch } from 'react-icons/fi'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 
+import SideBtn from '../ui/button/SideBtn'
+import LoginForm from '../../features/auth/LoginForm'
+
 const MotionBox = motion(Box)
 
 const Sidebar = () => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
   const SIDEBAR_WIDTH = 250
 
   const toggleBox = () => {
@@ -23,6 +27,7 @@ const Sidebar = () => {
 
   return (
     <>
+      <LoginForm isOpen={isOpen} onClose={onClose} />
       {isSideBoxVisible ? (
         <Box
           bg="gray.50"
@@ -123,6 +128,7 @@ const Sidebar = () => {
               }}
               h="40px"
               bg="blue.200"
+              onClick={onOpen}
             >
               <Text m="0 auto">로그인/회원가입</Text>
             </Flex>

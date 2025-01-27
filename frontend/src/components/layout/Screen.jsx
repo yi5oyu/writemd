@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Box, Flex } from '@chakra-ui/react'
-import MarkDownInputBox from './MarkDownInputBox'
-import MarkdownPreview from './MarkdownPreview'
-import Questionbar from './Questionbar'
-import ChatBox from './ChatBox'
 import axios from 'axios'
+
+import MarkDownInputBox from '../../features/markdown/MarkDownInputBox'
+import MarkdownPreview from '../../features/markdown/MarkdownPreview'
+import Questionbar from '../../features/chat/Questionbar'
+import ChatBox from '../../features/chat/ChatBox'
 
 const Screen = () => {
   const aiModel = 'llama-3.2-korean-blossom-3b'

@@ -1,5 +1,5 @@
-import Screen from '../layout/Screen'
-import Sidebar from '../layout/Sidebar'
+import Screen from '../components/layout/Screen'
+import Sidebar from '../components/layout/Sidebar'
 import { Flex } from '@chakra-ui/react'
 
 const Homepage = () => {

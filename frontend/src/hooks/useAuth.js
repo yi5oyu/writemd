@@ -9,11 +9,9 @@ const useAuth = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log('Fetched data:', data)
         setUser(data.user)
       })
       .catch((err) => {
-        console.error('에러:', err)
         setUser(null)
       })
   }, [])

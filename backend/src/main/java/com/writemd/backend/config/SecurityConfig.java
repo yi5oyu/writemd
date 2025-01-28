@@ -1,5 +1,6 @@
 package com.writemd.backend.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,14 +35,25 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**", "/a")
-                        .permitAll().requestMatchers("/h2-console/**", "/profile/**")
+                        .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**", "/logout").permitAll()
+                        .requestMatchers("/h2-console/**", "/profile/**")
                         .authenticated().anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
-                // .defaultSuccessUrl("http://localhost:5173/thymeleaf", true)
+                 .defaultSuccessUrl("http://localhost:5173", true)
                 )
-                .logout(logout -> logout.logoutUrl("/logout")
-                        .logoutSuccessUrl("http://localhost:5173").invalidateHttpSession(true)
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("http://localhost:5173")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+                            response.setHeader("Access-Control-Allow-Credentials", "true");
+                            response.setContentType("application/json");
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.getWriter().write("{\"message\": \"로그아웃 성공\"}");
+                            response.getWriter().flush();
+                        })
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .clearAuthentication(true))
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 

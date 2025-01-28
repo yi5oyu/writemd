@@ -1,14 +1,25 @@
 import { useState } from 'react'
 import { Box, Flex } from '@chakra-ui/react'
-import { MdPreview, MdChat } from 'react-icons/md'
-import { RiMarkdownFill } from 'react-icons/ri'
+import { MdPreview, MdChat, MdOutlineSpellcheck } from 'react-icons/md'
+import { RiMarkdownFill, RiInboxUnarchiveLine } from 'react-icons/ri'
 
 import UtilityBtn from '../ui/button/UtilityBtn'
 
 const UtilityBox = ({ toggleVisibility }) => {
   return (
     <Flex p="2" justifyContent="space-between" alignItems="center">
-      <Box></Box>
+      <Box>
+        <UtilityBtn
+          icon={MdOutlineSpellcheck}
+          label="맞춤법"
+          // onClick={() => toggleVisibility('preview')}
+        />
+        <UtilityBtn
+          icon={RiInboxUnarchiveLine}
+          label="도구상자"
+          // onClick={() => toggleVisibility('preview')}
+        />
+      </Box>
       <Box>
         <UtilityBtn
           icon={RiMarkdownFill}

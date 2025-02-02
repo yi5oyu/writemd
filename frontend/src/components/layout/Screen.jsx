@@ -26,7 +26,7 @@ const Screen = () => {
       try {
         let response = await axios.post('http://localhost:8888/api/chat/lmstudio', {
           model: aiModel,
-          messages: [{ role: 'user', content: questionText }],
+          content: questionText,
         })
 
         let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'

@@ -1,8 +1,10 @@
 package com.writemd.backend.service;
 
+import com.writemd.backend.repository.ChatRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +17,9 @@ public class LMStudioService {
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
     private final List<Map<String, Object>> chatHistory = new ArrayList<>();
+
+    @Autowired
+    private ChatRepository chatRepository;
 
     // 모델 가져오기
     public String getModels() {

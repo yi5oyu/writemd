@@ -27,8 +27,17 @@ public class Users {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // login
+    @Column(unique = true, nullable = false)
+    private String githubId;
+
     @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
+    private String email;
+
+    private String avatarUrl;
 
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

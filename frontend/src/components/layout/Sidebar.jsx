@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
+import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar, Input } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
   BsLayoutSidebarInset,
@@ -7,7 +7,8 @@ import {
   BsQuestionCircle,
   BsChevronRight,
 } from 'react-icons/bs'
-import { FiHome, FiPlus, FiFolder, FiSearch } from 'react-icons/fi'
+import { FiHome, FiPlus, FiFolder, FiSearch, FiPlusSquare } from 'react-icons/fi'
+import { PiNotebook, PiCheckFatFill } from 'react-icons/pi'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
@@ -27,6 +28,10 @@ const Sidebar = () => {
 
   const toggleBox = () => {
     setIsSideBoxVisible(!isSideBoxVisible)
+  }
+
+  const handleAddClick = () => {
+    console.log('Icon 클릭')
   }
 
   return (
@@ -103,19 +108,54 @@ const Sidebar = () => {
                 <SideMenuIcon icon={FiHome} />
                 <Text>홈</Text>
               </Flex>
-              <Flex
-                px="2"
-                py="1"
-                mx="2"
-                cursor="pointer"
-                borderRadius="md"
-                alignItems="center"
-                _hover={{
-                  bg: 'gray.200',
-                }}
-              >
-                <SideMenuIcon icon={FiFolder} />
-                <Text>내 노트</Text>
+              <Flex direction="column">
+                <Flex
+                  px="2"
+                  py="1"
+                  mx="2"
+                  cursor="pointer"
+                  borderRadius="md"
+                  alignItems="center"
+                  _hover={{
+                    bg: 'gray.200',
+                  }}
+                >
+                  <SideMenuIcon icon={FiFolder} />
+                  <Text>내 노트</Text>
+                  <Icon
+                    as={FiPlusSquare}
+                    ml="115px"
+                    w="5"
+                    h="5"
+                    color="gray.500"
+                    onClick={handleAddClick}
+                    _hover={{
+                      color: 'black',
+                    }}
+                  />
+                </Flex>
+                <Box
+                  ml="30px"
+                  mr="10px"
+                  mt="5px"
+                  h="30px"
+                  display="flex"
+                  alignItems="center"
+                  borderRadius="md"
+                  _hover={{
+                    bg: 'gray.100',
+                  }}
+                >
+                  <Icon as={PiNotebook} />
+                  <Input
+                    placeholder="노트이름 작성하세요..."
+                    size="xl"
+                    fontSize="14px"
+                    variant="unstyled"
+                    mx="10px"
+                  />
+                  <Icon as={PiCheckFatFill} color="blue.400" cursor="pointer" mr="2" />
+                </Box>
               </Flex>
             </Box>
 

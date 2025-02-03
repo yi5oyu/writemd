@@ -1,7 +1,7 @@
 import React from 'react'
 import { Textarea } from '@chakra-ui/react'
 
-const MarkDownInputBox = ({ markdownText, setMarkdownText }) => {
+const MarkdownInputBox = ({ markdownText, setMarkdownText }) => {
   const handleChange = (e) => {
     setMarkdownText(e.target.value)
   }
@@ -40,4 +40,4 @@ const MarkDownInputBox = ({ markdownText, setMarkdownText }) => {
   )
 }
 
-export default MarkDownInputBox
+export default MarkdownInputBox

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar, Input } from '@chakra-ui/react'
+import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
   BsLayoutSidebarInset,
@@ -8,12 +8,14 @@ import {
   BsChevronRight,
 } from 'react-icons/bs'
 import { FiHome, FiPlus, FiFolder, FiSearch, FiPlusSquare } from 'react-icons/fi'
-import { PiNotebook, PiCheckFatFill } from 'react-icons/pi'
+import { PiNotebook } from 'react-icons/pi'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
 import useAuth from '../../hooks/useAuth'
 import LogInfoForm from '../../features/auth/LogInfoForm'
+import NoteInputBox from '../../features/note/NoteInputBox'
+import NoteBox from '../../features/note/NoteBox'
 
 const MotionBox = motion(Box)
 
@@ -21,6 +23,7 @@ const Sidebar = () => {
   const user = useAuth()
 
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
+  const [showNoteInputBox, setShowNoteInputBox] = useState(false)
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
 
@@ -31,7 +34,7 @@ const Sidebar = () => {
   }
 
   const handleAddClick = () => {
-    console.log('Icon 클릭')
+    setShowNoteInputBox(true)
   }
 
   return (
@@ -108,6 +111,7 @@ const Sidebar = () => {
                 <SideMenuIcon icon={FiHome} />
                 <Text>홈</Text>
               </Flex>
+
               <Flex direction="column">
                 <Flex
                   px="2"
@@ -134,28 +138,8 @@ const Sidebar = () => {
                     }}
                   />
                 </Flex>
-                <Box
-                  ml="30px"
-                  mr="10px"
-                  mt="5px"
-                  h="30px"
-                  display="flex"
-                  alignItems="center"
-                  borderRadius="md"
-                  _hover={{
-                    bg: 'gray.100',
-                  }}
-                >
-                  <Icon as={PiNotebook} />
-                  <Input
-                    placeholder="노트이름 작성하세요..."
-                    size="xl"
-                    fontSize="14px"
-                    variant="unstyled"
-                    mx="10px"
-                  />
-                  <Icon as={PiCheckFatFill} color="blue.400" cursor="pointer" mr="2" />
-                </Box>
+                <NoteBox name={name} icon={PiNotebook} />
+                {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
               </Flex>
             </Box>
 

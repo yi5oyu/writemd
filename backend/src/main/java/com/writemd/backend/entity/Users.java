@@ -2,7 +2,6 @@ package com.writemd.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,19 +27,16 @@ public class Users {
     private Long id;
 
     // login
-    @Column(unique = true, nullable = false)
     private String githubId;
 
-    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String email;
+    private String htmlUrl;
 
     private String avatarUrl;
 
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
-    private List<Folders> folders  = new ArrayList<>();
+    private List<Folders> folders = new ArrayList<>();
 }

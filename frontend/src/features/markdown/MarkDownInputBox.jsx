@@ -36,6 +36,7 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText }) => {
       fontSize="md"
       p="4"
       variant="unstyled"
+      bg="gray.100"
     />
   )
 }

@@ -2,13 +2,14 @@ import React, { useState } from 'react'
 import { Box, Flex } from '@chakra-ui/react'
 import axios from 'axios'
 
-import MarkDownInputBox from '../../features/markdown/MarkDownInputBox'
+import MarkDownInputBox from '../../features/markdown/MarkdownInputBox'
 import MarkdownPreview from '../../features/markdown/MarkdownPreview'
 import Questionbar from '../../features/chat/Questionbar'
 import ChatBox from '../../features/chat/ChatBox'
 import UtilityBox from '../../features/chat/UtilityBox'
+import NoteScreen from '../../features/note/NoteScreen'
 
-const Screen = () => {
+const Screen = ({ selectedNote }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
@@ -47,6 +48,8 @@ const Screen = () => {
   }
 
   return (
+    <NoteScreen selectedNote={selectedNote} />
+    /* 
     <Flex flexDirection="column" m="0 auto" position="relative">
       <Flex align="center" justify="center" h="100vh" gap="4">
         {isBoxVisible.markdown && (
@@ -82,6 +85,7 @@ const Screen = () => {
         <UtilityBox toggleVisibility={toggleVisibility} />
       </Flex>
     </Flex>
+    */
   )
 }
 

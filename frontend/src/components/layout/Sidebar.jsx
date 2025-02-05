@@ -43,7 +43,6 @@ const Sidebar = ({ user }) => {
       )
       alert('노트 저장 성공')
     } catch (error) {
-      console.error('Error saving note:', error)
       alert('노트 저장 실패')
     }
   }

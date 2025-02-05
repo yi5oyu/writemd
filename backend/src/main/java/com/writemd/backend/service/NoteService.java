@@ -1,8 +1,10 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.entity.Notes;
+import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.NoteRepository;
+import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,17 +15,28 @@ public class NoteService {
     private NoteRepository noteRepository;
 
     @Autowired
-    private UserRepository  userRepository;
+    private UserRepository userRepository;
+
+    @Autowired
+    private TextRepository textRepository;
 
     public Notes createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
-        Notes newNote = Notes.builder()
-            .users(user)
-            .noteName(noteName)
-            .build();
+        Notes newNote = Notes.builder().users(user).noteName(noteName).build();
 
         return noteRepository.save(newNote);
+    }
+
+    public Texts saveMarkdownText(Long noteId, String markdownText) {
+        Notes note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다."));
+
+        Texts texts = textRepository.findByNotes(note).orElse(Texts.builder().notes(note).build());
+
+        texts.updateMarkdownText(markdownText);
+
+        return textRepository.save(texts);
     }
 }

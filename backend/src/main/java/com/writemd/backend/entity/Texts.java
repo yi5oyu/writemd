@@ -26,10 +26,14 @@ public class Texts {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "folder_id", nullable = false, unique = true)
+    @JoinColumn(name = "note_id", nullable = false, unique = true)
     @JsonBackReference
     private Notes notes;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String markdownText;
+
+    public void updateMarkdownText(String markdownText) {
+        this.markdownText = markdownText;
+    }
 }

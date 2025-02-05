@@ -46,6 +46,25 @@ const Screen = ({ user }) => {
     }))
   }
 
+  const saveMarkdownText = async () => {
+    try {
+      await axios.put(
+        `http://localhost:8888/api/notes/${noteId}`,
+        {
+          markdownText: markdownText,
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      )
+
+      alert('Markdown 텍스트 저장 성공!')
+    } catch (error) {
+      alert('Markdown 텍스트 저장 실패!')
+    }
+  }
+
   return (
     <Flex flexDirection="column" m="0 auto" position="relative">
       <Flex align="center" justify="center" h="100vh" gap="4">
@@ -65,6 +84,7 @@ const Screen = ({ user }) => {
           </Box>
         )}
       </Flex>
+      <Box onClick={saveMarkdownText}>btn</Box>
       <Flex
         flexDirection="column"
         justify="center"

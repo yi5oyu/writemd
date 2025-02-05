@@ -24,9 +24,9 @@ public class QChats extends EntityPathBase<Chats> {
 
     public final StringPath content = createString("content");
 
-    public final QFolders folders;
-
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final QNotes notes;
 
     public final StringPath role = createString("role");
 
@@ -50,7 +50,7 @@ public class QChats extends EntityPathBase<Chats> {
 
     public QChats(Class<? extends Chats> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.folders = inits.isInitialized("folders") ? new QFolders(forProperty("folders"), inits.get("folders")) : null;
+        this.notes = inits.isInitialized("notes") ? new QNotes(forProperty("notes"), inits.get("notes")) : null;
     }
 
 }

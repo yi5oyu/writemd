@@ -22,11 +22,11 @@ public class QTexts extends EntityPathBase<Texts> {
 
     public static final QTexts texts = new QTexts("texts");
 
-    public final QFolders folders;
-
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath markdownText = createString("markdownText");
+
+    public final QNotes notes;
 
     public QTexts(String variable) {
         this(Texts.class, forVariable(variable), INITS);
@@ -46,7 +46,7 @@ public class QTexts extends EntityPathBase<Texts> {
 
     public QTexts(Class<? extends Texts> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.folders = inits.isInitialized("folders") ? new QFolders(forProperty("folders"), inits.get("folders")) : null;
+        this.notes = inits.isInitialized("notes") ? new QNotes(forProperty("notes"), inits.get("notes")) : null;
     }
 
 }

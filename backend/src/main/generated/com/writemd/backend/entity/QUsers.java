@@ -22,8 +22,6 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath avatarUrl = createString("avatarUrl");
 
-    public final ListPath<Folders, QFolders> folders = this.<Folders, QFolders>createList("folders", Folders.class, QFolders.class, PathInits.DIRECT2);
-
     public final StringPath githubId = createString("githubId");
 
     public final StringPath htmlUrl = createString("htmlUrl");
@@ -31,6 +29,8 @@ public class QUsers extends EntityPathBase<Users> {
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath name = createString("name");
+
+    public final ListPath<Notes, QNotes> notes = this.<Notes, QNotes>createList("notes", Notes.class, QNotes.class, PathInits.DIRECT2);
 
     public QUsers(String variable) {
         super(Users.class, forVariable(variable));

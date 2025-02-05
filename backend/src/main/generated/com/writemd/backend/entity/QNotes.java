@@ -11,44 +11,44 @@ import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
- * QFolders is a Querydsl query type for Folders
+ * QNotes is a Querydsl query type for Notes
  */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
-public class QFolders extends EntityPathBase<Folders> {
+public class QNotes extends EntityPathBase<Notes> {
 
-    private static final long serialVersionUID = 1223335545L;
+    private static final long serialVersionUID = 1420957813L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 
-    public static final QFolders folders = new QFolders("folders");
+    public static final QNotes notes = new QNotes("notes");
 
     public final ListPath<Chats, QChats> chats = this.<Chats, QChats>createList("chats", Chats.class, QChats.class, PathInits.DIRECT2);
 
-    public final StringPath folderName = createString("folderName");
-
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final StringPath noteName = createString("noteName");
 
     public final QTexts texts;
 
     public final QUsers users;
 
-    public QFolders(String variable) {
-        this(Folders.class, forVariable(variable), INITS);
+    public QNotes(String variable) {
+        this(Notes.class, forVariable(variable), INITS);
     }
 
-    public QFolders(Path<? extends Folders> path) {
+    public QNotes(Path<? extends Notes> path) {
         this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
-    public QFolders(PathMetadata metadata) {
+    public QNotes(PathMetadata metadata) {
         this(metadata, PathInits.getFor(metadata, INITS));
     }
 
-    public QFolders(PathMetadata metadata, PathInits inits) {
-        this(Folders.class, metadata, inits);
+    public QNotes(PathMetadata metadata, PathInits inits) {
+        this(Notes.class, metadata, inits);
     }
 
-    public QFolders(Class<? extends Folders> type, PathMetadata metadata, PathInits inits) {
+    public QNotes(Class<? extends Notes> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.texts = inits.isInitialized("texts") ? new QTexts(forProperty("texts"), inits.get("texts")) : null;
         this.users = inits.isInitialized("users") ? new QUsers(forProperty("users")) : null;

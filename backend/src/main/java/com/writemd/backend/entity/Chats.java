@@ -30,9 +30,9 @@ public class Chats {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "folder_id", nullable = false)
+    @JoinColumn(name = "note_id", nullable = false)
     @JsonBackReference
-    private Folders folders;
+    private Notes notes;
 
     @Column(nullable = false)
     private String role;

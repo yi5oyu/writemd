@@ -28,7 +28,7 @@ public class Texts {
     @OneToOne
     @JoinColumn(name = "folder_id", nullable = false, unique = true)
     @JsonBackReference
-    private Folders folders;
+    private Notes notes;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String markdownText;

@@ -38,5 +38,5 @@ public class Users {
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
-    private List<Folders> folders = new ArrayList<>();
+    private List<Notes> notes = new ArrayList<>();
 }

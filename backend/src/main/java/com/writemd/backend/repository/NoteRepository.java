@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FolderRepository extends JpaRepository<Chats, Long> {
+public interface NoteRepository extends JpaRepository<Chats, Long> {
 
 }

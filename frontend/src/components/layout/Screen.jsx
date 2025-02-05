@@ -8,7 +8,7 @@ import Questionbar from '../../features/chat/Questionbar'
 import ChatBox from '../../features/chat/ChatBox'
 import UtilityBox from '../../features/chat/UtilityBox'
 
-const Screen = () => {
+const Screen = ({ user }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')

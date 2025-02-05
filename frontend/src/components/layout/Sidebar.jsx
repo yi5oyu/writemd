@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import axios from 'axios'
 import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
@@ -11,14 +12,11 @@ import { FiHome, FiPlus, FiFolder, FiSearch } from 'react-icons/fi'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
-import useAuth from '../../hooks/useAuth'
 import LogInfoForm from '../../features/auth/LogInfoForm'
 
 const MotionBox = motion(Box)
 
-const Sidebar = () => {
-  const user = useAuth()
-
+const Sidebar = ({ user }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
@@ -27,6 +25,27 @@ const Sidebar = () => {
 
   const toggleBox = () => {
     setIsSideBoxVisible(!isSideBoxVisible)
+  }
+
+  const saveNote = async () => {
+    try {
+      await axios.post(
+        `http://localhost:8888/api/notes/${user.login}`,
+        {
+          noteName: '노트이름',
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        }
+      )
+      alert('노트 저장 성공')
+    } catch (error) {
+      console.error('Error saving note:', error)
+      alert('노트 저장 실패')
+    }
   }
 
   return (
@@ -115,7 +134,7 @@ const Sidebar = () => {
                 }}
               >
                 <SideMenuIcon icon={FiFolder} />
-                <Text>내 노트</Text>
+                <Text onClick={saveNote}>내 노트</Text>
               </Flex>
             </Box>
 

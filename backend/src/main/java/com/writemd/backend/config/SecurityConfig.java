@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**",
                                 "/logout")
-                        .permitAll().requestMatchers("/h2-console/**", "/profile/**")
+                        .permitAll().requestMatchers("/h2-console/**", "/profile/**", "/api/**")
                         .authenticated().anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                         .userInfoEndpoint(

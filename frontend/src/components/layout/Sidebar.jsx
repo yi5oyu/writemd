@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
@@ -8,7 +8,7 @@ import {
   BsChevronRight,
 } from 'react-icons/bs'
 import { FiHome, FiPlus, FiFolder, FiSearch, FiPlusSquare } from 'react-icons/fi'
-import { PiNotebook } from 'react-icons/pi'
+import { PiNotebook, PiNotebookFill } from 'react-icons/pi'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
@@ -19,11 +19,12 @@ import NoteBox from '../../features/note/NoteBox'
 
 const MotionBox = motion(Box)
 
-const Sidebar = () => {
+const Sidebar = ({ setSelectedNote }) => {
   const user = useAuth()
 
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
+  const [names, setNames] = useState([])
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
 
@@ -36,6 +37,20 @@ const Sidebar = () => {
   const handleAddClick = () => {
     setShowNoteInputBox(true)
   }
+
+  useEffect(() => {
+    const fetchNames = async () => {
+      const data = [
+        '첫 번째 노트',
+        '두 번째 노트 - 내용이 아주 길어지면 자동으로 ... 표시됨',
+        '세 번째 노트',
+        '네 번째 노트 - 추가 정보 포함',
+      ]
+      setNames(data)
+    }
+
+    fetchNames()
+  }, [])
 
   return (
     <>
@@ -138,7 +153,14 @@ const Sidebar = () => {
                     }}
                   />
                 </Flex>
-                <NoteBox name={name} icon={PiNotebook} />
+                {names.map((name, index) => (
+                  <NoteBox
+                    key={index}
+                    name={name}
+                    icon={PiNotebookFill}
+                    onClick={() => setSelectedNote(name)}
+                  />
+                ))}
                 {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
               </Flex>
             </Box>

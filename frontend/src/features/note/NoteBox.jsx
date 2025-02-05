@@ -1,6 +1,6 @@
 import { Box, Icon, Text } from '@chakra-ui/react'
 
-const NoteBox = ({ name, icon }) => {
+const NoteBox = ({ name, icon, onClick }) => {
   return (
     <Box
       ml="30px"
@@ -14,6 +14,7 @@ const NoteBox = ({ name, icon }) => {
         bg: 'gray.100',
       }}
       cursor="pointer"
+      onClick={onClick}
     >
       <Icon as={icon} />
       <Text mx="10px" isTruncated>

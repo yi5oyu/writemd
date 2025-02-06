@@ -1,6 +1,6 @@
 package com.writemd.backend.controller;
 
-import com.writemd.backend.service.LMStudioService;
+import com.writemd.backend.service.ChatService;
 import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,19 +13,24 @@ import java.util.Map;
 public class ChatController {
 
     @Autowired
-    private LMStudioService lmStudioService;
+    private ChatService chatService;
 
     // 모델 목록 가져오기
     @GetMapping("/models")
     public ResponseEntity<String> getModels() {
-        String models = lmStudioService.getModels();
+        String models = chatService.getModels();
         return ResponseEntity.ok(models);
     }
 
     // 채팅 요청
     @PostMapping("/lmstudio")
     public ResponseEntity<String> chatCompletion(@RequestBody Map<String, Object> requestPayload) {
-        String response = lmStudioService.chatCompletion(requestPayload);
+        Long sessionId = Long.parseLong(requestPayload.get("sessionId").toString());
+        String content = (String) requestPayload.get("content");
+
+        chatService.saveChat(sessionId, "user", content);
+
+        String response = chatService.chatCompletion(sessionId);
         return ResponseEntity.ok(response);
     }
 
@@ -33,7 +38,7 @@ public class ChatController {
     @PostMapping("/session")
     public ResponseEntity<Map<String, Object>> createSession(
             @RequestBody Map<String, Object> requestPayload) {
-        Long sessionId = lmStudioService.createSession(requestPayload);
+        Long sessionId = chatService.createSession(requestPayload);
 
         Map<String, Object> response = new HashMap<>();
         response.put("sessionId", sessionId);

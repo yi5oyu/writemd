@@ -22,6 +22,8 @@ public class QSessions extends EntityPathBase<Sessions> {
 
     public static final QSessions sessions = new QSessions("sessions");
 
+    public final ListPath<Chats, QChats> chats = this.<Chats, QChats>createList("chats", Chats.class, QChats.class, PathInits.DIRECT2);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final QNotes notes;

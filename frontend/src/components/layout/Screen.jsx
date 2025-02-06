@@ -27,6 +27,7 @@ const Screen = ({ user }) => {
         let response = await axios.post(
           'http://localhost:8888/api/chat/lmstudio',
           {
+            sessionId: 65,
             model: aiModel,
             content: questionText,
           },
@@ -78,7 +79,7 @@ const Screen = ({ user }) => {
       let data = await axios.post(
         `http://localhost:8888/api/chat/session`,
         {
-          noteId: 33,
+          noteId: 97,
         },
         {
           headers: { 'Content-Type': 'application/json' },

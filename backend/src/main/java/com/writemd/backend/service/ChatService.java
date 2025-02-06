@@ -1,5 +1,7 @@
 package com.writemd.backend.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
@@ -17,12 +19,10 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Service
-public class LMStudioService {
+public class ChatService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
-
-    private final List<Map<String, Object>> chatHistory = new ArrayList<>();
 
     @Autowired
     private ChatRepository chatRepository;
@@ -40,37 +40,48 @@ public class LMStudioService {
         return response.getBody();
     }
 
-    // 채팅
-    public String chatCompletion(Map<String, Object> requestPayload) {
-        String url = LMSTUDIO_BASE_URL + "/chat/completions";
+    // 채팅 요청
+    public String chatCompletion(Long sessionId) {
+        List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<Map<String, Object>> messages = new ArrayList<>();
 
-        // 대화 추가
-        Map<String, Object> userMessageMap = new HashMap<>();
-        userMessageMap.put("role", "user");
-        userMessageMap.put("content", requestPayload.get("content"));
-        chatHistory.add(userMessageMap);
+        Map<String, Object> messageMap = new HashMap<>();
+
+        for (Chats chat : chatHistory) {
+            messageMap.put("role", chat.getRole());
+            messageMap.put("content", chat.getContent());
+            messages.add(messageMap);
+        }
 
         // LM Studio 요청 데이터
         Map<String, Object> payload = new HashMap<>();
-        payload.put("messages", chatHistory);
+        payload.put("messages", messages);
 
+        // Lm Studio 호출
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-        ResponseEntity<String> response =
-                restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(
+                LMSTUDIO_BASE_URL + "/chat/completions", HttpMethod.POST, entity, String.class);
 
-        // LM Studio 응답을 저장
-        Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("role", "assistant");
-        responseMap.put("content", response.getBody());
-        chatHistory.add(responseMap);
+        JsonNode rootNode;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            rootNode = objectMapper.readTree(response.getBody());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "오류";
+        }
+
+        // LM Studio 응답 저장
+        saveChat(sessionId, "assistant",
+                rootNode.path("choices").get(0).path("message").path("content").asText());
 
         return response.getBody();
     }
 
-    public void saveMessage(Long sessionId, String content, String role) {
+    public void saveChat(Long sessionId, String role, String content) {
         Sessions session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
 

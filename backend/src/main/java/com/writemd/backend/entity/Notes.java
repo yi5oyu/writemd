@@ -38,10 +38,10 @@ public class Notes {
 
     private String noteName;
 
-    @OneToMany(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sessions", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
-    private List<Chats> chats = new ArrayList<>();
+    private List<Sessions> sessions = new ArrayList<>();
 
     @OneToOne(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
     private Texts texts;

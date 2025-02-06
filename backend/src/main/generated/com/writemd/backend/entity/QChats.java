@@ -26,9 +26,9 @@ public class QChats extends EntityPathBase<Chats> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final QNotes notes;
-
     public final StringPath role = createString("role");
+
+    public final QSessions sessions;
 
     public final DateTimePath<java.time.LocalDateTime> time = createDateTime("time", java.time.LocalDateTime.class);
 
@@ -50,7 +50,7 @@ public class QChats extends EntityPathBase<Chats> {
 
     public QChats(Class<? extends Chats> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.notes = inits.isInitialized("notes") ? new QNotes(forProperty("notes"), inits.get("notes")) : null;
+        this.sessions = inits.isInitialized("sessions") ? new QSessions(forProperty("sessions"), inits.get("sessions")) : null;
     }
 
 }

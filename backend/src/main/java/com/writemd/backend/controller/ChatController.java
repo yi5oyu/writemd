@@ -1,6 +1,7 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.service.LMStudioService;
+import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,18 @@ public class ChatController {
     @PostMapping("/lmstudio")
     public ResponseEntity<String> chatCompletion(@RequestBody Map<String, Object> requestPayload) {
         String response = lmStudioService.chatCompletion(requestPayload);
+        return ResponseEntity.ok(response);
+    }
+
+    // 세션 생성
+    @PostMapping("/session")
+    public ResponseEntity<Map<String, Object>> createSession(
+            @RequestBody Map<String, Object> requestPayload) {
+        Long sessionId = lmStudioService.createSession(requestPayload);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("sessionId", sessionId);
+
         return ResponseEntity.ok(response);
     }
 }

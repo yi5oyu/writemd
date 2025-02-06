@@ -24,10 +24,17 @@ const Screen = ({ user }) => {
     if (questionText.trim()) {
       setMessages((m) => [...m, { role: 'user', content: questionText }])
       try {
-        let response = await axios.post('http://localhost:8888/api/chat/lmstudio', {
-          model: aiModel,
-          content: questionText,
-        })
+        let response = await axios.post(
+          'http://localhost:8888/api/chat/lmstudio',
+          {
+            model: aiModel,
+            content: questionText,
+          },
+          {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          }
+        )
 
         let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
         setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
@@ -49,7 +56,8 @@ const Screen = ({ user }) => {
   const saveMarkdownText = async () => {
     try {
       await axios.put(
-        `http://localhost:8888/api/notes/${noteId}`,
+        // ${noteId}
+        `http://localhost:8888/api/notes/`,
         {
           markdownText: markdownText,
         },
@@ -62,6 +70,25 @@ const Screen = ({ user }) => {
       alert('Markdown 텍스트 저장 성공!')
     } catch (error) {
       alert('Markdown 텍스트 저장 실패!')
+    }
+  }
+
+  const newSession = async () => {
+    try {
+      let data = await axios.post(
+        `http://localhost:8888/api/chat/session`,
+        {
+          noteId: 33,
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      )
+      console.log(data)
+      alert('세션 저장 성공!')
+    } catch (error) {
+      alert('세션 저장 실패!')
     }
   }
 
@@ -85,6 +112,9 @@ const Screen = ({ user }) => {
         )}
       </Flex>
       <Box onClick={saveMarkdownText}>btn</Box>
+
+      <Box onClick={newSession}>chat</Box>
+
       <Flex
         flexDirection="column"
         justify="center"

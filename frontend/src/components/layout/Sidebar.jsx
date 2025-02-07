@@ -30,7 +30,7 @@ const Sidebar = ({ user }) => {
   const saveNote = async () => {
     try {
       await axios.post(
-        `http://localhost:8888/api/notes/${user.login}`,
+        `http://localhost:8888/api/notes/${user.githubId}`,
         {
           noteName: '노트이름',
         },

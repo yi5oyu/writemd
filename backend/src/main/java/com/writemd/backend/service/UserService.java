@@ -1,14 +1,17 @@
 package com.writemd.backend.service;
 
 
+import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.dto.TextDTO;
 import com.writemd.backend.dto.UserDTO;
+import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
+import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
 import com.writemd.backend.repository.TextRepository;
@@ -33,6 +36,9 @@ public class UserService {
 
     @Autowired
     private SessionRepository sessionRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
 
     @Transactional
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {
@@ -75,6 +81,15 @@ public class UserService {
         return note;
     }
 
+    @Transactional
+    public List<ChatDTO> chatList(Long sessionId){
+        List<Chats> chats = chatRepository.findBySessions_Id(sessionId);
+
+        List<ChatDTO> chat =chats.stream().map(this::convertChat).collect(Collectors.toList());
+
+        return chat;
+    }
+
     private NoteDTO convertNote(Notes notes) {
         NoteDTO note =
                 NoteDTO.builder().noteId(notes.getId()).noteName(notes.getNoteName()).build();
@@ -96,4 +111,10 @@ public class UserService {
         return text;
     }
 
+    private ChatDTO convertChat(Chats chats){
+        ChatDTO chat = ChatDTO.builder().chatId(chats.getId()).role(chats.getRole()).content(
+            chats.getContent()).time(chats.getTime()).build();
+
+        return chat;
+    }
 }

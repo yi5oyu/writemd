@@ -29,7 +29,7 @@ const Screen = ({ user }) => {
         let response = await axios.post(
           'http://localhost:8888/api/chat/lmstudio',
           {
-            sessionId: 65,
+            sessionId: 129,
             model: aiModel,
             content: questionText,
           },
@@ -60,7 +60,7 @@ const Screen = ({ user }) => {
     try {
       await axios.put(
         // ${noteId}
-        `http://localhost:8888/api/notes/161`,
+        `http://localhost:8888/api/notes/193`,
         {
           markdownText: markdownText,
         },
@@ -81,7 +81,7 @@ const Screen = ({ user }) => {
       let data = await axios.post(
         `http://localhost:8888/api/chat/session`,
         {
-          noteId: 161,
+          noteId: 193,
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -101,7 +101,20 @@ const Screen = ({ user }) => {
 
   const loadNote = () => {
     alert('note')
-    setNoteId(161)
+    setNoteId(193)
+  }
+
+  // 채팅 가져오기
+  const loadChatList = async () => {
+    try {
+      let data = await axios.get(`http://localhost:8888/api/chat-list/129`, {
+        withCredentials: true,
+      })
+      console.log(data)
+      alert('채팅 로드 성공!')
+    } catch (error) {
+      alert('채팅 로드 실패!')
+    }
   }
 
   return (
@@ -128,6 +141,8 @@ const Screen = ({ user }) => {
       <Box onClick={newSession}>chat</Box>
 
       <Box onClick={loadNote}>note</Box>
+
+      <Box onClick={loadChatList}>chats</Box>
 
       <Flex
         flexDirection="column"

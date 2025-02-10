@@ -4,7 +4,7 @@ const useNote = (noteId) => {
   const [note, setNote] = useState(null)
 
   useEffect(() => {
-    fetch(`http://localhost:8888/api/note-info?noteId=${noteId}`, {
+    fetch(`http://localhost:8888/api/note-info/${noteId}`, {
       credentials: 'include',
     })
       .then((res) => res.json())

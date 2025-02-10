@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -36,5 +37,10 @@ public class NoteController {
         return ResponseEntity.ok(updatedTexts);
     }
 
-
+    @DeleteMapping("/{noteId}")
+    public ResponseEntity<Void> deleteNote(@PathVariable Long noteId){
+        noteService.deleteNote(noteId);
+        // 204
+        return ResponseEntity.noContent().build();
+    }
 }

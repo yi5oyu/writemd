@@ -10,6 +10,7 @@ import UtilityBox from '../../features/chat/UtilityBox'
 
 import useNote from '../../hooks/useNote'
 import sessionDelete from '../../services/sessionDelete'
+import deleteNote from '../../services/deleteNote'
 
 const Screen = ({ user }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
@@ -119,9 +120,13 @@ const Screen = ({ user }) => {
   }
 
   // 채팅 세션 삭제
-
   const chatSessionDelete = () => {
     sessionDelete(161)
+  }
+
+  // 노트 삭제
+  const handleDeleteNote = () => {
+    deleteNote(257)
   }
 
   return (
@@ -152,6 +157,8 @@ const Screen = ({ user }) => {
       <Box onClick={loadChatList}>chats</Box>
 
       <Box onClick={chatSessionDelete}>세션삭제</Box>
+
+      <Box onClick={handleDeleteNote}>노트삭제</Box>
 
       <Flex
         flexDirection="column"

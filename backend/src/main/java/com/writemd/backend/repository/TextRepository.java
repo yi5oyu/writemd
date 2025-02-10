@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TextRepository extends JpaRepository<Texts, Long> {
     Optional<Texts> findByNotes(Notes notes);
+
+    Optional<Texts> findByNotes_id(Long noteId);
 }

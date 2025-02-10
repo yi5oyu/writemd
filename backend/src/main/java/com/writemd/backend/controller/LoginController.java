@@ -2,18 +2,15 @@ package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.dto.UserDTO;
-import com.writemd.backend.entity.Users;
-import com.writemd.backend.repository.UserRepository;
 import com.writemd.backend.service.UserService;
 import java.security.Principal;
-import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,10 +28,10 @@ public class LoginController {
         return userService.userInfo((String) oauthUser.getAttributes().get("login"));
     }
 
-    // @GetMapping
-    // public NoteDTO getNote(@RequestBody Long noteId){
-    // return userService.
-    // }
+    @GetMapping("/note-info")
+    public NoteDTO getNote(@RequestParam Long noteId) {
+        return userService.noteContent(noteId);
+    }
 
     @GetMapping("/current-user")
     public Map<String, Object> getCurrentUser(Principal principal) {

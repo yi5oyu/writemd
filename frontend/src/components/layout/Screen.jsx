@@ -8,6 +8,8 @@ import Questionbar from '../../features/chat/Questionbar'
 import ChatBox from '../../features/chat/ChatBox'
 import UtilityBox from '../../features/chat/UtilityBox'
 
+import useNote from '../../hooks/useNote'
+
 const Screen = ({ user }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
@@ -58,7 +60,7 @@ const Screen = ({ user }) => {
     try {
       await axios.put(
         // ${noteId}
-        `http://localhost:8888/api/notes/`,
+        `http://localhost:8888/api/notes/161`,
         {
           markdownText: markdownText,
         },
@@ -79,7 +81,7 @@ const Screen = ({ user }) => {
       let data = await axios.post(
         `http://localhost:8888/api/chat/session`,
         {
-          noteId: 97,
+          noteId: 161,
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -91,6 +93,15 @@ const Screen = ({ user }) => {
     } catch (error) {
       alert('세션 저장 실패!')
     }
+  }
+
+  // 노트 정보
+  const [noteId, setNoteId] = useState(null)
+  const note = useNote(noteId)
+
+  const loadNote = () => {
+    alert('note')
+    setNoteId(161)
   }
 
   return (
@@ -115,6 +126,8 @@ const Screen = ({ user }) => {
       <Box onClick={saveMarkdownText}>btn</Box>
 
       <Box onClick={newSession}>chat</Box>
+
+      <Box onClick={loadNote}>note</Box>
 
       <Flex
         flexDirection="column"

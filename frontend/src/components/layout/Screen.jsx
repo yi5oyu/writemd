@@ -9,6 +9,7 @@ import ChatBox from '../../features/chat/ChatBox'
 import UtilityBox from '../../features/chat/UtilityBox'
 
 import useNote from '../../hooks/useNote'
+import sessionDelete from '../../services/sessionDelete'
 
 const Screen = ({ user }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
@@ -29,7 +30,7 @@ const Screen = ({ user }) => {
         let response = await axios.post(
           'http://localhost:8888/api/chat/lmstudio',
           {
-            sessionId: 129,
+            sessionId: 161,
             model: aiModel,
             content: questionText,
           },
@@ -60,7 +61,7 @@ const Screen = ({ user }) => {
     try {
       await axios.put(
         // ${noteId}
-        `http://localhost:8888/api/notes/193`,
+        `http://localhost:8888/api/notes/225`,
         {
           markdownText: markdownText,
         },
@@ -81,7 +82,7 @@ const Screen = ({ user }) => {
       let data = await axios.post(
         `http://localhost:8888/api/chat/session`,
         {
-          noteId: 193,
+          noteId: 225,
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -107,7 +108,7 @@ const Screen = ({ user }) => {
   // 채팅 가져오기
   const loadChatList = async () => {
     try {
-      let data = await axios.get(`http://localhost:8888/api/chat-list/129`, {
+      let data = await axios.get(`http://localhost:8888/api/chat-list/161`, {
         withCredentials: true,
       })
       console.log(data)
@@ -115,6 +116,12 @@ const Screen = ({ user }) => {
     } catch (error) {
       alert('채팅 로드 실패!')
     }
+  }
+
+  // 채팅 세션 삭제
+
+  const chatSessionDelete = () => {
+    sessionDelete(161)
   }
 
   return (
@@ -143,6 +150,8 @@ const Screen = ({ user }) => {
       <Box onClick={loadNote}>note</Box>
 
       <Box onClick={loadChatList}>chats</Box>
+
+      <Box onClick={chatSessionDelete}>세션삭제</Box>
 
       <Flex
         flexDirection="column"

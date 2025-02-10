@@ -15,6 +15,7 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
 
+
     // 모델 목록 가져오기
     @GetMapping("/models")
     public ResponseEntity<String> getModels() {
@@ -44,5 +45,13 @@ public class ChatController {
         response.put("sessionId", sessionId);
 
         return ResponseEntity.ok(response);
+    }
+
+    // 세션 삭제
+    @DeleteMapping("/session/{sessionId}")
+    public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
+        chatService.deleteSession(sessionId);
+        // 204
+        return ResponseEntity.noContent().build();
     }
 }

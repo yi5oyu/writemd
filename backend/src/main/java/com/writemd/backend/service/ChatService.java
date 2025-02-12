@@ -76,8 +76,11 @@ public class ChatService {
         }
 
         // LM Studio 응답 저장
-        saveChat(sessionId, "assistant",
-                rootNode.path("choices").get(0).path("message").path("content").asText());
+        saveChat(sessionId, "assistant", rootNode.path("choices")
+                    .get(0)
+                    .path("message")
+                    .path("content")
+                    .asText());
 
         return response.getBody();
     }
@@ -86,20 +89,26 @@ public class ChatService {
         Sessions session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
 
-        Chats chat = Chats.builder().sessions(session).role(role).content(content)
+        Chats chat = Chats.builder()
+                .sessions(session)
+                .role(role)
+                .content(content)
                 .time(LocalDateTime.now()).build();
 
         chatRepository.save(chat);
     }
 
-    public Long createSession(Map<String, Object> requestPayload) {
-        Long noteId = Long.parseLong(requestPayload.get("noteId").toString());
+    public Long createSession(Long noteId) {
         Notes note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
 
-        Sessions session = Sessions.builder().notes(note).title("Chat" + noteId).build();
+        Sessions session = Sessions.builder()
+                .notes(note)
+                .title("Chat" + noteId)
+                .build();
 
         sessionRepository.save(session);
+
         return session.getId();
     }
 

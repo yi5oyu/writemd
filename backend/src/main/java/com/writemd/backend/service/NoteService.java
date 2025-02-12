@@ -24,7 +24,10 @@ public class NoteService {
         Users user = userRepository.findByGithubId(userName)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
-        Notes newNote = Notes.builder().users(user).noteName(noteName).build();
+        Notes newNote = Notes.builder()
+                .users(user)
+                .noteName(noteName)
+                .build();
 
         return noteRepository.save(newNote);
     }
@@ -33,7 +36,10 @@ public class NoteService {
         Notes note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다."));
 
-        Texts texts = textRepository.findByNotes(note).orElse(Texts.builder().notes(note).build());
+        Texts texts = textRepository.findByNotes(note)
+                .orElse(Texts.builder()
+                    .notes(note)
+                    .build());
 
         texts.updateMarkdownText(markdownText);
 

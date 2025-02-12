@@ -42,10 +42,16 @@ public class UserService {
 
     @Transactional
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {
-        Long userId = userRepository.findIdByGithubId(githubId).orElse(null);
+        Long userId = userRepository.findIdByGithubId(githubId)
+                .orElse(null);
 
-        return userRepository.save(Users.builder().id(userId).githubId(githubId).name(name)
-                .htmlUrl(htmlUrl).avatarUrl(avatarUrl).build());
+        return userRepository.save(Users.builder()
+                .id(userId)
+                .githubId(githubId)
+                .name(name)
+                .htmlUrl(htmlUrl)
+                .avatarUrl(avatarUrl)
+                .build());
     }
 
     @Transactional
@@ -57,11 +63,18 @@ public class UserService {
         List<Notes> notes = noteRepository.findByUsers_Id(user.getId());
 
         // note 리스트
-        List<NoteDTO> note = notes.stream().map(this::convertNote).collect(Collectors.toList());
+        List<NoteDTO> note = notes.stream()
+                .map(this::convertNote)
+                .collect(Collectors.toList());
 
-        UserDTO userInfo = UserDTO.builder().userId(user.getId()).name(user.getName())
-                .githubId(user.getGithubId()).avatarUrl(user.getAvatarUrl())
-                .htmlUrl(user.getHtmlUrl()).notes(note).build();
+        UserDTO userInfo = UserDTO.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .githubId(user.getGithubId())
+                .avatarUrl(user.getAvatarUrl())
+                .htmlUrl(user.getHtmlUrl())
+                .notes(note)
+                .build();
 
         return userInfo;
     }
@@ -73,10 +86,14 @@ public class UserService {
 
         List<Sessions> sessions = sessionRepository.findByNotes_id(noteId);
 
-        List<SessionDTO> sessionInfo =
-                sessions.stream().map(this::convertSession).collect(Collectors.toList());
+        List<SessionDTO> sessionInfo = sessions.stream()
+                .map(this::convertSession)
+                .collect(Collectors.toList());
 
-        NoteDTO note = NoteDTO.builder().sessions(sessionInfo).texts(convertText(texts)).build();
+        NoteDTO note = NoteDTO.builder()
+                .sessions(sessionInfo)
+                .texts(convertText(texts))
+                .build();
 
         return note;
     }
@@ -85,35 +102,47 @@ public class UserService {
     public List<ChatDTO> chatList(Long sessionId){
         List<Chats> chats = chatRepository.findBySessions_Id(sessionId);
 
-        List<ChatDTO> chat =chats.stream().map(this::convertChat).collect(Collectors.toList());
+        List<ChatDTO> chat = chats.stream()
+                .map(this::convertChat)
+                .collect(Collectors.toList());
 
         return chat;
     }
 
     private NoteDTO convertNote(Notes notes) {
-        NoteDTO note =
-                NoteDTO.builder().noteId(notes.getId()).noteName(notes.getNoteName()).build();
+        NoteDTO note = NoteDTO.builder()
+                .noteId(notes.getId())
+                .noteName(notes.getNoteName())
+                .build();
 
         return note;
     }
 
     private SessionDTO convertSession(Sessions sessions) {
-        SessionDTO session =
-                SessionDTO.builder().SessionId(sessions.getId()).title(sessions.getTitle()).build();
+        SessionDTO session = SessionDTO.builder()
+                .SessionId(sessions.getId())
+                .title(sessions.getTitle())
+                .build();
 
         return session;
     }
 
     private TextDTO convertText(Texts texts) {
-        TextDTO text = TextDTO.builder().textId(texts.getId()).markdownText(texts.getMarkdownText())
+        TextDTO text = TextDTO.builder()
+                .textId(texts.getId())
+                .markdownText(texts.getMarkdownText())
                 .build();
 
         return text;
     }
 
     private ChatDTO convertChat(Chats chats){
-        ChatDTO chat = ChatDTO.builder().chatId(chats.getId()).role(chats.getRole()).content(
-            chats.getContent()).time(chats.getTime()).build();
+        ChatDTO chat = ChatDTO.builder()
+                .chatId(chats.getId())
+                .role(chats.getRole())
+                .content(chats.getContent())
+                .time(chats.getTime())
+                .build();
 
         return chat;
     }

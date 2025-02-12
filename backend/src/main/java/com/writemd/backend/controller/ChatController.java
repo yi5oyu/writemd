@@ -1,7 +1,9 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.service.ChatService;
-import java.util.HashMap;
+import com.writemd.backend.service.UserService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,9 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/chat")
 public class ChatController {
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private ChatService chatService;
@@ -35,20 +40,15 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
 
-    // 세션 생성
-    @PostMapping("/session")
-    public ResponseEntity<Map<String, Object>> createSession(
-            @RequestBody Map<String, Object> requestPayload) {
-        Long sessionId = chatService.createSession(requestPayload);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("sessionId", sessionId);
-
-        return ResponseEntity.ok(response);
+    // 채팅 리스트 조회
+    @GetMapping("/{sessionId}")
+    public List<ChatDTO> getChats(@PathVariable Long sessionId) {
+        return userService.chatList(sessionId);
     }
 
+
     // 세션 삭제
-    @DeleteMapping("/session/{sessionId}")
+    @DeleteMapping("/{sessionId}")
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         chatService.deleteSession(sessionId);
         // 204

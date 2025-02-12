@@ -1,13 +1,18 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Texts;
+import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.NoteService;
+import com.writemd.backend.service.UserService;
+import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,12 +21,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/notes")
+@RequestMapping("/api/note")
 @CrossOrigin(origins = "http://localhost:5173")
 public class NoteController {
+
+    @Autowired
+    private UserService userService;
+
     @Autowired
     private NoteService noteService;
 
+    @Autowired
+    private ChatService chatService;
+
+    // username으로 노트 생성
     @PostMapping("/{userName}")
     public ResponseEntity<Notes> createNote(@PathVariable String userName,
             @RequestBody Map<String, Object> requestPayload) {
@@ -29,6 +42,24 @@ public class NoteController {
         return ResponseEntity.ok(savedNote);
     }
 
+    // 세션 생성
+    @PostMapping("/{noteId}")
+    public ResponseEntity<Map<String, Object>> createSession(@PathVariable Long noteId) {
+        Long sessionId = chatService.createSession(noteId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("sessionId", sessionId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // 노트 조회
+    @GetMapping("/{noteId}")
+    public NoteDTO getNote(@PathVariable Long noteId) {
+        return userService.noteContent(noteId);
+    }
+    
+    // 노트 markdownText 생성
     @PutMapping("/{noteId}")
     public ResponseEntity<Texts> updateMarkdownText(@PathVariable Long noteId,
             @RequestBody Map<String, Object> requestPayload) {
@@ -37,6 +68,7 @@ public class NoteController {
         return ResponseEntity.ok(updatedTexts);
     }
 
+    // 노트 삭제
     @DeleteMapping("/{noteId}")
     public ResponseEntity<Void> deleteNote(@PathVariable Long noteId){
         noteService.deleteNote(noteId);

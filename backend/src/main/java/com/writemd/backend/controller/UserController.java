@@ -1,23 +1,19 @@
 package com.writemd.backend.controller;
 
-import com.writemd.backend.dto.ChatDTO;
-import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.UserService;
 import java.security.Principal;
-import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
-public class LoginController {
+@RequestMapping("/api/user")
+public class UserController {
 
     // @Autowired
     // private OAuth2AuthorizedClientService authorizedClientService;
@@ -25,7 +21,7 @@ public class LoginController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/user-info")
+    @GetMapping("/info")
     public UserDTO getUserInfo(@AuthenticationPrincipal OAuth2User oauthUser) {
         return userService.userInfo((String) oauthUser.getAttributes().get("login"));
     }

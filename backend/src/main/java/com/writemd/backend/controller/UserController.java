@@ -30,15 +30,6 @@ public class LoginController {
         return userService.userInfo((String) oauthUser.getAttributes().get("login"));
     }
 
-    @GetMapping("/note-info/{noteId}")
-    public NoteDTO getNote(@PathVariable Long noteId) {
-        return userService.noteContent(noteId);
-    }
-
-    @GetMapping("/chat-list/{sessionId}")
-    public List<ChatDTO> getChats(@PathVariable Long sessionId) {
-        return userService.chatList(sessionId);
-    }
 
     @GetMapping("/current-user")
     public Map<String, Object> getCurrentUser(Principal principal) {

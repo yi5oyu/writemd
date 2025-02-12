@@ -27,25 +27,27 @@ const Sidebar = ({ user }) => {
     setIsSideBoxVisible(!isSideBoxVisible)
   }
 
-  const saveNote = async () => {
-    try {
-      await axios.post(
-        `http://localhost:8888/api/notes/${user.githubId}`,
-        {
-          noteName: '노트이름',
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
-      )
-      alert('노트 저장 성공')
-    } catch (error) {
-      alert('노트 저장 실패')
-    }
-  }
+  // 노트 저장
+  // saveNote(user, noteName)
+  // const saveNote = async () => {
+  //   try {
+  //     await axios.post(
+  //       `http://localhost:8888/api/notes/${user.githubId}`,
+  //       {
+  //         noteName: '노트이름',
+  //       },
+  //       {
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         withCredentials: true,
+  //       }
+  //     )
+  //     alert('노트 저장 성공')
+  //   } catch (error) {
+  //     alert('노트 저장 실패')
+  //   }
+  // }
 
   return (
     <>

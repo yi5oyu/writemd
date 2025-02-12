@@ -9,8 +9,10 @@ import ChatBox from '../../features/chat/ChatBox'
 import UtilityBox from '../../features/chat/UtilityBox'
 
 import useNote from '../../hooks/useNote'
-import sessionDelete from '../../services/sessionDelete'
+import sessionDelete from '../../services/deleteSession'
 import deleteNote from '../../services/deleteNote'
+import saveMarkdownText from '../../services/saveMarkdownText'
+import saveSession from '../../services/saveSession'
 
 const Screen = ({ user }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
@@ -24,31 +26,8 @@ const Screen = ({ user }) => {
   })
 
   // ai 채팅
-  const handleSendMessage = async () => {
-    if (questionText.trim()) {
-      setMessages((m) => [...m, { role: 'user', content: questionText }])
-      try {
-        let response = await axios.post(
-          'http://localhost:8888/api/chat/lmstudio',
-          {
-            sessionId: 161,
-            model: aiModel,
-            content: questionText,
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        )
-
-        let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
-        setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-      } catch (error) {
-        console.error('에러:', error)
-        setMessages((m) => [...m, { role: 'assistant', content: '에러' }])
-      }
-      setQuestionText('')
-    }
+  const handleSendMessage = () => {
+    sendMessage(sessionId, aiModel, questionText, setMessages, setQuestionText)
   }
 
   const toggleVisibility = (key) => {
@@ -58,43 +37,13 @@ const Screen = ({ user }) => {
     }))
   }
 
-  const saveMarkdownText = async () => {
-    try {
-      await axios.put(
-        // ${noteId}
-        `http://localhost:8888/api/notes/225`,
-        {
-          markdownText: markdownText,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true,
-        }
-      )
-
-      alert('Markdown 텍스트 저장 성공!')
-    } catch (error) {
-      alert('Markdown 텍스트 저장 실패!')
-    }
+  // 마크 다운 저장
+  const handleSaveMarkdown = (markdownText) => {
+    saveMarkdownText(noteId, markdownText)
   }
 
-  const newSession = async () => {
-    try {
-      let data = await axios.post(
-        `http://localhost:8888/api/chat/session`,
-        {
-          noteId: 225,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true,
-        }
-      )
-      console.log(data)
-      alert('세션 저장 성공!')
-    } catch (error) {
-      alert('세션 저장 실패!')
-    }
+  const handleCreateSession = () => {
+    saveSession(161)
   }
 
   // 노트 정보
@@ -107,17 +56,7 @@ const Screen = ({ user }) => {
   }
 
   // 채팅 가져오기
-  const loadChatList = async () => {
-    try {
-      let data = await axios.get(`http://localhost:8888/api/chat-list/161`, {
-        withCredentials: true,
-      })
-      console.log(data)
-      alert('채팅 로드 성공!')
-    } catch (error) {
-      alert('채팅 로드 실패!')
-    }
-  }
+  // useChat
 
   // 채팅 세션 삭제
   const chatSessionDelete = () => {
@@ -172,7 +111,7 @@ const Screen = ({ user }) => {
         <Questionbar
           questionText={questionText}
           setQuestionText={setQuestionText}
-          onSendMessage={handleSendMessage}
+          handleSendMessage={handleSendMessage}
         />
         <UtilityBox toggleVisibility={toggleVisibility} />
       </Flex>

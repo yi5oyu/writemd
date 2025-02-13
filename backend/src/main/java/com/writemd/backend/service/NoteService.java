@@ -6,19 +6,17 @@ import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class NoteService {
-    @Autowired
-    private NoteRepository noteRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private TextRepository textRepository;
+    private final NoteRepository noteRepository;
+    private final UserRepository userRepository;
+    private final TextRepository textRepository;
 
     public Notes createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)

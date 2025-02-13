@@ -8,6 +8,7 @@ import com.writemd.backend.service.NoteService;
 import com.writemd.backend.service.UserService;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -23,16 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/note")
 @CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
 public class NoteController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private NoteService noteService;
-
-    @Autowired
-    private ChatService chatService;
+    private final UserService userService;
+    private final NoteService noteService;
+    private final ChatService chatService;
 
     // username으로 노트 생성
     @PostMapping("/{userName}")

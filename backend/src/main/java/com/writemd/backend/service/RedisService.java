@@ -1,13 +1,16 @@
 package com.writemd.backend.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class RedisService {
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+
+    private final RedisTemplate<String, Object> redisTemplate;
+
     // 데이터 저장
     public void saveValue(String key, String value) {
         redisTemplate.opsForValue().set(key, value);

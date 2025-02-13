@@ -4,6 +4,7 @@ import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.UserService;
 import java.security.Principal;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -13,13 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/user")
+@RequiredArgsConstructor
 public class UserController {
 
-    // @Autowired
-    // private OAuth2AuthorizedClientService authorizedClientService;
-
-    @Autowired
-    private UserService userService;
+    // private final OAuth2AuthorizedClientService authorizedClientService;
+    private final UserService userService;
 
     @GetMapping("/info")
     public UserDTO getUserInfo(@AuthenticationPrincipal OAuth2User oauthUser) {

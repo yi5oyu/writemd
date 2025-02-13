@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,19 +21,15 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ChatService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
-    @Autowired
-    private ChatRepository chatRepository;
-
-    @Autowired
-    private SessionRepository sessionRepository;
-
-    @Autowired
-    private NoteRepository noteRepository;
+    private final ChatRepository chatRepository;
+    private final SessionRepository sessionRepository;
+    private final NoteRepository noteRepository;
 
     // 모델 가져오기
     public String getModels() {

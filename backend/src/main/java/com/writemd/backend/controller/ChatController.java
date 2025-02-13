@@ -4,6 +4,7 @@ import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,14 +13,11 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/chat")
+@RequiredArgsConstructor
 public class ChatController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ChatService chatService;
-
+    private final UserService userService;
+    private final ChatService chatService;
 
     // 모델 목록 가져오기
     @GetMapping("/models")

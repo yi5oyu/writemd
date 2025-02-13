@@ -18,27 +18,20 @@ import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private NoteRepository noteRepository;
-
-    @Autowired
-    private TextRepository textRepository;
-
-    @Autowired
-    private SessionRepository sessionRepository;
-
-    @Autowired
-    private ChatRepository chatRepository;
+    private final UserRepository userRepository;
+    private final NoteRepository noteRepository;
+    private final TextRepository textRepository;
+    private final SessionRepository sessionRepository;
+    private final ChatRepository chatRepository;
 
     @Transactional
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {

@@ -1,6 +1,7 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.service.RedisService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,9 +9,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 public class RedisController {
-    @Autowired
-    private RedisService redisService;
+
+    private final RedisService redisService;
+
     // 저장 /save?key=이름&value=데이터
     @PostMapping("/save")
     public void save(String key, String value) {

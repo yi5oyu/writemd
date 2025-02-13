@@ -9,6 +9,7 @@ import com.writemd.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final UserRepository userRepository;
     private final TextRepository textRepository;
+
 
     public Notes createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)
@@ -29,6 +31,7 @@ public class NoteService {
 
         return noteRepository.save(newNote);
     }
+
 
     public Texts saveMarkdownText(Long noteId, String markdownText) {
         Notes note = noteRepository.findById(noteId)
@@ -43,6 +46,7 @@ public class NoteService {
 
         return textRepository.save(texts);
     }
+
 
     public void deleteNote(Long noteId){
         noteRepository.deleteById(noteId);

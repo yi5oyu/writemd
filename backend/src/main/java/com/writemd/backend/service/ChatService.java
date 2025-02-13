@@ -24,7 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
     private final ChatRepository chatRepository;
@@ -39,9 +39,10 @@ public class ChatService {
     }
 
     // 채팅 요청
+    @Transactional
     public String chatCompletion(Long sessionId) {
+        // 채팅 조회
         List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
-
         List<Map<String, Object>> messages = new ArrayList<>();
 
         Map<String, Object> messageMap = new HashMap<>();
@@ -63,21 +64,8 @@ public class ChatService {
         ResponseEntity<String> response = restTemplate.exchange(
                 LMSTUDIO_BASE_URL + "/chat/completions", HttpMethod.POST, entity, String.class);
 
-        JsonNode rootNode;
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            rootNode = objectMapper.readTree(response.getBody());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "오류";
-        }
-
         // LM Studio 응답 저장
-        saveChat(sessionId, "assistant", rootNode.path("choices")
-                    .get(0)
-                    .path("message")
-                    .path("content")
-                    .asText());
+        saveChat(sessionId, "assistant", extractResponseBody(response.getBody()));
 
         return response.getBody();
     }
@@ -90,7 +78,8 @@ public class ChatService {
                 .sessions(session)
                 .role(role)
                 .content(content)
-                .time(LocalDateTime.now()).build();
+                .time(LocalDateTime.now())
+                .build();
 
         chatRepository.save(chat);
     }
@@ -110,9 +99,23 @@ public class ChatService {
     }
 
     // 채팅 세션 삭제
-    @Transactional
     public void deleteSession(Long sessionId) {
         sessionRepository.deleteById(sessionId);
     }
 
+    // assistant 메세지 추출
+    private String extractResponseBody(String responseBody){
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            return rootNode.path("choices")
+                .get(0)
+                .path("message")
+                .path("content")
+                .asText();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "오류";
+        }
+    }
 }

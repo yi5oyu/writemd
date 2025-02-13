@@ -33,12 +33,14 @@ public class UserService {
     private final SessionRepository sessionRepository;
     private final ChatRepository chatRepository;
 
-    @Transactional
+
+    // user 저장
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {
         Long userId = userRepository.findIdByGithubId(githubId)
                 .orElse(null);
 
-        return userRepository.save(Users.builder()
+        return userRepository.save(
+            Users.builder()
                 .id(userId)
                 .githubId(githubId)
                 .name(name)
@@ -47,7 +49,7 @@ public class UserService {
                 .build());
     }
 
-    @Transactional
+    // user 조회
     public UserDTO userInfo(String githubId) {
         // user 찾기
         Users user = userRepository.findByGithubId(githubId)
@@ -72,7 +74,7 @@ public class UserService {
         return userInfo;
     }
 
-    @Transactional
+    // 노트 내용 조회
     public NoteDTO noteContent(Long noteId) {
         Texts texts = textRepository.findByNotes_id(noteId)
                 .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
@@ -91,7 +93,7 @@ public class UserService {
         return note;
     }
 
-    @Transactional
+    // 채팅 리스트 조회
     public List<ChatDTO> chatList(Long sessionId){
         List<Chats> chats = chatRepository.findBySessions_Id(sessionId);
 

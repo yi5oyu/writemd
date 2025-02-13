@@ -25,11 +25,15 @@ public class OAuthService extends DefaultOAuth2UserService {
         String githubId = oauth2User.getAttribute("id").toString();
         userRepository.findByGithubId(githubId)
                 .orElseGet(() -> userRepository.save(
-                        Users.builder().githubId(githubId).name(oauth2User.getAttribute("name"))
+                        Users.builder()
+                                .githubId(githubId)
+                                .name(oauth2User.getAttribute("name"))
                                 .htmlUrl(oauth2User.getAttribute("html_url"))
-                                .avatarUrl(oauth2User.getAttribute("avatar_url")).build()));
+                                .avatarUrl(oauth2User.getAttribute("avatar_url"))
+                                .build()));
 
-        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+        return new DefaultOAuth2User(
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                 oauth2User.getAttributes(), "id");
     }
 

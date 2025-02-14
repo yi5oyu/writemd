@@ -153,6 +153,7 @@ const Sidebar = ({ setSelectedNote }) => {
                     }}
                   />
                 </Flex>
+                {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
                 {names.map((name, index) => (
                   <NoteBox
                     key={index}
@@ -161,7 +162,6 @@ const Sidebar = ({ setSelectedNote }) => {
                     onClick={() => setSelectedNote(name)}
                   />
                 ))}
-                {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
               </Flex>
             </Box>
 

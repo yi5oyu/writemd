@@ -3,7 +3,6 @@ package com.writemd.backend.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,8 +24,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "FOLDERS")
-public class Folders {
+@Table(name = "NOTES")
+public class Notes {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,14 +35,13 @@ public class Folders {
     @JsonBackReference
     private Users users;
 
-    @Column(nullable = false)
-    private String folderName;
+    private String noteName;
 
-    @OneToMany(mappedBy = "folders", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
-    private List<Chats> chats = new ArrayList<>();
+    private List<Sessions> sessions = new ArrayList<>();
 
-    @OneToOne(mappedBy = "folders", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
     private Texts texts;
 }

@@ -8,13 +8,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 
 @Entity
@@ -30,23 +30,17 @@ public class Chats {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "folder_id", nullable = false)
+    @JoinColumn(name = "session_id", nullable = false)
     @JsonBackReference
-    private Folders folders;
+    private Sessions sessions;
 
-    @Column(nullable = false)
     private String role;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)
+    @CreationTimestamp
     private LocalDateTime time;
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.time == null) {
-            this.time = LocalDateTime.now();
-        }
-    }
 }

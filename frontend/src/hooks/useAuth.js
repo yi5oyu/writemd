@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 
 const useAuth = () => {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState({})
 
   useEffect(() => {
-    fetch('http://localhost:8888/api/user-info', {
+    fetch('http://localhost:8888/api/user/info', {
       credentials: 'include',
     })
       .then((res) => res.json())
       .then((data) => {
-        setUser(data.user)
+        setUser(data)
       })
       .catch((err) => {
         setUser(null)

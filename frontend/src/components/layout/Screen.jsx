@@ -12,13 +12,6 @@ import NoteScreen from '../../features/note/NoteScreen'
 const Screen = ({ selectedNote }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
-  const [questionText, setQuestionText] = useState('')
-  const [messages, setMessages] = useState([])
-  const [isBoxVisible, setIsBoxVisible] = useState({
-    markdown: true,
-    preview: true,
-    chat: false,
-  })
 
   // ai 채팅
   const handleSendMessage = async () => {
@@ -40,15 +33,9 @@ const Screen = ({ selectedNote }) => {
     }
   }
 
-  const toggleVisibility = (key) => {
-    setIsBoxVisible((v) => ({
-      ...v,
-      [key]: !v[key],
-    }))
-  }
-
   return (
     <NoteScreen selectedNote={selectedNote} />
+
     /* 
     <Flex flexDirection="column" m="0 auto" position="relative">
       <Flex align="center" justify="center" h="100vh" gap="4">

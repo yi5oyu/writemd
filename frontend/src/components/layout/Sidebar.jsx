@@ -146,41 +146,42 @@ const Sidebar = ({ user }) => {
                 <SideMenuIcon icon={FiHome} />
                 <Text>홈</Text>
               </Flex>
-
-              <Flex
-                px="2"
-                py="1"
-                mx="2"
-                cursor="pointer"
-                borderRadius="md"
-                alignItems="center"
-                _hover={{
-                  bg: 'gray.200',
-                }}
-              >
-                <SideMenuIcon icon={FiFolder} />
-                <Text>내 노트</Text>
-                <Icon
-                  as={FiPlusSquare}
-                  ml="115px"
-                  w="5"
-                  h="5"
-                  color="gray.500"
-                  onClick={handleAddClick}
+              <Flex direction="column">
+                <Flex
+                  px="2"
+                  py="1"
+                  mx="2"
+                  cursor="pointer"
+                  borderRadius="md"
+                  alignItems="center"
                   _hover={{
-                    color: 'black',
+                    bg: 'gray.200',
                   }}
-                />
+                >
+                  <SideMenuIcon icon={FiFolder} />
+                  <Text>내 노트</Text>
+                  <Icon
+                    as={FiPlusSquare}
+                    ml="115px"
+                    w="5"
+                    h="5"
+                    color="gray.500"
+                    onClick={handleAddClick}
+                    _hover={{
+                      color: 'black',
+                    }}
+                  />
+                </Flex>
+                {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
+                {names.map((name, index) => (
+                  <NoteBox
+                    key={index}
+                    name={name}
+                    icon={PiNotebookFill}
+                    onClick={() => setSelectedNote(name)}
+                  />
+                ))}
               </Flex>
-              {names.map((name, index) => (
-                <NoteBox
-                  key={index}
-                  name={name}
-                  icon={PiNotebookFill}
-                  onClick={() => setSelectedNote(name)}
-                />
-              ))}
-              {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
             </Box>
 
             {/* 여백 */}

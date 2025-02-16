@@ -6,10 +6,16 @@ import useAuth from '../hooks/useAuth'
 
 const Homepage = () => {
   const user = useAuth()
+  /*
+    user
+    avatarUrl, githubId, htmlUrl, name
+  */
+  const [currentScreen, setCurrentScreen] = useState('home')
+
   return (
     <Flex height="100vh" width="100vw">
-      <Sidebar user={user} />
-      <Screen user={user} />
+      <Sidebar user={user} setCurrentScreen={setCurrentScreen} />
+      <Screen user={user} currentScreen={currentScreen} />
     </Flex>
   )
 }

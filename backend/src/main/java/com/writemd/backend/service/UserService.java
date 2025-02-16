@@ -85,7 +85,13 @@ public class UserService {
                 .map(this::convertSession)
                 .collect(Collectors.toList());
 
+        // 노트 이름 조회
+        Notes notes = noteRepository.findById(noteId)
+            .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없음"));
+
         NoteDTO note = NoteDTO.builder()
+                .noteId(noteId)
+                .noteName(notes.getNoteName())
                 .sessions(sessionInfo)
                 .texts(convertText(texts))
                 .build();

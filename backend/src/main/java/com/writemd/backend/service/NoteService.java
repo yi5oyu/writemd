@@ -29,7 +29,15 @@ public class NoteService {
                 .noteName(noteName)
                 .build();
 
-        return noteRepository.save(newNote);
+        Notes savedNote = noteRepository.save(newNote);
+
+        Texts text = Texts.builder()
+            .notes(savedNote)
+            .markdownText("")
+            .build();
+        textRepository.save(text);
+
+        return savedNote;
     }
 
 

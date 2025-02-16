@@ -19,10 +19,10 @@ import NoteBox from '../../features/note/NoteBox'
 
 const MotionBox = motion(Box)
 
-const Sidebar = ({ user }) => {
+const Sidebar = ({ user, setCurrentScreen }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
-  const [names, setNames] = useState([])
+  const [notes, setNotes] = useState([])
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
 
@@ -37,43 +37,14 @@ const Sidebar = ({ user }) => {
   }
 
   useEffect(() => {
-    const fetchNames = async () => {
-      const data = [
-        '첫 번째 노트',
-        '두 번째 노트 - 내용이 아주 길어지면 자동으로 ... 표시됨',
-        '세 번째 노트',
-        '네 번째 노트 - 추가 정보 포함',
-      ]
-      setNames(data)
+    if (user && user.notes) {
+      setNotes(user.notes)
     }
-
-    fetchNames()
-  }, [])
-
-  // 노트 저장
-  // saveNote(user, noteName)
-  // const saveNote = async () => {
-  //   try {
-  //     await axios.post(
-  //       `http://localhost:8888/api/notes/${user.githubId}`,
-  //       {
-  //         noteName: '노트이름',
-  //       },
-  //       {
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //         },
-  //         withCredentials: true,
-  //       }
-  //     )
-  //     alert('노트 저장 성공')
-  //   } catch (error) {
-  //     alert('노트 저장 실패')
-  //   }
-  // }
+  }, [user])
 
   return (
     <>
+      {/* 로그인 Form */}
       {user ? (
         <LogInfoForm isOpen={isOpenLogInfo} onClose={onCloseLogInfo} user={user} />
       ) : (
@@ -142,46 +113,49 @@ const Sidebar = ({ user }) => {
                 _hover={{
                   bg: 'gray.200',
                 }}
+                onClick={() => setCurrentScreen('home')}
               >
                 <SideMenuIcon icon={FiHome} />
                 <Text>홈</Text>
               </Flex>
-              <Flex direction="column">
-                <Flex
-                  px="2"
-                  py="1"
-                  mx="2"
-                  cursor="pointer"
-                  borderRadius="md"
-                  alignItems="center"
-                  _hover={{
-                    bg: 'gray.200',
-                  }}
-                >
-                  <SideMenuIcon icon={FiFolder} />
-                  <Text>내 노트</Text>
-                  <Icon
-                    as={FiPlusSquare}
-                    ml="115px"
-                    w="5"
-                    h="5"
-                    color="gray.500"
-                    onClick={handleAddClick}
+              {user && (
+                <Flex direction="column">
+                  <Flex
+                    px="2"
+                    py="1"
+                    mx="2"
+                    cursor="pointer"
+                    borderRadius="md"
+                    alignItems="center"
                     _hover={{
-                      color: 'black',
+                      bg: 'gray.200',
                     }}
-                  />
+                  >
+                    <SideMenuIcon icon={FiFolder} />
+                    <Text>내 노트</Text>
+                    <Icon
+                      as={FiPlusSquare}
+                      ml="115px"
+                      w="5"
+                      h="5"
+                      color="gray.500"
+                      onClick={handleAddClick}
+                      _hover={{
+                        color: 'black',
+                      }}
+                    />
+                  </Flex>
+                  {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
+                  {notes.map((note) => (
+                    <NoteBox
+                      key={note.noteId}
+                      name={note.noteName}
+                      icon={PiNotebookFill}
+                      onClick={() => setCurrentScreen(note.noteId)}
+                    />
+                  ))}
                 </Flex>
-                {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
-                {names.map((name, index) => (
-                  <NoteBox
-                    key={index}
-                    name={name}
-                    icon={PiNotebookFill}
-                    onClick={() => setSelectedNote(name)}
-                  />
-                ))}
-              </Flex>
+              )}
             </Box>
 
             {/* 여백 */}
@@ -220,9 +194,9 @@ const Sidebar = ({ user }) => {
                 cursor="pointer"
                 onClick={onOpenLogInfo}
               >
-                <Avatar name={user.login || user.name} src={user.avatar_url} size="sm" mr="2" />
+                <Avatar name={user.githubId || user.name} src={user.avatarUrl} size="sm" mr="2" />
 
-                <Text fontWeight="medium">{user.login || user.name}</Text>
+                <Text fontWeight="medium">{user.githubId || user.name}</Text>
               </Flex>
             )}
             <Flex

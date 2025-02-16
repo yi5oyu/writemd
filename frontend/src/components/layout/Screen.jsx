@@ -8,10 +8,12 @@ import Questionbar from '../../features/chat/Questionbar'
 import ChatBox from '../../features/chat/ChatBox'
 import UtilityBox from '../../features/chat/UtilityBox'
 import NoteScreen from '../../features/note/NoteScreen'
+import NoteHome from '../../features/note/NoteHome'
 
-const Screen = ({ selectedNote }) => {
+const Screen = ({ selectedNote, user, currentScreen }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
+  console.log(user)
 
   // ai 채팅
   const handleSendMessage = async () => {
@@ -34,7 +36,9 @@ const Screen = ({ selectedNote }) => {
   }
 
   return (
-    <NoteScreen selectedNote={selectedNote} />
+    <>
+      {currentScreen === 'home' ? <NoteHome user={user} /> : <NoteScreen noteId={currentScreen} />}
+    </>
 
     /* 
     <Flex flexDirection="column" m="0 auto" position="relative">

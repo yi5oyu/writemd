@@ -2,10 +2,6 @@ import React from 'react'
 import {
   Button,
   Box,
-  Text,
-  VStack,
-  HStack,
-  Link,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -37,6 +33,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
       console.error('로그아웃 중 실패:', error.message)
     }
   }
+  // avatarUrl, githubId, htmlUrl, name
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
@@ -53,7 +50,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
             <Box fontSize="md" mb="2" fontWeight="600">
               프로필 정보
             </Box>
-            <Avatar size="xl" name={user.login} src={user.avatar_url} mb="2" />
+            <Avatar size="xl" name={user.githubId} src={user.avatarUrl} mb="2" />
             <Box>이름: {user.name}</Box>
           </Flex>
           <Button

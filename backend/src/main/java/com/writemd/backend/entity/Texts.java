@@ -30,7 +30,7 @@ public class Texts {
     @JsonBackReference
     private Notes notes;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String markdownText;
 
     public void updateMarkdownText(String markdownText) {

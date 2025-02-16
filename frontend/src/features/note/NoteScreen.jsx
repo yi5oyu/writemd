@@ -7,21 +7,27 @@ import UtilityBox from '../chat/UtilityBox'
 import Questionbar from '../chat/Questionbar'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 import ChatBox from '../chat/ChatBox'
+import useNote from '../../hooks/useNote'
 
-const NoteScreen = ({ selectedNote }) => {
-  const [name, setName] = useState(selectedNote)
+const NoteScreen = ({ noteId }) => {
+  const note = useNote(noteId)
+
+  const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [isBoxVisible, setIsBoxVisible] = useState(true)
-
+  // console.log(note.texts.markdownText)
   const handleChange = (e) => {
     setName(e.target.value)
   }
 
   useEffect(() => {
-    setName(selectedNote)
-  }, [selectedNote])
+    if (note) {
+      setName(note.noteName)
+      setMarkdownText(note.texts.markdownText)
+    }
+  }, [note])
 
   return (
     <Flex direction="column" m="5" w="100vw">

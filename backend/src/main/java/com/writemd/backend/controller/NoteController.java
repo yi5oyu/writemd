@@ -36,6 +36,7 @@ public class NoteController {
     public ResponseEntity<Notes> createNote(@PathVariable String userName,
             @RequestBody Map<String, Object> requestPayload) {
         Notes savedNote = noteService.createNote(userName, (String) requestPayload.get("noteName"));
+
         return ResponseEntity.ok(savedNote);
     }
 
@@ -50,7 +51,7 @@ public class NoteController {
         return ResponseEntity.ok(response);
     }
 
-    // 노트 조회
+    // 노트 세부사항 조회
     @GetMapping("/{noteId}")
     public NoteDTO getNote(@PathVariable Long noteId) {
         return userService.noteContent(noteId);

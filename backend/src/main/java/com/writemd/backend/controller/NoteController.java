@@ -32,7 +32,7 @@ public class NoteController {
     private final ChatService chatService;
 
     // username으로 노트 생성
-    @PostMapping("/{userName}")
+    @PostMapping("/create/{userName}")
     public ResponseEntity<Notes> createNote(@PathVariable String userName,
             @RequestBody Map<String, Object> requestPayload) {
         Notes savedNote = noteService.createNote(userName, (String) requestPayload.get("noteName"));

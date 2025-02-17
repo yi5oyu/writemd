@@ -10,8 +10,9 @@ import MarkdownPreview from '../markdown/MarkdownPreview'
 import ChatBox from '../chat/ChatBox'
 import useNote from '../../hooks/useNote'
 import saveMarkdownText from '../../services/saveMarkdownText'
+import updateNoteName from '../../services/updateNoteName'
 
-const NoteScreen = ({ noteId }) => {
+const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const note = useNote(noteId)
   const render = useRef(true)
 
@@ -34,6 +35,7 @@ const NoteScreen = ({ noteId }) => {
       setMarkdownText(note.texts.markdownText)
       render.current = false
     }
+
     if (note) {
       setName(note.noteName)
     }
@@ -96,7 +98,12 @@ const NoteScreen = ({ noteId }) => {
             bg: 'gray.200',
           }}
         />
-        <Icon as={PiCheckFatFill} color="blue.400" cursor="pointer" />
+        <Icon
+          as={PiCheckFatFill}
+          color="blue.400"
+          cursor="pointer"
+          onClick={() => handleUpdateNote(noteId, name)}
+        />
       </Flex>
 
       <Flex position="relative" w="100%" h="100%" mt="5" gap="5" justifyContent="center">

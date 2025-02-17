@@ -19,10 +19,10 @@ import NoteBox from '../../features/note/NoteBox'
 
 const MotionBox = motion(Box)
 
-const Sidebar = ({ user, setCurrentScreen }) => {
+const Sidebar = ({ notes, user, setCurrentScreen }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
-  const [notes, setNotes] = useState([])
+
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
 
@@ -36,11 +36,16 @@ const Sidebar = ({ user, setCurrentScreen }) => {
     setShowNoteInputBox(true)
   }
 
-  useEffect(() => {
-    if (user && user.notes) {
-      setNotes(user.notes)
-    }
-  }, [user])
+  // 로딩
+  // useEffect(() => {
+  //   if (notes && notes.length > 0) {
+  //     setIsLoading(false)
+  //   }
+  // }, [notes])
+
+  // if (isLoading) {
+  //   return <Box>Loading...</Box>
+  // }
 
   return (
     <>

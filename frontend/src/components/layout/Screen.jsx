@@ -10,10 +10,9 @@ import UtilityBox from '../../features/chat/UtilityBox'
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 
-const Screen = ({ selectedNote, user, currentScreen }) => {
+const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote }) => {
   const aiModel = 'llama-3.2-korean-blossom-3b'
   const [markdownText, setMarkdownText] = useState('')
-  console.log(user)
 
   // ai 채팅
   const handleSendMessage = async () => {
@@ -37,7 +36,11 @@ const Screen = ({ selectedNote, user, currentScreen }) => {
 
   return (
     <>
-      {currentScreen === 'home' ? <NoteHome user={user} /> : <NoteScreen noteId={currentScreen} />}
+      {currentScreen === 'home' ? (
+        <NoteHome handleSaveNote={handleSaveNote} />
+      ) : (
+        <NoteScreen handleUpdateNote={handleUpdateNote} noteId={currentScreen} />
+      )}
     </>
 
     /* 

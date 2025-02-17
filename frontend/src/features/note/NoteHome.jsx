@@ -1,14 +1,8 @@
 import { Box, Textarea, Input, Flex, Heading, Button } from '@chakra-ui/react'
 import { useState } from 'react'
-import saveNote from '../../services/saveNote'
 
-const NoteHome = ({ user }) => {
+const NoteHome = ({ handleSaveNote }) => {
   const [title, setTitle] = useState('새 노트')
-
-  const handleSaveNote = async () => {
-    let result = saveNote(user, title)
-    console.log(result)
-  }
 
   return (
     <Flex w="100vw" alignItems="center" justifyContent="center">
@@ -30,7 +24,7 @@ const NoteHome = ({ user }) => {
             <Box bg="gray.100" h="450px" w="50%" borderRadius="md"></Box>
           </Flex>
           <Flex justifyContent="flex-end" mt="4">
-            <Button onClick={handleSaveNote}>새 노트 생성</Button>
+            <Button onClick={() => handleSaveNote(title)}>새 노트 생성</Button>
           </Flex>
         </Box>
       </Box>

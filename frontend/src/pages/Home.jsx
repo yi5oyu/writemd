@@ -13,7 +13,6 @@ const Home = () => {
     avatarUrl, githubId, htmlUrl, name
   */
   const [currentScreen, setCurrentScreen] = useState('home')
-  const [isLoading, setIsLoading] = useState(false)
   const [notes, setNotes] = useState([])
 
   useEffect(() => {
@@ -25,9 +24,14 @@ const Home = () => {
 
   // 새 노트 저장
   const handleSaveNote = async (title) => {
-    let note = await saveNote(user, title)
-
-    setCurrentScreen(note.id)
+    try {
+      const savedNote = await saveNote(user, title)
+      const convertNoteId = { ...savedNote, noteId: savedNote.id }
+      setNotes((n) => [...n, convertNoteId])
+      setCurrentScreen(savedNote.id)
+    } catch (error) {
+      console.log('저장 실패: ' + error)
+    }
   }
 
   // 노트 업데이트
@@ -35,9 +39,7 @@ const Home = () => {
     try {
       const updatedNote = await updateNoteName(noteId, name)
       const convertNoteId = { ...updatedNote, noteId: updatedNote.id }
-      setNotes((prevNotes) =>
-        prevNotes.map((note) => (note.noteId === updatedNote.id ? convertNoteId : note))
-      )
+      setNotes((n) => n.map((note) => (note.noteId === updatedNote.id ? convertNoteId : note)))
     } catch (error) {
       console.log('업데이트 실패: ' + error)
     }

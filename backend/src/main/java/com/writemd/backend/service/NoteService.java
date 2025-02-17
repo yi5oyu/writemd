@@ -1,5 +1,6 @@
 package com.writemd.backend.service;
 
+import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
@@ -20,7 +21,7 @@ public class NoteService {
     private final TextRepository textRepository;
 
 
-    public Notes createNote(String userName, String noteName) {
+    public NoteDTO createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
@@ -37,16 +38,28 @@ public class NoteService {
             .build();
         textRepository.save(text);
 
-        return savedNote;
+        NoteDTO note = NoteDTO.builder()
+            .noteId(savedNote.getId())
+            .noteName(savedNote.getNoteName())
+            .build();
+
+        return note;
     }
 
-    public Notes updateNoteName(Long noteId, String newNoteName) {
-        Notes note = noteRepository.findById(noteId)
+    public NoteDTO updateNoteName(Long noteId, String newNoteName) {
+        Notes notes = noteRepository.findById(noteId)
             .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다."));
 
-        note.updateNoteName(newNoteName);
+        notes.updateNoteName(newNoteName);
 
-        return noteRepository.save(note);
+        Notes updatedNote = noteRepository.save(notes);
+
+        NoteDTO note = NoteDTO.builder()
+            .noteId(updatedNote.getId())
+            .noteName(updatedNote.getNoteName())
+            .build();
+
+        return note;
     }
 
 

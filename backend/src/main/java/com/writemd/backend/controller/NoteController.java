@@ -33,17 +33,17 @@ public class NoteController {
 
     // username으로 노트 생성
     @PostMapping("/create/{userName}")
-    public ResponseEntity<Notes> createNote(@PathVariable String userName,
+    public ResponseEntity<NoteDTO> createNote(@PathVariable String userName,
             @RequestBody Map<String, Object> requestPayload) {
-        Notes savedNote = noteService.createNote(userName, (String) requestPayload.get("noteName"));
+        NoteDTO savedNote = noteService.createNote(userName, (String) requestPayload.get("noteName"));
 
         return ResponseEntity.ok(savedNote);
     }
 
     // 노트 이름 변경
     @PutMapping("/{noteId}/{noteName}")
-    public ResponseEntity<Notes> updateNoteName(@PathVariable Long noteId, @PathVariable String noteName){
-        Notes updatedNote = noteService.updateNoteName(noteId, noteName);
+    public ResponseEntity<NoteDTO> updateNoteName(@PathVariable Long noteId, @PathVariable String noteName){
+        NoteDTO updatedNote = noteService.updateNoteName(noteId, noteName);
 
         return ResponseEntity.ok(updatedNote);
     }

@@ -18,7 +18,6 @@ const Home = () => {
   useEffect(() => {
     if (user && user.notes) {
       setNotes(user.notes)
-      console.log(notes)
     }
   }, [user])
 
@@ -26,9 +25,8 @@ const Home = () => {
   const handleSaveNote = async (title) => {
     try {
       const savedNote = await saveNote(user, title)
-      const convertNoteId = { ...savedNote, noteId: savedNote.id }
-      setNotes((n) => [...n, convertNoteId])
-      setCurrentScreen(savedNote.id)
+      setNotes((n) => [...n, savedNote])
+      setCurrentScreen(savedNote.noteId)
     } catch (error) {
       console.log('저장 실패: ' + error)
     }
@@ -38,8 +36,7 @@ const Home = () => {
   const handleUpdateNote = async (noteId, name) => {
     try {
       const updatedNote = await updateNoteName(noteId, name)
-      const convertNoteId = { ...updatedNote, noteId: updatedNote.id }
-      setNotes((n) => n.map((note) => (note.noteId === updatedNote.id ? convertNoteId : note)))
+      setNotes((n) => n.map((note) => (note.noteId === updatedNote.noteId ? updatedNote : note)))
     } catch (error) {
       console.log('업데이트 실패: ' + error)
     }

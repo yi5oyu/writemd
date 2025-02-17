@@ -40,6 +40,14 @@ public class NoteController {
         return ResponseEntity.ok(savedNote);
     }
 
+    // 노트 이름 변경
+    @PutMapping("/{noteId}/{noteName}")
+    public ResponseEntity<Notes> updateNoteName(@PathVariable Long noteId, @PathVariable String noteName){
+        Notes updatedNote = noteService.updateNoteName(noteId, noteName);
+
+        return ResponseEntity.ok(updatedNote);
+    }
+
     // 세션 생성
     @PostMapping("/{noteId}")
     public ResponseEntity<Map<String, Object>> createSession(@PathVariable Long noteId) {
@@ -56,7 +64,7 @@ public class NoteController {
     public NoteDTO getNote(@PathVariable Long noteId) {
         return userService.noteContent(noteId);
     }
-    
+
     // 노트 markdownText 생성
     @PutMapping("/{noteId}")
     public ResponseEntity<Texts> updateMarkdownText(@PathVariable Long noteId,

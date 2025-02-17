@@ -40,6 +40,15 @@ public class NoteService {
         return savedNote;
     }
 
+    public Notes updateNoteName(Long noteId, String newNoteName) {
+        Notes note = noteRepository.findById(noteId)
+            .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다."));
+
+        note.updateNoteName(newNoteName);
+
+        return noteRepository.save(note);
+    }
+
 
     public Texts saveMarkdownText(Long noteId, String markdownText) {
         Notes note = noteRepository.findById(noteId)

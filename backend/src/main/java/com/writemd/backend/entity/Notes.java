@@ -44,4 +44,8 @@ public class Notes {
 
     @OneToOne(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
     private Texts texts;
+
+    public void updateNoteName(String noteName) {
+        this.noteName = noteName;
+    }
 }

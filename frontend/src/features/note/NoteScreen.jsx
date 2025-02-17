@@ -14,7 +14,6 @@ import updateNoteName from '../../services/updateNoteName'
 
 const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const note = useNote(noteId)
-  const render = useRef(true)
 
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
@@ -29,11 +28,10 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   // 최초 markdowntext 불러옴
   useEffect(() => {
     const savedText = localStorage.getItem(noteId)
-    if (savedText) {
+    if (savedText !== null) {
       setMarkdownText(savedText)
-    } else if (note && render.current) {
+    } else if (note) {
       setMarkdownText(note.texts.markdownText)
-      render.current = false
     }
 
     if (note) {

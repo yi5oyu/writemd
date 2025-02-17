@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { debounce } from 'lodash'
 import { Box, Flex, Icon, Input } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
 
@@ -8,26 +9,75 @@ import Questionbar from '../chat/Questionbar'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 import ChatBox from '../chat/ChatBox'
 import useNote from '../../hooks/useNote'
+import saveMarkdownText from '../../services/saveMarkdownText'
 
 const NoteScreen = ({ noteId }) => {
   const note = useNote(noteId)
+  const render = useRef(true)
 
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [isBoxVisible, setIsBoxVisible] = useState(true)
-  // console.log(note.texts.markdownText)
-  const handleChange = (e) => {
+
+  const handleTitleChange = (e) => {
     setName(e.target.value)
   }
 
+  // 최초 markdowntext 불러옴
   useEffect(() => {
+    const savedText = localStorage.getItem(noteId)
+    if (savedText) {
+      setMarkdownText(savedText)
+    } else if (note && render.current) {
+      setMarkdownText(note.texts.markdownText)
+      render.current = false
+    }
     if (note) {
       setName(note.noteName)
-      setMarkdownText(note.texts.markdownText)
     }
   }, [note])
+
+  // localStorage에 저장
+  useEffect(() => {
+    if (markdownText) {
+      localStorage.setItem(noteId, markdownText)
+    }
+  }, [markdownText])
+
+  // 자동 저장
+  const debouncedSave = useCallback(
+    debounce(
+      async (id, text) => {
+        try {
+          await saveMarkdownText(id, text)
+        } catch (error) {
+          console.log('자동 저장 실패: ', error)
+        }
+      },
+      [5000]
+    ),
+    []
+  )
+
+  useEffect(() => {
+    if (markdownText) {
+      debouncedSave(noteId, markdownText)
+    }
+  }, [markdownText, debouncedSave])
+
+  // 브라우저 종료시 db에 저장
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (markdownText) {
+        saveMarkdownText(noteId, markdownText)
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [markdownText])
 
   return (
     <Flex direction="column" m="5" w="100vw">
@@ -39,7 +89,7 @@ const NoteScreen = ({ noteId }) => {
           fontSize="18px"
           variant="unstyled"
           mx="10px"
-          onChange={handleChange}
+          onChange={handleTitleChange}
           w="40vw"
           maxLength={35}
           _focus={{

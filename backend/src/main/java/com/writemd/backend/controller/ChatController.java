@@ -6,6 +6,7 @@ import com.writemd.backend.service.UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -20,10 +21,15 @@ public class ChatController {
     private final ChatService chatService;
 
     // 모델 목록 가져오기
-    @GetMapping("/models")
+    @GetMapping("/connected")
     public ResponseEntity<String> getModels() {
-        String models = chatService.getModels();
-        return ResponseEntity.ok(models);
+        boolean isConnected = chatService.isConnected();
+        if (isConnected) {
+            return ResponseEntity.ok("연결 성공");
+        } else {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("연결 실패");
+        }
     }
 
     // 채팅 요청

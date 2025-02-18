@@ -31,11 +31,11 @@ public class ChatService {
     private final SessionRepository sessionRepository;
     private final NoteRepository noteRepository;
 
-    // 모델 가져오기
-    public String getModels() {
+    // 연결 확인
+    public boolean isConnected() {
         String url = LMSTUDIO_BASE_URL + "/models";
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        return response.getBody();
+        return response.getStatusCode().is2xxSuccessful();
     }
 
     // 채팅 요청

@@ -6,7 +6,7 @@ import UtilityBtn from '../../components/ui/button/UtilityBtn'
 
 const UtilityBox = ({ setIsBoxVisible }) => {
   return (
-    <Flex p="2" justifyContent="space-between" alignItems="center">
+    <Flex p="1" justifyContent="space-between" alignItems="center">
       <Box>
         <UtilityBtn icon={MdOutlineSpellcheck} label="맞춤법" />
         <UtilityBtn icon={RiInboxUnarchiveLine} label="도구상자" />

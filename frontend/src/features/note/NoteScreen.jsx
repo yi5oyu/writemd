@@ -104,17 +104,20 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
         />
       </Flex>
 
-      <Flex position="relative" w="100%" h="100%" mt="5" gap="5" justifyContent="center">
+      <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
         <Box w="640px" direction="column">
+          <UtilityBox setIsBoxVisible={setIsBoxVisible} />
           <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
         </Box>
-        <Box w="640px" bg="gray.100" position="relative">
+        <Box w="640px" position="relative">
           {isBoxVisible ? (
-            <Box p="1" w="640px" h="100%" bg="gray.200" flex="1">
+            <Box w="640px" h="100%" flex="1">
+              <UtilityBox setIsBoxVisible={setIsBoxVisible} />
               <MarkdownPreview markdownText={markdownText} />
             </Box>
           ) : (
-            <Box p="4" w="640px" h="100%" bg="gray.200" flex="1">
+            <Box w="640px" h="100%" flex="1">
+              <UtilityBox setIsBoxVisible={setIsBoxVisible} />
               <ChatBox messages={messages} />
             </Box>
           )}
@@ -128,17 +131,14 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
             zIndex="1000"
           >
             {isBoxVisible ? (
-              <>
+              <>{/*  */}</>
+            ) : (
+              <Box w="600px">
                 <Questionbar
                   questionText={questionText}
                   setQuestionText={setQuestionText}
                   // onSendMessage={handleSendMessage}
                 />
-                <UtilityBox setIsBoxVisible={setIsBoxVisible} />
-              </>
-            ) : (
-              <Box w="600px">
-                <UtilityBox setIsBoxVisible={setIsBoxVisible} />
               </Box>
             )}
           </Flex>

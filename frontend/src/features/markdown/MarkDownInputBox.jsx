@@ -1,5 +1,6 @@
 import React from 'react'
 import { Textarea } from '@chakra-ui/react'
+// import TextareaAutosize from 'react-textarea-autosize'
 
 const MarkdownInputBox = ({ markdownText, setMarkdownText }) => {
   const handleChange = (e) => {
@@ -26,12 +27,13 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText }) => {
 
   return (
     <Textarea
+      // as={TextareaAutosize}
       value={markdownText}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       placeholder="마크다운 입력"
       resize="none"
-      h="100%"
+      h="calc(100vh - 125px)"
       w="100%"
       fontSize="md"
       p="4"

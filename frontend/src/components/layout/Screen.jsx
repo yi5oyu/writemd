@@ -1,12 +1,6 @@
 import React, { useState } from 'react'
-import { Box, Flex } from '@chakra-ui/react'
 import axios from 'axios'
 
-import MarkDownInputBox from '../../features/markdown/MarkdownInputBox'
-import MarkdownPreview from '../../features/markdown/MarkdownPreview'
-import Questionbar from '../../features/chat/Questionbar'
-import ChatBox from '../../features/chat/ChatBox'
-import UtilityBox from '../../features/chat/UtilityBox'
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 

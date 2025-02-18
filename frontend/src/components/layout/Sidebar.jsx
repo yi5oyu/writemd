@@ -10,6 +10,7 @@ import {
 } from 'react-icons/bs'
 import { FiHome, FiPlus, FiFolder, FiSearch, FiPlusSquare } from 'react-icons/fi'
 import { PiNotebook, PiNotebookFill } from 'react-icons/pi'
+import { MdDeleteForever } from 'react-icons/md'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
@@ -19,7 +20,7 @@ import NoteBox from '../../features/note/NoteBox'
 
 const MotionBox = motion(Box)
 
-const Sidebar = ({ notes, user, setCurrentScreen }) => {
+const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
 
@@ -154,8 +155,11 @@ const Sidebar = ({ notes, user, setCurrentScreen }) => {
                   {notes.map((note) => (
                     <NoteBox
                       key={note.noteId}
+                      noteId={note.noteId}
                       name={note.noteName}
                       icon={PiNotebookFill}
+                      del={MdDeleteForever}
+                      handleDeleteNote={handleDeleteNote}
                       onClick={() => setCurrentScreen(note.noteId)}
                     />
                   ))}

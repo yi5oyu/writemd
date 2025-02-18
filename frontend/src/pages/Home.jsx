@@ -5,6 +5,7 @@ import { Flex } from '@chakra-ui/react'
 import useAuth from '../hooks/useAuth'
 import saveNote from '../services/saveNote'
 import updateNoteName from '../services/updateNoteName'
+import deleteNote from '../services/deleteNote'
 
 const Home = () => {
   const user = useAuth()
@@ -42,9 +43,24 @@ const Home = () => {
     }
   }
 
+  // 노트 삭제
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await deleteNote(noteId)
+      setNotes((n) => n.filter((note) => note.noteId !== noteId))
+    } catch (error) {
+      console.log('삭제 실패: ' + error)
+    }
+  }
+
   return (
     <Flex height="100vh" width="100vw">
-      <Sidebar notes={notes} user={user} setCurrentScreen={setCurrentScreen} />
+      <Sidebar
+        notes={notes}
+        user={user}
+        setCurrentScreen={setCurrentScreen}
+        handleDeleteNote={handleDeleteNote}
+      />
       <Screen
         user={user}
         currentScreen={currentScreen}

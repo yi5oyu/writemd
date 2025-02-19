@@ -9,7 +9,6 @@ const useNote = (noteId) => {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data.texts)
         setNote(data)
       })
       .catch((err) => {

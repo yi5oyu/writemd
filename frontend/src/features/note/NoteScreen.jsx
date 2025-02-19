@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { debounce } from 'lodash'
 import { Box, Flex, Icon, Input } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
+import axios from 'axios'
 
 import MarkdownInputBox from '../markdown/MarkdownInputBox'
 import UtilityBox from '../chat/UtilityBox'
@@ -11,6 +12,7 @@ import ChatBox from '../chat/ChatBox'
 import useNote from '../../hooks/useNote'
 import saveMarkdownText from '../../services/saveMarkdownText'
 import updateNoteName from '../../services/updateNoteName'
+import checkConnection from '../../services/checkConnection'
 
 const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const note = useNote(noteId)
@@ -20,6 +22,8 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [isBoxVisible, setIsBoxVisible] = useState(true)
+  const [isConnected, setIsConnected] = useState(false)
+  const aiModel = 'llama-3.2-korean-blossom-3b'
 
   const handleTitleChange = (e) => {
     setName(e.target.value)
@@ -79,6 +83,36 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [markdownText])
 
+  // ai 채팅
+  const handleSendMessage = async () => {
+    if (questionText.trim()) {
+      setMessages((m) => [...m, { role: 'user', content: questionText }])
+      try {
+        let response = await axios.post('http://localhost:8888/api/chat/lmstudio', {
+          model: aiModel,
+          content: questionText,
+        })
+
+        let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
+        setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
+      } catch (error) {
+        console.error('에러:', error)
+        setMessages((m) => [...m, { role: 'assistant', content: '에러' }])
+      }
+      setQuestionText('')
+    }
+  }
+
+  // 연결 확인
+  const handleCheckConnection = async () => {
+    const message = await checkConnection()
+    if (message) {
+      setIsConnected(true)
+    } else {
+      setIsConnected(false)
+    }
+  }
+
   return (
     <Flex direction="column" m="5" w="100vw">
       <Flex w="100%" display="flex" alignItems="center" justifyContent="center">
@@ -112,13 +146,19 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
         <Box w="640px" position="relative">
           {isBoxVisible ? (
             <Box w="640px" h="100%" flex="1">
-              <UtilityBox setIsBoxVisible={setIsBoxVisible} />
+              <UtilityBox
+                setIsBoxVisible={setIsBoxVisible}
+                handleCheckConnection={handleCheckConnection}
+              />
               <MarkdownPreview markdownText={markdownText} />
             </Box>
           ) : (
             <Box w="640px" h="100%" flex="1">
-              <UtilityBox setIsBoxVisible={setIsBoxVisible} />
-              <ChatBox messages={messages} />
+              <UtilityBox
+                setIsBoxVisible={setIsBoxVisible}
+                handleCheckConnection={handleCheckConnection}
+              />
+              <ChatBox messages={messages} isConnected={isConnected} />
             </Box>
           )}
           <Flex
@@ -137,7 +177,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                 <Questionbar
                   questionText={questionText}
                   setQuestionText={setQuestionText}
-                  // onSendMessage={handleSendMessage}
+                  onSendMessage={handleSendMessage}
                 />
               </Box>
             )}

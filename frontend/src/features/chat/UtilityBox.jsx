@@ -3,14 +3,8 @@ import { Box, Flex } from '@chakra-ui/react'
 import { MdPreview, MdChat, MdOutlineSpellcheck } from 'react-icons/md'
 import { RiMarkdownFill, RiInboxUnarchiveLine } from 'react-icons/ri'
 import UtilityBtn from '../../components/ui/button/UtilityBtn'
-import checkConnection from '../../services/checkConnection'
 
-const UtilityBox = ({ setIsBoxVisible }) => {
-  const handleCheckConnection = () => {
-    const message = checkConnection()
-    console.log(message)
-  }
-
+const UtilityBox = ({ setIsBoxVisible, handleCheckConnection }) => {
   return (
     <Flex p="1" justifyContent="space-between" alignItems="center">
       <Box>
@@ -23,8 +17,10 @@ const UtilityBox = ({ setIsBoxVisible }) => {
           icon={MdChat}
           label="채팅"
           onClick={() => {
+            if (handleCheckConnection) {
+              handleCheckConnection()
+            }
             setIsBoxVisible(false)
-            handleCheckConnection()
           }}
         />
       </Box>

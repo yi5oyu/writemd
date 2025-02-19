@@ -20,9 +20,9 @@ public class ChatController {
     private final UserService userService;
     private final ChatService chatService;
 
-    // 모델 목록 가져오기
+    // 연결 확인
     @GetMapping("/connected")
-    public ResponseEntity<String> getModels() {
+    public ResponseEntity<String> checkConnection() {
         boolean isConnected = chatService.isConnected();
         if (isConnected) {
             return ResponseEntity.ok("연결 성공");

@@ -1,10 +1,13 @@
-import React, { useState } from 'react'
-import { Box, Flex } from '@chakra-ui/react'
+import React, { useEffect } from 'react'
+import { Box, Flex, Switch } from '@chakra-ui/react'
 
-const ChatBox = ({ messages }) => {
+const ChatBox = ({ messages, isConnected }) => {
   return (
     <>
       <Flex flexDirection="column">
+        <Box mb="1" display="flex" justifyContent="flex-end">
+          <Switch isChecked={isConnected}></Switch>
+        </Box>
         {messages.length > 0 ? (
           messages.map((m, index) => (
             <Box

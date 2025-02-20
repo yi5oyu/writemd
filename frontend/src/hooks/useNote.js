@@ -10,6 +10,7 @@ const useNote = (noteId) => {
       .then((res) => res.json())
       .then((data) => {
         setNote(data)
+        console.log('노트 조회: ', data)
       })
       .catch((err) => {
         setNote(null)

@@ -1,29 +1,60 @@
 import { useState } from 'react'
-import { Box, Flex } from '@chakra-ui/react'
+import { Box, Flex, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react'
 import { MdPreview, MdChat, MdOutlineSpellcheck } from 'react-icons/md'
 import { RiMarkdownFill, RiInboxUnarchiveLine } from 'react-icons/ri'
+import { BiMessageSquareAdd } from 'react-icons/bi'
 import UtilityBtn from '../../components/ui/button/UtilityBtn'
 
-const UtilityBox = ({ setIsBoxVisible, handleCheckConnection }) => {
+const UtilityBox = ({ setBoxForm, handleCheckConnection, boxForm }) => {
   return (
     <Flex p="1" justifyContent="space-between" alignItems="center">
-      <Box>
-        <UtilityBtn icon={MdOutlineSpellcheck} label="맞춤법" />
-        <UtilityBtn icon={RiInboxUnarchiveLine} label="도구상자" />
-      </Box>
-      <Box>
-        <UtilityBtn icon={MdPreview} label="프리뷰" onClick={() => setIsBoxVisible(true)} />
-        <UtilityBtn
-          icon={MdChat}
-          label="채팅"
-          onClick={() => {
-            if (handleCheckConnection) {
-              handleCheckConnection()
-            }
-            setIsBoxVisible(false)
-          }}
-        />
-      </Box>
+      {boxForm === 'preview' ? (
+        <Box>
+          <UtilityBtn
+            icon={MdChat}
+            label="채팅"
+            onClick={() => {
+              if (handleCheckConnection) {
+                handleCheckConnection()
+              }
+              setBoxForm('chat')
+            }}
+          />
+          <UtilityBtn
+            icon={BiMessageSquareAdd}
+            label="새채팅"
+            onClick={() => setBoxForm('newChat')}
+          />
+        </Box>
+      ) : boxForm === 'chat' ? (
+        <Box>
+          <UtilityBtn icon={MdPreview} label="프리뷰" onClick={() => setBoxForm('preview')} />
+          <UtilityBtn
+            icon={BiMessageSquareAdd}
+            label="새채팅"
+            onClick={() => setBoxForm('newChat')}
+          />
+        </Box>
+      ) : boxForm === 'newChat' ? (
+        <Box>
+          <UtilityBtn icon={MdPreview} label="프리뷰" onClick={() => setBoxForm('preview')} />
+          <UtilityBtn
+            icon={MdChat}
+            label="채팅"
+            onClick={() => {
+              if (handleCheckConnection) {
+                handleCheckConnection()
+              }
+              setBoxForm('chat')
+            }}
+          />
+        </Box>
+      ) : (
+        <Box>
+          <UtilityBtn icon={MdOutlineSpellcheck} label="맞춤법" />
+          <UtilityBtn icon={RiInboxUnarchiveLine} label="도구상자" />
+        </Box>
+      )}
     </Flex>
   )
 }

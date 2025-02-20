@@ -13,6 +13,7 @@ import useNote from '../../hooks/useNote'
 import saveMarkdownText from '../../services/saveMarkdownText'
 import updateNoteName from '../../services/updateNoteName'
 import checkConnection from '../../services/checkConnection'
+import NewChatBox from '../chat/NewChatBox'
 
 const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const note = useNote(noteId)
@@ -21,7 +22,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
-  const [isBoxVisible, setIsBoxVisible] = useState(true)
+  const [boxForm, setBoxForm] = useState('preview')
   const [isConnected, setIsConnected] = useState(false)
   const aiModel = 'llama-3.2-korean-blossom-3b'
 
@@ -140,26 +141,39 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
 
       <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
         <Box w="640px" direction="column">
-          <UtilityBox setIsBoxVisible={setIsBoxVisible} />
+          <UtilityBox />
           <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
         </Box>
         <Box w="640px" position="relative">
-          {isBoxVisible ? (
+          {boxForm === 'preview' ? (
             <Box w="640px" h="100%" flex="1">
               <UtilityBox
-                setIsBoxVisible={setIsBoxVisible}
+                setBoxForm={setBoxForm}
+                boxForm={boxForm}
                 handleCheckConnection={handleCheckConnection}
               />
               <MarkdownPreview markdownText={markdownText} />
             </Box>
-          ) : (
+          ) : boxForm === 'chat' ? (
             <Box w="640px" h="100%" flex="1">
               <UtilityBox
-                setIsBoxVisible={setIsBoxVisible}
+                setBoxForm={setBoxForm}
                 handleCheckConnection={handleCheckConnection}
+                boxForm={boxForm}
               />
               <ChatBox messages={messages} isConnected={isConnected} />
             </Box>
+          ) : boxForm === 'newChat' ? (
+            <Box w="640px" h="100%" flex="1">
+              <UtilityBox
+                setBoxForm={setBoxForm}
+                handleCheckConnection={handleCheckConnection}
+                boxForm={boxForm}
+              />
+              <NewChatBox messages={messages} isConnected={isConnected} />
+            </Box>
+          ) : (
+            <></>
           )}
           <Flex
             flexDirection="column"
@@ -170,9 +184,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
             transform="translate(-50%)"
             zIndex="1000"
           >
-            {isBoxVisible ? (
-              <>{/*  */}</>
-            ) : (
+            {boxForm === 'chat' ? (
               <Box w="600px">
                 <Questionbar
                   questionText={questionText}
@@ -180,6 +192,8 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                   onSendMessage={handleSendMessage}
                 />
               </Box>
+            ) : (
+              <></>
             )}
           </Flex>
         </Box>

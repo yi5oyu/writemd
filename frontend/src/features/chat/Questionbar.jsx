@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Box, Textarea, Icon, Flex } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 
-const Questionbar = ({ questionText, setQuestionText, onSendMessage }) => {
+const Questionbar = ({ questionText, setQuestionText, onSendMessage, newChat }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
   const [borderColor, setBorderColor] = useState('gray.300')
@@ -11,6 +11,7 @@ const Questionbar = ({ questionText, setQuestionText, onSendMessage }) => {
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
 
+  // input 크기 조절
   const handleInput = (e) => {
     let textarea = e.target
     textarea.style.height = '24px'
@@ -61,7 +62,7 @@ const Questionbar = ({ questionText, setQuestionText, onSendMessage }) => {
       bg="white"
       boxShadow="md"
       p="4"
-      w={textWidth}
+      w={!newChat ? textWidth : '630px'}
       position="relative"
       borderRadius={borderRadius}
       border="2px solid"
@@ -90,7 +91,7 @@ const Questionbar = ({ questionText, setQuestionText, onSendMessage }) => {
         }}
         p="0"
       />
-      {!isTextFlow ? (
+      {!isTextFlow && !newChat ? (
         <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
           <Icon
             borderRadius="2xl"

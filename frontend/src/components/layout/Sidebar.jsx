@@ -158,7 +158,7 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
                       noteId={note.noteId}
                       name={note.noteName}
                       icon={PiNotebookFill}
-                      del={MdDeleteForever}
+                      delIcon={MdDeleteForever}
                       handleDeleteNote={handleDeleteNote}
                       onClick={() => setCurrentScreen(note.noteId)}
                     />

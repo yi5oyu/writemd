@@ -3,7 +3,7 @@ import { Box, Icon, Text, useDisclosure } from '@chakra-ui/react'
 import deleteNote from '../../services/deleteNote'
 import NoteDeleteBox from './NoteDeleteBox'
 
-const NoteBox = ({ name, icon, onClick, del, noteId, handleDeleteNote }) => {
+const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote }) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const handleDelete = (e) => {
@@ -36,7 +36,7 @@ const NoteBox = ({ name, icon, onClick, del, noteId, handleDeleteNote }) => {
         <Text mx="10px" isTruncated flex="1">
           {name}
         </Text>
-        <Icon as={del} mr="2" _hover={{ color: 'blue.500' }} onClick={handleDelete} />
+        <Icon as={delIcon} mr="2" _hover={{ color: 'blue.500' }} onClick={handleDelete} />
       </Box>
       <NoteDeleteBox isOpen={isOpen} onClose={onClose} confirmDelete={confirmDelete} />
     </>

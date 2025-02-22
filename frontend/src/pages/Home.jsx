@@ -6,6 +6,7 @@ import useAuth from '../hooks/useAuth'
 import saveNote from '../services/saveNote'
 import updateNoteName from '../services/updateNoteName'
 import deleteNote from '../services/deleteNote'
+import saveSession from '../services/saveSession'
 
 const Home = () => {
   const user = useAuth()
@@ -53,6 +54,16 @@ const Home = () => {
     }
   }
 
+  // 세션 생성
+  const handleCreateSession = async (noteId) => {
+    try {
+      const sessionId = await saveSession(noteId)
+      console.log(sessionId)
+    } catch (error) {
+      console.log('세션 생성 실패' + error)
+    }
+  }
+
   return (
     <Flex height="100vh" width="100vw">
       <Sidebar
@@ -66,6 +77,7 @@ const Home = () => {
         currentScreen={currentScreen}
         handleSaveNote={handleSaveNote}
         handleUpdateNote={handleUpdateNote}
+        handleCreateSession={handleCreateSession}
       />
     </Flex>
   )

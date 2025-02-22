@@ -15,7 +15,7 @@ import updateNoteName from '../../services/updateNoteName'
 import checkConnection from '../../services/checkConnection'
 import NewChatBox from '../chat/NewChatBox'
 
-const NoteScreen = ({ noteId, handleUpdateNote }) => {
+const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
   const note = useNote(noteId)
 
   const [name, setName] = useState('')
@@ -84,26 +84,6 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [markdownText])
 
-  // ai 채팅
-  const handleSendMessage = async () => {
-    if (questionText.trim()) {
-      setMessages((m) => [...m, { role: 'user', content: questionText }])
-      try {
-        let response = await axios.post('http://localhost:8888/api/chat/lmstudio', {
-          model: aiModel,
-          content: questionText,
-        })
-
-        let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
-        setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-      } catch (error) {
-        console.error('에러:', error)
-        setMessages((m) => [...m, { role: 'assistant', content: '에러' }])
-      }
-      setQuestionText('')
-    }
-  }
-
   // 연결 확인
   const handleCheckConnection = async () => {
     const message = await checkConnection()
@@ -170,7 +150,13 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                 handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
               />
-              <NewChatBox messages={messages} isConnected={isConnected} />
+              <NewChatBox
+                messages={messages}
+                isConnected={isConnected}
+                questionText={questionText}
+                setQuestionText={setQuestionText}
+                handleCreateSession={handleCreateSession}
+              />
             </Box>
           ) : (
             <></>

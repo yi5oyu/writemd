@@ -2,7 +2,13 @@ import React, { useState } from 'react'
 import { Box, Textarea, Icon, Flex } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 
-const Questionbar = ({ questionText, setQuestionText, onSendMessage, newChat }) => {
+const Questionbar = ({
+  questionText,
+  setQuestionText,
+  onSendMessage,
+  newChat,
+  handleCreateSession,
+}) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
   const [borderColor, setBorderColor] = useState('gray.300')
@@ -117,7 +123,7 @@ const Questionbar = ({ questionText, setQuestionText, onSendMessage, newChat }) 
             color="gray.400"
             boxSize="8"
             cursor="pointer"
-            onClick={handleSendMessage}
+            onClick={() => handleCreateSession(673)}
             _hover={{
               color: 'blue.400',
               bg: 'gray.200',

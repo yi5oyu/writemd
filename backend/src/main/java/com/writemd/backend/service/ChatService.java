@@ -84,6 +84,7 @@ public class ChatService {
         chatRepository.save(chat);
     }
 
+    // 세션 생성
     public Long createSession(Long noteId) {
         Notes note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new IllegalArgumentException("노트 없음"));

@@ -14,16 +14,23 @@ import saveMarkdownText from '../../services/saveMarkdownText'
 import updateNoteName from '../../services/updateNoteName'
 import checkConnection from '../../services/checkConnection'
 import NewChatBox from '../chat/NewChatBox'
+import saveSession from '../../services/saveSession'
+import SessionList from '../chat/SessionList'
+import useChat from '../../hooks/useChat'
 
-const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
-  const note = useNote(noteId)
-
+const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
   const [isConnected, setIsConnected] = useState(false)
+  const [sessions, setSessions] = useState([])
+  const [sessionId, setSessionId] = useState('')
+
+  const note = useNote(noteId)
+  const chat = useChat({ sessionId })
+
   const aiModel = 'llama-3.2-korean-blossom-3b'
 
   const handleTitleChange = (e) => {
@@ -41,6 +48,9 @@ const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
 
     if (note) {
       setName(note.noteName)
+      if (Array.isArray(note.sessions)) {
+        setSessions(note.sessions)
+      }
     }
   }, [note])
 
@@ -94,6 +104,29 @@ const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
     }
   }
 
+  // 세션 생성
+  const handleCreateSession = async (noteId) => {
+    try {
+      const session = await saveSession(noteId)
+      setSessions((s) => [...s, session])
+      console.log('세션: ', sessions)
+    } catch (error) {
+      console.log('세션 생성 실패: ' + error)
+    }
+  }
+
+  // 세션ID 변경
+  const handleSessionId = (sessionId) => {
+    setSessionId(sessionId)
+    setBoxForm(sessionId)
+  }
+
+  useEffect(() => {
+    if (chat) {
+      setMessages(chat)
+    }
+  }, [chat])
+
   return (
     <Flex direction="column" m="5" w="100vw">
       <Flex w="100%" display="flex" alignItems="center" justifyContent="center">
@@ -141,7 +174,12 @@ const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
                 handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
               />
-              <ChatBox messages={messages} isConnected={isConnected} />
+              <SessionList
+                sessions={sessions}
+                handleSessionId={handleSessionId}
+                setBoxForm={setBoxForm}
+                setMessages={setMessages}
+              />
             </Box>
           ) : boxForm === 'newChat' ? (
             <Box w="640px" h="100%" flex="1">
@@ -156,10 +194,19 @@ const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
                 questionText={questionText}
                 setQuestionText={setQuestionText}
                 handleCreateSession={handleCreateSession}
+                noteId={noteId}
               />
             </Box>
           ) : (
-            <></>
+            <Box w="640px" h="100%" flex="1">
+              <UtilityBox
+                setBoxForm={setBoxForm}
+                handleCheckConnection={handleCheckConnection}
+                boxForm={boxForm}
+              />
+              {/* sessionId로 messages 가져와야함 */}
+              <ChatBox messages={messages} sessionId={sessionId} />
+            </Box>
           )}
           <Flex
             flexDirection="column"
@@ -172,11 +219,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, handleCreateSession }) => {
           >
             {boxForm === 'chat' ? (
               <Box w="600px">
-                <Questionbar
-                  questionText={questionText}
-                  setQuestionText={setQuestionText}
-                  onSendMessage={handleSendMessage}
-                />
+                <Questionbar questionText={questionText} setQuestionText={setQuestionText} />
               </Box>
             ) : (
               <></>

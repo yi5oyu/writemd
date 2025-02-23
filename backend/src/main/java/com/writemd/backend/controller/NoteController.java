@@ -1,6 +1,7 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.NoteDTO;
+import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.service.ChatService;
@@ -50,13 +51,9 @@ public class NoteController {
 
     // 세션 생성
     @PostMapping("/{noteId}")
-    public ResponseEntity<Map<String, Object>> createSession(@PathVariable Long noteId) {
-        Long sessionId = chatService.createSession(noteId);
+    public SessionDTO createSession(@PathVariable Long noteId) {
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("sessionId", sessionId);
-
-        return ResponseEntity.ok(response);
+        return chatService.createSession(noteId);
     }
 
     // 노트 세부사항 조회

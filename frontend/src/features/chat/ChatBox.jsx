@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { Box, Flex, Switch } from '@chakra-ui/react'
 
-const ChatBox = ({ messages, isConnected }) => {
+const ChatBox = ({ messages, isConnected, sessionId }) => {
   return (
     <>
       <Flex flexDirection="column">

@@ -54,16 +54,6 @@ const Home = () => {
     }
   }
 
-  // 세션 생성
-  const handleCreateSession = async (noteId) => {
-    try {
-      const sessionId = await saveSession(noteId)
-      console.log(sessionId)
-    } catch (error) {
-      console.log('세션 생성 실패' + error)
-    }
-  }
-
   return (
     <Flex height="100vh" width="100vw">
       <Sidebar
@@ -77,7 +67,6 @@ const Home = () => {
         currentScreen={currentScreen}
         handleSaveNote={handleSaveNote}
         handleUpdateNote={handleUpdateNote}
-        handleCreateSession={handleCreateSession}
       />
     </Flex>
   )

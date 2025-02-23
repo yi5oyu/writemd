@@ -8,6 +8,7 @@ const Questionbar = ({
   onSendMessage,
   newChat,
   handleCreateSession,
+  noteId,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -123,7 +124,7 @@ const Questionbar = ({
             color="gray.400"
             boxSize="8"
             cursor="pointer"
-            onClick={() => handleCreateSession(673)}
+            onClick={() => handleCreateSession(noteId)}
             _hover={{
               color: 'blue.400',
               bg: 'gray.200',

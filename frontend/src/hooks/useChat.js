@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 
-const useChat = () => {
+const useChat = ({ sessionId }) => {
   const [chat, setChat] = useState({})
 
   useEffect(() => {
+    if (!sessionId) return
+
     fetch(`http://localhost:8888/api/chat/${sessionId}`, {
       credentials: 'include',
     })

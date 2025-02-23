@@ -2,6 +2,7 @@ package com.writemd.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
@@ -85,18 +86,23 @@ public class ChatService {
     }
 
     // 세션 생성
-    public Long createSession(Long noteId) {
+    public SessionDTO createSession(Long noteId) {
         Notes note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
 
-        Sessions session = Sessions.builder()
+        Sessions sessions = Sessions.builder()
                 .notes(note)
                 .title("Chat" + noteId)
                 .build();
 
-        sessionRepository.save(session);
+        sessionRepository.save(sessions);
 
-        return session.getId();
+        SessionDTO session = SessionDTO.builder()
+                .SessionId(sessions.getId())
+                .title(sessions.getTitle())
+                .build();
+
+        return session;
     }
 
     // 채팅 세션 삭제

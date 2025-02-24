@@ -1,10 +1,10 @@
 import axios from 'axios'
 
-const saveSession = async (noteId) => {
+const saveSession = async (noteId, title) => {
   try {
     let response = await axios.post(
       `http://localhost:8888/api/note/${noteId}`,
-      {},
+      { title: title },
       {
         withCredentials: true,
       }

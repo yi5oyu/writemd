@@ -104,11 +104,15 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   }
 
   // 세션 생성
-  const handleCreateSession = async (noteId) => {
+  const handleCreateSession = async (noteId, value) => {
     try {
-      const session = await saveSession(noteId)
+      const maxLen = 30
+      const title = value.length > maxLen ? value.slice(0, maxLen) : value
+
+      const session = await saveSession(noteId, title)
       setSessions((s) => [...s, session])
-      console.log('세션: ', sessions)
+      setSessionId(session.sessionId)
+      setBoxForm('chatBox')
     } catch (error) {
       console.log('세션 생성 실패: ' + error)
     }

@@ -1,7 +1,7 @@
 import { Box, Flex, Switch } from '@chakra-ui/react'
 import SessionBox from './SessionBox'
 
-const SessionList = ({ sessions, handleChatLoad, setBoxForm, handleSessionId, isConnected }) => {
+const SessionList = ({ sessions, handleChatLoad, handleSessionId, isConnected }) => {
   if (!sessions || sessions.length === 0) {
     return <Box p="4">현재 활성화된 세션이 없습니다.</Box>
   }
@@ -16,7 +16,6 @@ const SessionList = ({ sessions, handleChatLoad, setBoxForm, handleSessionId, is
           sessionId={session.sessionId}
           title={session.title}
           handleChatLoad={handleChatLoad}
-          onClick={() => setBoxForm('chatBox')}
           handleSessionId={handleSessionId}
         />
       ))}

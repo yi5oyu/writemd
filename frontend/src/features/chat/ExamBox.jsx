@@ -1,6 +1,6 @@
 import { Box } from '@chakra-ui/react'
 
-const ExamBox = ({ text }) => {
+const ExamBox = ({ noteId, text, handleCreateSession }) => {
   return (
     <Box
       w="300px"
@@ -13,7 +13,7 @@ const ExamBox = ({ text }) => {
       textAlign="center"
       cursor="pointer"
       // e.target.value 보내서 세션 생성 채팅으로
-      onClick={{}}
+      onClick={() => handleCreateSession(noteId, text)}
     >
       {text}
     </Box>

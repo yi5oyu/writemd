@@ -86,13 +86,13 @@ public class ChatService {
     }
 
     // 세션 생성
-    public SessionDTO createSession(Long noteId) {
+    public SessionDTO createSession(Long noteId, String title) {
         Notes note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
 
         Sessions sessions = Sessions.builder()
                 .notes(note)
-                .title("Chat" + noteId)
+                .title(title)
                 .build();
 
         sessionRepository.save(sessions);

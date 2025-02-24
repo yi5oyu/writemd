@@ -51,9 +51,9 @@ public class NoteController {
 
     // 세션 생성
     @PostMapping("/{noteId}")
-    public SessionDTO createSession(@PathVariable Long noteId) {
+    public SessionDTO createSession(@PathVariable Long noteId, @RequestBody Map<String, Object> requestPayload) {
 
-        return chatService.createSession(noteId);
+        return chatService.createSession(noteId, (String)requestPayload.get("title"));
     }
 
     // 노트 세부사항 조회

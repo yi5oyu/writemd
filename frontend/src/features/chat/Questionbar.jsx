@@ -124,7 +124,7 @@ const Questionbar = ({
             color="gray.400"
             boxSize="8"
             cursor="pointer"
-            onClick={() => handleCreateSession(noteId)}
+            onClick={() => handleCreateSession(noteId, questionText)}
             _hover={{
               color: 'blue.400',
               bg: 'gray.200',

@@ -34,7 +34,7 @@ const Home = () => {
     }
   }
 
-  // 노트 업데이트
+  // 노트 업데이트 (이름)
   const handleUpdateNote = async (noteId, name) => {
     try {
       const updatedNote = await updateNoteName(noteId, name)

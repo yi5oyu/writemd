@@ -51,8 +51,22 @@ const UtilityBox = ({ setBoxForm, handleCheckConnection, boxForm }) => {
         </Box>
       ) : (
         <Box>
-          <UtilityBtn icon={MdOutlineSpellcheck} label="맞춤법" />
-          <UtilityBtn icon={RiInboxUnarchiveLine} label="도구상자" />
+          <UtilityBtn icon={MdPreview} label="프리뷰" onClick={() => setBoxForm('preview')} />
+          <UtilityBtn
+            icon={MdChat}
+            label="채팅"
+            onClick={() => {
+              if (handleCheckConnection) {
+                handleCheckConnection()
+              }
+              setBoxForm('chat')
+            }}
+          />
+          <UtilityBtn
+            icon={BiMessageSquareAdd}
+            label="새채팅"
+            onClick={() => setBoxForm('newChat')}
+          />
         </Box>
       )}
     </Flex>

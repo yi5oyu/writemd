@@ -30,7 +30,6 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
 
   const note = useNote(noteId)
   const chat = useChat({ sessionId })
-
   const aiModel = 'llama-3.2-korean-blossom-3b'
 
   const handleTitleChange = (e) => {
@@ -118,11 +117,13 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   // 세션ID 변경
   const handleSessionId = (sessionId) => {
     setSessionId(sessionId)
-    setBoxForm(sessionId)
+    setBoxForm('chatBox')
   }
 
+  // 메시지 저장
   useEffect(() => {
-    if (chat) {
+    if (Array.isArray(chat) && chat.length > 0) {
+      console.log('g')
       setMessages(chat)
     }
   }, [chat])
@@ -179,6 +180,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                 handleSessionId={handleSessionId}
                 setBoxForm={setBoxForm}
                 setMessages={setMessages}
+                isConnected={isConnected}
               />
             </Box>
           ) : boxForm === 'newChat' ? (
@@ -197,17 +199,16 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                 noteId={noteId}
               />
             </Box>
-          ) : (
+          ) : boxForm === 'chatBox' ? (
             <Box w="640px" h="100%" flex="1">
               <UtilityBox
                 setBoxForm={setBoxForm}
                 handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
               />
-              {/* sessionId로 messages 가져와야함 */}
               <ChatBox messages={messages} sessionId={sessionId} />
             </Box>
-          )}
+          ) : null}
           <Flex
             flexDirection="column"
             justify="center"
@@ -217,7 +218,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
             transform="translate(-50%)"
             zIndex="1000"
           >
-            {boxForm === 'chat' ? (
+            {boxForm === 'chatBox' ? (
               <Box w="600px">
                 <Questionbar questionText={questionText} setQuestionText={setQuestionText} />
               </Box>

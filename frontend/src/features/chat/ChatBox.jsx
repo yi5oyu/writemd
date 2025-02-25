@@ -6,7 +6,8 @@ const ChatBox = ({ messages, isConnected, sessionId }) => {
     <>
       <Flex flexDirection="column">
         <Box mb="1" display="flex" justifyContent="flex-end">
-          <Switch isChecked={isConnected}></Switch>
+          {sessionId}
+          <Switch isChecked={isConnected}></Switch>``
         </Box>
         {messages.length > 0 ? (
           messages.map((m, index) => (

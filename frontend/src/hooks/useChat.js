@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const useChat = ({ sessionId }) => {
-  const [chat, setChat] = useState({})
+  const [chat, setChat] = useState([])
 
   useEffect(() => {
     if (!sessionId) return
@@ -14,7 +14,7 @@ const useChat = ({ sessionId }) => {
         setChat(data)
       })
       .catch((err) => {
-        setChat(null)
+        setChat([])
       })
   }, [sessionId])
 

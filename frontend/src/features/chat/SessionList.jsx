@@ -17,6 +17,7 @@ const SessionList = ({ sessions, handleChatLoad, handleSessionId, isConnected })
           title={session.title}
           handleChatLoad={handleChatLoad}
           handleSessionId={handleSessionId}
+          // onClick={{}}
         />
       ))}
     </Flex>

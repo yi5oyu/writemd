@@ -5,7 +5,7 @@ import { ArrowForwardIcon } from '@chakra-ui/icons'
 const Questionbar = ({
   questionText,
   setQuestionText,
-  onSendMessage,
+  handleSendChatMessage,
   newChat,
   handleCreateSession,
   noteId,
@@ -50,7 +50,7 @@ const Questionbar = ({
 
   const handleSendMessage = () => {
     if (questionText.trim()) {
-      onSendMessage()
+      handleSendChatMessage(questionText)
       setScrollFlow('hidden')
       setTextWidth('600px')
       setBorderRadius('2xl')

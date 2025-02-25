@@ -12,7 +12,6 @@ const ExamBox = ({ noteId, text, handleCreateSession }) => {
       boxShadow="md"
       textAlign="center"
       cursor="pointer"
-      // e.target.value 보내서 세션 생성 채팅으로
       onClick={() => handleCreateSession(noteId, text)}
     >
       {text}

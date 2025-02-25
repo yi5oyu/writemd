@@ -7,6 +7,7 @@ const NewChatBox = ({
   questionText,
   setQuestionText,
   handleCreateSession,
+  handleSendChatMessage,
   noteId,
 }) => {
   return (
@@ -22,15 +23,26 @@ const NewChatBox = ({
             questionText={questionText}
             setQuestionText={setQuestionText}
             handleCreateSession={handleCreateSession}
+            handleSendChatMessage={handleSendChatMessage}
             noteId={noteId}
           />
           <Flex mt="4" gap="5">
             <ExamBox
               noteId={noteId}
               handleCreateSession={handleCreateSession}
+              questionText={questionText}
+              setQuestionText={setQuestionText}
+              handleSendChatMessage={handleSendChatMessage}
               text={'마크다운(Markdown) 문법 설명'}
             />
-            <ExamBox noteId={noteId} handleCreateSession={handleCreateSession} text={'GFM 차이'} />
+            <ExamBox
+              noteId={noteId}
+              handleCreateSession={handleCreateSession}
+              questionText={questionText}
+              setQuestionText={setQuestionText}
+              handleSendChatMessage={handleSendChatMessage}
+              text={'Markdown과 GFM 차이'}
+            />
           </Flex>
         </Flex>
       </Flex>

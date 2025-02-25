@@ -17,6 +17,7 @@ import NewChatBox from '../chat/NewChatBox'
 import saveSession from '../../services/saveSession'
 import SessionList from '../chat/SessionList'
 import useChat from '../../hooks/useChat'
+import sendChatMessage from '../../services/sendChatMessage'
 
 const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const [name, setName] = useState('')
@@ -104,15 +105,20 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   }
 
   // 세션 생성
-  const handleCreateSession = async (noteId, value) => {
+  const handleCreateSession = async (noteId, questionText) => {
     try {
       const maxLen = 30
-      const title = value.length > maxLen ? value.slice(0, maxLen) : value
+      const title = questionText.length > maxLen ? questionText.slice(0, maxLen) : questionText
 
       const session = await saveSession(noteId, title)
       setSessions((s) => [...s, session])
-      setSessionId(session.sessionId)
+      setMessages((m) => [...m, { role: 'user', content: questionText }])
+      const response = await sendChatMessage(session.sessionId, aiModel, questionText)
+      let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
+      setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
+      setQuestionText('')
       setBoxForm('chatBox')
+      setSessionId(session.sessionId)
     } catch (error) {
       console.log('세션 생성 실패: ' + error)
     }
@@ -124,13 +130,29 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
     setBoxForm('chatBox')
   }
 
-  // 메시지 저장
+  // 채팅 내역 조회
   useEffect(() => {
-    if (Array.isArray(chat) && chat.length > 0) {
-      console.log('g')
+    if (boxForm === 'chatBox' && Array.isArray(chat)) {
       setMessages(chat)
     }
-  }, [chat])
+  }, [chat, boxForm])
+
+  // 새 메시지 보내기
+  const handleSendChatMessage = async (questionText) => {
+    setMessages((m) => [...m, { role: 'user', content: questionText }])
+    try {
+      console.log('세션id: ', sessionId)
+      const response = await sendChatMessage(sessionId, aiModel, questionText)
+      console.log(response)
+      let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
+      setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
+
+      setQuestionText('')
+    } catch (error) {
+      console.log('메시지 보내기 실패: ' + error)
+      setMessages((m) => [...m, { role: 'assistant', content: '에러' }])
+    }
+  }
 
   return (
     <Flex direction="column" m="5" w="100vw">
@@ -200,6 +222,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                 questionText={questionText}
                 setQuestionText={setQuestionText}
                 handleCreateSession={handleCreateSession}
+                handleSendChatMessage={handleSendChatMessage}
                 noteId={noteId}
               />
             </Box>
@@ -210,7 +233,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
                 handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
               />
-              <ChatBox messages={messages} sessionId={sessionId} />
+              <ChatBox messages={messages} isConnected={isConnected} sessionId={sessionId} />
             </Box>
           ) : null}
           <Flex
@@ -224,7 +247,11 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
           >
             {boxForm === 'chatBox' ? (
               <Box w="600px">
-                <Questionbar questionText={questionText} setQuestionText={setQuestionText} />
+                <Questionbar
+                  questionText={questionText}
+                  setQuestionText={setQuestionText}
+                  handleSendChatMessage={handleSendChatMessage}
+                />
               </Box>
             ) : (
               <></>

@@ -1,7 +1,7 @@
 import { Box, Icon, Flex } from '@chakra-ui/react'
 import useChat from '../../hooks/useChat'
 
-const SessionBox = ({ sessionId, title, setMessages, handleSessionId }) => {
+const SessionBox = ({ sessionId, title, handleSessionId }) => {
   return (
     <Flex
       w="600px"

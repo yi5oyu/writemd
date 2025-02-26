@@ -19,6 +19,7 @@ import {
 import ReactMarkdown from 'react-markdown'
 import ChakraUIRenderer from 'chakra-ui-markdown-renderer'
 import remarkGfm from 'remark-gfm'
+import CodeBlock from './CodeBlock'
 
 const customChakraUIRenderer = {
   // 제목
@@ -64,7 +65,8 @@ const customChakraUIRenderer = {
 
   // 코드 블록
   pre: (props) => (
-    <Box as="pre" p={4} bg="gray.100" color="white" overflowX="auto" mb={4} {...props} />
+    <CodeBlock {...props} />
+    // <Box as="pre" p={4} bg="gray.100" color="white" overflowX="auto" mb={4} {...props} />
   ),
 
   // 인용문

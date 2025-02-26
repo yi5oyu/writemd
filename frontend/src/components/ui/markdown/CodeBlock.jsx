@@ -4,7 +4,6 @@ import { CopyIcon, CheckIcon } from '@chakra-ui/icons'
 
 const CodeBlock = ({ children, ...props }) => {
   const [copied, setCopied] = useState(false)
-  console.log(children)
 
   // 배열을 텍스트로 변환
   let codeText = ''

@@ -16,34 +16,57 @@ import {
   Td,
   Divider,
 } from '@chakra-ui/react'
+import { LinkIcon } from '@chakra-ui/icons'
 import CodeBlock from './CodeBlock'
 
 const ChakraMarkdownGithubLight = {
   // 제목
-  h1: (props) => (
-    <Heading
-      as="h1"
-      size="2xl"
-      fontWeight="bold"
-      mt={6}
-      mb={4}
-      borderBottom="1px solid"
-      borderColor="gray.300"
-      pb={2}
-      {...props}
-    />
-  ),
+  h1: (props) => {
+    const id = props.node?.properties?.id
+
+    return (
+      <Heading
+        as="h1"
+        id={id}
+        role="group"
+        position="relative"
+        fontSize="2em"
+        fontWeight="bold"
+        mt="24px"
+        mb="16px"
+        pb=".3em"
+        borderBottom="1px solid"
+        borderColor="gray.300"
+        {...props}
+      >
+        <Link
+          href={`#${id}`}
+          className="heading-anchor"
+          position="absolute"
+          left="-1.25rem"
+          transform="translateY(calc(-50% + 0.5em))"
+          opacity="0"
+          _groupHover={{ opacity: 1 }}
+        >
+          <LinkIcon boxSize={3.5} />
+        </Link>
+        {props.children}
+      </Heading>
+    )
+  },
   h2: (props) => {
+    const id = props.node?.properties?.id
+
     // 각주(footnote)
     if (props.node?.properties?.id === 'footnote-label') {
       return (
         <Heading
           as="h2"
-          mt={6}
-          mb={3}
+          mt="24px"
+          mb="16px"
+          pb=".3em"
           borderBottom="1px solid"
           borderColor="gray.300"
-          pb={2}
           {...props}
         >
           {''}
@@ -54,23 +77,150 @@ const ChakraMarkdownGithubLight = {
     return (
       <Heading
         as="h2"
-        size="xl"
+        id={id}
+        role="group"
+        fontSize="1.5em"
         fontWeight="bold"
-        mt={6}
-        mb={3}
+        mt="24px"
+        mb="16px"
+        pb=".3em"
         borderBottom="1px solid"
         borderColor="gray.300"
-        pb={2}
+        position="relative"
         {...props}
-      />
+      >
+        <Link
+          href={`#${id}`}
+          className="heading-anchor"
+          position="absolute"
+          left="-1.25rem"
+          transform="translateY(calc(-50% + 0.5em))"
+          opacity="0"
+          _groupHover={{ opacity: 1 }}
+        >
+          <LinkIcon boxSize={3.5} />
+        </Link>
+        {props.children}
+      </Heading>
     )
   },
-  h3: (props) => <Heading as="h3" size="lg" fontWeight="bold" mt={6} mb={2} pb={2} {...props} />,
-  h4: (props) => <Heading as="h4" size="md" fontWeight="bold" mt={6} mb={2} {...props} />,
-
-  // 본문
-  p: (props) => <Text mb={3} lineHeight="tall" fontSize="md" {...props} />,
-
+  h3: (props) => {
+    const id = props.node?.properties?.id
+    return (
+      <Heading
+        as="h3"
+        id={id}
+        role="group"
+        position="relative"
+        fontSize="1.25em"
+        fontWeight="bold"
+        mt="24px"
+        mb="16px"
+        {...props}
+      >
+        <Link
+          href={`#${id}`}
+          className="heading-anchor"
+          position="absolute"
+          left="-1.25rem"
+          transform="translateY(calc(-50% + 0.5em))"
+          opacity="0"
+          _groupHover={{ opacity: 1 }}
+        >
+          <LinkIcon boxSize={3.5} />
+        </Link>
+        {props.children}
+      </Heading>
+    )
+  },
+  h4: (props) => {
+    const id = props.node?.properties?.id
+    return (
+      <Heading
+        as="h4"
+        id={id}
+        role="group"
+        position="relative"
+        fontSize="1em"
+        fontWeight="bold"
+        mt="24px"
+        mb="16px"
+        {...props}
+      >
+        <Link
+          href={`#${id}`}
+          className="heading-anchor"
+          position="absolute"
+          left="-1.25rem"
+          transform="translateY(calc(-50% + 0.5em))"
+          opacity="0"
+          _groupHover={{ opacity: 1 }}
+        >
+          <LinkIcon boxSize={3.5} />
+        </Link>
+        {props.children}
+      </Heading>
+    )
+  },
+  h5: (props) => {
+    const id = props.node?.properties?.id
+    return (
+      <Heading
+        as="h5"
+        id={id}
+        role="group"
+        position="relative"
+        fontSize=".875em"
+        fontWeight="bold"
+        mt="24px"
+        mb="16px"
+        {...props}
+      >
+        <Link
+          href={`#${id}`}
+          className="heading-anchor"
+          position="absolute"
+          left="-1.25rem"
+          transform="translateY(calc(-50% + 0.5em))"
+          opacity="0"
+          _groupHover={{ opacity: 1 }}
+        >
+          <LinkIcon boxSize={3.5} />
+        </Link>
+        {props.children}
+      </Heading>
+    )
+  },
+  h6: (props) => {
+    const id = props.node?.properties?.id
+    return (
+      <Heading
+        as="h6"
+        id={id}
+        role="group"
+        position="relative"
+        fontSize=".85em"
+        fontWeight="bold"
+        mt="24px"
+        mb="16px"
+        color="gray.600"
+        {...props}
+      >
+        <Link
+          href={`#${id}`}
+          className="heading-anchor"
+          position="absolute"
+          left="-1.25rem"
+          transform="translateY(calc(-50% + 0.5em))"
+          opacity="0"
+          _groupHover={{ opacity: 1 }}
+        >
+          <LinkIcon boxSize={3.5} />
+        </Link>
+        {props.children}
+      </Heading>
+    )
+  },
   // 링크
   a: (props) => <Link color="blue.500" {...props} />,
 
@@ -192,9 +342,11 @@ const ChakraMarkdownGithubLight = {
 
     return <Box as="section" {...props} />
   },
+
+  // 본문, 각주
   p: (props) => {
     const isFootnote = props.node?.parent?.properties?.className?.includes('footnotes')
-    return <Text mb={3} lineHeight="tall" fontSize={isFootnote ? '0.8rem' : 'sm'} {...props} />
+    return <Text mb={3} lineHeight="tall" fontSize={isFootnote ? '0.8rem' : 'md'} {...props} />
   },
 }
 

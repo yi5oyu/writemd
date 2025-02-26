@@ -3,6 +3,7 @@ import { Box } from '@chakra-ui/react'
 import ReactMarkdown from 'react-markdown'
 import ChakraUIRenderer from 'chakra-ui-markdown-renderer'
 import remarkGfm from 'remark-gfm'
+import remarkSlug from 'remark-slug'
 import ChakraMarkdownGithubLight from '../../components/ui/markdown/ChakraMarkdownGithubLight'
 
 const MarkdownPreview = ({ markdownText }) => {
@@ -13,11 +14,11 @@ const MarkdownPreview = ({ markdownText }) => {
       borderRadius="md"
       h="calc(100vh - 125px)"
       overflowY="auto"
-      px="2"
+      px="7"
     >
       <ReactMarkdown
         components={ChakraUIRenderer(ChakraMarkdownGithubLight)}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkSlug]}
       >
         {markdownText}
       </ReactMarkdown>

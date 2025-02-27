@@ -4,17 +4,13 @@ import axios from 'axios'
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 
-const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote, handleCreateSession }) => {
+const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote }) => {
   return (
     <>
       {currentScreen === 'home' ? (
         <NoteHome handleSaveNote={handleSaveNote} />
       ) : (
-        <NoteScreen
-          handleUpdateNote={handleUpdateNote}
-          noteId={currentScreen}
-          handleCreateSession={handleCreateSession}
-        />
+        <NoteScreen handleUpdateNote={handleUpdateNote} noteId={currentScreen} />
       )}
     </>
 

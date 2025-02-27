@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { debounce } from 'lodash'
-import { Box, Flex, Icon, Input } from '@chakra-ui/react'
+import { Box, Flex, Icon, Input, Spinner } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
 import axios from 'axios'
 
@@ -29,7 +29,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   const [sessions, setSessions] = useState([])
   const [sessionId, setSessionId] = useState('')
 
-  const note = useNote(noteId)
+  const { note, loading } = useNote(noteId)
   const chat = useChat({ sessionId })
   const aiModel = 'llama-3.2-korean-blossom-3b'
 
@@ -154,111 +154,133 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
     }
   }
 
-  return (
-    <Flex direction="column" m="5" w="100vw">
-      <Flex w="100%" display="flex" alignItems="center" justifyContent="center">
-        <Icon as={PiNotebookFill} />
-        <Input
-          value={name}
-          size="xl"
-          fontSize="18px"
-          variant="unstyled"
-          mx="10px"
-          onChange={handleTitleChange}
-          w="40vw"
-          maxLength={35}
-          _focus={{
-            bg: 'gray.200',
-          }}
-        />
-        <Icon
-          as={PiCheckFatFill}
-          color="blue.400"
-          cursor="pointer"
-          onClick={() => handleUpdateNote(noteId, name)}
-        />
-      </Flex>
+  // loading 초기화
+  useEffect(() => {
+    if (loading) {
+      setBoxForm('preview')
+    }
+  }, [loading])
 
-      <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
-        <Box w="640px" direction="column">
-          <UtilityBox />
-          <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
-        </Box>
-        <Box w="640px" position="relative">
-          {boxForm === 'preview' ? (
-            <Box w="640px" h="100%" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                boxForm={boxForm}
-                handleCheckConnection={handleCheckConnection}
-              />
-              <MarkdownPreview markdownText={markdownText} />
-            </Box>
-          ) : boxForm === 'chat' ? (
-            <Box w="640px" h="100%" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-              />
-              <SessionList
-                sessions={sessions}
-                handleSessionId={handleSessionId}
-                setBoxForm={setBoxForm}
-                setMessages={setMessages}
-                isConnected={isConnected}
-              />
-            </Box>
-          ) : boxForm === 'newChat' ? (
-            <Box w="640px" h="100%" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-              />
-              <NewChatBox
-                messages={messages}
-                isConnected={isConnected}
-                questionText={questionText}
-                setQuestionText={setQuestionText}
-                handleCreateSession={handleCreateSession}
-                handleSendChatMessage={handleSendChatMessage}
-                noteId={noteId}
-              />
-            </Box>
-          ) : boxForm === 'chatBox' ? (
-            <Box w="640px" h="100%" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-              />
-              <ChatBox messages={messages} isConnected={isConnected} sessionId={sessionId} />
-            </Box>
-          ) : null}
-          <Flex
-            flexDirection="column"
-            justify="center"
-            position="absolute"
-            bottom="5"
-            left="50%"
-            transform="translate(-50%)"
-            zIndex="1000"
-          >
-            {boxForm === 'chatBox' ? (
-              <Box w="600px">
-                <Questionbar
-                  questionText={questionText}
-                  setQuestionText={setQuestionText}
-                  handleSendChatMessage={handleSendChatMessage}
+  return (
+    <Flex direction="column" m="5" w="100vw" position="relative">
+      <Box filter={loading ? 'blur(4px)' : 'none'}>
+        <Flex w="100%" alignItems="center" justifyContent="center">
+          <Icon as={PiNotebookFill} />
+          <Input
+            value={name}
+            size="xl"
+            fontSize="18px"
+            variant="unstyled"
+            mx="10px"
+            onChange={handleTitleChange}
+            w="40vw"
+            maxLength={35}
+            _focus={{ bg: 'gray.200' }}
+          />
+          <Icon
+            as={PiCheckFatFill}
+            color="blue.400"
+            cursor="pointer"
+            onClick={() => handleUpdateNote(noteId, name)}
+          />
+        </Flex>
+
+        <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
+          <Box w="640px">
+            <UtilityBox />
+            <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
+          </Box>
+          <Box w="640px" position="relative">
+            {boxForm === 'preview' ? (
+              <Box w="640px" h="100%">
+                <UtilityBox
+                  setBoxForm={setBoxForm}
+                  boxForm={boxForm}
+                  handleCheckConnection={handleCheckConnection}
+                />
+                <MarkdownPreview markdownText={markdownText} />
+              </Box>
+            ) : boxForm === 'chat' ? (
+              <Box w="640px" h="100%">
+                <UtilityBox
+                  setBoxForm={setBoxForm}
+                  handleCheckConnection={handleCheckConnection}
+                  boxForm={boxForm}
+                />
+                <SessionList
+                  sessions={sessions}
+                  handleSessionId={handleSessionId}
+                  setBoxForm={setBoxForm}
+                  setMessages={setMessages}
+                  isConnected={isConnected}
                 />
               </Box>
-            ) : (
-              <></>
-            )}
-          </Flex>
-        </Box>
-      </Flex>
+            ) : boxForm === 'newChat' ? (
+              <Box w="640px" h="100%">
+                <UtilityBox
+                  setBoxForm={setBoxForm}
+                  handleCheckConnection={handleCheckConnection}
+                  boxForm={boxForm}
+                />
+                <NewChatBox
+                  messages={messages}
+                  isConnected={isConnected}
+                  questionText={questionText}
+                  setQuestionText={setQuestionText}
+                  handleCreateSession={handleCreateSession}
+                  handleSendChatMessage={handleSendChatMessage}
+                  noteId={noteId}
+                />
+              </Box>
+            ) : boxForm === 'chatBox' ? (
+              <Box w="640px" h="100%">
+                <UtilityBox
+                  setBoxForm={setBoxForm}
+                  handleCheckConnection={handleCheckConnection}
+                  boxForm={boxForm}
+                />
+                <ChatBox messages={messages} isConnected={isConnected} sessionId={sessionId} />
+              </Box>
+            ) : null}
+            <Flex
+              flexDirection="column"
+              justify="center"
+              position="absolute"
+              bottom="5"
+              left="50%"
+              transform="translate(-50%)"
+              zIndex="1000"
+            >
+              {boxForm === 'chatBox' && (
+                <Box w="600px">
+                  <Questionbar
+                    questionText={questionText}
+                    setQuestionText={setQuestionText}
+                    handleSendChatMessage={handleSendChatMessage}
+                  />
+                </Box>
+              )}
+            </Flex>
+          </Box>
+        </Flex>
+      </Box>
+
+      {/* 로딩 시 중앙에 Spinner 오버레이 */}
+      {loading && (
+        <Flex
+          position="absolute"
+          top="0"
+          left="0"
+          w="100%"
+          h="100%"
+          justify="center"
+          align="center"
+          bg="rgba(255,255,255,0.5)"
+          zIndex="2000"
+        >
+          <Spinner size="xl" color="blue.400" />
+        </Flex>
+      )}
     </Flex>
   )
 }

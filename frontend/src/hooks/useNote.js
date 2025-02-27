@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 
 const useNote = (noteId) => {
   const [note, setNote] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     fetch(`http://localhost:8888/api/note/${noteId}`, {
       credentials: 'include',
     })
@@ -15,9 +17,12 @@ const useNote = (noteId) => {
       .catch((err) => {
         setNote(null)
       })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [noteId])
 
-  return note
+  return { note, loading }
 }
 
 export default useNote

@@ -13,10 +13,10 @@ import useNote from '../../hooks/useNote'
 import saveMarkdownText from '../../services/saveMarkdownText'
 import checkConnection from '../../services/checkConnection'
 import NewChatBox from '../chat/NewChatBox'
-import saveSession from '../../services/saveSession'
 import SessionList from '../chat/SessionList'
 import useChat from '../../hooks/useChat'
 import useSendChatMessage from '../../hooks/useSendChatMessage'
+import useSaveSession from '../../hooks/useSaveSession'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -31,6 +31,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const { note, loading } = useNote(noteId)
   const { chat, loading: chatLoading, error } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: MessageError } = useSendChatMessage()
+  const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -231,6 +232,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   setQuestionText={setQuestionText}
                   handleCreateSession={handleCreateSession}
                   handleSendChatMessage={handleSendChatMessage}
+                  sessionLoading={sessionLoading}
                   noteId={noteId}
                 />
               </Box>

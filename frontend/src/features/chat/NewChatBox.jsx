@@ -1,4 +1,4 @@
-import { Box, Switch, Icon, Flex, Spacer } from '@chakra-ui/react'
+import { Box, Switch, Icon, Flex, Spacer, Spinner } from '@chakra-ui/react'
 import Questionbar from './Questionbar'
 import ExamBox from './ExamBox'
 
@@ -8,6 +8,7 @@ const NewChatBox = ({
   setQuestionText,
   handleCreateSession,
   handleSendChatMessage,
+  sessionLoading,
   noteId,
 }) => {
   return (
@@ -17,7 +18,13 @@ const NewChatBox = ({
           <Switch isChecked={isConnected}></Switch>
         </Box>
 
-        <Flex flex="1" alignItems="center" justifyContent="center" flexDirection="column">
+        <Flex
+          flex="1"
+          alignItems="center"
+          justifyContent="center"
+          flexDirection="column"
+          filter={sessionLoading ? 'blur(4px)' : 'none'}
+        >
           <Questionbar
             newChat={true}
             questionText={questionText}
@@ -45,6 +52,22 @@ const NewChatBox = ({
             />
           </Flex>
         </Flex>
+
+        {sessionLoading && (
+          <Flex
+            position="absolute"
+            top="0"
+            left="0"
+            w="100%"
+            h="100%"
+            justify="center"
+            align="center"
+            bg="rgba(255,255,255,0.5)"
+            zIndex="2000"
+          >
+            <Spinner size="xl" color="blue.400" />
+          </Flex>
+        )}
       </Flex>
     </>
   )

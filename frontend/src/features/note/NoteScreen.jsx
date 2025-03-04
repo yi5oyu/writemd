@@ -16,7 +16,7 @@ import NewChatBox from '../chat/NewChatBox'
 import saveSession from '../../services/saveSession'
 import SessionList from '../chat/SessionList'
 import useChat from '../../hooks/useChat'
-import sendChatMessage from '../../services/sendChatMessage'
+import useSendChatMessage from '../../hooks/useSendChatMessage'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -29,8 +29,11 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [sessionId, setSessionId] = useState('')
 
   const { note, loading } = useNote(noteId)
-  const chat = useChat({ sessionId })
-  const aiModel = 'llama-3.2-korean-blossom-3b'
+  const { chat, loading: chatLoading, error } = useChat({ sessionId })
+  const { sendChatMessage, loading: messageLoading, error: MessageError } = useSendChatMessage()
+
+  const aiModel = 'exaone-3.5-7.8b-instruct'
+  //  'llama-3.2-korean-blossom-3b'
 
   const handleTitleChange = (e) => {
     setName(e.target.value)
@@ -238,7 +241,13 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   handleCheckConnection={handleCheckConnection}
                   boxForm={boxForm}
                 />
-                <ChatBox messages={messages} isConnected={isConnected} sessionId={sessionId} />
+                <ChatBox
+                  messages={messages}
+                  isConnected={isConnected}
+                  sessionId={sessionId}
+                  chatLoading={chatLoading}
+                  messageLoading={messageLoading}
+                />
               </Box>
             ) : null}
             <Flex

@@ -4,10 +4,11 @@ import axios from 'axios'
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 import useSaveNote from '../../hooks/useSaveNote'
-import updateNoteName from '../../services/updateNoteName'
+import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 
 const Screen = ({ currentScreen, user, setNotes }) => {
-  const { saveNote, loading: saveLoading, error } = useSaveNote()
+  const { saveNote, loading, error: saveError } = useSaveNote()
+  const { updateNoteName, loading: updateLoading, error: updageError } = useUpdateNoteName()
 
   // 새 노트 저장
   const handleSaveNote = async (title) => {
@@ -33,9 +34,13 @@ const Screen = ({ currentScreen, user, setNotes }) => {
   return (
     <>
       {currentScreen === 'home' ? (
-        <NoteHome loading={saveLoading} handleSaveNote={handleSaveNote} />
+        <NoteHome loading={loading} handleSaveNote={handleSaveNote} />
       ) : (
-        <NoteScreen handleUpdateNote={handleUpdateNote} noteId={currentScreen} />
+        <NoteScreen
+          updateLoading={updateLoading}
+          handleUpdateNote={handleUpdateNote}
+          noteId={currentScreen}
+        />
       )}
     </>
 

@@ -11,7 +11,6 @@ import MarkdownPreview from '../markdown/MarkdownPreview'
 import ChatBox from '../chat/ChatBox'
 import useNote from '../../hooks/useNote'
 import saveMarkdownText from '../../services/saveMarkdownText'
-import updateNoteName from '../../services/updateNoteName'
 import checkConnection from '../../services/checkConnection'
 import NewChatBox from '../chat/NewChatBox'
 import saveSession from '../../services/saveSession'
@@ -19,7 +18,7 @@ import SessionList from '../chat/SessionList'
 import useChat from '../../hooks/useChat'
 import sendChatMessage from '../../services/sendChatMessage'
 
-const NoteScreen = ({ noteId, handleUpdateNote }) => {
+const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
@@ -163,7 +162,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
 
   return (
     <Flex direction="column" m="5" w="100vw" position="relative">
-      <Box filter={loading ? 'blur(4px)' : 'none'}>
+      <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
         <Flex w="100%" alignItems="center" justifyContent="center">
           <Icon as={PiNotebookFill} />
           <Input
@@ -266,7 +265,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
       </Box>
 
       {/* 로딩 시 Spinner */}
-      {loading && (
+      {(loading || updateLoading) && (
         <Flex
           position="absolute"
           top="0"

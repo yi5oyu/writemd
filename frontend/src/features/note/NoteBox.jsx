@@ -1,6 +1,5 @@
 import React from 'react'
 import { Box, Icon, Text, useDisclosure } from '@chakra-ui/react'
-import deleteNote from '../../services/deleteNote'
 import NoteDeleteBox from './NoteDeleteBox'
 
 const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote }) => {

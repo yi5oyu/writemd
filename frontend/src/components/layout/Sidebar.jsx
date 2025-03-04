@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
+import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar, Spinner } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
   BsLayoutSidebarInset,
@@ -17,10 +17,13 @@ import LoginForm from '../../features/auth/LoginForm'
 import LogInfoForm from '../../features/auth/LogInfoForm'
 import NoteInputBox from '../../features/note/NoteInputBox'
 import NoteBox from '../../features/note/NoteBox'
+import useDeleteNote from '../../hooks/useDeleteNote'
 
 const MotionBox = motion(Box)
 
-const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
+const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
+  const { deleteNote, loading, error } = useDeleteNote()
+
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
 
@@ -37,16 +40,16 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
     setShowNoteInputBox(true)
   }
 
-  // 로딩
-  // useEffect(() => {
-  //   if (notes && notes.length > 0) {
-  //     setIsLoading(false)
-  //   }
-  // }, [notes])
-
-  // if (isLoading) {
-  //   return <Box>Loading...</Box>
-  // }
+  // 노트 삭제
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await deleteNote(noteId)
+      setNotes((n) => n.filter((note) => note.noteId !== noteId))
+      setCurrentScreen('home')
+    } catch (error) {
+      console.log('삭제 실패: ' + error)
+    }
+  }
 
   return (
     <>
@@ -66,7 +69,7 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
         >
           <Flex direction="column" height="100%">
             {/* 상단 */}
-            <Box>
+            <Box filter={loading ? 'blur(4px)' : 'none'}>
               <Flex justifyContent="space-between" alignItems="center" my="2" height="50px">
                 <Text ml="2" fontSize="xl" p="3" fontWeight="bold">
                   Write MD
@@ -163,6 +166,21 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
                       onClick={() => setCurrentScreen(note.noteId)}
                     />
                   ))}
+                </Flex>
+              )}
+              {loading && (
+                <Flex
+                  position="absolute"
+                  top="0"
+                  left="0"
+                  w="100%"
+                  h="100%"
+                  justify="center"
+                  align="center"
+                  bg="rgba(255,255,255,0.5)"
+                  zIndex="2000"
+                >
+                  <Spinner size="xl" color="blue.400" />
                 </Flex>
               )}
             </Box>

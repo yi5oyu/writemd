@@ -6,7 +6,7 @@ import NoteHome from '../../features/note/NoteHome'
 import useSaveNote from '../../hooks/useSaveNote'
 import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 
-const Screen = ({ currentScreen, user, setNotes }) => {
+const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
   const { saveNote, loading, error: saveError } = useSaveNote()
   const { updateNoteName, loading: updateLoading, error: updageError } = useUpdateNoteName()
 

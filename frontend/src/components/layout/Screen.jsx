@@ -3,12 +3,37 @@ import axios from 'axios'
 
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
+import useSaveNote from '../../hooks/useSaveNote'
+import updateNoteName from '../../services/updateNoteName'
 
-const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote }) => {
+const Screen = ({ currentScreen, user, setNotes }) => {
+  const { saveNote, loading: saveLoading, error } = useSaveNote()
+
+  // 새 노트 저장
+  const handleSaveNote = async (title) => {
+    try {
+      const savedNote = await saveNote(user, title)
+      setNotes((n) => [...n, savedNote])
+      setCurrentScreen(savedNote.noteId)
+    } catch (error) {
+      console.log('저장 실패: ' + error)
+    }
+  }
+
+  // 노트 업데이트 (이름)
+  const handleUpdateNote = async (noteId, name) => {
+    try {
+      const updatedNote = await updateNoteName(noteId, name)
+      setNotes((n) => n.map((note) => (note.noteId === updatedNote.noteId ? updatedNote : note)))
+    } catch (error) {
+      console.log('업데이트 실패: ' + error)
+    }
+  }
+
   return (
     <>
       {currentScreen === 'home' ? (
-        <NoteHome handleSaveNote={handleSaveNote} />
+        <NoteHome loading={saveLoading} handleSaveNote={handleSaveNote} />
       ) : (
         <NoteScreen handleUpdateNote={handleUpdateNote} noteId={currentScreen} />
       )}

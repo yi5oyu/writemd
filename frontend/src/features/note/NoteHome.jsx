@@ -1,12 +1,12 @@
-import { Box, Textarea, Input, Flex, Heading, Button } from '@chakra-ui/react'
+import { Box, Textarea, Input, Flex, Heading, Button, Spinner } from '@chakra-ui/react'
 import { useState } from 'react'
 
-const NoteHome = ({ handleSaveNote }) => {
+const NoteHome = ({ handleSaveNote, loading }) => {
   const [title, setTitle] = useState('새 노트')
 
   return (
     <Flex w="100vw" alignItems="center" justifyContent="center">
-      <Box w="600px" h="600px">
+      <Box w="600px" h="600px" filter={loading ? 'blur(4px)' : 'none'}>
         <Heading as="h1" size="lg" mb="6" textAlign="center">
           새 노트
         </Heading>
@@ -28,6 +28,22 @@ const NoteHome = ({ handleSaveNote }) => {
           </Flex>
         </Box>
       </Box>
+
+      {loading && (
+        <Flex
+          position="absolute"
+          top="0"
+          left="0"
+          w="100%"
+          h="100%"
+          justify="center"
+          align="center"
+          bg="rgba(255,255,255,0.5)"
+          zIndex="2000"
+        >
+          <Spinner size="xl" color="blue.400" />
+        </Flex>
+      )}
     </Flex>
   )
 }

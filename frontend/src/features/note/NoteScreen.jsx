@@ -265,7 +265,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
         </Flex>
       </Box>
 
-      {/* 로딩 시 중앙에 Spinner 오버레이 */}
+      {/* 로딩 시 Spinner */}
       {loading && (
         <Flex
           position="absolute"

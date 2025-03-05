@@ -7,6 +7,7 @@ const SessionList = ({
   sessions,
   handleChatLoad,
   handleSessionId,
+  handleDeleteSession,
   isConnected,
   connectError,
   loading,
@@ -36,7 +37,7 @@ const SessionList = ({
             title={session.title}
             handleChatLoad={handleChatLoad}
             handleSessionId={handleSessionId}
-            // onClick={{}}
+            handleDeleteSession={handleDeleteSession}
           />
         ))}
 

@@ -17,6 +17,7 @@ import useSendChatMessage from '../../hooks/useSendChatMessage'
 import useSaveSession from '../../hooks/useSaveSession'
 import useChatConnection from '../../hooks/useChatConnection'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
+import useDeleteSession from '../../hooks/useDeleteSession'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -33,6 +34,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const { sendChatMessage, loading: messageLoading, error: MessageError } = useSendChatMessage()
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
+  const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -195,6 +197,18 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
     }
   }, [loading])
 
+  // 세션 삭제
+  const handleDeleteSession = async (sessionId) => {
+    if (delSessionError) return
+
+    try {
+      await deleteSession(sessionId)
+      setSessions((s) => s.filter((session) => session.sessionId !== sessionId))
+    } catch (error) {
+      console.log('세션 삭제 실패: ' + error)
+    }
+  }
+
   return (
     <Flex direction="column" m="5" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
@@ -244,6 +258,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                 <SessionList
                   sessions={sessions}
                   handleSessionId={handleSessionId}
+                  handleDeleteSession={handleDeleteSession}
                   setBoxForm={setBoxForm}
                   setMessages={setMessages}
                   isConnected={isConnected}

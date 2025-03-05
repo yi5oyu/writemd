@@ -18,6 +18,7 @@ const Questionbar = ({
   const [borderRadius, setBorderRadius] = useState('2xl')
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
+  const [isSessionCreating, setIsSessionCreating] = useState(false)
 
   // input 크기 조절
   const handleInput = (e) => {
@@ -110,7 +111,7 @@ const Questionbar = ({
             boxSize="8"
             cursor={!active ? 'pointer' : 'default'}
             onClick={() => {
-              if (!active) handleSendMessage
+              if (!active) handleSendMessage()
             }}
             _hover={
               !active
@@ -133,7 +134,12 @@ const Questionbar = ({
             boxSize="8"
             cursor={!active ? 'pointer' : 'default'}
             onClick={() => {
-              if (!active) handleCreateSession(noteId, questionText)
+              if (!active && !isSessionCreating) {
+                setIsSessionCreating(true)
+                handleCreateSession(noteId, questionText).finally(() => {
+                  setIsSessionCreating(false)
+                })
+              }
             }}
             _hover={
               !active

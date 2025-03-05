@@ -28,10 +28,11 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [isConnected, setIsConnected] = useState(false)
   const [sessions, setSessions] = useState([])
   const [sessionId, setSessionId] = useState('')
+  const [newChatLoading, setNewChatLoading] = useState(null)
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError } = useChat({ sessionId })
-  const { sendChatMessage, loading: messageLoading, error: MessageError } = useSendChatMessage()
+  const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
@@ -42,9 +43,13 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const toast = useToast()
 
   useEffect(() => {
-    if (error || sessionError || MessageError || chatError) {
+    if (error || sessionError || messageError || chatError || delSessionError) {
       const errorMessage =
-        error?.message || sessionError?.message || MessageError?.message || chatError?.message
+        error?.message ||
+        sessionError?.message ||
+        messageError?.message ||
+        chatError?.message ||
+        delSessionError?.message
       toast({
         duration: 5000,
         isClosable: true,
@@ -116,14 +121,11 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 연결 확인
   const handleCheckConnection = async () => {
-    console.log('클릭')
     try {
       const connect = await chatConnection()
-
-      if (connect?.data?.connected) {
+      if (connect?.status === 200) {
         setIsConnected(true)
       } else {
-        console.log('연결: ', connectError)
         setIsConnected(false)
       }
     } catch (err) {
@@ -133,9 +135,10 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
-    if (connectError || questionText === '' || sessionError || MessageError) return
+    if (connectError || questionText === '' || sessionError || messageError) return
 
     try {
+      setNewChatLoading(true)
       const maxLen = 30
       const title = questionText.length > maxLen ? questionText.slice(0, maxLen) : questionText
 
@@ -151,6 +154,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
       setSessionId(session.sessionId)
     } catch (error) {
       console.log('세션 생성 실패: ' + error)
+    } finally {
+      setNewChatLoading(null)
     }
   }
 
@@ -171,7 +176,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
-    if (MessageError) {
+    if (messageError) {
+      console.log('메시지 보내기 에러: ', messageError)
       return
     }
 
@@ -263,7 +269,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   setMessages={setMessages}
                   isConnected={isConnected}
                   connectError={connectError}
-                  loading={connectLoading}
+                  connectLoading={connectLoading}
+                  delSessionLoading={delSessionLoading}
                 />
               </Box>
             ) : boxForm === 'newChat' ? (
@@ -280,10 +287,10 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   setQuestionText={setQuestionText}
                   handleCreateSession={handleCreateSession}
                   handleSendChatMessage={handleSendChatMessage}
-                  sessionLoading={sessionLoading}
+                  loading={newChatLoading}
                   noteId={noteId}
                   connectError={connectError}
-                  loading={connectLoading}
+                  connectLoading={connectLoading}
                 />
               </Box>
             ) : boxForm === 'chatBox' ? (

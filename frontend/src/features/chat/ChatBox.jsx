@@ -22,6 +22,7 @@ const ChatBox = ({ messages, isConnected, sessionId, chatLoading, messageLoading
               {m.content}
             </Box>
           ))}
+
         {messageLoading && (
           <Flex
             mt="4"
@@ -37,6 +38,7 @@ const ChatBox = ({ messages, isConnected, sessionId, chatLoading, messageLoading
             <Spinner size="xl" color="blue.400" />
           </Flex>
         )}
+
         {chatLoading && (
           <Flex
             position="absolute"

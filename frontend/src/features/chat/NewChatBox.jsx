@@ -10,7 +10,7 @@ const NewChatBox = ({
   setQuestionText,
   handleCreateSession,
   handleSendChatMessage,
-  sessionLoading,
+  connectLoading,
   noteId,
   connectError,
   loading,
@@ -39,7 +39,7 @@ const NewChatBox = ({
           alignItems="center"
           justifyContent="center"
           flexDirection="column"
-          filter={sessionLoading ? 'blur(4px)' : 'none'}
+          filter={connectLoading ? 'blur(4px)' : 'none'}
         >
           <Questionbar
             newChat={true}
@@ -71,39 +71,23 @@ const NewChatBox = ({
             />
           </Flex>
         </Flex>
-
-        {sessionLoading && (
-          <Flex
-            position="absolute"
-            top="0"
-            left="0"
-            w="100%"
-            h="100%"
-            justify="center"
-            align="center"
-            bg="rgba(255,255,255,0.5)"
-            zIndex="2000"
-          >
-            <Spinner size="xl" color="blue.400" />
-          </Flex>
-        )}
-
-        {loading && (
-          <Flex
-            position="absolute"
-            top="0"
-            left="0"
-            w="100%"
-            h="100%"
-            justify="center"
-            align="center"
-            bg="rgba(255,255,255,0.5)"
-            zIndex="2000"
-          >
-            <Spinner size="xl" color="blue.400" />
-          </Flex>
-        )}
       </Flex>
+
+      {(loading || connectLoading) && (
+        <Flex
+          position="absolute"
+          top="0"
+          left="0"
+          w="100%"
+          h="100%"
+          justify="center"
+          align="center"
+          bg="rgba(255,255,255,0.5)"
+          zIndex="2000"
+        >
+          <Spinner size="xl" color="blue.400" />
+        </Flex>
+      )}
     </>
   )
 }

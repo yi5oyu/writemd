@@ -10,7 +10,8 @@ const SessionList = ({
   handleDeleteSession,
   isConnected,
   connectError,
-  loading,
+  connectLoading,
+  delSessionLoading,
 }) => {
   const toast = useToast()
 
@@ -26,7 +27,10 @@ const SessionList = ({
 
   return (
     <>
-      <Flex flexDirection="column" filter={loading ? 'blur(4px)' : 'none'}>
+      <Flex
+        flexDirection="column"
+        filter={connectLoading || delSessionLoading ? 'blur(4px)' : 'none'}
+      >
         <Box mb="1" display="flex" justifyContent="flex-end">
           <Switch isChecked={isConnected}></Switch>
         </Box>
@@ -44,7 +48,7 @@ const SessionList = ({
         {(!sessions || sessions.length === 0) && <Box p="4">현재 활성화된 세션이 없습니다.</Box>}
       </Flex>
 
-      {loading && (
+      {(connectLoading || delSessionLoading) && (
         <Flex
           position="absolute"
           top="0"

@@ -10,7 +10,13 @@ const MarkdownPreview = ({ markdownText, mode }) => {
       border="1px solid"
       borderColor="gray.200"
       borderRadius="md"
-      h={mode === 'home' ? 'calc(100vh - 300px)' : 'calc(100vh - 125px)'}
+      h={
+        mode === 'home'
+          ? 'calc(100vh - 300px)'
+          : mode === 'simple'
+          ? 'calc(100vh - 900px)'
+          : 'calc(100vh - 125px)'
+      }
       overflowY="auto"
     >
       <ReactMarkdown components={ChakraUIRenderer()} remarkPlugins={[remarkGfm]}>

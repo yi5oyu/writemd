@@ -33,7 +33,13 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, mode }) => {
       onKeyDown={handleKeyDown}
       placeholder="마크다운 입력"
       resize="none"
-      h={mode === 'home' ? 'calc(100vh - 300px)' : 'calc(100vh - 125px)'}
+      h={
+        mode === 'home'
+          ? 'calc(100vh - 300px)'
+          : mode === 'simple'
+          ? 'calc(100vh - 900px)'
+          : 'calc(100vh - 125px)'
+      }
       w="100%"
       fontSize="md"
       p="4"

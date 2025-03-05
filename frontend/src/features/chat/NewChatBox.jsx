@@ -13,6 +13,7 @@ const NewChatBox = ({
   sessionLoading,
   noteId,
   connectError,
+  loading,
 }) => {
   const toast = useToast()
 
@@ -28,7 +29,7 @@ const NewChatBox = ({
 
   return (
     <>
-      <Flex flexDirection="column" h="calc(100vh - 125px)">
+      <Flex flexDirection="column" h="calc(100vh - 125px)" filter={loading ? 'blur(4px)' : 'none'}>
         <Box mb="1" display="flex" justifyContent="flex-end">
           <Switch isChecked={isConnected}></Switch>
         </Box>
@@ -72,6 +73,22 @@ const NewChatBox = ({
         </Flex>
 
         {sessionLoading && (
+          <Flex
+            position="absolute"
+            top="0"
+            left="0"
+            w="100%"
+            h="100%"
+            justify="center"
+            align="center"
+            bg="rgba(255,255,255,0.5)"
+            zIndex="2000"
+          >
+            <Spinner size="xl" color="blue.400" />
+          </Flex>
+        )}
+
+        {loading && (
           <Flex
             position="absolute"
             top="0"

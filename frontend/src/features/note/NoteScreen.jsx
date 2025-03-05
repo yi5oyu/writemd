@@ -40,8 +40,9 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const toast = useToast()
 
   useEffect(() => {
-    if (error || sessionError || MessageError) {
-      const errorMessage = error?.message || sessionError?.message || MessageError?.message
+    if (error || sessionError || MessageError || chatError) {
+      const errorMessage =
+        error?.message || sessionError?.message || MessageError?.message || chatError?.message
       toast({
         duration: 5000,
         isClosable: true,
@@ -130,9 +131,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
-    if (connectError || questionText === '' || sessionError || MessageError) {
-      return
-    }
+    if (connectError || questionText === '' || sessionError || MessageError) return
 
     try {
       const maxLen = 30
@@ -161,6 +160,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 채팅 내역 조회
   useEffect(() => {
+    if (chatError) return
+
     if (boxForm === 'chatBox' && Array.isArray(chat)) {
       setMessages(chat)
     }
@@ -247,6 +248,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   setMessages={setMessages}
                   isConnected={isConnected}
                   connectError={connectError}
+                  loading={connectLoading}
                 />
               </Box>
             ) : boxForm === 'newChat' ? (
@@ -266,6 +268,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   sessionLoading={sessionLoading}
                   noteId={noteId}
                   connectError={connectError}
+                  loading={connectLoading}
                 />
               </Box>
             ) : boxForm === 'chatBox' ? (

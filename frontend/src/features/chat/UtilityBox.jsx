@@ -23,7 +23,12 @@ const UtilityBox = ({ setBoxForm, handleCheckConnection, boxForm }) => {
           <UtilityBtn
             icon={BiMessageSquareAdd}
             label="새채팅"
-            onClick={() => setBoxForm('newChat')}
+            onClick={() => {
+              if (handleCheckConnection) {
+                handleCheckConnection()
+              }
+              setBoxForm('newChat')
+            }}
           />
         </Box>
       ) : boxForm === 'chat' ? (
@@ -65,7 +70,12 @@ const UtilityBox = ({ setBoxForm, handleCheckConnection, boxForm }) => {
           <UtilityBtn
             icon={BiMessageSquareAdd}
             label="새채팅"
-            onClick={() => setBoxForm('newChat')}
+            onClick={() => {
+              if (handleCheckConnection) {
+                handleCheckConnection()
+              }
+              setBoxForm('newChat')
+            }}
           />
         </Box>
       )}

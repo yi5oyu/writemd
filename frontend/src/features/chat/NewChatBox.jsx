@@ -1,6 +1,8 @@
-import { Box, Switch, Icon, Flex, Spacer, Spinner } from '@chakra-ui/react'
+import { useEffect } from 'react'
+import { Box, Switch, Icon, Flex, Spacer, Spinner, useToast } from '@chakra-ui/react'
 import Questionbar from './Questionbar'
 import ExamBox from './ExamBox'
+import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const NewChatBox = ({
   isConnected,
@@ -10,7 +12,21 @@ const NewChatBox = ({
   handleSendChatMessage,
   sessionLoading,
   noteId,
+  connectError,
+  sessionError,
 }) => {
+  const toast = useToast()
+
+  useEffect(() => {
+    if (connectError) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={connectError.message} />,
+      })
+    }
+  }, [connectError, toast])
+
   return (
     <>
       <Flex flexDirection="column" h="calc(100vh - 125px)">
@@ -32,6 +48,7 @@ const NewChatBox = ({
             handleCreateSession={handleCreateSession}
             handleSendChatMessage={handleSendChatMessage}
             noteId={noteId}
+            active={connectError ? true : false}
           />
           <Flex mt="4" gap="5">
             <ExamBox
@@ -40,6 +57,7 @@ const NewChatBox = ({
               questionText={questionText}
               setQuestionText={setQuestionText}
               handleSendChatMessage={handleSendChatMessage}
+              active={connectError ? true : false}
               text={'마크다운(Markdown) 문법 설명'}
             />
             <ExamBox
@@ -48,6 +66,7 @@ const NewChatBox = ({
               questionText={questionText}
               setQuestionText={setQuestionText}
               handleSendChatMessage={handleSendChatMessage}
+              active={connectError ? true : false}
               text={'Markdown과 GFM 차이'}
             />
           </Flex>

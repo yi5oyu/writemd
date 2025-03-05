@@ -9,6 +9,7 @@ const Questionbar = ({
   newChat,
   handleCreateSession,
   noteId,
+  active,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -97,6 +98,7 @@ const Questionbar = ({
           overflow: scrollFlow,
         }}
         p="0"
+        isDisabled={active}
       />
       {!isTextFlow && !newChat ? (
         <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
@@ -106,12 +108,18 @@ const Questionbar = ({
             as={ArrowForwardIcon}
             color="gray.400"
             boxSize="8"
-            cursor="pointer"
-            onClick={handleSendMessage}
-            _hover={{
-              color: 'blue.400',
-              bg: 'gray.200',
+            cursor={!active ? 'pointer' : 'default'}
+            onClick={() => {
+              if (!active) handleSendMessage
             }}
+            _hover={
+              !active
+                ? {
+                    color: 'blue.400',
+                    bg: 'gray.200',
+                  }
+                : {}
+            }
           />
         </Box>
       ) : (
@@ -123,12 +131,18 @@ const Questionbar = ({
             bg="gray.100"
             color="gray.400"
             boxSize="8"
-            cursor="pointer"
-            onClick={() => handleCreateSession(noteId, questionText)}
-            _hover={{
-              color: 'blue.400',
-              bg: 'gray.200',
+            cursor={!active ? 'pointer' : 'default'}
+            onClick={() => {
+              if (!active) handleCreateSession(noteId, questionText)
             }}
+            _hover={
+              !active
+                ? {
+                    color: 'blue.400',
+                    bg: 'gray.200',
+                  }
+                : {}
+            }
           />
         </Flex>
       )}

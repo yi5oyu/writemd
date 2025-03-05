@@ -11,12 +11,12 @@ import MarkdownPreview from '../markdown/MarkdownPreview'
 import ChatBox from '../chat/ChatBox'
 import useNote from '../../hooks/useNote'
 import saveMarkdownText from '../../services/saveMarkdownText'
-import checkConnection from '../../services/checkConnection'
 import NewChatBox from '../chat/NewChatBox'
 import SessionList from '../chat/SessionList'
 import useChat from '../../hooks/useChat'
 import useSendChatMessage from '../../hooks/useSendChatMessage'
 import useSaveSession from '../../hooks/useSaveSession'
+import useChatConnection from '../../hooks/useChatConnection'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -32,6 +32,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const { chat, loading: chatLoading, error } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: MessageError } = useSendChatMessage()
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
+  const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -99,21 +100,34 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 연결 확인
   const handleCheckConnection = async () => {
-    const message = await checkConnection()
-    if (message) {
-      setIsConnected(true)
-    } else {
+    console.log('클릭')
+    try {
+      const connect = await chatConnection()
+
+      if (connect?.data?.connected) {
+        setIsConnected(true)
+      } else {
+        console.log('연결: ', connectError)
+        setIsConnected(false)
+      }
+    } catch (err) {
       setIsConnected(false)
     }
   }
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
+    if (connectError || questionText === '') {
+      console.log('세션 생성 실패')
+      return
+    }
+
     try {
       const maxLen = 30
       const title = questionText.length > maxLen ? questionText.slice(0, maxLen) : questionText
 
       const session = await saveSession(noteId, title)
+
       setSessions((s) => [...s, session])
       setMessages((m) => [...m, { role: 'user', content: questionText }])
       const response = await sendChatMessage(session.sessionId, aiModel, questionText)
@@ -216,6 +230,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   setBoxForm={setBoxForm}
                   setMessages={setMessages}
                   isConnected={isConnected}
+                  connectError={connectError}
                 />
               </Box>
             ) : boxForm === 'newChat' ? (
@@ -234,6 +249,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   handleSendChatMessage={handleSendChatMessage}
                   sessionLoading={sessionLoading}
                   noteId={noteId}
+                  connectError={connectError}
+                  sessionError={sessionError}
                 />
               </Box>
             ) : boxForm === 'chatBox' ? (

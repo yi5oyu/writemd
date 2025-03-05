@@ -13,7 +13,6 @@ const NewChatBox = ({
   sessionLoading,
   noteId,
   connectError,
-  sessionError,
 }) => {
   const toast = useToast()
 

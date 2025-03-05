@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
-import { Box, Flex, Icon, Input, Spinner } from '@chakra-ui/react'
+import { Box, Flex, Icon, Input, Spinner, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
-import axios from 'axios'
 
 import MarkdownInputBox from '../markdown/MarkdownInputBox'
 import UtilityBox from '../chat/UtilityBox'
@@ -17,6 +16,7 @@ import useChat from '../../hooks/useChat'
 import useSendChatMessage from '../../hooks/useSendChatMessage'
 import useSaveSession from '../../hooks/useSaveSession'
 import useChatConnection from '../../hooks/useChatConnection'
+import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -28,14 +28,27 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [sessions, setSessions] = useState([])
   const [sessionId, setSessionId] = useState('')
 
-  const { note, loading } = useNote(noteId)
-  const { chat, loading: chatLoading, error } = useChat({ sessionId })
+  const { note, loading, error } = useNote(noteId)
+  const { chat, loading: chatLoading, error: chatError } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: MessageError } = useSendChatMessage()
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
+
+  const toast = useToast()
+
+  useEffect(() => {
+    if (error || sessionError || MessageError) {
+      const errorMessage = error?.message || sessionError?.message || MessageError?.message
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
+      })
+    }
+  }, [error, toast])
 
   const handleTitleChange = (e) => {
     setName(e.target.value)
@@ -117,8 +130,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
-    if (connectError || questionText === '') {
-      console.log('세션 생성 실패')
+    if (connectError || questionText === '' || sessionError || MessageError) {
       return
     }
 
@@ -156,6 +168,10 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
+    if (MessageError) {
+      return
+    }
+
     setMessages((m) => [...m, { role: 'user', content: questionText }])
     try {
       console.log('세션id: ', sessionId)
@@ -250,7 +266,6 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   sessionLoading={sessionLoading}
                   noteId={noteId}
                   connectError={connectError}
-                  sessionError={sessionError}
                 />
               </Box>
             ) : boxForm === 'chatBox' ? (

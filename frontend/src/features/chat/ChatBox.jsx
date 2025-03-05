@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react'
 import { Box, Flex, Switch, Spinner } from '@chakra-ui/react'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 
 const ChatBox = ({ messages, isConnected, sessionId, chatLoading, messageLoading }) => {
   return (
@@ -13,7 +15,7 @@ const ChatBox = ({ messages, isConnected, sessionId, chatLoading, messageLoading
             <Box
               key={index}
               p="2"
-              mb="2"
+              my="1.5"
               bg={m.role === 'user' ? 'gray.100' : 'gray.300'}
               alignSelf={m.role === 'user' ? 'flex-end' : 'flex-start'}
               w={m.role == 'user' ? '' : '630px'}
@@ -23,37 +25,9 @@ const ChatBox = ({ messages, isConnected, sessionId, chatLoading, messageLoading
             </Box>
           ))}
 
-        {messageLoading && (
-          <Flex
-            mt="4"
-            p="2"
-            w="630px"
-            h="100%"
-            justify="center"
-            align="center"
-            bg="gray.100"
-            borderRadius="md"
-            zIndex="2000"
-          >
-            <Spinner size="xl" color="blue.400" />
-          </Flex>
-        )}
+        {messageLoading && <ContentsSpinner />}
 
-        {chatLoading && (
-          <Flex
-            position="absolute"
-            top="0"
-            left="0"
-            w="100%"
-            h="100%"
-            justify="center"
-            align="center"
-            bg="rgba(255,255,255,0.5)"
-            zIndex="2000"
-          >
-            <Spinner size="xl" color="blue.400" />
-          </Flex>
-        )}
+        {chatLoading && <LoadingSpinner />}
       </Flex>
     </>
   )

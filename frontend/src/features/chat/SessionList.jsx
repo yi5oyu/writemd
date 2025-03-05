@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Box, Flex, Switch, useToast, Spinner } from '@chakra-ui/react'
 import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const SessionList = ({
   sessions,
@@ -12,24 +13,26 @@ const SessionList = ({
   connectError,
   connectLoading,
   delSessionLoading,
+  delSessionError,
 }) => {
   const toast = useToast()
 
   useEffect(() => {
-    if (connectError) {
+    if (connectError || delSessionError) {
+      const errorMessage = connectError?.message || delSessionError?.message
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={connectError.message} />,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
     }
-  }, [connectError, toast])
+  }, [connectError, delSessionError, toast])
 
   return (
     <>
       <Flex
         flexDirection="column"
-        filter={connectLoading || delSessionLoading ? 'blur(4px)' : 'none'}
+        filter={delSessionLoading || connectLoading ? 'blur(4px)' : 'none'}
       >
         <Box mb="1" display="flex" justifyContent="flex-end">
           <Switch isChecked={isConnected}></Switch>
@@ -48,21 +51,7 @@ const SessionList = ({
         {(!sessions || sessions.length === 0) && <Box p="4">현재 활성화된 세션이 없습니다.</Box>}
       </Flex>
 
-      {(connectLoading || delSessionLoading) && (
-        <Flex
-          position="absolute"
-          top="0"
-          left="0"
-          w="100%"
-          h="100%"
-          justify="center"
-          align="center"
-          bg="rgba(255,255,255,0.5)"
-          zIndex="2000"
-        >
-          <Spinner size="xl" color="blue.400" />
-        </Flex>
-      )}
+      {(delSessionLoading || connectLoading) && <LoadingSpinner />}
     </>
   )
 }

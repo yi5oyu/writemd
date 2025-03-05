@@ -18,6 +18,7 @@ import useSaveSession from '../../hooks/useSaveSession'
 import useChatConnection from '../../hooks/useChatConnection'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import useDeleteSession from '../../hooks/useDeleteSession'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -43,20 +44,16 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const toast = useToast()
 
   useEffect(() => {
-    if (error || sessionError || messageError || chatError || delSessionError) {
+    if (error || sessionError || messageError || chatError) {
       const errorMessage =
-        error?.message ||
-        sessionError?.message ||
-        messageError?.message ||
-        chatError?.message ||
-        delSessionError?.message
+        error?.message || sessionError?.message || messageError?.message || chatError?.message
       toast({
         duration: 5000,
         isClosable: true,
         render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
     }
-  }, [error, toast])
+  }, [error, sessionError, messageError, chatError, toast])
 
   const handleTitleChange = (e) => {
     setName(e.target.value)
@@ -269,6 +266,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   setMessages={setMessages}
                   isConnected={isConnected}
                   connectError={connectError}
+                  delSessionError={delSessionError}
                   connectLoading={connectLoading}
                   delSessionLoading={delSessionLoading}
                 />
@@ -333,21 +331,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
       </Box>
 
       {/* 로딩 시 Spinner */}
-      {(loading || updateLoading) && (
-        <Flex
-          position="absolute"
-          top="0"
-          left="0"
-          w="100%"
-          h="100%"
-          justify="center"
-          align="center"
-          bg="rgba(255,255,255,0.5)"
-          zIndex="2000"
-        >
-          <Spinner size="xl" color="blue.400" />
-        </Flex>
-      )}
+      {(loading || updateLoading) && <LoadingSpinner />}
     </Flex>
   )
 }

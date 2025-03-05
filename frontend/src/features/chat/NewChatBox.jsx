@@ -3,6 +3,7 @@ import { Box, Switch, Icon, Flex, Spacer, Spinner, useToast } from '@chakra-ui/r
 import Questionbar from './Questionbar'
 import ExamBox from './ExamBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const NewChatBox = ({
   isConnected,
@@ -73,21 +74,7 @@ const NewChatBox = ({
         </Flex>
       </Flex>
 
-      {(loading || connectLoading) && (
-        <Flex
-          position="absolute"
-          top="0"
-          left="0"
-          w="100%"
-          h="100%"
-          justify="center"
-          align="center"
-          bg="rgba(255,255,255,0.5)"
-          zIndex="2000"
-        >
-          <Spinner size="xl" color="blue.400" />
-        </Flex>
-      )}
+      {(loading || connectLoading) && <LoadingSpinner />}
     </>
   )
 }

@@ -7,7 +7,7 @@ import UtilityBtn from '../../components/ui/button/UtilityBtn'
 
 const UtilityBox = ({ setBoxForm, handleCheckConnection, boxForm }) => {
   return (
-    <Flex p="1" justifyContent="space-between" alignItems="center">
+    <Flex p="1" justifyContent="space-between" alignItems="center" zIndex="9999">
       {boxForm === 'preview' ? (
         <Box>
           <UtilityBtn

@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar, Spinner } from '@chakra-ui/react'
+import {
+  useDisclosure,
+  Box,
+  Text,
+  Flex,
+  Icon,
+  Spacer,
+  Avatar,
+  Spinner,
+  useToast,
+} from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
   BsLayoutSidebarInset,
@@ -18,6 +28,7 @@ import LogInfoForm from '../../features/auth/LogInfoForm'
 import NoteInputBox from '../../features/note/NoteInputBox'
 import NoteBox from '../../features/note/NoteBox'
 import useDeleteNote from '../../hooks/useDeleteNote'
+import ErrorToast from '../ui/toast/ErrorToast'
 
 const MotionBox = motion(Box)
 
@@ -32,6 +43,18 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
 
   const SIDEBAR_WIDTH = 250
 
+  const toast = useToast()
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={error.message} />,
+      })
+    }
+  }, [error, toast])
+
   const toggleBox = () => {
     setIsSideBoxVisible(!isSideBoxVisible)
   }
@@ -42,6 +65,10 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
 
   // 노트 삭제
   const handleDeleteNote = async (noteId) => {
+    if (error) {
+      return
+    }
+
     try {
       await deleteNote(noteId)
       setNotes((n) => n.filter((note) => note.noteId !== noteId))

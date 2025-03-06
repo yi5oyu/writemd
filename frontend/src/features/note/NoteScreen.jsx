@@ -33,7 +33,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [isSendMessaging, setIsSendMessaging] = useState(false)
 
   const { note, loading, error } = useNote(noteId)
-  const { chat, loading: chatLoading, error: chatError } = useChat({ sessionId })
+  const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
@@ -133,6 +133,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
+    setQuestionText('')
     if (connectError || questionText === '' || sessionError || messageError) return
 
     try {
@@ -147,7 +148,6 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
       const response = await sendChatMessage(session.sessionId, aiModel, questionText)
       let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-      setQuestionText('')
       setBoxForm('chatBox')
       setSessionId(session.sessionId)
     } catch (error) {
@@ -174,10 +174,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
-    if (messageError) {
-      console.log('메시지 보내기 에러: ', messageError)
-      return
-    }
+    setQuestionText('')
+    if (messageError) return
 
     setMessages((m) => [...m, { role: 'user', content: questionText }])
     try {
@@ -186,8 +184,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
       console.log(response)
       let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-
-      setQuestionText('')
+      refetch()
     } catch (error) {
       console.log('메시지 보내기 실패: ' + error)
       setMessages((m) => [...m, { role: 'assistant', content: '에러' }])

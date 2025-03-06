@@ -5,9 +5,8 @@ const useChat = ({ sessionId }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
+  const checkChat = () => {
     if (!sessionId) return
-
     setLoading(true)
     setError(null)
 
@@ -24,9 +23,13 @@ const useChat = ({ sessionId }) => {
         setError(err)
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    checkChat()
   }, [sessionId])
 
-  return { chat, loading, error }
+  return { chat, loading, error, refetch: checkChat }
 }
 
 export default useChat

@@ -15,6 +15,7 @@ import {
   Th,
   Td,
   Divider,
+  Image,
 } from '@chakra-ui/react'
 import { LinkIcon } from '@chakra-ui/icons'
 import CodeBlock from './CodeBlock'
@@ -230,10 +231,7 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 코드 블록
-  pre: (props) => (
-    <CodeBlock {...props} />
-    // <Box as="pre" p={4} bg="gray.100" color="white" overflowX="auto" mb={4} {...props} />
-  ),
+  pre: (props) => <CodeBlock {...props} />,
 
   // 인용문
   blockquote: (props) => (
@@ -348,6 +346,18 @@ const ChakraMarkdownGithubLight = {
     const isFootnote = props.node?.parent?.properties?.className?.includes('footnotes')
     return <Text mb={3} lineHeight="tall" fontSize={isFootnote ? '0.8rem' : 'md'} {...props} />
   },
+
+  // summary 커서 추가
+  summary: (props) => (
+    <Box as="summary" cursor="pointer" {...props}>
+      {props.children}
+    </Box>
+  ),
+
+  // 이미지 렌더링
+  img: (props) => (
+    <Image src={props.src} alt={props.alt} maxW="100%" my={4} borderRadius="md" {...props} />
+  ),
 }
 
 export default ChakraMarkdownGithubLight

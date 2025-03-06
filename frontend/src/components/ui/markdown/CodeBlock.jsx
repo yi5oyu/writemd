@@ -1,8 +1,14 @@
 import React, { useState } from 'react'
 import { Box, IconButton } from '@chakra-ui/react'
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { ghcolors } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
-const CodeBlock = ({ children, ...props }) => {
+const myCustomTheme = {
+  ...ghcolors,
+}
+
+const CodeBlock = ({ children, language, ...props }) => {
   const [copied, setCopied] = useState(false)
 
   // 배열을 텍스트로 변환
@@ -48,6 +54,10 @@ const CodeBlock = ({ children, ...props }) => {
       >
         {children}
       </Box>
+
+      {/* <SyntaxHighlighter language={language} style={myCustomTheme} {...props}>
+        {codeText}
+      </SyntaxHighlighter> */}
     </Box>
   )
 }

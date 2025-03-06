@@ -9,7 +9,6 @@ const SessionList = ({
   handleChatLoad,
   handleSessionId,
   handleDeleteSession,
-  isConnected,
   connectError,
   connectLoading,
   delSessionLoading,
@@ -32,11 +31,8 @@ const SessionList = ({
     <>
       <Flex
         flexDirection="column"
-        filter={delSessionLoading || connectLoading ? 'blur(4px)' : 'none'}
+        filter={connectError || delSessionLoading || connectLoading ? 'blur(4px)' : 'none'}
       >
-        <Box mb="1" display="flex" justifyContent="flex-end">
-          <Switch isChecked={isConnected}></Switch>
-        </Box>
         {sessions.map((session) => (
           <SessionBox
             key={session.sessionId}
@@ -45,6 +41,7 @@ const SessionList = ({
             handleChatLoad={handleChatLoad}
             handleSessionId={handleSessionId}
             handleDeleteSession={handleDeleteSession}
+            error={connectError}
           />
         ))}
 

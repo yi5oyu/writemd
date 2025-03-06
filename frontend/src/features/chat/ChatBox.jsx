@@ -3,13 +3,10 @@ import { Box, Flex, Switch, Spinner } from '@chakra-ui/react'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 
-const ChatBox = ({ messages, isConnected, sessionId, chatLoading, messageLoading }) => {
+const ChatBox = ({ messages, chatLoading, messageLoading }) => {
   return (
     <>
       <Flex flexDirection="column" filter={chatLoading ? 'blur(4px)' : 'none'}>
-        <Box mb="1" display="flex" justifyContent="flex-end">
-          <Switch isChecked={isConnected}></Switch>
-        </Box>
         {messages.length > 0 &&
           messages.map((m, index) => (
             <Box

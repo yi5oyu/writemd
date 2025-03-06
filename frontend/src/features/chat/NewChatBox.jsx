@@ -6,7 +6,6 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const NewChatBox = ({
-  isConnected,
   questionText,
   setQuestionText,
   handleCreateSession,
@@ -30,11 +29,11 @@ const NewChatBox = ({
 
   return (
     <>
-      <Flex flexDirection="column" h="calc(100vh - 125px)" filter={loading ? 'blur(4px)' : 'none'}>
-        <Box mb="1" display="flex" justifyContent="flex-end">
-          <Switch isChecked={isConnected}></Switch>
-        </Box>
-
+      <Flex
+        flexDirection="column"
+        h="calc(100vh - 125px)"
+        filter={connectError || loading ? 'blur(4px)' : 'none'}
+      >
         <Flex
           flex="1"
           alignItems="center"

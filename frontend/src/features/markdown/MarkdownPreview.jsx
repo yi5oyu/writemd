@@ -13,7 +13,7 @@ const MarkdownPreview = ({ markdownText }) => {
       border="1px solid"
       borderColor="gray.200"
       borderRadius="md"
-      h="calc(100vh - 125px)"
+      h="calc(100vh - 140px)"
       overflowY="auto"
       px="7"
     >

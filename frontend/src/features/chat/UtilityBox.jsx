@@ -8,7 +8,7 @@ import ConnectIcon from '../../components/ui/icon/ConnectIcon'
 
 const UtilityBox = ({ setBoxForm, handleCheckConnection, boxForm, isConnected }) => {
   return (
-    <Flex p="1" justifyContent="space-between" alignItems="center" zIndex="9999">
+    <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
       {boxForm === 'preview' ? (
         <Flex alignItems="center" w="100%">
           <UtilityBtn

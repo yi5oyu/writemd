@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
-import { Box, Flex, Icon, Input, Spinner, useToast } from '@chakra-ui/react'
+import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
 
 import MarkdownInputBox from '../markdown/MarkdownInputBox'
@@ -19,6 +19,7 @@ import useChatConnection from '../../hooks/useChatConnection'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import useDeleteSession from '../../hooks/useDeleteSession'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import ToolBox from '../markdown/ToolBox'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -234,9 +235,9 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
           />
         </Flex>
 
-        <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
+        <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
           <Box w="640px">
-            <UtilityBox />
+            <ToolBox />
             <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
           </Box>
 

@@ -10,15 +10,17 @@ const Questionbar = ({
   handleCreateSession,
   noteId,
   active,
+  isSessionCreating,
+  setIsSessionCreating,
+  isSendMessaging,
+  setIsSendMessaging,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
-  const [borderColor, setBorderColor] = useState('gray.300')
   const [textWidth, setTextWidth] = useState('600px')
   const [borderRadius, setBorderRadius] = useState('2xl')
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
-  const [isSessionCreating, setIsSessionCreating] = useState(false)
 
   // input 크기 조절
   const handleInput = (e) => {
@@ -42,22 +44,19 @@ const Questionbar = ({
     }
   }
 
-  const handleFocus = () => {
-    setBorderColor('blue.400')
-  }
-
-  const handleBlur = () => {
-    setBorderColor('gray.300')
-  }
-
-  const handleSendMessage = () => {
+  // 메시지 전송
+  const handleSendMessage = async () => {
     if (questionText.trim()) {
-      handleSendChatMessage(questionText)
-      setScrollFlow('hidden')
-      setTextWidth('600px')
-      setBorderRadius('2xl')
-      setIsTextFlow(false)
-      document.querySelector('#questionText').style.height = '24px'
+      try {
+        await handleSendChatMessage(questionText)
+        setScrollFlow('hidden')
+        setTextWidth('600px')
+        setBorderRadius('2xl')
+        setIsTextFlow(false)
+        document.querySelector('#questionText').style.height = '24px'
+      } catch (error) {
+        console.error(error)
+      }
     }
   }
 
@@ -67,7 +66,7 @@ const Questionbar = ({
 
   return (
     <Box
-      zIndex="1000"
+      zIndex="9999"
       bg="white"
       boxShadow="md"
       p="4"
@@ -75,7 +74,8 @@ const Questionbar = ({
       position="relative"
       borderRadius={borderRadius}
       border="2px solid"
-      borderColor={borderColor}
+      borderColor="gray.300"
+      _focusWithin={{ borderColor: 'blue.400' }}
       onClick={handleQuestionBox}
     >
       <Textarea
@@ -83,8 +83,6 @@ const Questionbar = ({
         placeholder="질문"
         value={questionText}
         onChange={(e) => setQuestionText(e.target.value)}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         onInput={handleInput}
         size="md"
         resize="none"
@@ -101,6 +99,7 @@ const Questionbar = ({
         p="0"
         isDisabled={active}
       />
+
       {!isTextFlow && !newChat ? (
         <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
           <Icon
@@ -109,12 +108,17 @@ const Questionbar = ({
             as={ArrowForwardIcon}
             color="gray.400"
             boxSize="8"
-            cursor={!active ? 'pointer' : 'default'}
+            cursor={!active && !isSendMessaging ? 'pointer' : 'default'}
             onClick={() => {
-              if (!active) handleSendMessage()
+              if (!active && !isSendMessaging) {
+                setIsSendMessaging(true)
+                handleSendMessage().finally(() => {
+                  setIsSendMessaging(false)
+                })
+              }
             }}
             _hover={
-              !active
+              !active && !isSendMessaging
                 ? {
                     color: 'blue.400',
                     bg: 'gray.200',
@@ -123,6 +127,34 @@ const Questionbar = ({
             }
           />
         </Box>
+      ) : isTextFlow ? (
+        <Flex justify="space-between" mt="2">
+          <Box></Box>
+          <Icon
+            as={ArrowForwardIcon}
+            borderRadius="2xl"
+            bg="gray.100"
+            color="gray.400"
+            boxSize="8"
+            cursor={!active && !isSendMessaging ? 'pointer' : 'default'}
+            onClick={() => {
+              if (!active && !isSendMessaging) {
+                setIsSendMessaging(true)
+                handleSendMessage().finally(() => {
+                  setIsSendMessaging(false)
+                })
+              }
+            }}
+            _hover={
+              !active && !isSendMessaging
+                ? {
+                    color: 'blue.400',
+                    bg: 'gray.200',
+                  }
+                : {}
+            }
+          />
+        </Flex>
       ) : (
         <Flex justify="space-between" mt="2">
           <Box></Box>
@@ -132,9 +164,9 @@ const Questionbar = ({
             bg="gray.100"
             color="gray.400"
             boxSize="8"
-            cursor={!active ? 'pointer' : 'default'}
+            cursor={!active && !isSessionCreating && !isSendMessaging ? 'pointer' : 'default'}
             onClick={() => {
-              if (!active && !isSessionCreating) {
+              if (!active && !isSessionCreating && !isSendMessaging) {
                 setIsSessionCreating(true)
                 handleCreateSession(noteId, questionText).finally(() => {
                   setIsSessionCreating(false)
@@ -142,7 +174,7 @@ const Questionbar = ({
               }
             }}
             _hover={
-              !active
+              !active && !isSessionCreating && !isSendMessaging
                 ? {
                     color: 'blue.400',
                     bg: 'gray.200',

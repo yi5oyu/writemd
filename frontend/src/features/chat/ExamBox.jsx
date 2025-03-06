@@ -1,6 +1,14 @@
 import { Box } from '@chakra-ui/react'
 
-const ExamBox = ({ noteId, text, handleCreateSession, active }) => {
+const ExamBox = ({
+  noteId,
+  text,
+  handleCreateSession,
+  active,
+  isSessionCreating,
+  setIsSessionCreating,
+  isSendMessaging,
+}) => {
   return (
     <Box
       w="300px"
@@ -9,7 +17,7 @@ const ExamBox = ({ noteId, text, handleCreateSession, active }) => {
       borderRadius="md"
       bg="gray.200"
       _hover={
-        !active
+        !active && !isSessionCreating && !isSendMessaging
           ? {
               bg: 'gray.300',
             }
@@ -17,9 +25,14 @@ const ExamBox = ({ noteId, text, handleCreateSession, active }) => {
       }
       boxShadow="md"
       textAlign="center"
-      cursor={!active ? 'pointer' : 'default'}
+      cursor={!active && isSessionCreating && !isSendMessaging ? 'pointer' : 'default'}
       onClick={() => {
-        if (!active) handleCreateSession(noteId, text)
+        if (!active && !isSessionCreating && !isSendMessaging) {
+          setIsSessionCreating(true)
+          handleCreateSession(noteId, text).finally(() => {
+            setIsSessionCreating(false)
+          })
+        }
       }}
     >
       {text}

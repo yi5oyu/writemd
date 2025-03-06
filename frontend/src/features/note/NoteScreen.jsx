@@ -30,6 +30,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [sessions, setSessions] = useState([])
   const [sessionId, setSessionId] = useState('')
   const [newChatLoading, setNewChatLoading] = useState(null)
+  const [isSendMessaging, setIsSendMessaging] = useState(false)
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError } = useChat({ sessionId })
@@ -279,6 +280,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   noteId={noteId}
                   connectError={connectError}
                   connectLoading={connectLoading}
+                  isSendMessaging={isSendMessaging}
+                  setIsSendMessaging={setIsSendMessaging}
                 />
               )}
 
@@ -286,7 +289,6 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                 <>
                   <ChatBox
                     messages={messages}
-                    sessionId={sessionId}
                     chatLoading={chatLoading}
                     messageLoading={messageLoading}
                   />
@@ -304,6 +306,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                         questionText={questionText}
                         setQuestionText={setQuestionText}
                         handleSendChatMessage={handleSendChatMessage}
+                        isSendMessaging={isSendMessaging}
+                        setIsSendMessaging={setIsSendMessaging}
                       />
                     </Box>
                   </Flex>

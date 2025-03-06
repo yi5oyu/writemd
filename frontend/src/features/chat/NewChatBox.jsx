@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Box, Switch, Icon, Flex, Spacer, Spinner, useToast } from '@chakra-ui/react'
+import { useEffect, useState } from 'react'
+import { Flex, useToast } from '@chakra-ui/react'
 import Questionbar from './Questionbar'
 import ExamBox from './ExamBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
@@ -14,7 +14,11 @@ const NewChatBox = ({
   noteId,
   connectError,
   loading,
+  isSendMessaging,
+  setIsSendMessaging,
 }) => {
+  const [isSessionCreating, setIsSessionCreating] = useState(false)
+
   const toast = useToast()
 
   useEffect(() => {
@@ -32,7 +36,7 @@ const NewChatBox = ({
       <Flex
         flexDirection="column"
         h="calc(100vh - 125px)"
-        filter={connectError || loading ? 'blur(4px)' : 'none'}
+        filter={connectError || loading || isSendMessaging ? 'blur(4px)' : 'none'}
       >
         <Flex
           flex="1"
@@ -47,6 +51,10 @@ const NewChatBox = ({
             setQuestionText={setQuestionText}
             handleCreateSession={handleCreateSession}
             handleSendChatMessage={handleSendChatMessage}
+            isSessionCreating={isSessionCreating}
+            setIsSessionCreating={setIsSessionCreating}
+            isSendMessaging={isSendMessaging}
+            setIsSendMessaging={setIsSendMessaging}
             noteId={noteId}
             active={connectError ? true : false}
           />
@@ -57,6 +65,9 @@ const NewChatBox = ({
               questionText={questionText}
               setQuestionText={setQuestionText}
               handleSendChatMessage={handleSendChatMessage}
+              isSessionCreating={isSessionCreating}
+              setIsSessionCreating={setIsSessionCreating}
+              isSendMessaging={isSendMessaging}
               active={connectError ? true : false}
               text={'마크다운(Markdown) 문법 설명'}
             />
@@ -66,6 +77,9 @@ const NewChatBox = ({
               questionText={questionText}
               setQuestionText={setQuestionText}
               handleSendChatMessage={handleSendChatMessage}
+              isSessionCreating={isSessionCreating}
+              setIsSessionCreating={setIsSessionCreating}
+              isSendMessaging={isSendMessaging}
               active={connectError ? true : false}
               text={'Markdown과 GFM 차이'}
             />
@@ -73,7 +87,7 @@ const NewChatBox = ({
         </Flex>
       </Flex>
 
-      {(loading || connectLoading) && <LoadingSpinner />}
+      {(loading || connectLoading || isSendMessaging) && <LoadingSpinner />}
     </>
   )
 }

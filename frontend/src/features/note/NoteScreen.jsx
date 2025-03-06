@@ -241,46 +241,36 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
             <UtilityBox />
             <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
           </Box>
+
           <Box w="640px" position="relative">
-            {boxForm === 'preview' ? (
-              <Box w="640px" h="100%">
-                <UtilityBox
-                  setBoxForm={setBoxForm}
-                  boxForm={boxForm}
-                  handleCheckConnection={handleCheckConnection}
-                />
-                <MarkdownPreview markdownText={markdownText} />
-              </Box>
-            ) : boxForm === 'chat' ? (
-              <Box w="640px" h="100%">
-                <UtilityBox
-                  setBoxForm={setBoxForm}
-                  handleCheckConnection={handleCheckConnection}
-                  boxForm={boxForm}
-                />
+            <Box w="640px" h="100%">
+              {/* 공통 UtilityBox */}
+              <UtilityBox
+                setBoxForm={setBoxForm}
+                handleCheckConnection={handleCheckConnection}
+                boxForm={boxForm}
+                isConnected={isConnected}
+              />
+
+              {boxForm === 'preview' && <MarkdownPreview markdownText={markdownText} />}
+
+              {boxForm === 'chat' && (
                 <SessionList
                   sessions={sessions}
                   handleSessionId={handleSessionId}
                   handleDeleteSession={handleDeleteSession}
                   setBoxForm={setBoxForm}
                   setMessages={setMessages}
-                  isConnected={isConnected}
                   connectError={connectError}
                   delSessionError={delSessionError}
                   connectLoading={connectLoading}
                   delSessionLoading={delSessionLoading}
                 />
-              </Box>
-            ) : boxForm === 'newChat' ? (
-              <Box w="640px" h="100%">
-                <UtilityBox
-                  setBoxForm={setBoxForm}
-                  handleCheckConnection={handleCheckConnection}
-                  boxForm={boxForm}
-                />
+              )}
+
+              {boxForm === 'newChat' && (
                 <NewChatBox
                   messages={messages}
-                  isConnected={isConnected}
                   questionText={questionText}
                   setQuestionText={setQuestionText}
                   handleCreateSession={handleCreateSession}
@@ -290,46 +280,39 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                   connectError={connectError}
                   connectLoading={connectLoading}
                 />
-              </Box>
-            ) : boxForm === 'chatBox' ? (
-              <Box w="640px" h="100%">
-                <UtilityBox
-                  setBoxForm={setBoxForm}
-                  handleCheckConnection={handleCheckConnection}
-                  boxForm={boxForm}
-                />
-                <ChatBox
-                  messages={messages}
-                  isConnected={isConnected}
-                  sessionId={sessionId}
-                  chatLoading={chatLoading}
-                  messageLoading={messageLoading}
-                />
-              </Box>
-            ) : null}
-            <Flex
-              flexDirection="column"
-              justify="center"
-              position="absolute"
-              bottom="5"
-              left="50%"
-              transform="translate(-50%)"
-              zIndex="1000"
-            >
-              {boxForm === 'chatBox' && (
-                <Box w="600px">
-                  <Questionbar
-                    questionText={questionText}
-                    setQuestionText={setQuestionText}
-                    handleSendChatMessage={handleSendChatMessage}
-                  />
-                </Box>
               )}
-            </Flex>
+
+              {boxForm === 'chatBox' && (
+                <>
+                  <ChatBox
+                    messages={messages}
+                    sessionId={sessionId}
+                    chatLoading={chatLoading}
+                    messageLoading={messageLoading}
+                  />
+                  <Flex
+                    flexDirection="column"
+                    justify="center"
+                    position="absolute"
+                    bottom="5"
+                    left="50%"
+                    transform="translate(-50%)"
+                    zIndex="1000"
+                  >
+                    <Box w="600px">
+                      <Questionbar
+                        questionText={questionText}
+                        setQuestionText={setQuestionText}
+                        handleSendChatMessage={handleSendChatMessage}
+                      />
+                    </Box>
+                  </Flex>
+                </>
+              )}
+            </Box>
           </Box>
         </Flex>
       </Box>
-
       {/* 로딩 시 Spinner */}
       {(loading || updateLoading) && <LoadingSpinner />}
     </Flex>

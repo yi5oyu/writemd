@@ -237,7 +237,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
         <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
           <Box w="640px">
-            <ToolBox />
+            <ToolBox onClearText={() => setMarkdownText('')} />
             <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
           </Box>
 

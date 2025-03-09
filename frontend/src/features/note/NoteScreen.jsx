@@ -211,6 +211,10 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
     }
   }
 
+  const handleCopyMarkdown = () => {
+    navigator.clipboard.writeText(markdownText)
+  }
+
   return (
     <Flex direction="column" m="5" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
@@ -237,7 +241,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
 
         <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
           <Box w="640px">
-            <ToolBox onClearText={() => setMarkdownText('')} />
+            <ToolBox onClearText={() => setMarkdownText('')} onCopyText={handleCopyMarkdown} />
             <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
           </Box>
 

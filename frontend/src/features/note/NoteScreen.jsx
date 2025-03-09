@@ -218,7 +218,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   }
 
   return (
-    <Flex direction="column" m="5" w="100vw" position="relative">
+    <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
         <Flex
           w="100%"
@@ -233,16 +233,20 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
             fontSize="18px"
             variant="unstyled"
             mx="10px"
+            pl="10px"
             onChange={handleTitleChange}
-            w="40vw"
+            w="1220px"
             maxLength={35}
             _focus={{ bg: 'gray.200' }}
+            borderRadius="md"
+            // border="1px solid"
           />
           <Icon
             as={PiCheckFatFill}
-            color="blue.400"
+            color="gray.200"
             cursor="pointer"
             onClick={() => handleUpdateNote(noteId, name)}
+            _hover={{ color: 'blue.400' }}
           />
         </Flex>
 

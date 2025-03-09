@@ -48,6 +48,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -98,6 +101,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -127,6 +133,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -156,6 +165,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -185,6 +197,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -215,6 +230,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -222,6 +240,7 @@ const ChakraMarkdownGithubLight = {
       </Heading>
     )
   },
+
   // 링크
   a: (props) => <Link color="blue.500" {...props} />,
 

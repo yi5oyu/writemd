@@ -16,6 +16,7 @@ const MarkdownPreview = ({ markdownText }) => {
       h="calc(100vh - 140px)"
       overflowY="auto"
       px="7"
+      pt="2"
     >
       <ReactMarkdown
         components={ChakraUIRenderer(ChakraMarkdownGithubLight)}

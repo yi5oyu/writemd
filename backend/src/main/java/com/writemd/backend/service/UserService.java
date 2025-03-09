@@ -17,6 +17,8 @@ import com.writemd.backend.repository.SessionRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,17 +38,31 @@ public class UserService {
 
     // user 저장
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {
-        Long userId = userRepository.findIdByGithubId(githubId)
-                .orElse(null);
+        Optional<Users> user = userRepository.findByGithubId(githubId);
+        if(user.isPresent()){
+            Users existingUser = user.get();
+            boolean updated = false;
 
-        return userRepository.save(
-            Users.builder()
-                .id(userId)
-                .githubId(githubId)
-                .name(name)
-                .htmlUrl(htmlUrl)
-                .avatarUrl(avatarUrl)
-                .build());
+            if(!Objects.equals(existingUser.getName(), name)) {
+                existingUser.setName(name);
+                updated = true;
+            }
+            if(!Objects.equals(existingUser.getAvatarUrl(), avatarUrl)) {
+                existingUser.setAvatarUrl(avatarUrl);
+                updated = true;
+            }
+
+            return updated ? userRepository.save(existingUser) : existingUser;
+        }
+
+        // 새 유저 저장
+        Users newUser = Users.builder()
+            .githubId(githubId)
+            .name(name)
+            .htmlUrl(htmlUrl)
+            .avatarUrl(avatarUrl)
+            .build();
+        return userRepository.save(newUser);
     }
 
     // user 조회

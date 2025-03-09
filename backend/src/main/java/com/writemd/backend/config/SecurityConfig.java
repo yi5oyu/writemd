@@ -45,13 +45,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**",
-                                "/logout")
-                        .permitAll().requestMatchers("/h2-console/**", "/profile/**", "/api/**")
-                        .authenticated().anyRequest().authenticated())
-                .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .authorizeHttpRequests((requests) -> requests
+                .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**", "/logout", "/h2-console/**")
+                .permitAll()
+                .requestMatchers("/profile/**", "/api/**")
+                .authenticated()
+                .anyRequest().authenticated())
+            .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                         .userInfoEndpoint(
                                 userInfo -> userInfo.userService(customOAuth2UserService()))
                         .defaultSuccessUrl("http://localhost:5173", true))

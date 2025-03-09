@@ -4,13 +4,21 @@ import { CopyIcon, CheckIcon } from '@chakra-ui/icons'
 import UtilityBtn from '../../components/ui/button/UtilityBtn'
 import { RiToolsFill } from 'react-icons/ri'
 import { MdOutlineEmojiEmotions, MdSpellcheck } from 'react-icons/md'
+import { AiOutlineFullscreen, AiOutlineFullscreenExit } from 'react-icons/ai'
 import { BiSolidEraser } from 'react-icons/bi'
 // import * as SimpleIcons from '@icons-pack/react-simple-icons'
 
 // import * as simpleIcons from 'simple-icons'
 import EmojiBox from './EmojiBox'
 
-const ToolBox = ({ handleCheckConnection, boxForm, isConnected, onClearText, onCopyText }) => {
+const ToolBox = ({
+  handleCheckConnection,
+  boxForm,
+  isConnected,
+  onClearText,
+  onCopyText,
+  onScreen,
+}) => {
   const [showEmojiBox, setShowEmojiBox] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -37,6 +45,11 @@ const ToolBox = ({ handleCheckConnection, boxForm, isConnected, onClearText, onC
         <UtilityBtn icon={MdOutlineEmojiEmotions} label="이모지" onClick={handleEmojiClick} />
         <UtilityBtn icon={BiSolidEraser} label="텍스트 삭제" onClick={onClearText} />
         <UtilityBtn icon={copied ? CheckIcon : CopyIcon} label="텍스트 복사" onClick={handleCopy} />
+        <UtilityBtn
+          icon={screen ? AiOutlineFullscreen : AiOutlineFullscreenExit}
+          label="화면 크기"
+          onClick={onScreen}
+        />
       </Flex>
       {showEmojiBox && <EmojiBox onEmojiSelect={handleEmojiSelect} />}
     </Flex>

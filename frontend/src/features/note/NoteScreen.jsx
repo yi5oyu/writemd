@@ -32,6 +32,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [sessionId, setSessionId] = useState('')
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
+  const [screen, setScreen] = useState(true)
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -211,6 +212,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
     }
   }
 
+  // 클립보드 복사
   const handleCopyMarkdown = () => {
     navigator.clipboard.writeText(markdownText)
   }
@@ -218,7 +220,12 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   return (
     <Flex direction="column" m="5" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
-        <Flex w="100%" alignItems="center" justifyContent="center">
+        <Flex
+          w="100%"
+          display={screen ? 'flex' : 'none'}
+          alignItems="center"
+          justifyContent="center"
+        >
           <Icon as={PiNotebookFill} />
           <Input
             value={name}
@@ -240,13 +247,18 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
         </Flex>
 
         <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
-          <Box w="640px">
-            <ToolBox onClearText={() => setMarkdownText('')} onCopyText={handleCopyMarkdown} />
+          <Box w={screen ? '640px' : '100%'}>
+            <ToolBox
+              onClearText={() => setMarkdownText('')}
+              onCopyText={handleCopyMarkdown}
+              screen={screen}
+              onScreen={() => setScreen(!screen)}
+            />
             <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
           </Box>
 
-          <Box w="640px" position="relative">
-            <Box w="640px" h="100%">
+          <Box w={screen ? '640px' : '100%'} position="relative">
+            <Box h="100%">
               {/* 공통 UtilityBox */}
               <UtilityBox
                 setBoxForm={setBoxForm}

@@ -217,6 +217,19 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
     navigator.clipboard.writeText(markdownText)
   }
 
+  // 파일 추출
+  const exportMarkdown = () => {
+    const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'writemd.md'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
@@ -257,6 +270,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               onCopyText={handleCopyMarkdown}
               screen={screen}
               onScreen={() => setScreen(!screen)}
+              onExport={exportMarkdown}
             />
             <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
           </Box>

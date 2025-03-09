@@ -5,6 +5,7 @@ import UtilityBtn from '../../components/ui/button/UtilityBtn'
 import { RiToolsFill } from 'react-icons/ri'
 import { MdOutlineEmojiEmotions, MdSpellcheck } from 'react-icons/md'
 import { AiOutlineFullscreen, AiOutlineFullscreenExit } from 'react-icons/ai'
+import { FaFileExport } from 'react-icons/fa'
 import { BiSolidEraser } from 'react-icons/bi'
 // import * as SimpleIcons from '@icons-pack/react-simple-icons'
 
@@ -18,6 +19,8 @@ const ToolBox = ({
   onClearText,
   onCopyText,
   onScreen,
+  screen,
+  onExport,
 }) => {
   const [showEmojiBox, setShowEmojiBox] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -50,6 +53,7 @@ const ToolBox = ({
           label="화면 크기"
           onClick={onScreen}
         />
+        <UtilityBtn icon={FaFileExport} label="추출" onClick={onExport} />
       </Flex>
       {showEmojiBox && <EmojiBox onEmojiSelect={handleEmojiSelect} />}
     </Flex>

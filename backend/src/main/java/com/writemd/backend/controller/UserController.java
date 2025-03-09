@@ -1,16 +1,17 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.UserDTO;
+import com.writemd.backend.service.GithubService;
 import com.writemd.backend.service.UserService;
 import java.security.Principal;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/user")
@@ -19,6 +20,8 @@ public class UserController {
 
     // private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserService userService;
+
+    private final GithubService githubService;
 
     @GetMapping("/info")
     public UserDTO getUserInfo(@AuthenticationPrincipal OAuth2User oauthUser) {
@@ -41,5 +44,11 @@ public class UserController {
         // } else {
         // response.put("accessToken", "토큰x");
         // }
+    }
+
+    @GetMapping("/github/repos")
+    public Mono<String> getRepos(@AuthenticationPrincipal OAuth2User principal) {
+        System.out.println(principal);
+        return githubService.getRepositorys(principal.getName());
     }
 }

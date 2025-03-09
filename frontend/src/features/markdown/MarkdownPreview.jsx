@@ -11,11 +11,7 @@ const MarkdownPreview = ({ markdownText, mode }) => {
       borderColor="gray.200"
       borderRadius="md"
       h={
-        mode === 'home'
-          ? 'calc(100vh - 300px)'
-          : mode === 'simple'
-          ? 'calc(100vh - 900px)'
-          : 'calc(100vh - 125px)'
+        mode === 'home' ? 'calc(100vh - 300px)' : mode === 'simple' ? '35vh' : 'calc(100vh - 125px)'
       }
       overflowY="auto"
     >

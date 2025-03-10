@@ -75,7 +75,12 @@ export const TutorialContents = [
         </Text>
       </Box>
     ),
-    markdownContents: `🔥 불꽃: :fire:  
+    markdownContents: `[이모지 차트](https://www.webfx.com/tools/emoji-cheat-sheet/)
+
+Windows: (win + .)/(win + ;)    
+Mac: Ctrl + Cmd + Space
+
+🔥 불꽃: :fire:  
 🎉 축하: :tada:  
 🚀 로켓: :rocket:  
 💡 아이디어: :bulb:  
@@ -152,17 +157,78 @@ export const TutorialContents = [
         <Text mb={2}>
           마크다운에서는 <Code>Mermaid.js</Code>를 사용하여 다이어그램을 생성할 수 있습니다.
         </Text>
-        <Text mb={2}>순서도, 간트 차트, 클래스 다이어그램 등을 쉽게 작성할 수 있습니다.</Text>
+        <Text mb={2}>
+          Mermaid는 텍스트 기반으로 코드 블록을 사용하여 쉽게 다이어그램을 작성할 수 있게 해주는
+          도구입니다.
+        </Text>
+        <Text>순서도, 간트 차트, 클래스 다이어그램 등을 쉽게 작성할 수 있습니다.</Text>
       </Box>
     ),
-    markdownContents: `\`\`\`mermaid
-  graph TD;
-    A[시작] --> B{조건 확인};
-    B -- 예 --> C[작업 수행];
-    B -- 아니오 --> D[다른 작업];
-    C --> E[종료];
-    D --> E;
-  \`\`\`
-  `,
+    markdownContents: `# mermaid
+
+[mermaid](https://mermaid.js.org/)  
+
+## 기본 구조    
+
+\`\`\`mermaid
+<Mermaid 문법 내용>
+\`\`\`
+
+## 종류   
+
+\`플로우, 간트, 피 차트, 시퀀스, 클래스, 상태, ER 다이어그램 등...\`
+
+### 플로우차트    
+\`graph TD(Top-Down), LR(Left-to-Right), RL(Right-to-Left), BT(Bottom-Up)\`
+
+\`\`\`mermaid
+graph TD
+  A[시작] --> B{조건 확인}
+  B -- 예 --> C[작업 수행]
+  B -- 아니오 --> D[다른 작업]
+  C --> E[종료]
+  D --> E
+\`\`\`
+
+### 시퀀스 다이어그램   
+\`sequenceDiagram\`     
+
+\`\`\`mermaid 
+sequenceDiagram
+  participant A as Alice
+  participant B as Bob
+  A->>B: 안녕하세요?
+  activate B
+  B-->>A: 안녕하세요!
+  deactivate B
+\`\`\`
+
+### 클래스 다이어그램   
+\`classDiagram\`
+
+\`\`\`mermaid 
+classDiagram
+  class Animal {
+    +String name
+    +int age
+    +eat()
+  }
+  class Dog {
+    +bark()
+  }
+  Animal <|-- Dog
+\`\`\`
+
+### 간트 차트   
+\`gantt\`
+
+\`\`\`mermaid
+gantt
+  dateFormat  YYYY-MM-DD
+  title 프로젝트 일정
+  section 개발
+    작업1: 2025-03-01, 10d
+    작업2: 2025-03-12, 5d
+\`\`\``,
   },
 ]

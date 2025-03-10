@@ -4,11 +4,14 @@ import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.GithubService;
 import com.writemd.backend.service.UserService;
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -46,9 +49,27 @@ public class UserController {
         // }
     }
 
+    // 깃허브 레포지토리 조회
     @GetMapping("/github/repos")
-    public Mono<String> getRepos(@AuthenticationPrincipal OAuth2User principal) {
-        System.out.println(principal);
-        return githubService.getRepositorys(principal.getName());
+    public Mono<List<Map<String, Object>>> getRepositories(@AuthenticationPrincipal OAuth2User principal) {
+        return githubService.getRepositories(principal.getName());
+    }
+
+    // 깃허브 레포지토리 하위 목록 조회
+    @GetMapping("/repos/{owner}/{repo}/contents")
+    public Mono<List<Map<String, Object>>> getContents(
+        @PathVariable String owner,
+        @PathVariable String repo) {
+
+        return githubService.getRepositoryContents(owner, repo);
+    }
+
+    @GetMapping("/repos/{owner}/{repo}/contents")
+    public Mono<Map<String, Object>> getContentsTree(
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @PathVariable String treeSha) {
+
+        return githubService.getRepositoryTree(owner, repo, treeSha);
     }
 }

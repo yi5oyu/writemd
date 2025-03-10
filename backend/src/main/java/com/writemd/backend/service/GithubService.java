@@ -1,7 +1,10 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.GithubDTO;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
@@ -18,10 +21,11 @@ public class GithubService {
     @Autowired
     private WebClient webClient;
 
-    public Mono<String> getRepositorys(String principalName) {
+    // 레포지토리 조회
+    public Mono<List<Map<String, Object>>> getRepositories(String principalName) {
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
         if (client == null) {
-            return Mono.error(new IllegalStateException("GitHub client 찾을 수 없음"));
+            return Mono.error(new IllegalStateException("GitHub OAuth2 client not found"));
         }
         String accessToken = client.getAccessToken().getTokenValue();
 
@@ -29,9 +33,27 @@ public class GithubService {
             .uri("https://api.github.com/user/repos")
             .headers(headers -> headers.setBearerAuth(accessToken))
             .retrieve()
-            .bodyToFlux(GithubDTO.class)
-            .map(GithubDTO::getName)
-            .collectList()
-            .map(list -> String.join(", ", list));
+            .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .collectList();
     }
+
+    // 레포지토리 하위 목록 조회
+    public Mono<List<Map<String, Object>>> getRepositoryContents(String owner, String repo) {
+        return webClient.get()
+            .uri("https://api.github.com/repos/{owner}/{repo}/contents", owner, repo)
+            .retrieve()
+            .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .collectList();
+    }
+
+
+    public Mono<Map<String, Object>> getRepositoryTree(String owner, String repo, String treeSha) {
+        return webClient.get()
+            .uri("https://api.github.com/repos/{owner}/{repo}/git/trees/{treeSha}?recursive=1", owner, repo, treeSha)
+            .retrieve()
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+
+    }
+
+
 }

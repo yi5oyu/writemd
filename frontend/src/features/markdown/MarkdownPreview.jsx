@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import ChakraUIRenderer from 'chakra-ui-markdown-renderer'
 import remarkGfm from 'remark-gfm'
 import remarkSlug from 'remark-slug'
+import remarkEmoji from 'remark-emoji'
 import rehypeRaw from 'rehype-raw'
 import ChakraMarkdownGithubLight from '../../components/ui/markdown/ChakraMarkdownGithubLight'
 
@@ -20,7 +21,7 @@ const MarkdownPreview = ({ markdownText }) => {
     >
       <ReactMarkdown
         components={ChakraUIRenderer(ChakraMarkdownGithubLight)}
-        remarkPlugins={[remarkGfm, remarkSlug]}
+        remarkPlugins={[remarkGfm, remarkSlug, remarkEmoji]}
         rehypePlugins={[rehypeRaw]}
       >
         {markdownText}

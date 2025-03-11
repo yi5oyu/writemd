@@ -51,7 +51,7 @@ public class GithubService {
             .collectList();
     }
 
-    // 레포지토리 하위 목록 조회
+    // 모든 목록 조회
     public Mono<Map<String, Object>> getRepositoryTree(String owner, String repo, String treeSha) {
         return webClient.get()
             .uri("https://api.github.com/repos/{owner}/{repo}/git/trees/{treeSha}?recursive=1", owner, repo, treeSha)
@@ -87,6 +87,25 @@ public class GithubService {
                     .flatMap(errorBody -> {
                         return Mono.error(new RuntimeException("GitHub API Error: " + errorBody));
                     })
+            )
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
+    // 파일 내용 조회
+    public Mono<Map<String, Object>> getFileContent(String principalName, String owner, String repo, String path) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+        if (client == null) {
+            return Mono.error(new IllegalStateException("GitHub OAuth2 로그인 안됨"));
+        }
+        String accessToken = client.getAccessToken().getTokenValue();
+
+        return webClient.get()
+            .uri("https://api.github.com/repos/{owner}/{repo}/contents/{path}", owner, repo, path)
+            .headers(headers -> headers.setBearerAuth(accessToken))
+            .retrieve()
+            .onStatus(status -> status.isError(), clientResponse ->
+                clientResponse.bodyToMono(String.class)
+                    .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error: " + errorBody)))
             )
             .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
     }

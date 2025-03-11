@@ -54,13 +54,13 @@ public class UserController {
         // }
     }
 
-    // 깃허브 레포지토리 조회
+    // 레포지토리 조회
     @GetMapping("/github/repos")
     public Mono<List<Map<String, Object>>> getRepositories(@AuthenticationPrincipal OAuth2User principal) {
         return githubService.getRepositories(principal.getName());
     }
 
-    // 깃허브 레포지토리 하위 목록 조회
+    // 레포지토리 하위 목록 조회
     @GetMapping("/repos/{owner}/{repo}/contents")
     public Mono<List<Map<String, Object>>> getContents(
         @PathVariable String owner,
@@ -69,15 +69,17 @@ public class UserController {
         return githubService.getRepositoryContents(owner, repo);
     }
 
-    @GetMapping("/repos/{owner}/{repo}/contents/{treeSha}")
+    // 모든 목록 조회
+    @GetMapping("/repos/{owner}/{repo}/contents/tree/{sha}")
     public Mono<Map<String, Object>> getContentsTree(
         @PathVariable String owner,
         @PathVariable String repo,
-        @PathVariable String treeSha) {
+        @PathVariable String sha) {
 
-        return githubService.getRepositoryTree(owner, repo, treeSha);
+        return githubService.getRepositoryTree(owner, repo, sha);
     }
 
+    // 파일 생성/업데이트
     @PostMapping("/repos/{owner}/{repo}/files")
     public Mono<ResponseEntity<Map<String, Object>>> createOrUpdateFile(
         @AuthenticationPrincipal(expression = "name") String principalName,
@@ -93,6 +95,19 @@ public class UserController {
             .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 Collections.singletonMap("error", e.getMessage())
             )));
+    }
+
+    // 파일 내용 조회
+    @GetMapping("/repos/{owner}/{repo}/contents/{path}")
+    public Mono<ResponseEntity<Map<String, Object>>> getFileContent(
+        @AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @PathVariable String path) {
+        return githubService.getFileContent(principalName, owner, repo, path)
+            .map(content -> ResponseEntity.ok(content))
+            .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", e.getMessage()))));
     }
 
 }

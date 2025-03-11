@@ -29,11 +29,13 @@ import NoteInputBox from '../../features/note/NoteInputBox'
 import NoteBox from '../../features/note/NoteBox'
 import useDeleteNote from '../../hooks/useDeleteNote'
 import ErrorToast from '../ui/toast/ErrorToast'
+import useGithubFile from '../../hooks/useGithubFile'
 
 const MotionBox = motion(Box)
 
 const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
   const { deleteNote, loading, error } = useDeleteNote()
+  const { createOrUpdateFile, loading: gitFileLoading, error: gitFileError, data } = useGithubFile()
 
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
@@ -76,6 +78,18 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
     } catch (error) {
       console.log('삭제 실패: ' + error)
     }
+  }
+
+  // 파일 업로드(임시)
+  const handleClick = () => {
+    createOrUpdateFile({
+      owner: 'yi5oyu', // GitHub 소유자 이름
+      repo: 'test', // 레포지토리 이름
+      path: 'README.md', // 파일 경로 (예: README.md)
+      message: 'Add markdown text', // 커밋 메시지
+      markdownText: '# Hello GitHub!\nThis is a sample markdown text.',
+      sha: '00bcb6e3738c7392875d6c3e65c22d569eaff069',
+    })
   }
 
   return (
@@ -210,6 +224,14 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
                   <Spinner size="xl" color="blue.400" />
                 </Flex>
               )}
+
+              {/* git */}
+              <Box
+                onClick={handleClick}
+                style={{ cursor: 'pointer', border: '1px solid #ccc', padding: '10px' }}
+              >
+                깃허브
+              </Box>
             </Box>
 
             {/* 여백 */}

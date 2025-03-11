@@ -4,15 +4,20 @@ import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.GithubService;
 import com.writemd.backend.service.UserService;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -64,7 +69,7 @@ public class UserController {
         return githubService.getRepositoryContents(owner, repo);
     }
 
-    @GetMapping("/repos/{owner}/{repo}/contents")
+    @GetMapping("/repos/{owner}/{repo}/contents/{treeSha}")
     public Mono<Map<String, Object>> getContentsTree(
         @PathVariable String owner,
         @PathVariable String repo,
@@ -72,4 +77,22 @@ public class UserController {
 
         return githubService.getRepositoryTree(owner, repo, treeSha);
     }
+
+    @PostMapping("/repos/{owner}/{repo}/files")
+    public Mono<ResponseEntity<Map<String, Object>>> createOrUpdateFile(
+        @AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @RequestParam String path,
+        @RequestParam String message,
+        @RequestParam(required = false) String sha,
+        @RequestBody String fileContent) {
+
+        return githubService.createOrUpdateFile(principalName, owner, repo, path, message, fileContent, sha)
+            .map(response -> ResponseEntity.ok(response))
+            .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Collections.singletonMap("error", e.getMessage())
+            )));
+    }
+
 }

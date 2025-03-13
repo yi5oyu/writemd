@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import { Textarea } from '@chakra-ui/react'
 // import TextareaAutosize from 'react-textarea-autosize'
 
-const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem }) => {
+const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen }) => {
   const textareaRef = useRef(null)
 
   // 탭 누르면 들여쓰기(4칸)
@@ -54,7 +54,7 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem }) => {
       onKeyDown={handleKeyDown}
       placeholder="마크다운 입력"
       resize="none"
-      h="calc(100vh - 140px)"
+      h={screen ? 'calc(100vh - 125px)' : 'calc(100vh - 90px)'}
       w="100%"
       fontSize="md"
       p="4"

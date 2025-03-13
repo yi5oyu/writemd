@@ -254,7 +254,6 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
             maxLength={35}
             _focus={{ bg: 'gray.200' }}
             borderRadius="md"
-            // border="1px solid"
           />
           <Icon
             as={PiCheckFatFill}
@@ -281,84 +280,85 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               setMarkdownText={setMarkdownText}
               item={item}
               setItem={setItem}
+              screen={screen}
             />
           </Box>
 
           <Box w={screen ? '640px' : '100%'} position="relative">
-            <Box h="100%">
-              {/* 공통 UtilityBox */}
-              <UtilityBox
+            {/* 공통 UtilityBox */}
+            <UtilityBox
+              setBoxForm={setBoxForm}
+              handleCheckConnection={handleCheckConnection}
+              boxForm={boxForm}
+              isConnected={isConnected}
+            />
+
+            {boxForm === 'preview' && (
+              <MarkdownPreview markdownText={markdownText} screen={screen} />
+            )}
+
+            {boxForm === 'chat' && (
+              <SessionList
+                sessions={sessions}
+                handleSessionId={handleSessionId}
+                handleDeleteSession={handleDeleteSession}
                 setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-                isConnected={isConnected}
+                setMessages={setMessages}
+                connectError={connectError}
+                delSessionError={delSessionError}
+                connectLoading={connectLoading}
+                delSessionLoading={delSessionLoading}
               />
+            )}
 
-              {boxForm === 'preview' && <MarkdownPreview markdownText={markdownText} />}
+            {boxForm === 'newChat' && (
+              <NewChatBox
+                messages={messages}
+                questionText={questionText}
+                setQuestionText={setQuestionText}
+                handleCreateSession={handleCreateSession}
+                handleSendChatMessage={handleSendChatMessage}
+                loading={newChatLoading}
+                noteId={noteId}
+                connectError={connectError}
+                connectLoading={connectLoading}
+                isSendMessaging={isSendMessaging}
+                setIsSendMessaging={setIsSendMessaging}
+              />
+            )}
 
-              {boxForm === 'chat' && (
-                <SessionList
-                  sessions={sessions}
-                  handleSessionId={handleSessionId}
-                  handleDeleteSession={handleDeleteSession}
-                  setBoxForm={setBoxForm}
-                  setMessages={setMessages}
-                  connectError={connectError}
-                  delSessionError={delSessionError}
-                  connectLoading={connectLoading}
-                  delSessionLoading={delSessionLoading}
-                />
-              )}
-
-              {boxForm === 'newChat' && (
-                <NewChatBox
+            {boxForm === 'chatBox' && (
+              <>
+                <ChatBox
                   messages={messages}
-                  questionText={questionText}
-                  setQuestionText={setQuestionText}
-                  handleCreateSession={handleCreateSession}
-                  handleSendChatMessage={handleSendChatMessage}
-                  loading={newChatLoading}
-                  noteId={noteId}
-                  connectError={connectError}
-                  connectLoading={connectLoading}
-                  isSendMessaging={isSendMessaging}
-                  setIsSendMessaging={setIsSendMessaging}
+                  chatLoading={chatLoading}
+                  messageLoading={messageLoading}
                 />
-              )}
+                <Flex
+                  flexDirection="column"
+                  justify="center"
+                  position="absolute"
+                  bottom="5"
+                  left="50%"
+                  transform="translate(-50%)"
+                  zIndex="1000"
+                >
+                  <Box w="600px">
+                    <Questionbar
+                      questionText={questionText}
+                      setQuestionText={setQuestionText}
+                      handleSendChatMessage={handleSendChatMessage}
+                      isSendMessaging={isSendMessaging}
+                      setIsSendMessaging={setIsSendMessaging}
+                    />
+                  </Box>
+                </Flex>
+              </>
+            )}
 
-              {boxForm === 'chatBox' && (
-                <>
-                  <ChatBox
-                    messages={messages}
-                    chatLoading={chatLoading}
-                    messageLoading={messageLoading}
-                  />
-                  <Flex
-                    flexDirection="column"
-                    justify="center"
-                    position="absolute"
-                    bottom="5"
-                    left="50%"
-                    transform="translate(-50%)"
-                    zIndex="1000"
-                  >
-                    <Box w="600px">
-                      <Questionbar
-                        questionText={questionText}
-                        setQuestionText={setQuestionText}
-                        handleSendChatMessage={handleSendChatMessage}
-                        isSendMessaging={isSendMessaging}
-                        setIsSendMessaging={setIsSendMessaging}
-                      />
-                    </Box>
-                  </Flex>
-                </>
-              )}
-
-              {(boxForm === 'tool' || boxForm === 'git') && (
-                <ToolScreen boxForm={boxForm} setItem={setItem} />
-              )}
-            </Box>
+            {(boxForm === 'tool' || boxForm === 'git') && (
+              <ToolScreen boxForm={boxForm} setItem={setItem} />
+            )}
           </Box>
         </Flex>
       </Box>

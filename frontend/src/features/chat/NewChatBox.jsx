@@ -35,7 +35,6 @@ const NewChatBox = ({
     <>
       <Flex
         flexDirection="column"
-        h="calc(100vh - 125px)"
         filter={connectError || loading || isSendMessaging ? 'blur(4px)' : 'none'}
       >
         <Flex

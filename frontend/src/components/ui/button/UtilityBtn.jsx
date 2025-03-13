@@ -1,22 +1,25 @@
-import { color, Icon } from '@chakra-ui/react'
-import { AddIcon } from '@chakra-ui/icons'
+import { Icon } from '@chakra-ui/react'
 
-const UtilityBtn = ({ icon, label, onClick }) => {
+const UtilityBtn = ({ icon, label, onClick, disabled = true }) => {
   return (
     <Icon
       as={icon}
       boxSize="8"
       color="gray.400"
-      cursor="pointer"
+      cursor={disabled ? 'pointer' : 'not-allowed'}
       w="10"
       h="10"
       shadow="md"
       mx="1"
-      title={label}
-      _hover={{
-        color: 'blue.400',
-      }}
-      onClick={onClick}
+      title={disabled ? label : '연결안됨'}
+      _hover={
+        disabled
+          ? {
+              color: 'blue.400',
+            }
+          : null
+      }
+      onClick={disabled ? onClick : null}
     />
   )
 }

@@ -20,6 +20,7 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 import useDeleteSession from '../../hooks/useDeleteSession'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ToolBox from '../markdown/ToolBox'
+import ToolScreen from '../markdown/ToolScreen'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -33,6 +34,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [screen, setScreen] = useState(true)
+  const [item, setItem] = useState('')
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -271,8 +273,15 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               screen={screen}
               onScreen={() => setScreen(!screen)}
               onExport={exportMarkdown}
+              setBoxForm={setBoxForm}
+              isConnected={isConnected}
             />
-            <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
+            <MarkdownInputBox
+              markdownText={markdownText}
+              setMarkdownText={setMarkdownText}
+              item={item}
+              setItem={setItem}
+            />
           </Box>
 
           <Box w={screen ? '640px' : '100%'} position="relative">
@@ -344,6 +353,10 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
                     </Box>
                   </Flex>
                 </>
+              )}
+
+              {(boxForm === 'tool' || boxForm === 'git') && (
+                <ToolScreen boxForm={boxForm} setItem={setItem} />
               )}
             </Box>
           </Box>

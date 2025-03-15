@@ -32,7 +32,8 @@
     "rehype-raw": "^7.0.0",
     "remark-emoji": "^5.0.1",
     "remark-gfm": "^3.0.1",
-    "remark-slug": "^7.0.1"
+    "remark-slug": "^7.0.1",
+    "styled-components": "^6.1.15"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

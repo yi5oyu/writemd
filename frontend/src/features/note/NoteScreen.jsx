@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
-import { Box, Flex, Icon, Input, Spinner, useToast } from '@chakra-ui/react'
+import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
 
 import MarkdownInputBox from '../markdown/MarkdownInputBox'
@@ -19,6 +19,8 @@ import useChatConnection from '../../hooks/useChatConnection'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import useDeleteSession from '../../hooks/useDeleteSession'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import ToolBox from '../markdown/ToolBox'
+import EmojiBox from '../markdown/EmojiBox'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -31,6 +33,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [sessionId, setSessionId] = useState('')
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
+  const [screen, setScreen] = useState(true)
+  const [item, setItem] = useState('')
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -210,10 +214,48 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
     }
   }
 
+  // 클립보드 복사
+  const handleCopyMarkdown = () => {
+    navigator.clipboard.writeText(markdownText)
+  }
+
+  // 파일 추출
+  const exportMarkdown = () => {
+    const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${name}.md`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  // 아이템(이모지, 로고) 선택
+  const handleItemSelect = (item) => {
+    if (item.native) {
+      setItem(item.native)
+      console.log('em')
+    } else {
+      const data = new URL(item.src).pathname
+      setItem(
+        `<img src="https://img.shields.io/badge/${
+          data.split('/')[1]
+        }-edf2f7?style=flat-square&logo=${data.split('/')[1]}&logoColor=${data.split('/')[2]}"> `
+      )
+    }
+  }
+
   return (
-    <Flex direction="column" m="5" w="100vw" position="relative">
+    <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
-        <Flex w="100%" alignItems="center" justifyContent="center">
+        <Flex
+          w="100%"
+          display={screen ? 'flex' : 'none'}
+          alignItems="center"
+          justifyContent="center"
+        >
           <Icon as={PiNotebookFill} />
           <Input
             value={name}
@@ -221,96 +263,120 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
             fontSize="18px"
             variant="unstyled"
             mx="10px"
+            pl="10px"
             onChange={handleTitleChange}
-            w="40vw"
+            w="1220px"
             maxLength={35}
             _focus={{ bg: 'gray.200' }}
+            borderRadius="md"
           />
           <Icon
             as={PiCheckFatFill}
-            color="blue.400"
+            color="gray.200"
             cursor="pointer"
             onClick={() => handleUpdateNote(noteId, name)}
+            _hover={{ color: 'blue.400' }}
           />
         </Flex>
 
-        <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
-          <Box w="640px">
-            <UtilityBox />
-            <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
+        <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
+          <Box w={screen ? '640px' : '100%'}>
+            <ToolBox
+              onClearText={() => setMarkdownText('')}
+              onCopyText={handleCopyMarkdown}
+              screen={screen}
+              onScreen={() => setScreen(!screen)}
+              onExport={exportMarkdown}
+              boxForm={boxForm}
+              setBoxForm={setBoxForm}
+              isConnected={isConnected}
+            />
+            <MarkdownInputBox
+              markdownText={markdownText}
+              setMarkdownText={setMarkdownText}
+              item={item}
+              setItem={setItem}
+              screen={screen}
+            />
           </Box>
 
-          <Box w="640px" position="relative">
-            <Box w="640px" h="100%">
-              {/* 공통 UtilityBox */}
-              <UtilityBox
+          <Box id="feature" w={screen ? '640px' : '100%'} position="relative">
+            {/* 공통 UtilityBox */}
+            <UtilityBox
+              setBoxForm={setBoxForm}
+              handleCheckConnection={handleCheckConnection}
+              boxForm={boxForm}
+              isConnected={isConnected}
+            />
+
+            {boxForm === 'preview' && (
+              <MarkdownPreview markdownText={markdownText} screen={screen} />
+            )}
+
+            {boxForm === 'chat' && (
+              <SessionList
+                sessions={sessions}
+                handleSessionId={handleSessionId}
+                handleDeleteSession={handleDeleteSession}
                 setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-                isConnected={isConnected}
+                setMessages={setMessages}
+                connectError={connectError}
+                delSessionError={delSessionError}
+                connectLoading={connectLoading}
+                delSessionLoading={delSessionLoading}
               />
+            )}
 
-              {boxForm === 'preview' && <MarkdownPreview markdownText={markdownText} />}
+            {boxForm === 'newChat' && (
+              <NewChatBox
+                messages={messages}
+                questionText={questionText}
+                setQuestionText={setQuestionText}
+                handleCreateSession={handleCreateSession}
+                handleSendChatMessage={handleSendChatMessage}
+                loading={newChatLoading}
+                noteId={noteId}
+                connectError={connectError}
+                connectLoading={connectLoading}
+                isSendMessaging={isSendMessaging}
+                setIsSendMessaging={setIsSendMessaging}
+              />
+            )}
 
-              {boxForm === 'chat' && (
-                <SessionList
-                  sessions={sessions}
-                  handleSessionId={handleSessionId}
-                  handleDeleteSession={handleDeleteSession}
-                  setBoxForm={setBoxForm}
-                  setMessages={setMessages}
-                  connectError={connectError}
-                  delSessionError={delSessionError}
-                  connectLoading={connectLoading}
-                  delSessionLoading={delSessionLoading}
-                />
-              )}
-
-              {boxForm === 'newChat' && (
-                <NewChatBox
+            {boxForm === 'chatBox' && (
+              <>
+                <ChatBox
                   messages={messages}
-                  questionText={questionText}
-                  setQuestionText={setQuestionText}
-                  handleCreateSession={handleCreateSession}
-                  handleSendChatMessage={handleSendChatMessage}
-                  loading={newChatLoading}
-                  noteId={noteId}
-                  connectError={connectError}
-                  connectLoading={connectLoading}
-                  isSendMessaging={isSendMessaging}
-                  setIsSendMessaging={setIsSendMessaging}
+                  chatLoading={chatLoading}
+                  messageLoading={messageLoading}
                 />
-              )}
+                <Flex
+                  flexDirection="column"
+                  justify="center"
+                  position="absolute"
+                  bottom="5"
+                  left="50%"
+                  transform="translate(-50%)"
+                  zIndex="1000"
+                >
+                  <Box w="600px">
+                    <Questionbar
+                      questionText={questionText}
+                      setQuestionText={setQuestionText}
+                      handleSendChatMessage={handleSendChatMessage}
+                      isSendMessaging={isSendMessaging}
+                      setIsSendMessaging={setIsSendMessaging}
+                    />
+                  </Box>
+                </Flex>
+              </>
+            )}
 
-              {boxForm === 'chatBox' && (
-                <>
-                  <ChatBox
-                    messages={messages}
-                    chatLoading={chatLoading}
-                    messageLoading={messageLoading}
-                  />
-                  <Flex
-                    flexDirection="column"
-                    justify="center"
-                    position="absolute"
-                    bottom="5"
-                    left="50%"
-                    transform="translate(-50%)"
-                    zIndex="1000"
-                  >
-                    <Box w="600px">
-                      <Questionbar
-                        questionText={questionText}
-                        setQuestionText={setQuestionText}
-                        handleSendChatMessage={handleSendChatMessage}
-                        isSendMessaging={isSendMessaging}
-                        setIsSendMessaging={setIsSendMessaging}
-                      />
-                    </Box>
-                  </Flex>
-                </>
-              )}
-            </Box>
+            {boxForm === 'tool' && (
+              // <ToolScreen boxForm={boxForm}  screen={screen} />
+              // <LogoBox />
+              <EmojiBox setBoxForm={setBoxForm} handleItemSelect={handleItemSelect} />
+            )}
           </Box>
         </Flex>
       </Box>

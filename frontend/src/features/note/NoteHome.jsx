@@ -2,7 +2,7 @@ import { Box, Textarea, Input, Flex, Heading, Button, Spinner } from '@chakra-ui
 import { useState } from 'react'
 
 const NoteHome = ({ handleSaveNote, loading }) => {
-  const [title, setTitle] = useState('새 노트')
+  const [title, setTitle] = useState('writeMD')
 
   return (
     <Flex w="100vw" alignItems="center" justifyContent="center">

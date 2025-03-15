@@ -48,6 +48,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -98,6 +101,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -127,6 +133,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -156,6 +165,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -185,6 +197,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -215,6 +230,9 @@ const ChakraMarkdownGithubLight = {
           transform="translateY(calc(-50% + 0.5em))"
           opacity="0"
           _groupHover={{ opacity: 1 }}
+          sx={{
+            'li &': { display: 'none' },
+          }}
         >
           <LinkIcon boxSize={3.5} />
         </Link>
@@ -222,12 +240,21 @@ const ChakraMarkdownGithubLight = {
       </Heading>
     )
   },
+
   // 링크
   a: (props) => <Link color="blue.500" {...props} />,
 
   // 인라인 코드
   code: (props) => (
-    <Code fontSize="sm" borderRadius="md" bg="gray.100" px="0.2em" py="0.1em" {...props} />
+    <Code
+      display="inline"
+      fontSize="sm"
+      borderRadius="md"
+      p="2.5px 4.5px"
+      whiteSpace="pre-wrap"
+      wordBreak="break-all"
+      {...props}
+    />
   ),
 
   // 코드 블록
@@ -291,24 +318,29 @@ const ChakraMarkdownGithubLight = {
   thematicBreak: (props) => <Divider my={4} {...props} />,
 
   // 목록
-  ul: (props) => (
-    <UnorderedList
-      styleType="disc"
-      sx={{
-        '& ul': {
-          listStyleType: 'circle !important',
-          ml: 6,
-        },
-        '& ul ul': {
-          listStyleType: 'square !important',
-          ml: 6,
-        },
-      }}
-      ml={6}
-      mb={3}
-      {...props}
-    />
-  ),
+  ul: ({ className, ...props }) => {
+    const isChecklist = className && className.includes('contains-task-list')
+    return (
+      <UnorderedList
+        styleType={isChecklist ? 'none' : 'disc'}
+        sx={{
+          '& ul': {
+            listStyleType: isChecklist ? 'none !important' : 'circle !important',
+            ml: isChecklist ? 0 : 6,
+          },
+          '& ul ul': {
+            listStyleType: isChecklist ? 'none !important' : 'square !important',
+            ml: isChecklist ? 0 : 6,
+          },
+        }}
+        ml={isChecklist ? 0 : 6}
+        mb={3}
+        className={className}
+        {...props}
+      />
+    )
+  },
+
   // 순서 있는 목록 (ol)
   ol: (props) => (
     <OrderedList
@@ -328,6 +360,7 @@ const ChakraMarkdownGithubLight = {
       {...props}
     />
   ),
+
   // 목록 아이템
   li: (props) => <ListItem mb={2} {...props} />,
 

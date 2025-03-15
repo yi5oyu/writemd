@@ -1,11 +1,9 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Textarea } from '@chakra-ui/react'
 // import TextareaAutosize from 'react-textarea-autosize'
 
-const MarkdownInputBox = ({ markdownText, setMarkdownText }) => {
-  const handleChange = (e) => {
-    setMarkdownText(e.target.value)
-  }
+const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen }) => {
+  const textareaRef = useRef(null)
 
   // 탭 누르면 들여쓰기(4칸)
   const handleKeyDown = (e) => {
@@ -25,15 +23,38 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText }) => {
     }
   }
 
+  // 이모지 삽입
+  const handleInsertItem = () => {
+    const textarea = textareaRef.current
+    const position = textarea.selectionStart
+
+    const newText = markdownText.slice(0, position) + item + markdownText.slice(position)
+
+    setMarkdownText(newText)
+    setItem('')
+
+    // 커서 위치 설정
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = position + item.length
+      textarea.focus()
+    }, 0)
+  }
+
+  useEffect(() => {
+    if (item) {
+      handleInsertItem()
+    }
+  }, [item])
+
   return (
     <Textarea
-      // as={TextareaAutosize}
+      ref={textareaRef}
       value={markdownText}
-      onChange={handleChange}
+      onChange={(e) => setMarkdownText(e.target.value)}
       onKeyDown={handleKeyDown}
       placeholder="마크다운 입력"
       resize="none"
-      h="calc(100vh - 125px)"
+      h={screen ? 'calc(100vh - 125px)' : 'calc(100vh - 90px)'}
       w="100%"
       fontSize="md"
       p="4"

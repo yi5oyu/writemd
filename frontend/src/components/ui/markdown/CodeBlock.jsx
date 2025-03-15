@@ -1,20 +1,24 @@
-import React, { useState } from 'react'
-import { Box, IconButton } from '@chakra-ui/react'
-import { CopyIcon, CheckIcon } from '@chakra-ui/icons'
+import React, { useState, useEffect } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { ghcolors } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import MermaidDiagram from './MermaidDiagram'
+import mermaid from 'mermaid'
+import CodeBlockBox from './CodeBlockBox'
 
-const myCustomTheme = {
-  ...ghcolors,
-}
+// const myCustomTheme = {
+//   ...ghcolors,
+// }
 
-const CodeBlock = ({ children, language, ...props }) => {
+const CodeBlock = ({ children, ...props }) => {
   const [copied, setCopied] = useState(false)
+  const [isValid, setIsValid] = useState(false)
 
-  // 배열을 텍스트로 변환
   let codeText = ''
+  let language = ''
+
   if (Array.isArray(children)) {
     codeText = children[0]?.props?.children || ''
+    language = children[0]?.props?.className?.replace(/language-/, '') || ''
   } else if (typeof children === 'string') {
     codeText = children
   }
@@ -30,35 +34,30 @@ const CodeBlock = ({ children, language, ...props }) => {
     }
   }
 
-  return (
-    <Box position="relative" my={4}>
-      <IconButton
-        icon={copied ? <CheckIcon /> : <CopyIcon />}
-        size="sm"
-        position="absolute"
-        top={2}
-        right={2}
-        onClick={handleCopy}
-        aria-label="코드 복사"
-        zIndex="1"
-      />
-      <Box
-        as="pre"
-        p={4}
-        bg="gray.100"
-        color="black"
-        overflowX="auto"
-        mb={4}
-        borderRadius="md"
-        {...props}
-      >
-        {children}
-      </Box>
+  useEffect(() => {
+    if (language !== 'mermaid') return
 
-      {/* <SyntaxHighlighter language={language} style={myCustomTheme} {...props}>
-        {codeText}
-      </SyntaxHighlighter> */}
-    </Box>
+    const codeStr = String(codeText).trim()
+
+    mermaid
+      .parse(codeStr)
+      .then(() => setIsValid(true))
+      .catch(() => setIsValid(false))
+  }, [codeText, language])
+
+  if (language !== 'mermaid')
+    return (
+      <CodeBlockBox copied={copied} handleCopy={handleCopy} {...props}>
+        {children}
+      </CodeBlockBox>
+    )
+
+  return isValid ? (
+    <MermaidDiagram chart={codeText} key={codeText} />
+  ) : (
+    <CodeBlockBox copied={copied} handleCopy={handleCopy} {...props}>
+      {children}
+    </CodeBlockBox>
   )
 }
 

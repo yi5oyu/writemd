@@ -38,24 +38,6 @@ const ToolScreen = ({ boxForm, setItem, screen }) => {
       : emojiData
   }, [search, emojiData])
 
-  // 아이템 선택
-  const handleItemSelect = useCallback((item) => {
-    const hexPattern = /^[0-9A-F]+$/i
-
-    if (hexPattern.test(item.split('/')[1])) {
-      setItem(
-        `<img src="https://img.shields.io/badge/${
-          item.split('/')[0]
-        }-edf2f7?style=flat-square&logo=${item.split('/')[0]}&logoColor=${item.split('/')[1]}"> `
-      )
-      // TODO: 뱃지 커스터 마이징(color 픽커, 스타일 등..)
-      setLogoItemInfo(item.split('/')[0])
-    } else {
-      setItem(item.split('/')[1])
-      setEmojiItemInfo(`${item.split('/')[1]} :${item.split('/')[0]}:`)
-    }
-  }, [])
-
   useEffect(() => {
     setResizedWidth(document.getElementById('feature').offsetWidth)
   }, [screen])

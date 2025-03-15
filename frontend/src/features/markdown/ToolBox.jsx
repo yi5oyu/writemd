@@ -10,6 +10,7 @@ import { BiSolidEraser } from 'react-icons/bi'
 import { BsGithub } from 'react-icons/bs'
 
 const ToolBox = ({
+  boxForm,
   setBoxForm,
   onClearText,
   onCopyText,
@@ -36,7 +37,14 @@ const ToolBox = ({
           disabled={isConnected}
           onClick={() => {}}
         />
-        <UtilityBtn icon={RiToolsFill} label="도구상자" onClick={() => setBoxForm('tool')} />
+        <UtilityBtn
+          icon={RiToolsFill}
+          label="도구상자"
+          boxForm={boxForm}
+          onClick={() => {
+            boxForm === 'tool' ? setBoxForm('preview') : setBoxForm('tool')
+          }}
+        />
         <UtilityBtn icon={BiSolidEraser} label="텍스트 삭제" onClick={onClearText} />
         <UtilityBtn icon={copied ? CheckIcon : CopyIcon} label="텍스트 복사" onClick={handleCopy} />
         <UtilityBtn

@@ -20,7 +20,7 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 import useDeleteSession from '../../hooks/useDeleteSession'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ToolBox from '../markdown/ToolBox'
-import ToolScreen from '../markdown/ToolScreen'
+import EmojiBox from '../markdown/EmojiBox'
 
 const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -232,6 +232,21 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
     URL.revokeObjectURL(url)
   }
 
+  // 아이템(이모지, 로고) 선택
+  const handleItemSelect = (item) => {
+    if (item.native) {
+      setItem(item.native)
+      console.log('em')
+    } else {
+      const data = new URL(item.src).pathname
+      setItem(
+        `<img src="https://img.shields.io/badge/${
+          data.split('/')[1]
+        }-edf2f7?style=flat-square&logo=${data.split('/')[1]}&logoColor=${data.split('/')[2]}"> `
+      )
+    }
+  }
+
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
@@ -272,6 +287,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               screen={screen}
               onScreen={() => setScreen(!screen)}
               onExport={exportMarkdown}
+              boxForm={boxForm}
               setBoxForm={setBoxForm}
               isConnected={isConnected}
             />
@@ -356,8 +372,10 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               </>
             )}
 
-            {(boxForm === 'tool' || boxForm === 'git') && (
-              <ToolScreen boxForm={boxForm} setItem={setItem} screen={screen} />
+            {boxForm === 'tool' && (
+              // <ToolScreen boxForm={boxForm}  screen={screen} />
+              // <LogoBox />
+              <EmojiBox setBoxForm={setBoxForm} handleItemSelect={handleItemSelect} />
             )}
           </Box>
         </Flex>

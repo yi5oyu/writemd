@@ -1,32 +1,48 @@
 import React, { useState } from 'react'
-import { Box } from '@chakra-ui/react'
+import { Flex, Box } from '@chakra-ui/react'
+import { CloseButton } from '@chakra-ui/icons'
 import Picker from '@emoji-mart/react'
 import data from '@emoji-mart/data'
 import Draggable from 'react-draggable'
+import styled from 'styled-components'
+import LogoData from '../../data/LogoData'
 
-const EmojiBox = ({ onEmojiSelect }) => {
+const StyledBox = styled(Box)`
+  position: absolute;
+  top: 10;
+  left: 0;
+  border-color: gray.200;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: ${(props) => (props.isDragging ? 'move' : 'default')};
+  z-index: 10000;
+
+  .emoji-mart-emoji img {
+    width: 30px !important;
+    height: auto !important;
+  }
+
+  &:hover .exit-emoji-btn {
+    display: flex;
+    justify-content: flex-end;
+  }
+`
+
+const EmojiBox = ({ handleItemSelect, setBoxForm }) => {
   const [isDragging, setIsDragging] = useState(false)
 
   return (
     <Draggable onStart={() => setIsDragging(true)} onStop={() => setIsDragging(false)}>
-      <Box
-        position="absolute"
-        bottom="0"
-        right="0"
-        bg="white"
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="md"
-        p={2}
-        boxShadow="md"
-        cursor={isDragging ? 'move' : 'defalut'}
-        zIndex={10000}
-      >
+      <StyledBox isDragging={isDragging}>
+        <Flex className="exit-emoji-btn" display="none">
+          <CloseButton onClick={() => setBoxForm('preview')} size="md" />
+        </Flex>
         <Picker
           data={data}
+          custom={LogoData}
           theme="light"
           skinTonePosition="none"
-          onEmojiSelect={onEmojiSelect}
+          onEmojiSelect={(e) => handleItemSelect(e)}
           previewPosition="none"
           i18n={{
             search: '검색',
@@ -68,7 +84,7 @@ const EmojiBox = ({ onEmojiSelect }) => {
             },
           }}
         />
-      </Box>
+      </StyledBox>
     </Draggable>
   )
 }

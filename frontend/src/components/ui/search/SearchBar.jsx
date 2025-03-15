@@ -1,9 +1,9 @@
 import { Input, InputGroup, InputLeftElement, Box } from '@chakra-ui/react'
 import { FiSearch } from 'react-icons/fi'
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onSearch, onWidth }) => {
   return (
-    <Box w="100%" mx="auto" my="3">
+    <Box w={onWidth - 40} mx="auto" my="3">
       <InputGroup>
         <InputLeftElement pointerEvents="none">
           <FiSearch color="gray.300" />

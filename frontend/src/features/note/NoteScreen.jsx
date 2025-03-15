@@ -284,7 +284,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
             />
           </Box>
 
-          <Box w={screen ? '640px' : '100%'} position="relative">
+          <Box id="feature" w={screen ? '640px' : '100%'} position="relative">
             {/* 공통 UtilityBox */}
             <UtilityBox
               setBoxForm={setBoxForm}
@@ -357,7 +357,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
             )}
 
             {(boxForm === 'tool' || boxForm === 'git') && (
-              <ToolScreen boxForm={boxForm} setItem={setItem} />
+              <ToolScreen boxForm={boxForm} setItem={setItem} screen={screen} />
             )}
           </Box>
         </Flex>

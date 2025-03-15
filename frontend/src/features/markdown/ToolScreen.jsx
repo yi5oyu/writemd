@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   Flex,
   Box,
@@ -13,9 +13,14 @@ import {
 import SearchBar from '../../components/ui/search/SearchBar'
 import ToolDataPicker from './ToolDataPicker'
 import data from '../../data/toolData.json'
+import ToolInfoBox from './ToolInfoBox'
+import MarkdownPreview from './MarkdownPreview'
 
-const ToolScreen = ({ boxForm, setItem }) => {
+const ToolScreen = ({ boxForm, setItem, screen }) => {
   const [search, setSearch] = useState('')
+  const [resizedWidth, setResizedWidth] = useState(0)
+  const [emojiItemInfo, setEmojiItemInfo] = useState('')
+  const [logoItemInfo, setLogoItemInfo] = useState('')
 
   const logoData = useMemo(() => data.logo, [])
   const emojiData = useMemo(() => data.emoji, [])
@@ -35,18 +40,35 @@ const ToolScreen = ({ boxForm, setItem }) => {
 
   // 아이템 선택
   const handleItemSelect = useCallback((item) => {
-    item.split('/')[1].length > 2
-      ? setItem(
-          `<img src="https://img.shields.io/badge/${
-            item.split('/')[0]
-          }-edf2f7?style=flat-square&logo=${item.split('/')[0]}&logoColor=${item.split('/')[1]}"> `
-        )
-      : setItem(item.split('/')[1])
+    const hexPattern = /^[0-9A-F]+$/i
+
+    if (hexPattern.test(item.split('/')[1])) {
+      setItem(
+        `<img src="https://img.shields.io/badge/${
+          item.split('/')[0]
+        }-edf2f7?style=flat-square&logo=${item.split('/')[0]}&logoColor=${item.split('/')[1]}"> `
+      )
+      // TODO: 뱃지 커스터 마이징(color 픽커, 스타일 등..)
+      setLogoItemInfo(item.split('/')[0])
+    } else {
+      setItem(item.split('/')[1])
+      setEmojiItemInfo(`${item.split('/')[1]} :${item.split('/')[0]}:`)
+    }
   }, [])
 
+  useEffect(() => {
+    setResizedWidth(document.getElementById('feature').offsetWidth)
+  }, [screen])
+
   return (
-    <Flex flexDirection="column">
-      <SearchBar onSearch={(query) => setSearch(query)} />
+    <Flex
+      flexDirection="column"
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="md"
+      h={screen ? 'calc(100vh - 125px)' : 'calc(100vh - 90px)'}
+    >
+      <SearchBar onSearch={(query) => setSearch(query)} onWidth={resizedWidth} />
       {boxForm === 'tool' && (
         <ChakraProvider>
           <Tabs variant="enclosed" colorScheme="blue">
@@ -57,11 +79,26 @@ const ToolScreen = ({ boxForm, setItem }) => {
             </TabList>
 
             <TabPanels>
-              <TabPanel>
-                <ToolDataPicker data={filteredEmojiData} type="emoji" onSelect={handleItemSelect} />
+              <TabPanel h="400px">
+                <ToolDataPicker
+                  data={filteredEmojiData}
+                  onSelect={handleItemSelect}
+                  onWidth={resizedWidth}
+                  screen={screen}
+                  type="emoji"
+                />
+                <ToolInfoBox itemInfo={emojiItemInfo} />
               </TabPanel>
               <TabPanel>
-                <ToolDataPicker data={filteredLogoData} type="logo" onSelect={handleItemSelect} />
+                <ToolDataPicker
+                  data={filteredLogoData}
+                  onSelect={handleItemSelect}
+                  onWidth={resizedWidth}
+                  screen={screen}
+                  type="logo"
+                />
+                <ToolInfoBox itemInfo={logoItemInfo} />
+                {/* <MarkdownPreview markdownText={logoItemInfo} /> */}
               </TabPanel>
               <TabPanel></TabPanel>
             </TabPanels>

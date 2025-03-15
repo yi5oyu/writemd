@@ -2,36 +2,32 @@ import React, { useState, useEffect, useRef } from 'react'
 import { FixedSizeGrid as Grid } from 'react-window'
 import { Box, Text, Image } from '@chakra-ui/react'
 
-const ToolDataPicker = ({ data, type, onSelect }) => {
-  const gridRef = useRef(null)
-  const [gridHeight, setGridHeight] = useState(window.innerHeight - 270)
+const ToolDataPicker = ({ data, type, onSelect, screen }) => {
+  const boxRef = useRef(null)
+
+  const gridHeigth = 400
   const [gridWidth, setGridWidth] = useState(630)
-  const columnCount = 12 // 21
-  const rowCount = Math.ceil(data.length / columnCount)
-  const itemSize = 60
+  const [colCount, setColCount] = useState(13)
+  const columnCount = 13 // 21
+  const rowCount = Math.ceil(data.length / colCount)
+  const itemSize = 55
 
-  // resize
+  // TODO: w조절
   useEffect(() => {
-    const updateGrid = () => {
-      setGridHeight(window.innerHeight - 270)
-    }
-
-    updateGrid()
-    window.addEventListener('resize', updateGrid)
-
-    return () => {
-      window.removeEventListener('resize', updateGrid)
-    }
-  }, [])
+    const boxWidth = document.getElementById('feature').offsetWidth
+    setGridWidth(boxWidth) // Adjust width based on container width
+    setColCount(Math.floor(boxWidth / itemSize)) // Dynamically calculate column count
+  }, [window.width, screen]) // Empty dependency array ensures this only runs once on mount
 
   return (
-    <Box borderRadius="8px" padding="4px" bg="gray.200">
+    <Box ref={boxRef} borderRadius="8px" padding="4px">
       <Grid
-        columnCount={columnCount}
+        style={{ background: 'rgb(229, 231, 235)', borderRadius: '8px' }}
+        columnCount={colCount}
         rowCount={rowCount}
         columnWidth={itemSize - 10}
         rowHeight={itemSize - 10}
-        height={gridHeight}
+        height={gridHeigth}
         width={gridWidth}
       >
         {({ columnIndex, rowIndex, style }) => {
@@ -42,6 +38,7 @@ const ToolDataPicker = ({ data, type, onSelect }) => {
 
           return (
             <Box
+              id="aa"
               style={style}
               display="flex"
               alignItems="center"
@@ -51,7 +48,7 @@ const ToolDataPicker = ({ data, type, onSelect }) => {
             >
               {type === 'emoji' ? (
                 // 이모지
-                <Text fontSize="24px">{key.split('/')[1]}</Text>
+                <Text fontSize="32px">{key.split('/')[1]}</Text>
               ) : type === 'logo' ? (
                 // 로고
                 <Image src={`https://cdn.simpleicons.org/${key}`} width="32px" height="32px" />

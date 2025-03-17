@@ -22,11 +22,11 @@ public class QGits extends EntityPathBase<Gits> {
 
     public static final QGits gits = new QGits("gits");
 
-    public final ListPath<GitContents, QGitContents> gitcontents = this.<GitContents, QGitContents>createList("gitcontents", GitContents.class, QGitContents.class, PathInits.DIRECT2);
+    public final StringPath etag = createString("etag");
+
+    public final ListPath<Gitrepos, QGitrepos> gitrepos = this.<Gitrepos, QGitrepos>createList("gitrepos", Gitrepos.class, QGitrepos.class, PathInits.DIRECT2);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
-
-    public final StringPath repoName = createString("repoName");
 
     public final QUsers users;
 

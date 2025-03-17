@@ -21,15 +21,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "GITSCONTENTS")
-public class GitContents {
+public class Gitcontents {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "git_id", nullable = false)
+    @JoinColumn(name = "gitrepo_id", nullable = false)
     @JsonBackReference
-    private Gits gits;
+    private Gitrepos gitrepos;
 
     private String path;
 

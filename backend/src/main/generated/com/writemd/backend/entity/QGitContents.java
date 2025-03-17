@@ -11,18 +11,18 @@ import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
- * QGitContents is a Querydsl query type for GitContents
+ * QGitcontents is a Querydsl query type for Gitcontents
  */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
-public class QGitContents extends EntityPathBase<GitContents> {
+public class QGitcontents extends EntityPathBase<Gitcontents> {
 
-    private static final long serialVersionUID = -1597632576L;
+    private static final long serialVersionUID = -1662276704L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 
-    public static final QGitContents gitContents = new QGitContents("gitContents");
+    public static final QGitcontents gitcontents = new QGitcontents("gitcontents");
 
-    public final QGits gits;
+    public final QGitrepos gitrepos;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -32,25 +32,25 @@ public class QGitContents extends EntityPathBase<GitContents> {
 
     public final StringPath type = createString("type");
 
-    public QGitContents(String variable) {
-        this(GitContents.class, forVariable(variable), INITS);
+    public QGitcontents(String variable) {
+        this(Gitcontents.class, forVariable(variable), INITS);
     }
 
-    public QGitContents(Path<? extends GitContents> path) {
+    public QGitcontents(Path<? extends Gitcontents> path) {
         this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
-    public QGitContents(PathMetadata metadata) {
+    public QGitcontents(PathMetadata metadata) {
         this(metadata, PathInits.getFor(metadata, INITS));
     }
 
-    public QGitContents(PathMetadata metadata, PathInits inits) {
-        this(GitContents.class, metadata, inits);
+    public QGitcontents(PathMetadata metadata, PathInits inits) {
+        this(Gitcontents.class, metadata, inits);
     }
 
-    public QGitContents(Class<? extends GitContents> type, PathMetadata metadata, PathInits inits) {
+    public QGitcontents(Class<? extends Gitcontents> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.gits = inits.isInitialized("gits") ? new QGits(forProperty("gits"), inits.get("gits")) : null;
+        this.gitrepos = inits.isInitialized("gitrepos") ? new QGitrepos(forProperty("gitrepos"), inits.get("gitrepos")) : null;
     }
 
 }

@@ -25,21 +25,23 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "GITS")
-public class Gits {
+@Table(name = "GITREPOS")
+public class Gitrepos {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String repoName;
+
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "git_id", nullable = false)
     @JsonBackReference
-    private Users users;
+    private Gits gits;
 
-    private String etag;
-
-    @OneToMany(mappedBy = "gits", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "gitrepos", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
-    private List<Gitrepos> gitrepos = new ArrayList<>();
+    private List<Gitcontents> gitcontents = new ArrayList<>();
+
 }

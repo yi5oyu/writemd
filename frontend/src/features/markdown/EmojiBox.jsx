@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Flex, Box } from '@chakra-ui/react'
 import { CloseButton } from '@chakra-ui/icons'
 import Picker from '@emoji-mart/react'
@@ -9,7 +9,7 @@ import LogoData from '../../data/LogoData'
 
 const StyledBox = styled(Box)`
   position: absolute;
-  top: 10;
+  top: 60px;
   left: 0;
   border-color: gray.200;
   border-radius: 8px;
@@ -28,14 +28,14 @@ const StyledBox = styled(Box)`
   }
 `
 
-const EmojiBox = ({ handleItemSelect, setBoxForm }) => {
+const EmojiBox = ({ handleItemSelect, setTool, tool }) => {
   const [isDragging, setIsDragging] = useState(false)
 
   return (
     <Draggable onStart={() => setIsDragging(true)} onStop={() => setIsDragging(false)}>
       <StyledBox isDragging={isDragging}>
         <Flex className="exit-emoji-btn" display="none">
-          <CloseButton onClick={() => setBoxForm('preview')} size="md" />
+          <CloseButton onClick={() => setTool(!tool)} size="md" />
         </Flex>
         <Picker
           data={data}

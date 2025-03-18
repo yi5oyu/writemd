@@ -18,6 +18,9 @@ const ToolBox = ({
   screen,
   onExport,
   isConnected,
+  tool,
+  setTool,
+  handleGitLoad,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -41,9 +44,8 @@ const ToolBox = ({
           icon={RiToolsFill}
           label="도구상자"
           boxForm={boxForm}
-          onClick={() => {
-            boxForm === 'tool' ? setBoxForm('preview') : setBoxForm('tool')
-          }}
+          onClick={() => setTool(!tool)}
+          setColor={tool ? true : false}
         />
         <UtilityBtn icon={BiSolidEraser} label="텍스트 삭제" onClick={onClearText} />
         <UtilityBtn icon={copied ? CheckIcon : CopyIcon} label="텍스트 복사" onClick={handleCopy} />
@@ -53,7 +55,15 @@ const ToolBox = ({
           onClick={onScreen}
         />
         <UtilityBtn icon={FaFileExport} label="추출" onClick={onExport} />
-        <UtilityBtn icon={BsGithub} label="깃허브" onClick={() => setBoxForm('git')} />
+        <UtilityBtn
+          icon={BsGithub}
+          label="깃허브"
+          onClick={() => {
+            handleGitLoad()
+            setBoxForm('git')
+          }}
+          setColor={boxForm === 'git' ? true : false}
+        />
       </Flex>
     </Flex>
   )

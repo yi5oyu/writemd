@@ -67,6 +67,7 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
           updateLoading={updateLoading}
           handleUpdateNote={handleUpdateNote}
           noteId={currentScreen}
+          userId={user.userId}
         />
       )}
     </>

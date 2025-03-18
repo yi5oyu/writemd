@@ -21,8 +21,10 @@ import useDeleteSession from '../../hooks/useDeleteSession'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ToolBox from '../markdown/ToolBox'
 import EmojiBox from '../markdown/EmojiBox'
+import useGit from '../../hooks/useGit'
+import GitScreen from '../git/GitScreen'
 
-const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
+const NoteScreen = ({ userId, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
@@ -35,6 +37,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [screen, setScreen] = useState(true)
   const [item, setItem] = useState('')
+  const [tool, setTool] = useState(false)
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -42,6 +45,7 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
+  const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -236,7 +240,6 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
   const handleItemSelect = (item) => {
     if (item.native) {
       setItem(item.native)
-      console.log('em')
     } else {
       const data = new URL(item.src).pathname
       setItem(
@@ -245,6 +248,11 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
         }-edf2f7?style=flat-square&logo=${data.split('/')[1]}&logoColor=${data.split('/')[2]}"> `
       )
     }
+  }
+
+  // 깃 정보 조회
+  const handleGitLoad = () => {
+    getRepo({ userId })
   }
 
   return (
@@ -290,6 +298,9 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               boxForm={boxForm}
               setBoxForm={setBoxForm}
               isConnected={isConnected}
+              tool={tool}
+              setTool={setTool}
+              handleGitLoad={handleGitLoad}
             />
             <MarkdownInputBox
               markdownText={markdownText}
@@ -372,11 +383,8 @@ const NoteScreen = ({ noteId, handleUpdateNote, updateLoading }) => {
               </>
             )}
 
-            {boxForm === 'tool' && (
-              // <ToolScreen boxForm={boxForm}  screen={screen} />
-              // <LogoBox />
-              <EmojiBox setBoxForm={setBoxForm} handleItemSelect={handleItemSelect} />
-            )}
+            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
+            {boxForm === 'git' && <GitScreen data={gitRepoData} screen={screen} />}
           </Box>
         </Flex>
       </Box>

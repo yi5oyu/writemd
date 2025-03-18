@@ -1,5 +1,7 @@
 package com.writemd.backend.config;
 
+import com.writemd.backend.config.security.CustomAuthenticationSuccessHandler;
+import com.writemd.backend.service.GithubService;
 import com.writemd.backend.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
@@ -27,6 +29,9 @@ public class SecurityConfig {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -45,17 +50,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**", "/logout", "/h2-console/**")
-                .permitAll()
-                .requestMatchers("/profile/**", "/api/**")
-                .authenticated()
-                .anyRequest().authenticated())
-            .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**",
+                                "/logout", "/h2-console/**")
+                        .permitAll().requestMatchers("/profile/**", "/api/**").authenticated()
+                        .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                         .userInfoEndpoint(
                                 userInfo -> userInfo.userService(customOAuth2UserService()))
-                        .defaultSuccessUrl("http://localhost:5173", true))
+                        .successHandler(customAuthenticationSuccessHandler))
                 .logout(logout -> logout.logoutUrl("/logout")
                         .logoutSuccessUrl("http://localhost:5173")
                         .logoutSuccessHandler((request, response, authentication) -> {

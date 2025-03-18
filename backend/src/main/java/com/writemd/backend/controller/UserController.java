@@ -1,5 +1,7 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.dto.ChatDTO;
+import com.writemd.backend.dto.GitRepoDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.GithubService;
 import com.writemd.backend.service.UserService;
@@ -55,9 +57,9 @@ public class UserController {
     }
 
     // 레포지토리 조회
-    @GetMapping("/github/repos")
-    public Mono<List<Map<String, Object>>> getRepositories(@AuthenticationPrincipal OAuth2User principal) {
-        return githubService.getRepositories(principal.getName());
+    @GetMapping("/github/repos/{owner}")
+    public Mono<List<Map<String, Object>>> getRepositories(@PathVariable String owner,@AuthenticationPrincipal OAuth2User principal) {
+        return githubService.getRepositories(owner,principal.getName());
     }
 
     // 레포지토리 하위 목록 조회
@@ -110,4 +112,9 @@ public class UserController {
                 .body(Collections.singletonMap("error", e.getMessage()))));
     }
 
+    // 깃 레포지토리 조회
+    @GetMapping("/git/repo/{userId}")
+    public List<GitRepoDTO> getGitInfo(@PathVariable Long userId){
+        return githubService.getGitRepos(userId);
+    }
 }

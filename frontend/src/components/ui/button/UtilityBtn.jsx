@@ -1,11 +1,11 @@
 import { Icon } from '@chakra-ui/react'
 
-const UtilityBtn = ({ icon, label, onClick, disabled = true, boxForm }) => {
+const UtilityBtn = ({ icon, label, onClick, disabled = true, setColor }) => {
   return (
     <Icon
       as={icon}
       boxSize="8"
-      color={boxForm === 'tool' ? 'blue.400' : 'gray.400'}
+      color={setColor ? 'blue.400' : 'gray.400'}
       cursor={disabled ? 'pointer' : 'not-allowed'}
       w="10"
       h="10"

@@ -92,7 +92,7 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
     createOrUpdateFile({
       owner: 'yi5oyu', // GitHub 소유자 이름
       repo: 'test', // 레포지토리 이름
-      path: 'README.md', // 파일 경로 (예: README.md)
+      path: 'REME.md', // 파일 경로 (예: README.md)
       message: 'Add markdown text', // 커밋 메시지
       markdownText: '# Hello GitHub!\nThis is a sample markdown text.',
       sha: '00bcb6e3738c7392875d6c3e65c22d569eaff069',

@@ -4,7 +4,7 @@ import { DeleteIcon } from '@chakra-ui/icons'
 const SessionBox = ({ sessionId, title, handleSessionId, handleDeleteSession, error }) => {
   return (
     <Flex
-      w="630px"
+      w="100%"
       h="50px"
       borderRadius="md"
       bg="gray.300"

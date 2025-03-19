@@ -23,8 +23,9 @@ import ToolBox from '../markdown/ToolBox'
 import EmojiBox from '../markdown/EmojiBox'
 import useGit from '../../hooks/useGit'
 import GitScreen from '../git/GitScreen'
+import useGetGithubFile from '../../hooks/useGetGithubFile'
 
-const NoteScreen = ({ userId, noteId, handleUpdateNote, updateLoading }) => {
+const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [questionText, setQuestionText] = useState('')
@@ -46,6 +47,12 @@ const NoteScreen = ({ userId, noteId, handleUpdateNote, updateLoading }) => {
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
   const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
+  const {
+    getFileContent,
+    loading: gitGetFileLoading,
+    error: gitGetFileError,
+    data: gitFileData,
+  } = useGetGithubFile()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -252,8 +259,36 @@ const NoteScreen = ({ userId, noteId, handleUpdateNote, updateLoading }) => {
 
   // 깃 정보 조회
   const handleGitLoad = () => {
-    getRepo({ userId })
+    if (user && user.userId) {
+      getRepo({ userId: user.userId })
+    }
   }
+
+  // 깃 파일 조회
+  const handleGetClick = (repo, path) => {
+    getFileContent({
+      owner: user.githubId,
+      repo,
+      path,
+    })
+  }
+
+  useEffect(() => {
+    if (gitFileData) {
+      // Base64 디코딩
+      const decodedContent = atob(gitFileData)
+
+      // UTF-8 변환
+      const byteArray = new Uint8Array(decodedContent.length)
+      for (let i = 0; i < decodedContent.length; i++) {
+        byteArray[i] = decodedContent.charCodeAt(i)
+      }
+      const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
+
+      // setMy(decodedContent)
+      console.log(decodedText)
+    }
+  }, [gitFileData])
 
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
@@ -384,7 +419,9 @@ const NoteScreen = ({ userId, noteId, handleUpdateNote, updateLoading }) => {
             )}
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
-            {boxForm === 'git' && <GitScreen data={gitRepoData} screen={screen} />}
+            {boxForm === 'git' && (
+              <GitScreen data={gitRepoData} screen={screen} handleGetClick={handleGetClick} />
+            )}
           </Box>
         </Flex>
       </Box>

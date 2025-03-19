@@ -285,8 +285,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       }
       const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
 
-      // setMy(decodedContent)
-      console.log(decodedText)
+      setMarkdownText(decodedText)
     }
   }, [gitFileData])
 
@@ -420,7 +419,13 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
             {boxForm === 'git' && (
-              <GitScreen data={gitRepoData} screen={screen} handleGetClick={handleGetClick} />
+              <GitScreen
+                data={gitRepoData}
+                screen={screen}
+                handleGetClick={handleGetClick}
+                gitLoading={gitLoading}
+                gitError={gitError}
+              />
             )}
           </Box>
         </Flex>

@@ -388,9 +388,7 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 이미지 렌더링
-  img: (props) => (
-    <Image src={props.src} alt={props.alt} maxW="100%" my={4} borderRadius="md" {...props} />
-  ),
+  img: (props) => <Image src={props.src} alt={props.alt} maxW="100%" display="inline" {...props} />,
 }
 
 export default ChakraMarkdownGithubLight

@@ -3,7 +3,7 @@ import { Flex, Box, Icon } from '@chakra-ui/react'
 import { RiGitRepositoryFill } from 'react-icons/ri'
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md'
 
-const RepoBox = ({ title, onClick, isActive, isDisabled }) => {
+const RepoBox = ({ title, onClick, isActive, isDisabled, selectedFile }) => {
   return (
     <Flex
       w="100%"
@@ -14,7 +14,17 @@ const RepoBox = ({ title, onClick, isActive, isDisabled }) => {
     >
       <Icon as={isActive ? MdKeyboardArrowDown : MdKeyboardArrowRight} ml="1" />
       <Icon as={RiGitRepositoryFill} ml="1" mr="2" />
-      <Box flex="1">{title}</Box>
+      <Box
+        bg={
+          selectedFile?.repo === title
+            ? selectedFile?.path
+              ? 'transparent'
+              : 'blue.100'
+            : 'transparent'
+        }
+      >
+        {title}
+      </Box>
     </Flex>
   )
 }

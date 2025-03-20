@@ -66,6 +66,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
   const toast = useToast()
 
+  // 에러 처리
   useEffect(() => {
     if (error || sessionError || messageError || chatError) {
       const errorMessage =
@@ -305,15 +306,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       markdownText,
       sha,
     })
+    getRepo({ userId: user.userId })
   }
-
-  //
-  useEffect(() => {
-    if (gitUpdatedData) {
-      console.log(gitUpdatedData)
-      // setMarkdownText()
-    }
-  }, [gitUpdatedData])
 
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
@@ -446,6 +440,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
             {boxForm === 'git' && (
               <GitScreen
+                name={name}
                 data={gitRepoData}
                 screen={screen}
                 handleGetClick={handleGetClick}

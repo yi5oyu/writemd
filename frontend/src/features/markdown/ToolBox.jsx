@@ -59,8 +59,7 @@ const ToolBox = ({
           icon={BsGithub}
           label="깃허브"
           onClick={() => {
-            handleGitLoad()
-            setBoxForm('git')
+            boxForm !== 'git' ? (handleGitLoad(), setBoxForm('git')) : setBoxForm('preview')
           }}
           setColor={boxForm === 'git' ? true : false}
         />

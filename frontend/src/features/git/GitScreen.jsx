@@ -7,6 +7,7 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 import CommitBox from './CommitBox'
 
 const GitScreen = ({
+  name,
   data,
   screen,
   handleGetClick,
@@ -29,10 +30,14 @@ const GitScreen = ({
   // 로딩
   const isLoading = gitLoading || gitGetFileLoading || gitFileLoading
 
-  // 리스트 토글
-  const handleRepoClick = (repoId) => {
+  // 리스트 토글, 폴더 선택/토글
+  const handleRepoClick = (repoId, repo) => {
     if (isLoading) return
 
+    setSelectedFile(() => ({
+      repo: repo,
+    }))
+    setMessage('docs: ')
     setActive((a) => {
       if (a.includes(repoId)) {
         return a.filter((id) => id !== repoId)
@@ -56,7 +61,9 @@ const GitScreen = ({
   const handleCommitClick = () => {
     if (isLoading) return
 
-    handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
+    selectedFile.path
+      ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
+      : handleNewFileClick(selectedFile.repo, `${name}.md`, message)
   }
 
   // 파일 업데이트
@@ -105,9 +112,13 @@ const GitScreen = ({
               <Box key={repoItem.repoId} mx={2} my={2}>
                 <RepoBox
                   title={repoItem.repo}
-                  onClick={() => handleRepoClick(repoItem.repoId)}
+                  onClick={() => {
+                    handleRepoClick(repoItem.repoId, repoItem.repo)
+                  }}
+                  handleFileClick={handleFileClick}
                   isActive={active.includes(repoItem.repoId)}
                   isDisabled={isLoading}
+                  selectedFile={selectedFile}
                 />
                 <RepoList
                   repo={repoItem.repo}
@@ -122,9 +133,11 @@ const GitScreen = ({
         </Box>
         <Box flex="1">
           <Text textAlign="center" borderRadius="md" bg="gray.300" h="35px" m={2} mb={3} py={1}>
-            {selectedFile?.repo && selectedFile?.path
-              ? `${selectedFile.repo}/${selectedFile.path}`
-              : '파일을 선택해주세요.'}
+            {selectedFile?.repo
+              ? selectedFile?.path
+                ? `${selectedFile.repo}/${selectedFile.path}`
+                : `${selectedFile.repo}/${name}.md`
+              : '폴더/파일을 선택해주세요.'}
           </Text>
           <CommitBox
             message={message}

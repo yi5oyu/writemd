@@ -231,4 +231,35 @@ gantt
     작업2: 2025-03-12, 5d
 \`\`\``,
   },
+  {
+    title: '콜아웃',
+    subTitle: '(Callout)',
+    description: (
+      <Box h="100px">
+        <Text mb={2}>
+          특별한 정보를 강조하기 위한 다양한 <Code>알림(Callout)</Code> 형식을 사용할 수 있습니다.
+        </Text>
+        <Text mb={2}>
+          GitHub는 공식적으로 5가지 유형의 알림을 지원합니다 <Code>NOTE</Code>, <Code>TIP</Code>,{' '}
+          <Code>IMPORTANT</Code>, <Code>WARNING</Code>, <Code>CAUTION</Code>
+        </Text>
+      </Box>
+    ),
+    markdownContents: `\`인용문을 사용한 알림생성\`
+
+> [!NOTE]
+> 유용한 정보를 여기에 작성합니다.
+
+> [!TIP]
+> 도움이 되는 팁을 여기에 작성합니다.
+
+> [!IMPORTANT]
+> 중요한 정보를 여기에 작성합니다.
+
+> [!WARNING]
+> 경고 사항을 여기에 작성합니다.
+
+> [!CAUTION]
+> 주의 사항을 여기에 작성합니다.`,
+  },
 ]

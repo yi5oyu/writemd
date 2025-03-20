@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
-import { Textarea, Box, Button, Icon } from '@chakra-ui/react'
-import { MdOutlineCheck } from 'react-icons/md'
-import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import { Flex, Textarea, Box, Button, Icon } from '@chakra-ui/react'
+import { MdOutlineCheck, MdOutlineHorizontalRule } from 'react-icons/md'
 
-const CommitBox = ({ message, setMessage, handleCommitClick, isDisabled }) => {
+const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
+  const [message, setMessage] = useState('')
+
   return (
     <Box m={2}>
       <Textarea
         value={message}
+        onChange={(e) => setMessage(e.target.value)}
         w="100%"
         p="2"
         mb="2"
@@ -20,18 +22,35 @@ const CommitBox = ({ message, setMessage, handleCommitClick, isDisabled }) => {
         _focus={{
           borderColor: 'gray.400',
         }}
-        onChange={(e) => setMessage(e.target.value)}
         disabled={isDisabled}
+        placeholder="docs: 변경 내용"
+        title="commit message"
       />
-      <Button
-        w="100%"
-        leftIcon={<Icon as={MdOutlineCheck} />}
-        onClick={isDisabled ? undefined : handleCommitClick}
-        disabled={isDisabled}
-        cursor={isDisabled ? 'not-allowed' : 'pointer'}
-      >
-        Commit
-      </Button>
+      <Flex gap="1">
+        <Button
+          flex="10"
+          leftIcon={<Icon as={MdOutlineCheck} />}
+          onClick={isDisabled ? undefined : () => handleCommitClick(message)}
+          isDisabled={isDisabled}
+          cursor={isDisabled ? 'not-allowed' : 'pointer'}
+          title="commit"
+          borderRadius="sm"
+        >
+          Commit
+        </Button>
+        <Button
+          flex="1"
+          onClick={isDisabled ? undefined : () => setSelectedFile(null)}
+          isDisabled={isDisabled}
+          cursor={isDisabled ? 'not-allowed' : 'pointer'}
+          justifyContent="center"
+          alignItems="center"
+          title="unstage"
+          borderRadius="sm"
+        >
+          <Icon as={MdOutlineHorizontalRule} />
+        </Button>
+      </Flex>
     </Box>
   )
 }

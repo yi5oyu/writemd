@@ -114,7 +114,11 @@ public class UserController {
 
     // 깃 레포지토리 조회
     @GetMapping("/git/repo/{userId}")
-    public List<GitRepoDTO> getGitInfo(@PathVariable Long userId){
-        return githubService.getGitRepos(userId);
+    public Mono<ResponseEntity<List<GitRepoDTO>>>  getGitInfo(
+        @AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable Long userId){
+        return githubService.getGitInfo(userId, principalName)
+            .map(repos -> ResponseEntity.ok(repos))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

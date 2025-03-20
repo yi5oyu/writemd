@@ -50,7 +50,6 @@ public class GithubService {
 
     // 레포지토리 조회
     public Mono<List<Map<String, Object>>> getRepositories(String owner, String principalName) {
-        System.out.println("레포:" + principalName);
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github",
             principalName);
         if (client == null) {
@@ -62,9 +61,7 @@ public class GithubService {
             .uri("https://api.github.com/users/{owner}/repos", owner)
             .headers(headers -> headers.setBearerAuth(accessToken))
             .exchangeToMono(response -> {
-                // 응답 헤더에서 ETag 추출
-                String etag = response.headers().asHttpHeaders().getETag();
-                System.out.println("ETag: " + etag);
+//                String etag = response.headers().asHttpHeaders().getETag();
                 return response.bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
                     .collectList();
@@ -163,7 +160,8 @@ public class GithubService {
                     .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음")))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMap(user -> {
-                OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", id);
+                OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    "github", id);
                 if (client == null) {
                     return Mono.error(new IllegalStateException("GitHub OAuth2 로그인 안됨"));
                 }
@@ -173,7 +171,8 @@ public class GithubService {
                     .uri("https://api.github.com/users/{githubId}/repos", githubId)
                     .headers(headers -> headers.setBearerAuth(accessToken))
                     .retrieve()
-                    .toEntity(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .toEntity(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    })
                     .flatMap(response -> {
                         String newEtag = response.getHeaders().getETag();
                         List<Map<String, Object>> reposList = response.getBody();
@@ -186,7 +185,8 @@ public class GithubService {
                                 } else {
                                     existingGit.setEtag(newEtag);
                                     existingGit.getGitrepos().clear();
-                                    return saveGitRepos(existingGit, reposList, githubId, accessToken);
+                                    return saveGitRepos(existingGit, reposList, githubId,
+                                        accessToken);
                                 }
                             })
                             // 새 생성
@@ -209,7 +209,8 @@ public class GithubService {
             });
     }
 
-    private Mono<Gits> saveGitRepos(Gits gits, List<Map<String, Object>> reposList, String githubId, String accessToken) {
+    private Mono<Gits> saveGitRepos(Gits gits, List<Map<String, Object>> reposList, String githubId,
+        String accessToken) {
         if (reposList == null || reposList.isEmpty()) {
             return saveGits(gits);
         }
@@ -220,10 +221,12 @@ public class GithubService {
             .flatMap(repo -> {
                 String repoName = (String) repo.get("name");
                 return webClient.get()
-                    .uri("https://api.github.com/repos/{githubId}/{repoName}/contents", githubId, repoName)
+                    .uri("https://api.github.com/repos/{githubId}/{repoName}/contents", githubId,
+                        repoName)
                     .headers(headers -> headers.setBearerAuth(accessToken))
                     .retrieve()
-                    .toEntity(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .toEntity(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    })
                     .onErrorResume(WebClientResponseException.NotFound.class, ex ->
                         Mono.just(new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK))
                     )
@@ -260,25 +263,100 @@ public class GithubService {
     }
 
     // 깃 레포지토리 조회
-    public List<GitRepoDTO> getGitRepos(Long userId) {
-        Users user = userRepository.findById(userId)
+//    public List<GitRepoDTO> getGitRepos(Long userId) {
+//        Users user = userRepository.findById(userId)
+//            .orElseThrow(() -> new RuntimeException("User 없음"));
+//
+//        Gits gitEntity = gitRepository.findByUsers(user).orElse(null);
+//
+//        return gitEntity.getGitrepos().stream()
+//            .map(repo -> GitRepoDTO.builder()
+//                .repoId(repo.getId())
+//                .repo(repo.getRepoName())
+//                .contents(repo.getGitcontents().stream()
+//                    .map(content -> GitContentDTO.builder()
+//                        .path(content.getPath())
+//                        .type(content.getType())
+//                        .sha(content.getSha())
+//                        .build())
+//                    .collect(Collectors.toList()))
+//                .build())
+//            .collect(Collectors.toList());
+//    }
+
+    public Mono<List<GitRepoDTO>> getGitInfo(Long userId, String principalName) {
+        Users users = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User 없음"));
 
-        Gits gitEntity = gitRepository.findByUsers(user).orElse(null);
+        return Mono.fromCallable(() ->
+                userRepository.findByGithubId(users.getGithubId())
+                    .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음")))
+            .subscribeOn(Schedulers.boundedElastic())
+            .flatMap(user -> {
+                OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    "github", principalName);
+                if (client == null) {
+                    return Mono.error(new IllegalStateException("GitHub OAuth2 로그인 안됨"));
+                }
+                String accessToken = client.getAccessToken().getTokenValue();
 
-        return gitEntity.getGitrepos().stream()
-            .map(repo -> GitRepoDTO.builder()
-                .repoId(repo.getId())
-                .repo(repo.getRepoName())
-                .contents(repo.getGitcontents().stream()
-                    .map(content -> GitContentDTO.builder()
-                        .path(content.getPath())
-                        .type(content.getType())
-                        .sha(content.getSha())
-                        .build())
-                    .collect(Collectors.toList()))
-                .build())
-            .collect(Collectors.toList());
+                return webClient.get()
+                    .uri("https://api.github.com/users/{githubId}/repos", users.getGithubId())
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .toEntity(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    })
+                    .flatMap(response -> {
+                        List<Map<String, Object>> reposList = response.getBody();
+                        if (reposList == null) {
+                            return Mono.just(Collections.emptyList());
+                        }
+                        List<Mono<GitRepoDTO>> repoMonos = reposList.stream()
+                            .map(repo -> {
+                                String repoName = (String) repo.get("name");
+                                Long repoId = ((Number) repo.get("id")).longValue();
+
+                                return webClient.get()
+                                    .uri("https://api.github.com/repos/{owner}/{repo}/contents",
+                                        users.getGithubId(), repoName)
+                                    .headers(headers -> headers.setBearerAuth(accessToken))
+                                    .retrieve()
+                                    .bodyToMono(
+                                        new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                                        })
+                                    .map(contents -> mapToGitRepoDTO(repoId, repoName, contents))
+                                    .onErrorResume(e -> {
+                                        System.err.println("콘텐츠 가져오기 실패: " + e.getMessage());
+
+                                        return Mono.just(GitRepoDTO.builder()
+                                            .repoId(repoId)
+                                            .repo(repoName)
+                                            .contents(Collections.emptyList())
+                                            .build());
+                                    });
+                            })
+                            .collect(Collectors.toList());
+
+                        return Flux.fromIterable(repoMonos)
+                            .flatMap(mono -> mono)
+                            .collectList();
+                    });
+            });
     }
 
+    private GitRepoDTO mapToGitRepoDTO(Long repoId, String repoName, List<Map<String, Object>> contents) {
+        List<GitContentDTO> contentDTOs = contents.stream()
+            .map(content -> GitContentDTO.builder()
+                .path((String) content.get("path"))
+                .type((String) content.get("type"))
+                .sha((String) content.get("sha"))
+                .build())
+            .collect(Collectors.toList());
+
+        return GitRepoDTO.builder()
+            .repoId(repoId)
+            .repo(repoName)
+            .contents(contentDTOs)
+            .build();
+    }
 }

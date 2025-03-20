@@ -3,14 +3,14 @@ import { Flex, Box, Icon, Text } from '@chakra-ui/react'
 import { GoFile, GoFileDirectoryFill } from 'react-icons/go'
 import { MdKeyboardArrowRight } from 'react-icons/md'
 
-const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile }) => {
+const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile, isDisabled }) => {
   return (
     <Box display={isActive ? 'block' : 'none'}>
       {contents.map((content) => (
         <Flex
           alignItems="center"
           h="30px"
-          cursor={content.type === 'file' ? 'pointer' : null}
+          cursor={isDisabled ? 'not-allowed' : content.type === 'file' ? 'pointer' : null}
           key={content.sha}
         >
           <Icon as={MdKeyboardArrowRight} ml="4" />
@@ -23,7 +23,9 @@ const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile }) =
           />
           <Box
             onClick={() =>
-              content.type === 'file' && handleFileClick(repo, content.path, content.sha)
+              isDisabled
+                ? undefined
+                : content.type === 'file' && handleFileClick(repo, content.path, content.sha)
             }
             bg={
               selectedFile && selectedFile.repo === repo && selectedFile.path === content.path

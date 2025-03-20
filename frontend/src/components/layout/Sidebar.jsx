@@ -36,13 +36,6 @@ const MotionBox = motion(Box)
 
 const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
   const { deleteNote, loading, error } = useDeleteNote()
-  const { createOrUpdateFile, loading: gitFileLoading, error: gitFileError, data } = useGithubFile()
-  const {
-    getFileContent,
-    loading: gitGetFileLoading,
-    error: gitGetFileError,
-    data: gitFileData,
-  } = useGetGithubFile()
 
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [showNoteInputBox, setShowNoteInputBox] = useState(false)
@@ -86,35 +79,6 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
       console.log('삭제 실패: ' + error)
     }
   }
-
-  // 파일 업로드(임시)
-  const handleClick = () => {
-    createOrUpdateFile({
-      owner: 'yi5oyu', // GitHub 소유자 이름
-      repo: 'test', // 레포지토리 이름
-      path: 'REME.md', // 파일 경로 (예: README.md)
-      message: 'Add markdown text', // 커밋 메시지
-      markdownText: '# Hello GitHub!\nThis is a sample markdown text.',
-      sha: '00bcb6e3738c7392875d6c3e65c22d569eaff069',
-    })
-  }
-
-  // 파일 내용 조회(임시)
-  const handleGetClick = () => {
-    getFileContent({
-      owner: 'yi5oyu',
-      repo: 'test',
-      path: 'READ.md',
-    })
-  }
-
-  useEffect(() => {
-    if (gitFileData) {
-      // Base64 디코딩
-      const decodedContent = atob(gitFileData)
-      setMy(decodedContent)
-    }
-  }, [gitFileData])
 
   return (
     <>
@@ -250,18 +214,6 @@ const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
               )}
 
               {/* git */}
-              <Box
-                onClick={handleClick}
-                style={{ cursor: 'pointer', border: '1px solid #ccc', padding: '10px' }}
-              >
-                깃허브
-              </Box>
-              <Box
-                onClick={handleGetClick}
-                style={{ cursor: 'pointer', border: '1px solid #ccc', padding: '10px' }}
-              >
-                가져오기
-              </Box>
             </Box>
 
             {/* 여백 */}

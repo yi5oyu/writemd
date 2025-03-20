@@ -3,13 +3,13 @@ import { Flex, Box, Icon } from '@chakra-ui/react'
 import { RiGitRepositoryFill } from 'react-icons/ri'
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md'
 
-const RepoBox = ({ title, onClick, isActive }) => {
+const RepoBox = ({ title, onClick, isActive, isDisabled }) => {
   return (
     <Flex
       w="100%"
-      cursor="pointer"
+      cursor={isDisabled ? 'not-allowed' : 'pointer'}
       alignItems="center"
-      onClick={onClick}
+      onClick={isDisabled ? undefined : onClick}
       fontWeight={isActive ? 500 : 400}
     >
       <Icon as={isActive ? MdKeyboardArrowDown : MdKeyboardArrowRight} ml="1" />

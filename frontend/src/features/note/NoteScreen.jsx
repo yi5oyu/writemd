@@ -24,6 +24,7 @@ import EmojiBox from '../markdown/EmojiBox'
 import useGit from '../../hooks/useGit'
 import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
+import useGithubFile from '../../hooks/useGithubFile'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -53,6 +54,12 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitGetFileError,
     data: gitFileData,
   } = useGetGithubFile()
+  const {
+    createOrUpdateFile,
+    loading: gitFileLoading,
+    error: gitFileError,
+    data: gitUpdatedData,
+  } = useGithubFile()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -273,12 +280,11 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     })
   }
 
+  // Base64 디코딩, UTF-8 변환
   useEffect(() => {
     if (gitFileData) {
-      // Base64 디코딩
       const decodedContent = atob(gitFileData)
 
-      // UTF-8 변환
       const byteArray = new Uint8Array(decodedContent.length)
       for (let i = 0; i < decodedContent.length; i++) {
         byteArray[i] = decodedContent.charCodeAt(i)
@@ -288,6 +294,26 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       setMarkdownText(decodedText)
     }
   }, [gitFileData])
+
+  // 파일 업로드
+  const handleNewFileClick = (repo, path, message, sha) => {
+    createOrUpdateFile({
+      owner: user.githubId,
+      repo,
+      path,
+      message,
+      markdownText,
+      sha,
+    })
+  }
+
+  //
+  useEffect(() => {
+    if (gitUpdatedData) {
+      console.log(gitUpdatedData)
+      // setMarkdownText()
+    }
+  }, [gitUpdatedData])
 
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
@@ -423,8 +449,14 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 data={gitRepoData}
                 screen={screen}
                 handleGetClick={handleGetClick}
+                handleNewFileClick={handleNewFileClick}
+                gitUpdatedData={gitUpdatedData}
                 gitLoading={gitLoading}
                 gitError={gitError}
+                gitGetFileLoading={gitGetFileLoading}
+                gitGetFileError={gitGetFileError}
+                gitFileLoading={gitFileLoading}
+                gitFileError={gitFileError}
               />
             )}
           </Box>

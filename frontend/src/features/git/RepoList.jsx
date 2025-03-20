@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Flex, Box, Icon, Text } from '@chakra-ui/react'
 import { GoFile, GoFileDirectoryFill } from 'react-icons/go'
+import { MdKeyboardArrowRight } from 'react-icons/md'
 
 const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile }) => {
   return (
@@ -8,10 +9,11 @@ const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile }) =
       {contents.map((content) => (
         <Flex
           alignItems="center"
-          h="35px"
+          h="30px"
           cursor={content.type === 'file' ? 'pointer' : null}
           key={content.sha}
         >
+          <Icon as={MdKeyboardArrowRight} ml="4" />
           <Icon
             as={
               content.type === 'file' ? GoFile : content.type === 'dir' ? GoFileDirectoryFill : null
@@ -20,7 +22,9 @@ const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile }) =
             mr="2"
           />
           <Box
-            onClick={() => content.type === 'file' && handleFileClick(repo, content.path)}
+            onClick={() =>
+              content.type === 'file' && handleFileClick(repo, content.path, content.sha)
+            }
             bg={
               selectedFile && selectedFile.repo === repo && selectedFile.path === content.path
                 ? 'blue.100'

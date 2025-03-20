@@ -1,22 +1,20 @@
-import React, { useState } from 'react'
-import { Flex, Box, Heading, Text } from '@chakra-ui/react'
+import React from 'react'
+import { Flex, Box, Icon } from '@chakra-ui/react'
+import { RiGitRepositoryFill } from 'react-icons/ri'
+import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md'
 
-const RepoBox = ({ title, onClick }) => {
+const RepoBox = ({ title, onClick, isActive }) => {
   return (
     <Flex
       w="100%"
-      h="50px"
-      borderRadius="md"
-      bg="gray.300"
       cursor="pointer"
       alignItems="center"
       onClick={onClick}
-      px="2"
-      fontSize="18px"
+      fontWeight={isActive ? 500 : 400}
     >
-      <Box flex="1" ml="2">
-        {title}
-      </Box>
+      <Icon as={isActive ? MdKeyboardArrowDown : MdKeyboardArrowRight} ml="1" />
+      <Icon as={RiGitRepositoryFill} ml="1" mr="2" />
+      <Box flex="1">{title}</Box>
     </Flex>
   )
 }

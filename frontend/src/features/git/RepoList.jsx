@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Flex, Box, Icon, Text } from '@chakra-ui/react'
 import { GoFile, GoFileDirectoryFill } from 'react-icons/go'
 
-const RepoList = ({ contents, isActive, repo, handleGetClick }) => {
+const RepoList = ({ contents, isActive, repo, handleFileClick, selectedFile }) => {
   return (
     <Box display={isActive ? 'block' : 'none'}>
       {contents.map((content) => (
@@ -20,18 +20,19 @@ const RepoList = ({ contents, isActive, repo, handleGetClick }) => {
             mr="2"
           />
           <Box
-            onClick={() => {
-              if (content.type === 'file') {
-                handleGetClick(repo, content.path)
-              }
-            }}
+            onClick={() => content.type === 'file' && handleFileClick(repo, content.path)}
+            bg={
+              selectedFile && selectedFile.repo === repo && selectedFile.path === content.path
+                ? 'blue.100'
+                : 'transparent'
+            }
           >
             {content.path}
           </Box>
         </Flex>
       ))}
 
-      {(!contents || contents.length === 0) && <Box p="4">없음.</Box>}
+      {(!contents || contents.length === 0) && <></>}
     </Box>
   )
 }

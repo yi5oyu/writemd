@@ -7,6 +7,7 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const GitScreen = ({ data, screen, handleGetClick, gitLoading, gitError }) => {
   const [active, setActive] = useState([])
+  const [selectedFile, setSelectedFile] = useState(null)
 
   const toast = useToast()
 
@@ -19,6 +20,12 @@ const GitScreen = ({ data, screen, handleGetClick, gitLoading, gitError }) => {
         return [...a, repoId]
       }
     })
+  }
+
+  // 파일 클릭
+  const handleFileClick = (repo, path) => {
+    setSelectedFile({ repo, path })
+    handleGetClick(repo, path)
   }
 
   // 에러 토스트
@@ -51,7 +58,8 @@ const GitScreen = ({ data, screen, handleGetClick, gitLoading, gitError }) => {
                 repo={repoItem.repo}
                 contents={repoItem.contents}
                 isActive={active.includes(repoItem.repoId)}
-                handleGetClick={handleGetClick}
+                handleFileClick={handleFileClick}
+                selectedFile={selectedFile}
               />
             </Box>
           ))}

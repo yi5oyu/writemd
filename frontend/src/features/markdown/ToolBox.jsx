@@ -5,7 +5,7 @@ import UtilityBtn from '../../components/ui/button/UtilityBtn'
 import { RiToolsFill } from 'react-icons/ri'
 import { MdSpellcheck } from 'react-icons/md'
 import { AiOutlineFullscreen, AiOutlineFullscreenExit } from 'react-icons/ai'
-import { FaFileExport } from 'react-icons/fa'
+import { FaFileExport, FaStickyNote, FaRegFileAlt } from 'react-icons/fa'
 import { BiSolidEraser } from 'react-icons/bi'
 import { BsGithub } from 'react-icons/bs'
 
@@ -54,6 +54,8 @@ const ToolBox = ({
         />
         <UtilityBtn icon={FaFileExport} label="추출" onClick={onExport} />
         <UtilityBtn icon={BsGithub} label="깃허브" onClick={() => setBoxForm('git')} />
+        <UtilityBtn icon={FaStickyNote} label="메모" onClick={() => setBoxForm('memo')} />
+        <UtilityBtn icon={FaRegFileAlt} label="템플릿" onClick={() => setBoxForm('template')} />
       </Flex>
     </Flex>
   )

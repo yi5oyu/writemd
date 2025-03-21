@@ -4,7 +4,7 @@ import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
 import Draggable from 'react-draggable'
 import MemoList from './MemoList'
 
-const MemoBox = ({ memo, setMemo, markdownText, setMarkdownText }) => {
+const MemoBox = ({ memo, setMemo, markdownText, setMarkdownText, handleMemoSaveClick }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [text, setText] = useState([])
 
@@ -12,6 +12,7 @@ const MemoBox = ({ memo, setMemo, markdownText, setMarkdownText }) => {
   const handleSaveText = () => {
     const newText = [...text, markdownText]
     setText(newText)
+    handleMemoSaveClick()
   }
 
   // 불러오기

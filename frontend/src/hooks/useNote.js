@@ -19,7 +19,6 @@ const useNote = (noteId) => {
       })
       .then((data) => {
         setNote(data)
-        console.log('노트 조회: ', data)
       })
       .catch((err) => {
         setError(err)

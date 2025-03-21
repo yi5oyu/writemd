@@ -26,6 +26,7 @@ import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
 import MemoBox from '../memo/MemoBox'
+import useSaveMemo from '../../hooks/useSaveMemo'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -62,6 +63,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
+  const { saveMemo, loading: memoSaveLoading, error: memoSaveError } = useSaveMemo()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -311,6 +313,15 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     getRepo({ userId: user.userId })
   }
 
+  // 메모 저장/업데이트
+  const handleMemoSaveClick = async (memoId) => {
+    try {
+      await saveMemo(user.githubId, markdownText, memoId)
+    } catch (error) {
+      console.error('메모 저장 실패: ', error)
+    }
+  }
+
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
@@ -466,6 +477,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 setMemo={setMemo}
                 markdownText={markdownText}
                 setMarkdownText={setMarkdownText}
+                handleMemoSaveClick={handleMemoSaveClick}
               />
             )}
           </Box>

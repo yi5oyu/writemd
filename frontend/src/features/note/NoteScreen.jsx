@@ -460,7 +460,14 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
 
-            {memo && <MemoBox memo={memo} setMemo={setMemo} markdownText={markdownText} />}
+            {memo && (
+              <MemoBox
+                memo={memo}
+                setMemo={setMemo}
+                markdownText={markdownText}
+                setMarkdownText={setMarkdownText}
+              />
+            )}
           </Box>
         </Flex>
       </Box>

@@ -25,6 +25,7 @@ import useGit from '../../hooks/useGit'
 import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
+import MemoBox from '../memo/MemoBox'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -40,6 +41,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [screen, setScreen] = useState(true)
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
+  const [memo, setMemo] = useState(false)
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -355,6 +357,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               tool={tool}
               setTool={setTool}
               handleGitLoad={handleGitLoad}
+              memo={memo}
+              setMemo={setMemo}
             />
             <MarkdownInputBox
               markdownText={markdownText}
@@ -437,7 +441,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               </>
             )}
 
-            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
             {boxForm === 'git' && (
               <GitScreen
                 name={name}
@@ -454,6 +457,10 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 gitFileError={gitFileError}
               />
             )}
+
+            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
+
+            {memo && <MemoBox memo={memo} setMemo={setMemo} markdownText={markdownText} />}
           </Box>
         </Flex>
       </Box>

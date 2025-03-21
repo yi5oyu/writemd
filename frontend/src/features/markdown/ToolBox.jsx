@@ -21,6 +21,8 @@ const ToolBox = ({
   tool,
   setTool,
   handleGitLoad,
+  memo,
+  setMemo,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -43,7 +45,6 @@ const ToolBox = ({
         <UtilityBtn
           icon={RiToolsFill}
           label="도구상자"
-          boxForm={boxForm}
           onClick={() => setTool(!tool)}
           setColor={tool ? true : false}
         />
@@ -65,7 +66,12 @@ const ToolBox = ({
           setColor={boxForm === 'git' ? true : false}
         />
 
-        <UtilityBtn icon={FaStickyNote} label="메모" onClick={() => setBoxForm('memo')} />
+        <UtilityBtn
+          icon={FaStickyNote}
+          label="메모"
+          onClick={() => setMemo(!memo)}
+          setColor={memo ? true : false}
+        />
         <UtilityBtn icon={FaRegFileAlt} label="템플릿" onClick={() => setBoxForm('template')} />
       </Flex>
     </Flex>

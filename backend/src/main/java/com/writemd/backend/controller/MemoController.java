@@ -1,11 +1,14 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.dto.MemoDTO;
 import com.writemd.backend.entity.Memos;
 import com.writemd.backend.service.MemoService;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,13 +24,21 @@ public class MemoController {
 
     private final MemoService memoService;
 
-    @PostMapping("/save/{githubId}")
+    // 메모 저장
+    @PostMapping("/{userId}")
     public ResponseEntity<Memos> saveMemo(
-        @PathVariable String githubId,
+        @PathVariable Long userId,
         @RequestBody Map<String, Object> requestPayload,
         @RequestParam(required = false) Long memoId) {
-        
-        Memos savedMemo = memoService.saveMemo(githubId, (String) requestPayload.get("text"), memoId);
+
+        Memos savedMemo = memoService.saveMemo(userId, (String) requestPayload.get("text"), memoId);
         return ResponseEntity.ok(savedMemo);
+    }
+
+    // 메모 조회
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<MemoDTO>> getMemos(@PathVariable Long userId) {
+        List<MemoDTO> memos = memoService.getMemos(userId);
+        return ResponseEntity.ok(memos);
     }
 }

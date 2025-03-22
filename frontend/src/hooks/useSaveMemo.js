@@ -5,12 +5,12 @@ const useSaveMemo = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const saveMemo = (githubId, text, memoId) => {
+  const saveMemo = (userId, text, memoId) => {
     setLoading(true)
     setError(null)
     return axios
       .post(
-        `http://localhost:8888/api/memo/save/${githubId}`,
+        `http://localhost:8888/api/memo/${userId}`,
         { text },
         {
           params: { memoId },

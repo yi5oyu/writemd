@@ -4,21 +4,8 @@ import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
 import Draggable from 'react-draggable'
 import MemoList from './MemoList'
 
-const MemoBox = ({ memo, setMemo, markdownText, setMarkdownText, handleMemoSaveClick }) => {
+const MemoBox = ({ text, memo, setMemo, setMarkdownText, handleMemoSaveClick }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [text, setText] = useState([])
-
-  // 저장
-  const handleSaveText = () => {
-    const newText = [...text, markdownText]
-    setText(newText)
-    handleMemoSaveClick()
-  }
-
-  // 불러오기
-  const handleLoadText = (temp) => {
-    setMarkdownText(temp)
-  }
 
   return (
     <Draggable onStart={() => setIsDragging(true)} onStop={() => setIsDragging(false)}>
@@ -41,7 +28,7 @@ const MemoBox = ({ memo, setMemo, markdownText, setMarkdownText, handleMemoSaveC
           <IconButton
             variant="ghost"
             size="md"
-            onClick={handleSaveText}
+            onClick={() => handleMemoSaveClick()}
             icon={<Icon as={RiSave3Fill} />}
             aria-label="저장"
           />
@@ -59,9 +46,9 @@ const MemoBox = ({ memo, setMemo, markdownText, setMarkdownText, handleMemoSaveC
         </Text>
         <Box p={2}>
           {text.length > 0 ? (
-            text.map((textItem, index) => (
-              <Box key={index}>
-                <MemoList text={textItem} handleLoadText={handleLoadText} />
+            text.map((item) => (
+              <Box key={item.memoId}>
+                <MemoList text={item.text} handleLoadText={() => setMarkdownText(item.text)} />
               </Box>
             ))
           ) : (

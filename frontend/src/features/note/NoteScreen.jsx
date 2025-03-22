@@ -28,6 +28,7 @@ import useGithubFile from '../../hooks/useGithubFile'
 import MemoBox from '../memo/MemoBox'
 import useSaveMemo from '../../hooks/useSaveMemo'
 import useGetMemo from '../../hooks/useGetMemo'
+import useDeleteMemo from '../../hooks/useDeleteMemo'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -44,7 +45,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
   const [memo, setMemo] = useState(false)
-  const [text, setText] = useState([]) //{ memoId: null, text: '' }
+  const [text, setText] = useState([])
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -67,6 +68,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   } = useGithubFile()
   const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
   const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
+  const { deleteMemo, loading: delMemoLoading, error: delMemoError } = useDeleteMemo()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -315,10 +317,18 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   }
 
   // 메모 저장/업데이트
-  const handleMemoSaveClick = async (memoId) => {
+  const handleSaveMemoClick = async (memoId) => {
+    if (saveMemoError) return
+
     try {
       const response = await saveMemo(user.userId, markdownText, memoId)
-      setText((t) => [...t, { memoId: response.id, text: response.text }])
+      if (memoId) {
+        setText((t) =>
+          t.map((memo) => (memo.memoId === memoId ? { ...memo, text: response.text } : memo))
+        )
+      } else {
+        setText((t) => [...t, { memoId: response.id, text: response.text }])
+      }
     } catch (error) {
       console.error('메모 저장 실패: ', error)
     }
@@ -327,11 +337,23 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   // 메모 조회
   useEffect(() => {
     if (getMemoError) return
-    console.log(memoData)
+
     if (memo && memoData) {
       setText(memoData)
     }
   }, [memo, memoData])
+
+  // 메모 삭제
+  const handelDelMemoClick = async (memoId) => {
+    if (delMemoError) return
+
+    try {
+      await deleteMemo(memoId)
+      setText((t) => t.filter((memo) => memo.memoId !== memoId))
+    } catch (error) {
+      console.error('메모 삭제 실패: ', error)
+    }
+  }
 
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
@@ -490,7 +512,11 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 setMemo={setMemo}
                 markdownText={markdownText}
                 setMarkdownText={setMarkdownText}
-                handleMemoSaveClick={handleMemoSaveClick}
+                handleSaveMemoClick={handleSaveMemoClick}
+                handelDelMemoClick={handelDelMemoClick}
+                delMemoLoading={delMemoLoading}
+                getMemoLoading={getMemoLoading}
+                saveMemoLoading={saveMemoLoading}
               />
             )}
           </Box>

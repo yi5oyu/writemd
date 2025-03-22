@@ -8,6 +8,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,10 +36,18 @@ public class MemoController {
         return ResponseEntity.ok(savedMemo);
     }
 
-    // 메모 조회
+    // 메모 전체 조회
     @GetMapping("/{userId}")
     public ResponseEntity<List<MemoDTO>> getMemos(@PathVariable Long userId) {
         List<MemoDTO> memos = memoService.getMemos(userId);
         return ResponseEntity.ok(memos);
+    }
+
+
+    // 메모 삭제
+    @DeleteMapping("/{memoId}")
+    public ResponseEntity<Void> deleteMemo(@PathVariable Long memoId) {
+         memoService.deleteMemo(memoId);
+        return ResponseEntity.noContent().build();
     }
 }

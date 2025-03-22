@@ -3,9 +3,23 @@ import { Flex, Box, Text, IconButton, Icon } from '@chakra-ui/react'
 import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
 import Draggable from 'react-draggable'
 import MemoList from './MemoList'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
-const MemoBox = ({ text, memo, setMemo, setMarkdownText, handleMemoSaveClick }) => {
+const MemoBox = ({
+  text,
+  memo,
+  setMemo,
+  setMarkdownText,
+  handleSaveMemoClick,
+  handelDelMemoClick,
+  delMemoLoading,
+  saveMemoLoading,
+  getMemoLoading,
+}) => {
   const [isDragging, setIsDragging] = useState(false)
+  const [selectedMemo, setSelectedMemo] = useState(null)
+
+  const isLoading = delMemoLoading || saveMemoLoading || getMemoLoading
 
   return (
     <Draggable onStart={() => setIsDragging(true)} onStop={() => setIsDragging(false)}>
@@ -23,14 +37,16 @@ const MemoBox = ({ text, memo, setMemo, setMarkdownText, handleMemoSaveClick }) 
         cursor={isDragging ? 'move' : 'default'}
         maxH="800px"
         overflowY="auto"
+        filter={isLoading ? 'blur(4px)' : 'none'}
       >
         <Flex justifyContent="space-between" alignItems="center">
           <IconButton
             variant="ghost"
             size="md"
-            onClick={() => handleMemoSaveClick()}
+            onClick={() => handleSaveMemoClick(selectedMemo ? selectedMemo : null)}
             icon={<Icon as={RiSave3Fill} />}
             aria-label="저장"
+            isDisabled={isLoading}
           />
 
           <IconButton
@@ -48,13 +64,23 @@ const MemoBox = ({ text, memo, setMemo, setMarkdownText, handleMemoSaveClick }) 
           {text.length > 0 ? (
             text.map((item) => (
               <Box key={item.memoId}>
-                <MemoList text={item.text} handleLoadText={() => setMarkdownText(item.text)} />
+                <MemoList
+                  id={item.memoId}
+                  text={item.text}
+                  onClick={() => {
+                    setMarkdownText(item.text)
+                    setSelectedMemo(item.memoId)
+                  }}
+                  handelDelMemoClick={handelDelMemoClick}
+                  isDisabled={isLoading}
+                />
               </Box>
             ))
           ) : (
             <Text>저장된 메모 없음.</Text>
           )}
         </Box>
+        {isLoading && <LoadingSpinner />}
       </Flex>
     </Draggable>
   )

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -20,6 +21,7 @@ public class MemoService {
     private final MemoRepository memoRepository;
 
     // 메모 저장/업데이트
+    @Transactional
     public Memos saveMemo(Long userId, String text, Long memoId){
         Users user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
@@ -29,8 +31,7 @@ public class MemoService {
                 .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음: " + memoId));
 
             memo.setText(text);
-
-            return memo;
+            return memoRepository.save(memo);
         } else{
             Memos memo = Memos.builder()
                 .text(text)
@@ -43,8 +44,8 @@ public class MemoService {
         }
     }
 
-    // 메모 조회
-    public  List<MemoDTO> getMemos(Long userId){
+    // 메모 전체 조회
+    public List<MemoDTO> getMemos(Long userId){
         List<Memos> memos = memoRepository.findByUsers_Id(userId);
 
         return memos.stream()
@@ -55,4 +56,8 @@ public class MemoService {
             .collect(Collectors.toList());
     }
 
+    // 메모 삭제
+    public void deleteMemo(Long memoId){
+        memoRepository.deleteById(memoId);
+    }
 }

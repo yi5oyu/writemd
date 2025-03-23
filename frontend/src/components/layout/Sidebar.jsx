@@ -22,7 +22,6 @@ const MotionBox = motion(Box)
 
 const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
-  const [showNoteInputBox, setShowNoteInputBox] = useState(false)
 
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
@@ -36,17 +35,6 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
   const handleAddClick = () => {
     setShowNoteInputBox(true)
   }
-
-  // 로딩
-  // useEffect(() => {
-  //   if (notes && notes.length > 0) {
-  //     setIsLoading(false)
-  //   }
-  // }, [notes])
-
-  // if (isLoading) {
-  //   return <Box>Loading...</Box>
-  // }
 
   return (
     <>
@@ -136,6 +124,21 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
                     _hover={{
                       bg: 'gray.200',
                     }}
+                    onClick={() => setCurrentScreen('newnote')}
+                  >
+                    <SideMenuIcon icon={FiFolder} />
+                    <Text>새 노트</Text>
+                  </Flex>
+                  <Flex
+                    px="2"
+                    py="1"
+                    mx="2"
+                    cursor="pointer"
+                    borderRadius="md"
+                    alignItems="center"
+                    _hover={{
+                      bg: 'gray.200',
+                    }}
                   >
                     <SideMenuIcon icon={FiFolder} />
                     <Text>내 노트</Text>
@@ -151,7 +154,7 @@ const Sidebar = ({ notes, user, setCurrentScreen, handleDeleteNote }) => {
                       }}
                     />
                   </Flex>
-                  {showNoteInputBox && <NoteInputBox icon={PiNotebook} />}
+
                   {notes.map((note) => (
                     <NoteBox
                       key={note.noteId}

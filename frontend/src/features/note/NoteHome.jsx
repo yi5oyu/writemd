@@ -5,7 +5,7 @@ const NoteHome = ({ handleSaveNote }) => {
   const [title, setTitle] = useState('새 노트')
 
   return (
-    <Flex w="100vw" alignItems="center" justifyContent="center">
+    <Flex mx="auto" alignItems="center" justifyContent="center">
       <Box w="600px" h="600px">
         <Heading as="h1" size="lg" mb="6" textAlign="center">
           새 노트

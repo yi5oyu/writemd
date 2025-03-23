@@ -19,7 +19,7 @@ const NoteDeleteBox = ({ isOpen, onClose, confirmDelete }) => {
         <ModalCloseButton />
         <ModalBody>정말로 노트를 삭제하시겠습니까?</ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mr={3} onClick={confirmDelete}>
+          <Button colorScheme="red" mr="10px" onClick={confirmDelete}>
             예
           </Button>
           <Button variant="ghost" onClick={onClose}>

@@ -1,6 +1,3 @@
-import React, { useState } from 'react'
-import axios from 'axios'
-
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 import MainPage from '../../features/home/MainPage'
@@ -12,6 +9,10 @@ const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote, handleCreateS
         <MainPage />
       ) : currentScreen === 'newnote' ? (
         <NoteHome handleSaveNote={handleSaveNote} />
+      ) : currentScreen === 'folder' ? (
+        <></>
+      ) : currentScreen === 'tip' ? (
+        <></>
       ) : (
         <NoteScreen
           handleUpdateNote={handleUpdateNote}

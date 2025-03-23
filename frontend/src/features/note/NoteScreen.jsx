@@ -155,8 +155,8 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
   }
 
   return (
-    <Flex direction="column" m="5" w="100vw">
-      <Flex w="100%" display="flex" alignItems="center" justifyContent="center">
+    <Flex direction="column" m="auto">
+      <Flex display="flex" alignItems="center" justifyContent="center">
         <Icon as={PiNotebookFill} />
         <Input
           value={name}
@@ -179,14 +179,14 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
         />
       </Flex>
 
-      <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
-        <Box w="640px" direction="column">
+      <Flex position="relative" gap="5" justifyContent="center">
+        <Box w="600px" direction="column">
           <UtilityBox />
           <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
         </Box>
-        <Box w="640px" position="relative">
+        <Box w="600px" position="relative">
           {boxForm === 'preview' ? (
-            <Box w="640px" h="100%" flex="1">
+            <Box w="640px" flex="1">
               <UtilityBox
                 setBoxForm={setBoxForm}
                 boxForm={boxForm}
@@ -195,7 +195,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
               <MarkdownPreview markdownText={markdownText} />
             </Box>
           ) : boxForm === 'chat' ? (
-            <Box w="640px" h="100%" flex="1">
+            <Box w="600px" flex="1">
               <UtilityBox
                 setBoxForm={setBoxForm}
                 handleCheckConnection={handleCheckConnection}
@@ -210,7 +210,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
               />
             </Box>
           ) : boxForm === 'newChat' ? (
-            <Box w="640px" h="100%" flex="1">
+            <Box w="600px" flex="1">
               <UtilityBox
                 setBoxForm={setBoxForm}
                 handleCheckConnection={handleCheckConnection}
@@ -227,7 +227,7 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
               />
             </Box>
           ) : boxForm === 'chatBox' ? (
-            <Box w="640px" h="100%" flex="1">
+            <Box w="600px" flex="1">
               <UtilityBox
                 setBoxForm={setBoxForm}
                 handleCheckConnection={handleCheckConnection}

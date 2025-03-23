@@ -1,8 +1,5 @@
 import { useState } from 'react'
-import { Box, Textarea, Input, Flex, Heading, Button } from '@chakra-ui/react'
-import ReactMarkdown from 'react-markdown'
-import ChakraUIRenderer from 'chakra-ui-markdown-renderer'
-import remarkGfm from 'remark-gfm'
+import { Box, Flex, Heading, Button } from '@chakra-ui/react'
 
 import IntroPage from './IntroPage'
 import TutorialPage from './TutorialPage'
@@ -12,9 +9,9 @@ const MainPage = () => {
   const [page, setPage] = useState('intro')
 
   return (
-    <Flex w="100vw" direction="column" minH="100vh">
-      <Box w="1200px" minH="900px" mx="auto" my="100px">
-        <Heading as="h2" size="lg" mb="6" textAlign="center">
+    <Flex mx="auto" direction="column" my="15px" p="20px" borderRadius="md">
+      <Box w="1200px">
+        <Heading as="h2" size="lg" mb="20px" textAlign="center">
           {page === 'intro'
             ? 'Write MD 가이드'
             : page === 'manual'
@@ -23,7 +20,7 @@ const MainPage = () => {
             ? '튜토리얼'
             : 'a'}
         </Heading>
-        <Flex mb="4" gap="2">
+        <Flex mb="20px" gap="2">
           <Button w="100px" onClick={() => setPage('intro')}>
             홈
           </Button>
@@ -37,7 +34,7 @@ const MainPage = () => {
             템플릿
           </Button>
         </Flex>
-        <Box mt="2" borderRadius="md">
+        <Box mt="10px" borderRadius="md">
           {page === 'intro' ? (
             <IntroPage />
           ) : page === 'tutorial' ? (

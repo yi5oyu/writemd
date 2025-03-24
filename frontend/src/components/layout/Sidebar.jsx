@@ -1,5 +1,15 @@
-import React, { useState } from 'react'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
+import React, { useState, useEffect } from 'react'
+import {
+  useDisclosure,
+  Box,
+  Text,
+  Flex,
+  Icon,
+  Spacer,
+  Avatar,
+  useToast,
+  Spinner,
+} from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { BsQuestionCircle, BsChevronRight } from 'react-icons/bs'
 import { FiHome, FiFolder, FiMinusSquare, FiPlusSquare } from 'react-icons/fi'
@@ -17,7 +27,7 @@ import ErrorToast from '../ui/toast/ErrorToast'
 const MotionBox = motion(Box)
 const MotionFlex = motion(Flex)
 
-const Sidebar = ({ notes, user, setCurrentScreen, setNotes }) => {
+const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
   const [isFold, setIsFold] = useState(true)

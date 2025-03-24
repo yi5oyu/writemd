@@ -6,8 +6,6 @@ import NoteHome from '../../features/note/NoteHome'
 import useSaveNote from '../../hooks/useSaveNote'
 import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 import ErrorToast from '../ui/toast/ErrorToast'
-import NoteScreen from '../../features/note/NoteScreen'
-import NoteHome from '../../features/note/NoteHome'
 import MainPage from '../../features/home/MainPage'
 
 const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {

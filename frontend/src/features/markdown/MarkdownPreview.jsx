@@ -7,12 +7,10 @@ import remarkGfm from 'remark-gfm'
 const MarkdownPreview = ({ markdownText, mode }) => {
   return (
     <Box
-      border="1px solid"
-      borderColor="gray.200"
+      bg="white"
       borderRadius="md"
-      h={
-        mode === 'home' ? 'calc(100vh - 300px)' : mode === 'simple' ? '35vh' : 'calc(100vh - 125px)'
-      }
+      boxShadow="md"
+      h={mode === 'home' ? '100%' : mode === 'simple' ? '35vh' : 'calc(100vh - 125px)'}
       overflowY="auto"
     >
       <ReactMarkdown components={ChakraUIRenderer()} remarkPlugins={[remarkGfm]}>

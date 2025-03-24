@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Switch, Icon, Flex, Spacer, Spinner, useToast } from '@chakra-ui/react'
-import axios from 'axios'
+import { useToast } from '@chakra-ui/react'
 
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 import useSaveNote from '../../hooks/useSaveNote'
 import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 import ErrorToast from '../ui/toast/ErrorToast'
+import NoteScreen from '../../features/note/NoteScreen'
+import NoteHome from '../../features/note/NoteHome'
+import MainPage from '../../features/home/MainPage'
 
 const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
   const { saveNote, loading, error: saveError } = useSaveNote()
@@ -15,6 +17,7 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
 
   const toast = useToast()
 
+  // 에러
   useEffect(() => {
     if (saveError || updageError) {
       const errorMessage = saveError?.message || updageError?.message
@@ -61,7 +64,13 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
   return (
     <>
       {currentScreen === 'home' ? (
+        <MainPage />
+      ) : currentScreen === 'newnote' ? (
         <NoteHome loading={loading} handleSaveNote={handleSaveNote} />
+      ) : currentScreen === 'folder' ? (
+        <></>
+      ) : currentScreen === 'tip' ? (
+        <></>
       ) : (
         <NoteScreen
           updateLoading={updateLoading}
@@ -71,44 +80,6 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
         />
       )}
     </>
-
-    /* 
-    <Flex flexDirection="column" m="0 auto" position="relative">
-      <Flex align="center" justify="center" h="100vh" gap="4">
-        {isBoxVisible.markdown && (
-          <Box w="640px" h="100%" bg="gray.100" flex="1">
-            <MarkDownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
-          </Box>
-        )}
-        {isBoxVisible.preview && (
-          <Box p="1" w="640px" h="100%" bg="gray.200" flex="1">
-            <MarkdownPreview markdownText={markdownText} />
-          </Box>
-        )}
-        {isBoxVisible.chat && (
-          <Box p="4" w="640px" h="100%" bg="gray.200" flex="1">
-            <ChatBox messages={messages} />
-          </Box>
-        )}
-      </Flex>
-      <Flex
-        flexDirection="column"
-        justify="center"
-        position="absolute"
-        bottom="5"
-        left="50%"
-        transform="translate(-50%)"
-        zIndex="1000"
-      >
-        <Questionbar
-          questionText={questionText}
-          setQuestionText={setQuestionText}
-          onSendMessage={handleSendMessage}
-        />
-        <UtilityBox toggleVisibility={toggleVisibility} />
-      </Flex>
-    </Flex>
-    */
   )
 }
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { Box, Icon, Text, useDisclosure } from '@chakra-ui/react'
 import NoteDeleteBox from './NoteDeleteBox'
 
-const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote }) => {
+const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote, currentScreen }) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const handleDelete = (e) => {
@@ -18,24 +18,35 @@ const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote }) => 
   return (
     <>
       <Box
-        ml="30px"
-        mr="10px"
-        mt="5px"
+        ml="5px"
+        mt="1"
+        px="5px"
         h="30px"
         display="flex"
         alignItems="center"
         borderRadius="md"
+        color={currentScreen === noteId ? 'blue.500' : 'gray.600'}
         _hover={{
-          bg: 'gray.100',
+          bg: 'white',
+          boxShadow: 'md',
+          color: currentScreen === noteId ? 'blue.500' : 'black',
         }}
         cursor="pointer"
         onClick={onClick}
       >
-        <Icon as={icon} />
-        <Text mx="10px" isTruncated flex="1">
+        <Icon w="18px" h="18px" as={icon} />
+        <Text mx="10px" isTruncated>
           {name}
         </Text>
-        <Icon as={delIcon} mr="2" _hover={{ color: 'blue.500' }} onClick={handleDelete} />
+        <Icon
+          color="gray.500"
+          w="20px"
+          h="20px"
+          as={delIcon}
+          ml="auto"
+          _hover={{ color: 'red.500' }}
+          onClick={handleDelete}
+        />
       </Box>
       <NoteDeleteBox isOpen={isOpen} onClose={onClose} confirmDelete={confirmDelete} />
     </>

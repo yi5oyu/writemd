@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { Textarea } from '@chakra-ui/react'
 import { debounce } from 'lodash'
 
-const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen }) => {
+const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen, mode }) => {
   const textareaRef = useRef(null)
   const cursorPositionRef = useRef(null)
 
@@ -96,12 +96,13 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
       onKeyDown={handleKeyDown}
       placeholder="마크다운 입력"
       resize="none"
-      h={screen ? 'calc(100vh - 125px)' : 'calc(100vh - 90px)'}
+      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 125px)'}
       w="100%"
       fontSize="md"
       p="4"
       variant="unstyled"
-      bg="gray.100"
+      bg="white"
+      boxShadow="md"
     />
   )
 }

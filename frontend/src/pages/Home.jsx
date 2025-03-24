@@ -21,8 +21,15 @@ const Home = () => {
   }, [user])
 
   return (
-    <Flex height="100vh" width="100vw">
-      <Sidebar notes={notes} setNotes={setNotes} user={user} setCurrentScreen={setCurrentScreen} />
+    <Flex h="100vh">
+      <Sidebar
+        notes={notes}
+        setNotes={setNotes}
+        user={user}
+        currentScreen={currentScreen}
+        setCurrentScreen={setCurrentScreen}
+      />
+
       <Screen
         user={user}
         setNotes={setNotes}

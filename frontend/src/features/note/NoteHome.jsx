@@ -1,11 +1,11 @@
-import { Box, Textarea, Input, Flex, Heading, Button, Spinner } from '@chakra-ui/react'
+import { Box, Textarea, Flex, Heading, Button, Spinner } from '@chakra-ui/react'
 import { useState } from 'react'
 
 const NoteHome = ({ handleSaveNote, loading }) => {
   const [title, setTitle] = useState('writeMD')
 
   return (
-    <Flex w="100vw" alignItems="center" justifyContent="center">
+    <Flex mx="auto" alignItems="center" justifyContent="center">
       <Box w="600px" h="600px" filter={loading ? 'blur(4px)' : 'none'}>
         <Heading as="h1" size="lg" mb="6" textAlign="center">
           새 노트

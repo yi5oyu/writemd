@@ -17,6 +17,7 @@ const TutorialPage = () => {
     } else {
       setMd(contents[currentStep - BasicContents.length].markdownContents)
     }
+    console.log(currentStep)
   }, [currentStep, isBasicMode])
 
   const steps = BasicContents.map((c) => c.title)
@@ -28,8 +29,8 @@ const TutorialPage = () => {
   }
 
   return (
-    <Flex direction="column">
-      <Heading as="h2" size="lg" mt="2" mb={4}>
+    <Flex direction="column" h="full" flex="1">
+      <Heading as="h2" size="lg" mb="20px">
         {isBasicMode
           ? `${BasicContents[currentStep].title} ${BasicContents[currentStep].subTitle}`
           : `${contents[currentStep - BasicContents.length].title} ${
@@ -37,13 +38,24 @@ const TutorialPage = () => {
             }`}
       </Heading>
 
-      <Box mb={6}>
-        {isBasicMode
-          ? BasicContents[currentStep].description
-          : contents[currentStep - BasicContents.length].description}
+      {isBasicMode
+        ? BasicContents[currentStep].description
+        : contents[currentStep - BasicContents.length].description}
+
+      <Box mb="20px">
+        <TutorialNavigator
+          steps={steps}
+          currentStep={currentStep}
+          onStepChange={(index) => handleStepChange(index, true)}
+        />
+        <TutorialNavigator
+          steps={nextSteps}
+          currentStep={currentStep - BasicContents.length}
+          onStepChange={(index) => handleStepChange(index, false)}
+        />
       </Box>
 
-      <Flex gap="4">
+      <Flex gap="4" h="full" flex="1" overflow="hidden">
         <Box w="640px">
           <MarkdownInputBox markdownText={md} setMarkdownText={setMd} mode={'simple'} />
         </Box>
@@ -51,17 +63,6 @@ const TutorialPage = () => {
           <MarkdownPreview markdownText={md} mode={'simple'} />
         </Box>
       </Flex>
-
-      <TutorialNavigator
-        steps={steps}
-        currentStep={currentStep}
-        onStepChange={(index) => handleStepChange(index, true)}
-      />
-      <TutorialNavigator
-        steps={nextSteps}
-        currentStep={currentStep - BasicContents.length}
-        onStepChange={(index) => handleStepChange(index, false)}
-      />
     </Flex>
   )
 }

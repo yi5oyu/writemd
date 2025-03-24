@@ -214,30 +214,30 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, handleDeleteNot
                     }}
                     mode={true}
                   />
-
                   <Spacer mb="50px" />
-
-                  <SideBtn
-                    icon={IoMdCreate}
-                    color={currentScreen === 'newnote' ? 'blue.500' : 'gray.500'}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setCurrentScreen('newnote')
-                    }}
-                    mode={true}
-                  />
-
-                  <Spacer mb="25px" />
-
-                  <SideBtn
-                    icon={FiFolder}
-                    color={currentScreen === 'folder' ? 'blue.500' : 'gray.500'}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setCurrentScreen('folder')
-                    }}
-                    mode={true}
-                  />
+                  {user && (
+                    <>
+                      <SideBtn
+                        icon={IoMdCreate}
+                        color={currentScreen === 'newnote' ? 'blue.500' : 'gray.500'}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCurrentScreen('newnote')
+                        }}
+                        mode={true}
+                      />
+                      <Spacer mb="25px" />
+                      <SideBtn
+                        icon={FiFolder}
+                        color={currentScreen === 'folder' ? 'blue.500' : 'gray.500'}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCurrentScreen('folder')
+                        }}
+                        mode={true}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </Box>
@@ -327,8 +327,8 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, handleDeleteNot
             ) : (
               <>
                 <Avatar
-                  name={user.githubId || user.name}
-                  src={user.avatarUrl}
+                  name={user && user.githubId}
+                  src={user && user.avatarUrl}
                   w="40px"
                   h="40px"
                   cursor="pointer"
@@ -336,13 +336,14 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, handleDeleteNot
                   mb="20px"
                   onClick={(e) => {
                     e.stopPropagation()
-                    onOpenLogInfo()
+                    user ? onOpenLogInfo() : onOpenLogin()
                   }}
                   _hover={{
-                    bg: 'white',
+                    bg: !user && 'blue.500',
                     boxShadow: 'md',
                   }}
                 />
+
                 <SideBtn
                   icon={BsQuestionCircle}
                   color={currentScreen === 'tip' ? 'blue.500' : 'gray.500'}

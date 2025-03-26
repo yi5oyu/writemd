@@ -96,7 +96,7 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
       onKeyDown={handleKeyDown}
       placeholder="마크다운 입력"
       resize="none"
-      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 125px)'}
+      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
       w="100%"
       fontSize="md"
       p="4"

@@ -310,27 +310,33 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   }
 
   return (
-    <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
+    <Flex
+      direction="column"
+      mx="auto"
+      my="15px"
+      px="20px"
+      py="10px"
+      borderRadius="md"
+      bg="gray.50"
+      boxShadow="xl"
+      position="relative"
+      w="85%"
+    >
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
         <Flex
-          w="100%"
+          h="30px"
           display={screen ? 'flex' : 'none'}
           alignItems="center"
           justifyContent="center"
         >
-          <Icon as={PiNotebookFill} />
+          {/* <Icon as={PiNotebookFill} /> */}
           <Input
             value={name}
-            size="xl"
-            fontSize="18px"
+            fontSize="20px"
+            pl="5px"
             variant="unstyled"
-            mx="10px"
-            pl="10px"
             onChange={handleTitleChange}
-            w="1220px"
             maxLength={35}
-            _focus={{ bg: 'gray.200' }}
-            borderRadius="md"
           />
           <Icon
             as={PiCheckFatFill}
@@ -342,7 +348,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
         </Flex>
 
         <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
-          <Box w={screen ? '640px' : '100%'}>
+          <Box w={screen ? '100%' : '100%'}>
             <ToolBox
               onClearText={() => setMarkdownText('')}
               onCopyText={handleCopyMarkdown}
@@ -365,7 +371,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             />
           </Box>
 
-          <Box id="feature" w={screen ? '640px' : '100%'} position="relative">
+          <Box id="feature" w={screen ? '100%' : '100%'} position="relative">
             {/* 공통 UtilityBox */}
             <UtilityBox
               setBoxForm={setBoxForm}

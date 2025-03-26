@@ -14,7 +14,7 @@ const MarkdownPreview = ({ markdownText, mode }) => {
       bg="white"
       borderRadius="md"
       boxShadow="md"
-      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 125px)'}
+      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
       overflowY="auto"
       px="7"
       pt="2"

@@ -25,6 +25,7 @@ import useGit from '../../hooks/useGit'
 import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
+import TemplateScreen from '../template/TemplateScreen'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -442,6 +443,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 </Flex>
               </>
             )}
+
+            {boxForm === 'template' && <TemplateScreen screen={screen} />}
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
             {boxForm === 'git' && (

@@ -359,4 +359,42 @@ public class GithubService {
             .contents(contentDTOs)
             .build();
     }
+
+    // 폴더 내용 조회
+    public Mono<List<GitContentDTO>> getFolderContents(String principalName, String owner, String repo, String sha) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+        if (client == null) {
+            throw new IllegalStateException("GitHub OAuth2 login required.");
+        }
+
+        String accessToken = client.getAccessToken().getTokenValue();
+
+        return webClient.get()
+            .uri("https://api.github.com/repos/{owner}/{repo}/git/trees/{sha}", owner, repo, sha)
+            .headers(headers -> headers.setBearerAuth(accessToken))
+            .retrieve()
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .map(response -> {
+                List<Map<String, Object>> treeItems = (List<Map<String, Object>>) response.get("tree");
+                return treeItems.stream()
+                    .map(item -> GitContentDTO.builder()
+                        .path((String) item.get("path"))
+                        .type(convertType((String) item.get("type")))
+                        .sha((String) item.get("sha"))
+                        .build())
+                    .collect(Collectors.toList());
+            });
+    }
+
+    private String convertType(String type) {
+        switch (type) {
+            case "blob":
+                return "file";
+            case "tree":
+                return "dir";
+            default:
+                return type;
+        }
+    }
+
 }

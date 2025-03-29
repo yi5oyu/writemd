@@ -25,6 +25,7 @@ import useGit from '../../hooks/useGit'
 import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
+import useGetGithubFolder from '../../hooks/useGetGithubFolder'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -60,6 +61,12 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
+  const {
+    getFolderContents,
+    loading: gitFolderLoading,
+    error: gitFolderError,
+    data: gitFolderData,
+  } = useGetGithubFolder()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -309,6 +316,15 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     getRepo({ userId: user.userId })
   }
 
+  // 깃 폴더 조회
+  const handleGetFolderClick = (repo, sha) => {
+    getFolderContents({
+      owner: user.githubId,
+      repo,
+      sha,
+    })
+  }
+
   return (
     <Flex direction="column" mx="5" mt="3" w="100vw" position="relative">
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
@@ -445,7 +461,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 screen={screen}
                 handleGetClick={handleGetClick}
                 handleNewFileClick={handleNewFileClick}
+                handleGetFolderClick={handleGetFolderClick}
                 gitUpdatedData={gitUpdatedData}
+                gitFolderData={gitFolderData}
                 gitLoading={gitLoading}
                 gitError={gitError}
                 gitGetFileLoading={gitGetFileLoading}

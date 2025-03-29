@@ -12,6 +12,7 @@ const GitScreen = ({
   screen,
   handleGetClick,
   handleNewFileClick,
+  handleGetFolderClick,
   gitLoading,
   gitError,
   gitGetFileLoading,
@@ -19,6 +20,7 @@ const GitScreen = ({
   gitFileLoading,
   gitFileError,
   gitUpdatedData,
+  gitFolderData,
 }) => {
   const [active, setActive] = useState([])
   const [selectedFile, setSelectedFile] = useState(null)
@@ -73,6 +75,22 @@ const GitScreen = ({
     }
   }, [gitUpdatedData, toast])
 
+  // 폴더 클릭
+  const handleFolderClick = (repo, path, sha) => {
+    if (isLoading) return
+
+    setSelectedFile({ repo, path, sha })
+    setCommit(true)
+    handleGetFolderClick(repo, sha)
+  }
+
+  // 폴더 업데이트
+  useEffect(() => {
+    if (gitFolderData) {
+      console.log(gitFolderData)
+    }
+  }, [gitFolderData, toast])
+
   // 에러 토스트
   useEffect(() => {
     if (gitError || gitGetFileError || gitFileError) {
@@ -92,14 +110,13 @@ const GitScreen = ({
   return (
     <>
       <Flex
-        overflowY="auto"
         h={screen ? 'calc(100vh - 125px)' : 'calc(100vh - 90px)'}
         border="1px solid"
         borderColor="gray.200"
         borderRadius="md"
         filter={isLoading ? 'blur(4px)' : 'none'}
       >
-        <Box flex="1">
+        <Box flex="1" overflowY="auto">
           <Text
             textAlign="center"
             borderRadius="md"
@@ -116,7 +133,7 @@ const GitScreen = ({
             [...data]
               .sort((a, b) => a.repo.localeCompare(b.repo))
               .map((repoItem) => (
-                <Box key={repoItem.repoId} mx={2} my={2}>
+                <Box key={repoItem.repoId} mx="10px" my="10px">
                   <RepoBox
                     title={repoItem.repo}
                     onClick={() => {
@@ -131,7 +148,9 @@ const GitScreen = ({
                     repo={repoItem.repo}
                     contents={repoItem.contents}
                     isActive={active.includes(repoItem.repoId)}
+                    gitFolderData={gitFolderData}
                     handleFileClick={handleFileClick}
+                    handleFolderClick={handleFolderClick}
                     selectedFile={selectedFile}
                     isDisabled={isLoading}
                   />

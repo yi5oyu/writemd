@@ -12,8 +12,8 @@ const RepoBox = ({ title, onClick, isActive, isDisabled, selectedFile }) => {
       onClick={isDisabled ? undefined : onClick}
       fontWeight={isActive ? 500 : 400}
     >
-      <Icon as={isActive ? MdKeyboardArrowDown : MdKeyboardArrowRight} ml="1" />
-      <Icon as={RiGitRepositoryFill} ml="1" mr="2" />
+      <Icon as={isActive ? MdKeyboardArrowDown : MdKeyboardArrowRight} />
+      <Icon as={RiGitRepositoryFill} ml="5px" mr="5px" />
       <Box
         bg={
           selectedFile?.repo === title

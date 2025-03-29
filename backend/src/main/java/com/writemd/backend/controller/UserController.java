@@ -1,6 +1,7 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.ChatDTO;
+import com.writemd.backend.dto.GitContentDTO;
 import com.writemd.backend.dto.GitRepoDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.GithubService;
@@ -120,5 +121,16 @@ public class UserController {
         return githubService.getGitInfo(userId, principalName)
             .map(repos -> ResponseEntity.ok(repos))
             .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    // 폴더 내용 조회
+    @GetMapping("/repos/{owner}/{repo}/folder/{sha}")
+    public Mono<List<GitContentDTO>> getFolderContents(
+        @AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @PathVariable String sha) {
+
+        return githubService.getFolderContents(principalName, owner, repo, sha);
     }
 }

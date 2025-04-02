@@ -26,6 +26,7 @@ import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
 import TemplateScreen from '../template/TemplateScreen'
+import BookmarkBox from './BookmarkBox'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -38,6 +39,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [sessionId, setSessionId] = useState('')
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
+  const [selectedScreen, setSelectedScreen] = useState('markdown')
   const [screen, setScreen] = useState(true)
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
@@ -323,12 +325,15 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       position="relative"
       w="85%"
     >
+      <BookmarkBox selectedScreen={selectedScreen} setSelectedScreen={setSelectedScreen} />
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
         <Flex
           h="30px"
           display={screen ? 'flex' : 'none'}
           alignItems="center"
           justifyContent="center"
+          borderBottom="1px solid"
+          borderColor="gray.300"
         >
           {/* <Icon as={PiNotebookFill} /> */}
           <Input

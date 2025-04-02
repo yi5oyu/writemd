@@ -27,10 +27,12 @@ import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
 import TemplateScreen from '../template/TemplateScreen'
 import BookmarkBox from './BookmarkBox'
+import useSaveTemplate from '../../hooks/useSaveTemplate'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
+  const [templateText, setTemplateText] = useState('temp')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
@@ -63,6 +65,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
+  const { saveTemplate, loading: templateLoding, error: templateError } = useSaveTemplate()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -312,6 +315,19 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     getRepo({ userId: user.userId })
   }
 
+  // 템플릿 저장
+  const handleSaveTemplate = async (folderId, templateId, folderName, title, description) => {
+    await saveTemplate(
+      user.userId,
+      folderId,
+      templateId,
+      folderName,
+      title,
+      description,
+      templateText
+    )
+  }
+
   return (
     <Flex
       direction="column"
@@ -449,7 +465,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               </>
             )}
 
-            {boxForm === 'template' && <TemplateScreen screen={screen} />}
+            {boxForm === 'template' && (
+              <TemplateScreen screen={screen} handleSaveTemplate={handleSaveTemplate} />
+            )}
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
             {boxForm === 'git' && (

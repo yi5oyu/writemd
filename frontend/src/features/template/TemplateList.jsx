@@ -23,13 +23,13 @@ import { SearchIcon } from '@chakra-ui/icons'
 import { CreatableSelect } from 'chakra-react-select'
 import { FiFile, FiSave } from 'react-icons/fi'
 
-const TemplateList = () => {
+const TemplateList = ({ handleSaveTemplate }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
-  const [isNewTemplate, setIsNewTemplate] = useState(true)
+  const [isNewTemplate, setIsNewTemplate] = useState(false)
 
-  // 여러 카테고리의 템플릿 데이터
+  // 임시 템플릿 데이터
   const folders = [
     {
       folderId: 0,
@@ -147,6 +147,19 @@ const TemplateList = () => {
     },
   ]
 
+  // 템플릿 저장
+  const saveTemplateClick = () => {
+    handleSaveTemplate(
+      selectedTemplate.folderId,
+      selectedTemplate.templateId,
+      selectedTemplate.folderName,
+      selectedTemplate.title,
+      selectedTemplate.description
+    )
+    setSelectedTemplate(null)
+    setIsNewTemplate(false)
+  }
+
   // 검색어에 따라 결과가 있는 아코디언 열기
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -184,7 +197,7 @@ const TemplateList = () => {
     setSelectedTemplate({
       ...template,
       folderId: folder.folderId,
-      folderTitle: folder.title,
+      folderName: folder.title,
     })
     setIsNewTemplate(false)
   }
@@ -205,10 +218,10 @@ const TemplateList = () => {
                   folderId: folder.folderId,
                 }))}
                 value={
-                  selectedTemplate?.folder
+                  selectedTemplate?.folderName
                     ? {
-                        value: selectedTemplate.folder,
-                        label: selectedTemplate.folder,
+                        value: selectedTemplate.folderName,
+                        label: selectedTemplate.folderName,
                       }
                     : isNewTemplate
                     ? null
@@ -221,7 +234,7 @@ const TemplateList = () => {
                   if (selectedTemplate) {
                     setSelectedTemplate({
                       ...selectedTemplate,
-                      folder: newValue.value,
+                      folderName: newValue.value,
                       folderId: newValue.folderId,
                     })
                   }
@@ -231,7 +244,7 @@ const TemplateList = () => {
                   if (selectedTemplate) {
                     setSelectedTemplate({
                       ...selectedTemplate,
-                      folder: newfolder,
+                      folderName: newfolder,
                       folderId: null,
                     })
                   }
@@ -297,6 +310,7 @@ const TemplateList = () => {
                     bg="transparent"
                     as={FiSave}
                     _hover={{ color: 'blue.500', bg: 'gray.100' }}
+                    onClick={saveTemplateClick}
                   />
                 </Flex>
               </Box>
@@ -314,7 +328,7 @@ const TemplateList = () => {
             title: '',
             description: '',
             content: '',
-            folderTitle: '',
+            folderName: '',
             folderId: null,
           })
         }}

@@ -29,6 +29,7 @@ import TemplateScreen from '../template/TemplateScreen'
 import BookmarkBox from './BookmarkBox'
 import useSaveTemplate from '../../hooks/useSaveTemplate'
 import useTemplate from '../../hooks/useTemplate'
+import useDeleteTemplate from '../../hooks/useDeleteTemplate'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -68,6 +69,11 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   } = useGithubFile()
   const { saveTemplate, loading: saveTemplateLoding, error: saveTemplateError } = useSaveTemplate()
   const { getTemplates, loading: templateLoding, error: templateError, templates } = useTemplate()
+  const {
+    deleteTemplate,
+    loading: delTemplateLoading,
+    error: delTemplateError,
+  } = useDeleteTemplate()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -331,6 +337,12 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     handleGetTemplates()
   }
 
+  // 템플릿 삭제
+  const handleDelTemplate = async (templateId) => {
+    await deleteTemplate(templateId)
+    handleGetTemplates()
+  }
+
   // 템플릿 조회
   const handleGetTemplates = () => {
     getTemplates({ userId: user.userId })
@@ -478,6 +490,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               <TemplateScreen
                 screen={screen}
                 handleSaveTemplate={handleSaveTemplate}
+                handleDelTemplate={handleDelTemplate}
                 templates={templates}
               />
             )}

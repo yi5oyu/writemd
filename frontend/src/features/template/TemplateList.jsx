@@ -18,16 +18,21 @@ import {
   Card,
   CardBody,
   CardHeader,
+  useDisclosure,
 } from '@chakra-ui/react'
 import { SearchIcon } from '@chakra-ui/icons'
 import { CreatableSelect } from 'chakra-react-select'
 import { FiFile, FiSave } from 'react-icons/fi'
+import { FaTrash } from 'react-icons/fa'
+import DeleteBox from '../../components/ui/Modal/DeleteBox'
 
-const TemplateList = ({ handleSaveTemplate, templates }) => {
+const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [isNewTemplate, setIsNewTemplate] = useState(false)
+  const [deleteTemplate, setDeleteTemplate] = useState(null)
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   // 템플릿 저장
   const saveTemplateClick = () => {
@@ -82,6 +87,15 @@ const TemplateList = ({ handleSaveTemplate, templates }) => {
       folderName: folder.title,
     })
     setIsNewTemplate(false)
+  }
+
+  // 템플릿 삭제
+  const confirmDelete = () => {
+    if (deleteTemplate) {
+      handleDelTemplate(deleteTemplate)
+      onClose()
+      setDeleteTemplate(null)
+    }
   }
 
   return (
@@ -297,12 +311,26 @@ const TemplateList = ({ handleSaveTemplate, templates }) => {
                             {template.description}
                           </Text>
                         </Box>
+                        <Button
+                          position="absolute"
+                          top="0"
+                          right="0"
+                          p="10px"
+                          bg="transparent"
+                          as={FaTrash}
+                          _hover={{ color: 'blue.500', bg: 'gray.100' }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeleteTemplate(template.templateId)
+                            onOpen()
+                          }}
+                        />
                       </Flex>
                     ))}
                   </Grid>
                 ) : (
                   <Box textAlign="center" py={4} color="gray.500">
-                    검색 결과가 없습니다.
+                    템플릿이 없습니다.
                   </Box>
                 )}
               </AccordionPanel>
@@ -318,6 +346,8 @@ const TemplateList = ({ handleSaveTemplate, templates }) => {
             '{searchQuery}'에 대한 검색 결과가 없습니다.
           </Box>
         )}
+
+      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title="템플릿" />
     </Box>
   )
 }

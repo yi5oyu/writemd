@@ -115,4 +115,17 @@ public class TemplateService {
         }
         return folderDTOs;
     }
+
+    @Transactional
+    public void deleteTemplate(Long templateId) {
+        Templates template = templateRepository.findById(templateId)
+            .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다."));
+
+        Folders folder = template.getFolders();
+        if (folder != null) {
+            folder.getTemplates().remove(template);
+        }
+
+        templateRepository.deleteById(templateId);
+    }
 }

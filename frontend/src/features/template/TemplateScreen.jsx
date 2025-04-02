@@ -1,9 +1,8 @@
-import { useState } from 'react'
-import { Box, Button, Flex } from '@chakra-ui/react'
+import { Box, Flex } from '@chakra-ui/react'
 
 import TemplateList from './TemplateList'
 
-const TemplateScreen = ({ screen, handleSaveTemplate }) => {
+const TemplateScreen = ({ screen, handleSaveTemplate, templates }) => {
   return (
     <Flex
       direction="column"
@@ -21,7 +20,7 @@ const TemplateScreen = ({ screen, handleSaveTemplate }) => {
         bg="white"
         overflowY="auto"
       >
-        <TemplateList handleSaveTemplate={handleSaveTemplate} />
+        <TemplateList handleSaveTemplate={handleSaveTemplate} templates={templates} />
       </Box>
     </Flex>
   )

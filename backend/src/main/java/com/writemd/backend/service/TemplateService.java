@@ -1,12 +1,15 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.FolderDTO;
+import com.writemd.backend.dto.TemplateDTO;
 import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Templates;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.FolderRepository;
 import com.writemd.backend.repository.TemplateRepository;
 import com.writemd.backend.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +25,6 @@ public class TemplateService {
     @Transactional
     public Templates saveTemplate(Long userId, Long folderId, Long templateId, String folderName,
         String title, String description, String content) {
-
         // 유저
         Users user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
@@ -64,5 +66,43 @@ public class TemplateService {
         }
 
         return template;
+    }
+
+    @Transactional(readOnly = true)
+    public List<FolderDTO> getTemplates(Long userId) {
+        // 유저
+        Users user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 폴더
+        List<Folders> userFolders = folderRepository.findByUsers(user);
+
+        List<FolderDTO> folderDTOs = new ArrayList<>();
+
+        for (Folders folder : userFolders) {
+            List<TemplateDTO> templateDTOs = new ArrayList<>();
+
+            // templateDTO 변환
+            for (Templates template : folder.getTemplates()) {
+                TemplateDTO templateDTO = TemplateDTO.builder()
+                    .templateId(template.getId())
+                    .title(template.getTitle())
+                    .description(template.getDescription())
+                    .content(template.getContent())
+                    .build();
+
+                templateDTOs.add(templateDTO);
+            }
+
+            // FolderDTO 변환
+            FolderDTO folderDTO = FolderDTO.builder()
+                .folderId(folder.getId())
+                .title(folder.getTitle())
+                .template(templateDTOs)
+                .build();
+
+            folderDTOs.add(folderDTO);
+        }
+        return folderDTOs;
     }
 }

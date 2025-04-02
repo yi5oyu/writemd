@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class TemplateDTO {
-    private Long TemplateId;
+    private Long templateId;
     private String title;
     private String description;
     private String content;

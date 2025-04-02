@@ -4,11 +4,13 @@ import com.writemd.backend.dto.FolderDTO;
 import com.writemd.backend.dto.TemplateDTO;
 import com.writemd.backend.entity.Templates;
 import com.writemd.backend.service.TemplateService;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,5 +44,11 @@ public class TemplateController {
             userId, folderId, templateId, folderName, title, description, content);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(template);
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<FolderDTO>> getUserTemplates(@PathVariable Long userId) {
+        List<FolderDTO> templates = templateService.getTemplates(userId);
+        return ResponseEntity.ok(templates);
     }
 }

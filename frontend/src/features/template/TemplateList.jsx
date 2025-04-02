@@ -23,129 +23,11 @@ import { SearchIcon } from '@chakra-ui/icons'
 import { CreatableSelect } from 'chakra-react-select'
 import { FiFile, FiSave } from 'react-icons/fi'
 
-const TemplateList = ({ handleSaveTemplate }) => {
+const TemplateList = ({ handleSaveTemplate, templates }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [isNewTemplate, setIsNewTemplate] = useState(false)
-
-  // 임시 템플릿 데이터
-  const folders = [
-    {
-      folderId: 0,
-      title: '문서 템플릿',
-      template: [
-        {
-          templateId: 1,
-          title: 'README.md',
-          description: '프로젝트 기본 설명 문서. 설치 방법 및 사용 가이드 포함',
-          content: '',
-        },
-        {
-          templateId: 2,
-          title: 'LICENSE',
-          description: 'MIT 라이선스 문서. 사용자 권한 및 제한 사항 명시',
-          content: '',
-        },
-        {
-          templateId: 3,
-          title: 'CONTRIBUTING.md',
-          description: '프로젝트 기여 가이드라인 문서',
-          content: '',
-        },
-      ],
-    },
-    {
-      folderId: 1,
-      title: '설정 파일 템플릿',
-      template: [
-        {
-          templateId: 4,
-          title: 'docker-compose.yml',
-          description: '멀티 컨테이너 Docker 애플리케이션 설정 파일',
-          content: '',
-        },
-        {
-          templateId: 5,
-          title: 'webpack.config.js',
-          description: '프론트엔드 빌드 시스템 구성. Entry/Output 및 로더 설정',
-          content: '',
-        },
-        {
-          templateId: 6,
-          title: '.env.example',
-          description: '환경 변수 템플릿 파일. SECRET_KEY, DB_URL 등 샘플 값 포함',
-          content: '',
-        },
-        {
-          templateId: 7,
-          title: 'jest.config.ts',
-          description: '테스트 프레임워크 설정. 커버리지 리포트 옵션 활성화',
-          content: '',
-        },
-        {
-          templateId: 8,
-          title: 'tailwind.config.cjs',
-          description: 'CSS 유틸리티 프레임워크 커스터마이징 설정',
-          content: '',
-        },
-        {
-          templateId: 9,
-          title: 'tsconfig.json',
-          description: 'TypeScript 컴파일러 옵션. Strict 모드 활성화',
-          content: '',
-        },
-      ],
-    },
-    {
-      folderId: 2,
-      title: 'CI/CD 템플릿',
-      template: [
-        {
-          templateId: 10,
-          title: '.github/workflows/ci.yml',
-          description: 'GitHub Actions 지속적 통합 파이프라인 설정',
-          content: '',
-        },
-        {
-          templateId: 11,
-          title: '.gitlab-ci.yml',
-          description: 'GitLab CI/CD 파이프라인 설정',
-          content: '',
-        },
-        {
-          templateId: 12,
-          title: 'Jenkinsfile',
-          description: 'Jenkins 파이프라인 설정 파일',
-          content: '',
-        },
-      ],
-    },
-    {
-      folderId: 3,
-      title: '데이터베이스 템플릿',
-      template: [
-        {
-          templateId: 13,
-          title: 'migration-2024.sql',
-          description: '데이터베이스 스키마 변경 이력. ALTER TABLE 구문 다수 포함',
-          content: '',
-        },
-        {
-          templateId: 14,
-          title: 'seed-data.sql',
-          description: '초기 데이터 삽입 SQL 스크립트',
-          content: '',
-        },
-        {
-          templateId: 15,
-          title: 'schema.prisma',
-          description: 'Prisma ORM 스키마 정의 파일',
-          content: '',
-        },
-      ],
-    },
-  ]
 
   // 템플릿 저장
   const saveTemplateClick = () => {
@@ -168,7 +50,7 @@ const TemplateList = ({ handleSaveTemplate }) => {
     }
 
     // 검색어가 있는 카테고리의 인덱스 찾기
-    const results = folders
+    const results = templates
       .filter((folder) =>
         folder.template.some(
           (template) =>
@@ -212,7 +94,7 @@ const TemplateList = ({ handleSaveTemplate }) => {
                 name="folder"
                 minWidth="300px"
                 placeholder="폴더 선택 또는 입력"
-                options={folders.map((folder) => ({
+                options={templates?.map((folder) => ({
                   value: folder.title,
                   label: folder.title,
                   folderId: folder.folderId,
@@ -226,8 +108,8 @@ const TemplateList = ({ handleSaveTemplate }) => {
                     : isNewTemplate
                     ? null
                     : {
-                        value: folders[0].title,
-                        label: folders[0].title,
+                        value: templates[0].title,
+                        label: templates[0].title,
                       }
                 }
                 onChange={(newValue) => {
@@ -356,7 +238,7 @@ const TemplateList = ({ handleSaveTemplate }) => {
         allowMultiple
         onChange={(index) => setOpenAccordions(index)}
       >
-        {folders.map((folder) => {
+        {templates.map((folder) => {
           const filteredTemplates = filterItems(folder.template)
           const hasResults = filteredTemplates.length > 0
 
@@ -431,7 +313,7 @@ const TemplateList = ({ handleSaveTemplate }) => {
 
       {/* 검색 결과가 없을 때 메시지 */}
       {searchQuery.trim() !== '' &&
-        !folders.some((folder) => filterItems(folder.template).length > 0) && (
+        !templates.some((folder) => filterItems(folder.template).length > 0) && (
           <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
             '{searchQuery}'에 대한 검색 결과가 없습니다.
           </Box>

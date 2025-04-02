@@ -21,6 +21,7 @@ const ToolBox = ({
   tool,
   setTool,
   handleGitLoad,
+  handleGetTemplates,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -66,7 +67,14 @@ const ToolBox = ({
         />
 
         <UtilityBtn icon={FaStickyNote} label="메모" onClick={() => setBoxForm('memo')} />
-        <UtilityBtn icon={FaRegFileAlt} label="템플릿" onClick={() => setBoxForm('template')} />
+        <UtilityBtn
+          icon={FaRegFileAlt}
+          label="템플릿"
+          onClick={() => {
+            handleGetTemplates()
+            setBoxForm('template')
+          }}
+        />
       </Flex>
     </Flex>
   )

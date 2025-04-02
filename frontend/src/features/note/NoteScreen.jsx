@@ -28,6 +28,7 @@ import useGithubFile from '../../hooks/useGithubFile'
 import TemplateScreen from '../template/TemplateScreen'
 import BookmarkBox from './BookmarkBox'
 import useSaveTemplate from '../../hooks/useSaveTemplate'
+import useTemplate from '../../hooks/useTemplate'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -65,7 +66,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
-  const { saveTemplate, loading: templateLoding, error: templateError } = useSaveTemplate()
+  const { saveTemplate, loading: saveTemplateLoding, error: saveTemplateError } = useSaveTemplate()
+  const { getTemplates, loading: templateLoding, error: templateError, templates } = useTemplate()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -326,6 +328,12 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       description,
       templateText
     )
+    handleGetTemplates()
+  }
+
+  // 템플릿 조회
+  const handleGetTemplates = () => {
+    getTemplates({ userId: user.userId })
   }
 
   return (
@@ -383,6 +391,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               tool={tool}
               setTool={setTool}
               handleGitLoad={handleGitLoad}
+              handleGetTemplates={handleGetTemplates}
             />
             <MarkdownInputBox
               markdownText={markdownText}
@@ -466,7 +475,11 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             )}
 
             {boxForm === 'template' && (
-              <TemplateScreen screen={screen} handleSaveTemplate={handleSaveTemplate} />
+              <TemplateScreen
+                screen={screen}
+                handleSaveTemplate={handleSaveTemplate}
+                templates={templates}
+              />
             )}
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}

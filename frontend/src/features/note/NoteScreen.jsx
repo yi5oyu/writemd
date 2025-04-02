@@ -30,6 +30,7 @@ import BookmarkBox from './BookmarkBox'
 import useSaveTemplate from '../../hooks/useSaveTemplate'
 import useTemplate from '../../hooks/useTemplate'
 import useDeleteTemplate from '../../hooks/useDeleteTemplate'
+import useDeleteFolder from '../../hooks/useDeleteFolder'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -74,6 +75,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     loading: delTemplateLoading,
     error: delTemplateError,
   } = useDeleteTemplate()
+  const { deleteFolder, loading: delFolderLoading, error: delFolderError } = useDeleteFolder()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -343,6 +345,12 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     handleGetTemplates()
   }
 
+  // 템플릿 폴더 삭제
+  const handleDelFolder = async (folderId) => {
+    await deleteFolder(folderId)
+    handleGetTemplates()
+  }
+
   // 템플릿 조회
   const handleGetTemplates = () => {
     getTemplates({ userId: user.userId })
@@ -491,6 +499,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 screen={screen}
                 handleSaveTemplate={handleSaveTemplate}
                 handleDelTemplate={handleDelTemplate}
+                handleDelFolder={handleDelFolder}
                 templates={templates}
               />
             )}

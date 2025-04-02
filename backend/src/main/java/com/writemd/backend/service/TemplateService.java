@@ -128,4 +128,17 @@ public class TemplateService {
 
         templateRepository.deleteById(templateId);
     }
+
+    @Transactional
+    public void deleteFolder(Long folderId) {
+        Folders folder = folderRepository.findById(folderId)
+            .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+
+        Users user = folder.getUsers();
+        if (user != null) {
+            user.getFolders().remove(folder);
+        }
+
+        folderRepository.deleteById(folderId);
+    }
 }

@@ -2,7 +2,13 @@ import { Box, Flex } from '@chakra-ui/react'
 
 import TemplateList from './TemplateList'
 
-const TemplateScreen = ({ screen, handleSaveTemplate, handleDelTemplate, templates }) => {
+const TemplateScreen = ({
+  screen,
+  handleSaveTemplate,
+  handleDelTemplate,
+  handleDelFolder,
+  templates,
+}) => {
   return (
     <Flex
       direction="column"
@@ -23,6 +29,7 @@ const TemplateScreen = ({ screen, handleSaveTemplate, handleDelTemplate, templat
         <TemplateList
           handleSaveTemplate={handleSaveTemplate}
           handleDelTemplate={handleDelTemplate}
+          handleDelFolder={handleDelFolder}
           templates={templates}
         />
       </Box>

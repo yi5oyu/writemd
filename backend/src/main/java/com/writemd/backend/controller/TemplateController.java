@@ -58,4 +58,10 @@ public class TemplateController {
         templateService.deleteTemplate(templateId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/folder/{folderId}")
+    public ResponseEntity<Void> deleteFolder(@PathVariable Long folderId) {
+        templateService.deleteFolder(folderId);
+        return ResponseEntity.noContent().build();
+    }
 }

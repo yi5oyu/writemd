@@ -26,12 +26,14 @@ import { FiFile, FiSave } from 'react-icons/fi'
 import { FaTrash } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/Modal/DeleteBox'
 
-const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
+const TemplateList = ({ handleSaveTemplate, handleDelTemplate, handleDelFolder, templates }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [isNewTemplate, setIsNewTemplate] = useState(false)
   const [deleteTemplate, setDeleteTemplate] = useState(null)
+  const [deleteFolder, setDeleteFolder] = useState(null)
+
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   // 템플릿 저장
@@ -95,6 +97,11 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
       handleDelTemplate(deleteTemplate)
       onClose()
       setDeleteTemplate(null)
+    }
+    if (deleteFolder) {
+      handleDelFolder(deleteFolder)
+      onClose()
+      setDeleteFolder(null)
     }
   }
 
@@ -262,7 +269,7 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
               isDisabled={searchQuery.trim() !== '' && !hasResults}
             >
               <h2>
-                <AccordionButton>
+                <AccordionButton role="group" position="relative">
                   <Box flex="1" textAlign="left" fontWeight="medium">
                     {folder.title}
                     {searchQuery && hasResults && (
@@ -270,6 +277,26 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
                         ({filteredTemplates.length} 결과)
                       </Text>
                     )}
+                  </Box>
+                  <Box
+                    position="absolute"
+                    top="0"
+                    right="40px"
+                    opacity={0}
+                    _groupHover={{ opacity: 1 }}
+                    transition="opacity 0.2s ease-in-out"
+                  >
+                    <Button
+                      p="10px"
+                      bg="transparent"
+                      as={FaTrash}
+                      _hover={{ color: 'red.500', bg: 'gray.100' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeleteFolder(folder.folderId)
+                        onOpen()
+                      }}
+                    />
                   </Box>
                   <AccordionIcon />
                 </AccordionButton>
@@ -302,6 +329,7 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
                         }}
                         cursor="pointer"
                         onClick={() => handleTemplateSelect(folder, template)}
+                        role="group"
                       >
                         <Box width="100%">
                           <Text fontSize="18px" fontWeight={600} noOfLines={1}>
@@ -318,7 +346,10 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
                           p="10px"
                           bg="transparent"
                           as={FaTrash}
-                          _hover={{ color: 'blue.500', bg: 'gray.100' }}
+                          opacity={0}
+                          _groupHover={{ opacity: 1 }}
+                          transition="opacity 0.2s ease-in-out"
+                          _hover={{ color: 'red.500', bg: 'gray.100' }}
                           onClick={(e) => {
                             e.stopPropagation()
                             setDeleteTemplate(template.templateId)
@@ -347,7 +378,12 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, templates }) => {
           </Box>
         )}
 
-      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title="템플릿" />
+      <DeleteBox
+        isOpen={isOpen}
+        onClose={onClose}
+        onClick={confirmDelete}
+        title={deleteTemplate ? '템플릿' : deleteFolder && '템플릿 폴더'}
+      />
     </Box>
   )
 }

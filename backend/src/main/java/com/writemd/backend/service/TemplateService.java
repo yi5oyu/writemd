@@ -50,6 +50,16 @@ public class TemplateService {
             template = templateRepository.findById(templateId)
                 .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다."));
 
+            // 템플릿 폴더 변경
+            if (template.getFolders() != null && !template.getFolders().equals(folder)) {
+                template.setFolders(folder);
+                folder.getTemplates().add(template);
+
+                Folders oldFolder = template.getFolders();
+                oldFolder.getTemplates().remove(template);
+            }
+
+
             template.setTitle(title);
             template.setDescription(description);
             template.setContent(content);

@@ -38,9 +38,11 @@ public class Templates {
     @JsonBackReference
     private Folders folders;
 
-    private String templateName;
+    private String title;
+
+    private String description;
 
     @Column(columnDefinition = "TEXT")
-    private String text;
+    private String content;
 
 }

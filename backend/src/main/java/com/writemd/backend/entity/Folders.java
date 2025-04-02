@@ -37,7 +37,7 @@ public class Folders {
     @JsonBackReference
     private Users users;
 
-    private  String folderName;
+    private String title;
 
     @OneToMany(mappedBy = "folders", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default

@@ -2,6 +2,7 @@ package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.FolderDTO;
 import com.writemd.backend.dto.TemplateDTO;
+import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Templates;
 import com.writemd.backend.service.TemplateService;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,5 +65,13 @@ public class TemplateController {
     public ResponseEntity<Void> deleteFolder(@PathVariable Long folderId) {
         templateService.deleteFolder(folderId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/folder/{folderId}/{folderName}")
+    public ResponseEntity<Folders> updateFolderTitle(
+        @PathVariable Long folderId,
+        @PathVariable String folderName ) {
+        Folders updatedFolder = templateService.updateFolderTitle(folderId, folderName);
+        return ResponseEntity.ok(updatedFolder);
     }
 }

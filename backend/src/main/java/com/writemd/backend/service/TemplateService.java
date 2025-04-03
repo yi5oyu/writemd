@@ -141,4 +141,15 @@ public class TemplateService {
 
         folderRepository.deleteById(folderId);
     }
+
+    @Transactional
+    public Folders updateFolderTitle(Long folderId, String newTitle) {
+        Folders folder = folderRepository.findById(folderId)
+            .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+
+        folder.setTitle(newTitle);
+
+        return folderRepository.save(folder);
+    }
+
 }

@@ -22,17 +22,25 @@ import {
 } from '@chakra-ui/react'
 import { SearchIcon } from '@chakra-ui/icons'
 import { CreatableSelect } from 'chakra-react-select'
-import { FiFile, FiSave } from 'react-icons/fi'
+import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
 import { FaTrash } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/Modal/DeleteBox'
 
-const TemplateList = ({ handleSaveTemplate, handleDelTemplate, handleDelFolder, templates }) => {
+const TemplateList = ({
+  handleSaveTemplate,
+  handleDelTemplate,
+  handleDelFolder,
+  handleUpdateFolder,
+  templates,
+}) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [isNewTemplate, setIsNewTemplate] = useState(false)
   const [deleteTemplate, setDeleteTemplate] = useState(null)
   const [deleteFolder, setDeleteFolder] = useState(null)
+  const [edit, setEdit] = useState('')
+  const [editedTitles, setEditedTitles] = useState([])
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -91,7 +99,7 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, handleDelFolder, 
     setIsNewTemplate(false)
   }
 
-  // 템플릿 삭제
+  // 템플릿/폴더 삭제
   const confirmDelete = () => {
     if (deleteTemplate) {
       handleDelTemplate(deleteTemplate)
@@ -270,27 +278,74 @@ const TemplateList = ({ handleSaveTemplate, handleDelTemplate, handleDelFolder, 
             >
               <h2>
                 <AccordionButton role="group" position="relative">
-                  <Box flex="1" textAlign="left" fontWeight="medium">
-                    {folder.title}
-                    {searchQuery && hasResults && (
-                      <Text as="span" ml={2} fontSize="sm" color="gray.500">
-                        ({filteredTemplates.length} 결과)
-                      </Text>
-                    )}
-                  </Box>
+                  {searchQuery && hasResults && (
+                    <Text as="span" mr="5px" flexShrink={0} fontSize="sm" color="gray.500">
+                      ({filteredTemplates.length} 결과)
+                    </Text>
+                  )}
+                  <Input
+                    value={editedTitles[folder.folderId] || folder.title}
+                    onChange={(e) => {
+                      setEditedTitles((t) => ({
+                        ...t,
+                        [folder.folderId]: e.target.value,
+                      }))
+                    }}
+                    onKeyDown={(e) => {
+                      e.key === 'Escape'
+                        ? (setEdit(''),
+                          setEditedTitles((t) => ({
+                            ...t,
+                            [folder.folderId]: folder.title,
+                          })))
+                        : e.key === 'Enter'
+                        ? (handleUpdateFolder(
+                            folder.folderId,
+                            editedTitles[folder.folderId] || folder.title
+                          ),
+                          setEdit(''))
+                        : null
+                    }}
+                    readOnly={edit !== folder.folderId}
+                    variant="flushed"
+                    isDisabled={searchQuery.trim() !== '' && !hasResults}
+                    maxLength={35}
+                  />
+
                   <Box
                     position="absolute"
-                    top="0"
-                    right="40px"
+                    top="10px"
+                    right="35px"
                     opacity={0}
                     _groupHover={{ opacity: 1 }}
                     transition="opacity 0.2s ease-in-out"
+                    display={searchQuery.trim() !== '' && !hasResults ? 'none' : 'inline-block'}
                   >
                     <Button
                       p="10px"
                       bg="transparent"
+                      as={edit === folder.folderId ? FiCheck : FiEdit}
+                      _hover={{ color: 'blue.500' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        edit === folder.folderId
+                          ? (handleUpdateFolder(
+                              folder.folderId,
+                              editedTitles[folder.folderId] || folder.title
+                            ),
+                            setEdit(''))
+                          : (setEdit(folder.folderId),
+                            setEditedTitles((t) => ({
+                              ...t,
+                              [folder.folderId]: folder.title,
+                            })))
+                      }}
+                    />
+                    <Button
+                      p="10px"
+                      bg="transparent"
                       as={FaTrash}
-                      _hover={{ color: 'red.500', bg: 'gray.100' }}
+                      _hover={{ color: 'red.500' }}
                       onClick={(e) => {
                         e.stopPropagation()
                         setDeleteFolder(folder.folderId)

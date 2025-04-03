@@ -7,6 +7,7 @@ const TemplateScreen = ({
   handleSaveTemplate,
   handleDelTemplate,
   handleDelFolder,
+  handleUpdateFolder,
   templates,
 }) => {
   return (
@@ -30,6 +31,7 @@ const TemplateScreen = ({
           handleSaveTemplate={handleSaveTemplate}
           handleDelTemplate={handleDelTemplate}
           handleDelFolder={handleDelFolder}
+          handleUpdateFolder={handleUpdateFolder}
           templates={templates}
         />
       </Box>

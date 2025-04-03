@@ -31,6 +31,7 @@ import useSaveTemplate from '../../hooks/useSaveTemplate'
 import useTemplate from '../../hooks/useTemplate'
 import useDeleteTemplate from '../../hooks/useDeleteTemplate'
 import useDeleteFolder from '../../hooks/useDeleteFolder'
+import useUpdateTemplateName from '../../hooks/useUpdateTemplateName'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -76,6 +77,11 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: delTemplateError,
   } = useDeleteTemplate()
   const { deleteFolder, loading: delFolderLoading, error: delFolderError } = useDeleteFolder()
+  const {
+    updateTemplateName,
+    loading: updateFolderLoading,
+    error: updateFolderError,
+  } = useUpdateTemplateName()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -351,6 +357,13 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     handleGetTemplates()
   }
 
+  // 템플릿 폴더 업데이트
+  const handleUpdateFolder = async (folderId, folderName) => {
+    console.log(folderId)
+    await updateTemplateName(folderId, folderName)
+    handleGetTemplates()
+  }
+
   // 템플릿 조회
   const handleGetTemplates = () => {
     getTemplates({ userId: user.userId })
@@ -500,6 +513,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 handleSaveTemplate={handleSaveTemplate}
                 handleDelTemplate={handleDelTemplate}
                 handleDelFolder={handleDelFolder}
+                handleUpdateFolder={handleUpdateFolder}
                 templates={templates}
               />
             )}

@@ -10,6 +10,7 @@ const GitScreen = ({
   name,
   data,
   screen,
+  githubId,
   handleGetClick,
   handleNewFileClick,
   handleGetFolderClick,
@@ -48,10 +49,10 @@ const GitScreen = ({
   }
 
   // 파일 클릭
-  const handleFileClick = (repo, path, sha) => {
+  const handleFileClick = (repo, path, sha, type) => {
     if (isLoading) return
 
-    setSelectedFile({ repo, path, sha })
+    setSelectedFile({ repo, path, sha, type })
     setCommit(true)
     handleGetClick(repo, path)
   }
@@ -62,7 +63,16 @@ const GitScreen = ({
 
     selectedFile.path
       ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
-      : handleNewFileClick(selectedFile.repo, `${name}.md`, message)
+      : handleNewFileClick(
+          selectedFile.repo,
+          `${name}${name.endsWith('.md') ? '' : '.md'}`,
+          message
+        )
+  }
+
+  // 폴더 업로드
+  const handleCommitFolder = (message) => {
+    if (isLoading) return
   }
 
   // 파일 업데이트
@@ -76,20 +86,20 @@ const GitScreen = ({
   }, [gitUpdatedData, toast])
 
   // 폴더 클릭
-  const handleFolderClick = (repo, path, sha) => {
+  const handleFolderClick = (repo, path, sha, type) => {
     if (isLoading) return
 
-    setSelectedFile({ repo, path, sha })
+    setSelectedFile({ repo, path, sha, type })
     setCommit(true)
     handleGetFolderClick(repo, sha)
   }
 
   // 폴더 업데이트
   useEffect(() => {
-    if (gitFolderData) {
-      console.log(gitFolderData)
+    if (selectedFile) {
+      console.log(selectedFile)
     }
-  }, [gitFolderData, toast])
+  }, [selectedFile, toast])
 
   // 에러 토스트
   useEffect(() => {
@@ -107,6 +117,14 @@ const GitScreen = ({
     }
   }, [gitError, gitGetFileError, gitFileError, toast])
 
+  const selectedItem = selectedFile?.repo
+    ? selectedFile?.path
+      ? selectedFile?.type === 'file'
+        ? `${selectedFile.repo}/${selectedFile.path}`
+        : `${selectedFile.repo}/${selectedFile.path}/${name}${name.endsWith('.md') ? '' : '.md'}`
+      : `${selectedFile.repo}/${name}${name.endsWith('.md') ? '' : '.md'}`
+    : '폴더/파일을 선택해주세요.'
+
   return (
     <>
       <Flex
@@ -115,71 +133,67 @@ const GitScreen = ({
         borderColor="gray.200"
         borderRadius="md"
         filter={isLoading ? 'blur(4px)' : 'none'}
+        bg="gray.200"
       >
-        <Box flex="1" overflowY="auto">
-          <Text
-            textAlign="center"
+        <Box flex="1" maxW="100%" overflow="hidden">
+          <Box
+            border="1px solid"
             borderRadius="md"
-            bg="gray.300"
-            h="35px"
-            m={2}
-            mb={3}
-            py={1}
-            title="repository 목록"
+            borderColor="gray.100"
+            m="10px 0 10px 10px"
+            bg="white"
+            boxShadow="md"
           >
-            Repositories
-          </Text>
-          {data &&
-            [...data]
-              .sort((a, b) => a.repo.localeCompare(b.repo))
-              .map((repoItem) => (
-                <Box key={repoItem.repoId} mx="10px" my="10px">
-                  <RepoBox
-                    title={repoItem.repo}
-                    onClick={() => {
-                      handleRepoClick(repoItem.repoId, repoItem.repo)
-                    }}
-                    handleFileClick={handleFileClick}
-                    isActive={active.includes(repoItem.repoId)}
-                    isDisabled={isLoading}
-                    selectedFile={selectedFile}
-                  />
-                  <RepoList
-                    repo={repoItem.repo}
-                    contents={repoItem.contents}
-                    isActive={active.includes(repoItem.repoId)}
-                    gitFolderData={gitFolderData}
-                    handleFileClick={handleFileClick}
-                    handleFolderClick={handleFolderClick}
-                    selectedFile={selectedFile}
-                    isDisabled={isLoading}
-                  />
-                </Box>
-              ))}
+            <Text
+              textAlign="center"
+              borderRadius="md"
+              h="35px"
+              m="10px"
+              py="5px"
+              title={selectedFile && `https://github.com/${githubId}/${selectedItem}`}
+              fontWeight="bold"
+              isTruncated
+              whiteSpace="nowrap"
+            >
+              {selectedItem}
+            </Text>
+            <CommitBox
+              handleCommitClick={handleCommitClick}
+              setSelectedFile={setSelectedFile}
+              display={commit ? 'block' : 'none'}
+              isDisabled={isLoading || !selectedFile}
+            />
+          </Box>
         </Box>
-        <Box flex="1">
-          <Text
-            textAlign="center"
-            borderRadius="md"
-            bg="gray.300"
-            h="35px"
-            m={2}
-            mb={3}
-            py={1}
-            title={selectedFile && `https://github.com/${selectedFile.repo}`}
-          >
-            {selectedFile?.repo
-              ? selectedFile?.path
-                ? `${selectedFile.repo}/${selectedFile.path}`
-                : `${selectedFile.repo}/${name}.md`
-              : '폴더/파일을 선택해주세요.'}
-          </Text>
-          <CommitBox
-            handleCommitClick={handleCommitClick}
-            setSelectedFile={setSelectedFile}
-            display={commit ? 'block' : 'none'}
-            isDisabled={isLoading || !selectedFile}
-          />
+        <Box flex="1" maxW="100%" overflow="hidden" overflowY="auto" m="10px">
+          <Box bg="white" p="10px 10px 10px 0" borderRadius="md">
+            {data &&
+              [...data]
+                .sort((a, b) => a.repo.localeCompare(b.repo))
+                .map((repoItem) => (
+                  <Box key={repoItem.repoId} mx="10px" mb="10px">
+                    <RepoBox
+                      title={repoItem.repo}
+                      onClick={() => {
+                        handleRepoClick(repoItem.repoId, repoItem.repo)
+                      }}
+                      handleFileClick={handleFileClick}
+                      isDisabled={isLoading}
+                      selectedFile={selectedFile}
+                    />
+                    <RepoList
+                      repo={repoItem.repo}
+                      contents={repoItem.contents}
+                      isActive={active.includes(repoItem.repoId)}
+                      gitFolderData={gitFolderData}
+                      handleFileClick={handleFileClick}
+                      handleFolderClick={handleFolderClick}
+                      selectedFile={selectedFile}
+                      isDisabled={isLoading}
+                    />
+                  </Box>
+                ))}
+          </Box>
         </Box>
       </Flex>
 

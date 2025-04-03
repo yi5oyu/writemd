@@ -458,6 +458,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               <GitScreen
                 name={name}
                 data={gitRepoData}
+                githubId={user.githubId}
                 screen={screen}
                 handleGetClick={handleGetClick}
                 handleNewFileClick={handleNewFileClick}

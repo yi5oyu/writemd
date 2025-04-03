@@ -10,29 +10,22 @@ const RepoList = ({
   handleFileClick,
   handleFolderClick,
   selectedFile,
-  gitFolderData,
 }) => {
-  const [isActiveFolder, setIsActiveFolder] = useState(true)
-
   return (
-    <Flex display={isActive ? 'block' : 'none'}>
+    <Flex my="5px" display={isActive ? 'block' : 'none'}>
       {contents.map((content) => (
-        <Flex direction="column" h="auto" cursor="pointer" key={content.sha}>
+        <Flex direction="column" h="auto" key={content.sha}>
           <Flex
-            ml="15px"
-            w="100%"
+            ml="25px"
             alignItems="center"
-            my="3px"
-            onClick={() =>
-              content.type === 'file'
-                ? handleFileClick(repo, content.path, content.sha)
-                : content.type === 'dir'
-                ? handleFolderClick(repo, content.path, content.sha)
-                : null
-            }
+            my="4px"
+            fontWeight={selectedFile?.path === content.path ? 500 : 400}
+            w="100%"
+            pr="20px"
           >
-            <Icon as={MdKeyboardArrowRight} />
+            {/* <Icon as={MdKeyboardArrowRight} /> */}
             <Icon
+              color={selectedFile?.path === content.path ? 'black' : 'gray.500'}
               as={
                 content.type === 'file'
                   ? GoFile
@@ -42,18 +35,31 @@ const RepoList = ({
               }
               ml="5px"
               mr="5px"
+              flexShrink={0}
             />
-            <Box
+            <Text
+              isTruncated
+              whiteSpace="nowrap"
               bg={
                 selectedFile && selectedFile.repo === repo && selectedFile.path === content.path
                   ? 'blue.100'
                   : 'transparent'
               }
+              onClick={() =>
+                content.type === 'file'
+                  ? handleFileClick(repo, content.path, content.sha, content.type)
+                  : content.type === 'dir'
+                  ? handleFolderClick(repo, content.path, content.sha, content.type)
+                  : null
+              }
+              cursor="pointer"
+              title={content.path}
             >
               {content.path}
-            </Box>
+            </Text>
           </Flex>
 
+          {/* 폴더안 폴더
           <Flex ml="15px">
             {gitFolderData &&
               selectedFile &&
@@ -68,7 +74,7 @@ const RepoList = ({
                   isActive={isActiveFolder}
                 />
               )}
-          </Flex>
+          </Flex> */}
         </Flex>
       ))}
 

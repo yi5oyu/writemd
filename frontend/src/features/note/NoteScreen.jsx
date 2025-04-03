@@ -405,7 +405,11 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       position="relative"
       w="85%"
     >
-      <BookmarkBox selectedScreen={selectedScreen} setSelectedScreen={setSelectedScreen} />
+      <BookmarkBox
+        screen={screen}
+        selectedScreen={selectedScreen}
+        setSelectedScreen={setSelectedScreen}
+      />
       <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
         <Flex
           h="30px"

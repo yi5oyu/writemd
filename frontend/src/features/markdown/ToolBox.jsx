@@ -71,9 +71,11 @@ const ToolBox = ({
           icon={FaRegFileAlt}
           label="템플릿"
           onClick={() => {
-            handleGetTemplates()
-            setBoxForm('template')
+            boxForm !== 'template'
+              ? (handleGetTemplates(), setBoxForm('template'))
+              : setBoxForm('preview')
           }}
+          setColor={boxForm === 'template' ? true : false}
         />
       </Flex>
     </Flex>

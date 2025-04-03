@@ -19,11 +19,12 @@ import {
   CardBody,
   CardHeader,
   useDisclosure,
+  InputRightElement,
 } from '@chakra-ui/react'
-import { SearchIcon } from '@chakra-ui/icons'
+import { CloseIcon, SearchIcon } from '@chakra-ui/icons'
 import { CreatableSelect } from 'chakra-react-select'
 import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
-import { FaTrash } from 'react-icons/fa'
+import { FaTrash, FaEraser } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/Modal/DeleteBox'
 
 const TemplateList = ({
@@ -140,7 +141,7 @@ const TemplateList = ({
       {(isNewTemplate || selectedTemplate) && (
         <Card mb="5px" variant="outline" borderColor="blue.500">
           <CardHeader>
-            <Flex justifyContent="space-between" alignItems="center">
+            <Flex alignItems="center">
               <CreatableSelect
                 name="folder"
                 minWidth="300px"
@@ -192,7 +193,28 @@ const TemplateList = ({
                 }}
               />
 
+              <Button
+                as={FaEraser}
+                px="10px"
+                w="22px"
+                h="32px"
+                bg="transparent"
+                color="gray.400"
+                onClick={() => {
+                  setIsNewTemplate(true)
+                  setSelectedTemplate({
+                    templateId: null,
+                    title: '',
+                    description: '',
+                    content: '',
+                    folderName: '',
+                    folderId: null,
+                  })
+                }}
+                _hover={{ color: 'blue.500' }}
+              />
               <CloseButton
+                ml="auto"
                 onClick={() => {
                   setIsNewTemplate(false)
                   setSelectedTemplate(null)
@@ -257,22 +279,25 @@ const TemplateList = ({
         </Card>
       )}
 
-      <Button
-        m="10px"
-        onClick={() => {
-          setIsNewTemplate(true)
-          setSelectedTemplate({
-            templateId: null,
-            title: '',
-            description: '',
-            content: '',
-            folderName: '',
-            folderId: null,
-          })
-        }}
-      >
-        새 템플릿 생성
-      </Button>
+      {!(isNewTemplate || selectedTemplate) && (
+        <Button
+          m="10px"
+          _hover={{ color: 'blue.500' }}
+          onClick={() => {
+            setIsNewTemplate(true)
+            setSelectedTemplate({
+              templateId: null,
+              title: '',
+              description: '',
+              content: '',
+              folderName: '',
+              folderId: null,
+            })
+          }}
+        >
+          새 템플릿 생성
+        </Button>
+      )}
 
       {/* 검색 */}
       <InputGroup m="10px" w="auto">
@@ -286,6 +311,15 @@ const TemplateList = ({
           borderRadius="md"
           focusBorderColor="blue.500"
         />
+        <InputRightElement>
+          <CloseIcon
+            p="2px"
+            color="gray.400"
+            cursor="pointer"
+            _hover={{ color: 'black' }}
+            onClick={() => setSearchQuery('')}
+          />
+        </InputRightElement>
       </InputGroup>
 
       {/* 목록 */}
@@ -306,7 +340,7 @@ const TemplateList = ({
                   <AccordionButton role="group" position="relative">
                     {searchQuery && hasResults && (
                       <Text as="span" mr="5px" flexShrink={0} fontSize="sm" color="gray.500">
-                        ({filteredTemplates.length} 결과)
+                        ({filteredTemplates.length}개)
                       </Text>
                     )}
                     <Input

@@ -1,6 +1,9 @@
-import { Box, Flex } from '@chakra-ui/react'
+import { useEffect } from 'react'
+import { Box, Flex, useToast } from '@chakra-ui/react'
 
 import TemplateList from './TemplateList'
+import ErrorToast from '../../components/ui/toast/ErrorToast'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const TemplateScreen = ({
   screen,
@@ -9,9 +12,25 @@ const TemplateScreen = ({
   handleDelFolder,
   handleUpdateFolder,
   templates,
+  isTemplateLoading,
+  isTemplateError,
+  templateErrorMessage,
 }) => {
+  const toast = useToast()
+
+  useEffect(() => {
+    if (isTemplateError) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={templateErrorMessage} />,
+      })
+    }
+  }, [isTemplateError, toast])
+
   return (
     <Flex
+      filter={isTemplateLoading ? 'blur(4px)' : 'none'}
       direction="column"
       borderRadius="md"
       boxShadow="md"
@@ -33,8 +52,11 @@ const TemplateScreen = ({
           handleDelFolder={handleDelFolder}
           handleUpdateFolder={handleUpdateFolder}
           templates={templates}
+          isTemplateLoading={isTemplateLoading}
         />
       </Box>
+
+      {isTemplateLoading && <LoadingSpinner />}
     </Flex>
   )
 }

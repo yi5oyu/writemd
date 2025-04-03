@@ -31,7 +31,7 @@ import useSaveTemplate from '../../hooks/useSaveTemplate'
 import useTemplate from '../../hooks/useTemplate'
 import useDeleteTemplate from '../../hooks/useDeleteTemplate'
 import useDeleteFolder from '../../hooks/useDeleteFolder'
-import useUpdateTemplateName from '../../hooks/useUpdateTemplateName'
+import useUpdateFolderName from '../../hooks/useUpdateFolderName'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -69,6 +69,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
+
+  // 템플릿 훅
   const { saveTemplate, loading: saveTemplateLoding, error: saveTemplateError } = useSaveTemplate()
   const { getTemplates, loading: templateLoding, error: templateError, templates } = useTemplate()
   const {
@@ -78,10 +80,30 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   } = useDeleteTemplate()
   const { deleteFolder, loading: delFolderLoading, error: delFolderError } = useDeleteFolder()
   const {
-    updateTemplateName,
+    updateFolderName,
     loading: updateFolderLoading,
     error: updateFolderError,
-  } = useUpdateTemplateName()
+  } = useUpdateFolderName()
+
+  const isTemplateLoading =
+    saveTemplateLoding ||
+    templateLoding ||
+    delTemplateLoading ||
+    delFolderLoading ||
+    updateFolderLoading
+
+  const isTemplateError =
+    saveTemplateError || templateError || delTemplateError || delFolderError || updateFolderError
+
+  const templateErrorMessage = saveTemplateError
+    ? saveTemplateError.message
+    : templateError
+    ? templateError.message
+    : delTemplateError
+    ? delTemplateError.message
+    : updateFolderError
+    ? updateFolderError.message
+    : null
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -359,13 +381,14 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
   // 템플릿 폴더 업데이트
   const handleUpdateFolder = async (folderId, folderName) => {
-    console.log(folderId)
-    await updateTemplateName(folderId, folderName)
+    await updateFolderName(folderId, folderName)
     handleGetTemplates()
   }
 
   // 템플릿 조회
   const handleGetTemplates = () => {
+    if (isTemplateLoading) return
+
     getTemplates({ userId: user.userId })
   }
 
@@ -515,6 +538,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 handleDelFolder={handleDelFolder}
                 handleUpdateFolder={handleUpdateFolder}
                 templates={templates}
+                isTemplateLoading={isTemplateLoading}
+                isTemplateError={isTemplateError}
+                templateErrorMessage={templateErrorMessage}
               />
             )}
 

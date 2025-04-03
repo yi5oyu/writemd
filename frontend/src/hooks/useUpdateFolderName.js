@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import axios from 'axios'
 
-const useUpdateTemplateName = () => {
+const useUpdateFolderName = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const updateTemplateName = (folderId, folderName) => {
+  const updateFolderName = (folderId, folderName) => {
     setLoading(true)
     setError(null)
     return axios
@@ -24,7 +24,7 @@ const useUpdateTemplateName = () => {
       })
   }
 
-  return { updateTemplateName, loading, error }
+  return { updateFolderName, loading, error }
 }
 
-export default useUpdateTemplateName
+export default useUpdateFolderName

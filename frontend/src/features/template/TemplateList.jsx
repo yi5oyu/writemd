@@ -32,6 +32,7 @@ const TemplateList = ({
   handleDelFolder,
   handleUpdateFolder,
   templates,
+  isTemplateLoading,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
@@ -46,6 +47,8 @@ const TemplateList = ({
 
   // 템플릿 저장
   const saveTemplateClick = () => {
+    if (isTemplateLoading || !isTemplateValid(selectedTemplate)) return
+
     handleSaveTemplate(
       selectedTemplate.folderId,
       selectedTemplate.templateId,
@@ -57,14 +60,14 @@ const TemplateList = ({
     setIsNewTemplate(false)
   }
 
-  // 검색어에 따라 결과가 있는 아코디언 열기
+  // 결과가 있는 아코디언 열기
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setOpenAccordions([])
       return
     }
 
-    // 검색어가 있는 카테고리의 인덱스 찾기
+    // 폴더의 인덱스 찾기
     const results = templates
       .filter((folder) =>
         folder.template.some(
@@ -101,6 +104,8 @@ const TemplateList = ({
 
   // 템플릿/폴더 삭제
   const confirmDelete = () => {
+    if (isTemplateLoading) return
+
     if (deleteTemplate) {
       handleDelTemplate(deleteTemplate)
       onClose()
@@ -111,6 +116,23 @@ const TemplateList = ({
       onClose()
       setDeleteFolder(null)
     }
+  }
+
+  // 템플릿 폴더 이름 변경
+  const handleUpdateFolderName = (folderId, folderName, title) => {
+    if (!folderName.trim() || folderName.trim() === title) {
+      setEditedTitles((t) => ({ ...t, [folderId]: title }))
+      return
+    }
+
+    if (isTemplateLoading) return
+
+    handleUpdateFolder(folderId, folderName)
+  }
+
+  // 템플릿 빈 문자열 검사
+  const isTemplateValid = (template) => {
+    return template?.folderName?.trim() && template?.title?.trim() && template?.description?.trim()
   }
 
   return (
@@ -220,8 +242,13 @@ const TemplateList = ({
                     p="10px"
                     bg="transparent"
                     as={FiSave}
-                    _hover={{ color: 'blue.500', bg: 'gray.100' }}
-                    onClick={saveTemplateClick}
+                    _hover={
+                      isTemplateValid(selectedTemplate) && { color: 'blue.500', bg: 'gray.100' }
+                    }
+                    isDisabled={!isTemplateValid(selectedTemplate)}
+                    onClick={(e) => {
+                      !isTemplateValid(selectedTemplate) ? e.preventDefault() : saveTemplateClick()
+                    }}
                   />
                 </Flex>
               </Box>
@@ -267,162 +294,178 @@ const TemplateList = ({
         allowMultiple
         onChange={(index) => setOpenAccordions(index)}
       >
-        {templates.map((folder) => {
-          const filteredTemplates = filterItems(folder.template)
-          const hasResults = filteredTemplates.length > 0
+        {templates
+          .filter((folder) => searchQuery.trim() === '' || filterItems(folder.template).length > 0)
+          .map((folder) => {
+            const filteredTemplates = filterItems(folder.template)
+            const hasResults = filteredTemplates.length > 0
 
-          return (
-            <AccordionItem
-              key={folder.folderId}
-              isDisabled={searchQuery.trim() !== '' && !hasResults}
-            >
-              <h2>
-                <AccordionButton role="group" position="relative">
-                  {searchQuery && hasResults && (
-                    <Text as="span" mr="5px" flexShrink={0} fontSize="sm" color="gray.500">
-                      ({filteredTemplates.length} 결과)
-                    </Text>
-                  )}
-                  <Input
-                    value={editedTitles[folder.folderId] || folder.title}
-                    onChange={(e) => {
-                      setEditedTitles((t) => ({
-                        ...t,
-                        [folder.folderId]: e.target.value,
-                      }))
-                    }}
-                    onKeyDown={(e) => {
-                      e.key === 'Escape'
-                        ? (setEdit(''),
-                          setEditedTitles((t) => ({
-                            ...t,
-                            [folder.folderId]: folder.title,
-                          })))
-                        : e.key === 'Enter'
-                        ? (handleUpdateFolder(
-                            folder.folderId,
-                            editedTitles[folder.folderId] || folder.title
-                          ),
-                          setEdit(''))
-                        : null
-                    }}
-                    readOnly={edit !== folder.folderId}
-                    variant="flushed"
-                    isDisabled={searchQuery.trim() !== '' && !hasResults}
-                    maxLength={35}
-                  />
-
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="35px"
-                    opacity={0}
-                    _groupHover={{ opacity: 1 }}
-                    transition="opacity 0.2s ease-in-out"
-                    display={searchQuery.trim() !== '' && !hasResults ? 'none' : 'inline-block'}
-                  >
-                    <Button
-                      p="10px"
-                      bg="transparent"
-                      as={edit === folder.folderId ? FiCheck : FiEdit}
-                      _hover={{ color: 'blue.500' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        edit === folder.folderId
-                          ? (handleUpdateFolder(
-                              folder.folderId,
-                              editedTitles[folder.folderId] || folder.title
-                            ),
-                            setEdit(''))
-                          : (setEdit(folder.folderId),
+            return (
+              <AccordionItem key={folder.folderId}>
+                <h2>
+                  <AccordionButton role="group" position="relative">
+                    {searchQuery && hasResults && (
+                      <Text as="span" mr="5px" flexShrink={0} fontSize="sm" color="gray.500">
+                        ({filteredTemplates.length} 결과)
+                      </Text>
+                    )}
+                    <Input
+                      value={
+                        editedTitles[folder.folderId] !== undefined
+                          ? editedTitles[folder.folderId]
+                          : folder.title
+                      }
+                      onChange={(e) => {
+                        setEditedTitles((t) => ({
+                          ...t,
+                          [folder.folderId]: e.target.value,
+                        }))
+                      }}
+                      onKeyDown={(e) => {
+                        e.key === 'Escape'
+                          ? (setEdit(''),
                             setEditedTitles((t) => ({
                               ...t,
                               [folder.folderId]: folder.title,
                             })))
+                          : e.key === 'Enter' &&
+                            (handleUpdateFolderName(
+                              folder.folderId,
+                              editedTitles[folder.folderId] || folder.title,
+                              folder.title
+                            ),
+                            setEdit(''))
                       }}
+                      readOnly={edit !== folder.folderId}
+                      variant="flushed"
+                      isDisabled={
+                        !isTemplateValid(selectedTemplate) &&
+                        searchQuery.trim() !== '' &&
+                        !hasResults
+                      }
+                      maxLength={35}
                     />
-                    <Button
-                      p="10px"
-                      bg="transparent"
-                      as={FaTrash}
-                      _hover={{ color: 'red.500' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setDeleteFolder(folder.folderId)
-                        onOpen()
-                      }}
-                    />
-                  </Box>
-                  <AccordionIcon />
-                </AccordionButton>
-              </h2>
-              <AccordionPanel pb={4}>
-                {hasResults ? (
-                  <Grid
-                    templateColumns="repeat(auto-fit, minmax(min(250px, 100%), 1fr))"
-                    gap="2"
-                    width="100%"
-                  >
-                    {filteredTemplates.map((template, index) => (
-                      <Flex
-                        key={index}
-                        position="relative"
-                        p="15px"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor={
-                          selectedTemplate?.title === template.title ? 'blue.500' : 'gray.200'
-                        }
-                        width="100%"
-                        minWidth="0"
-                        containerType="inline-size"
-                        bg={selectedTemplate?.title === template.title ? 'blue.50' : 'white'}
-                        _hover={{
-                          bg: 'gray.100',
-                          borderColor: 'blue.500',
-                          boxShadow: 'xl',
+
+                    <Box
+                      position="absolute"
+                      top="10px"
+                      right="35px"
+                      opacity={0}
+                      _groupHover={{ opacity: 1 }}
+                      transition="opacity 0.2s ease-in-out"
+                      display={searchQuery.trim() !== '' && !hasResults ? 'none' : 'inline-block'}
+                    >
+                      <Button
+                        p="10px"
+                        bg="transparent"
+                        as={edit === folder.folderId ? FiCheck : FiEdit}
+                        _hover={{ color: 'blue.500' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          edit === folder.folderId
+                            ? (handleUpdateFolderName(
+                                folder.folderId,
+                                editedTitles[folder.folderId] || folder.title,
+                                folder.title
+                              ),
+                              setEdit(''))
+                            : (setEdit(folder.folderId),
+                              setEditedTitles((t) => ({
+                                ...t,
+                                [folder.folderId]: folder.title,
+                              })))
                         }}
-                        cursor="pointer"
-                        onClick={() => handleTemplateSelect(folder, template)}
-                        role="group"
-                      >
-                        <Box width="100%">
-                          <Text fontSize="18px" fontWeight={600} noOfLines={1}>
-                            {template.title}
-                          </Text>
-                          <Text fontSize="14px" noOfLines={1}>
-                            {template.description}
-                          </Text>
-                        </Box>
-                        <Button
-                          position="absolute"
-                          top="0"
-                          right="0"
-                          p="10px"
-                          bg="transparent"
-                          as={FaTrash}
-                          opacity={0}
-                          _groupHover={{ opacity: 1 }}
-                          transition="opacity 0.2s ease-in-out"
-                          _hover={{ color: 'red.500', bg: 'gray.100' }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteTemplate(template.templateId)
-                            onOpen()
+                      />
+                      <Button
+                        p="10px"
+                        bg="transparent"
+                        as={FaTrash}
+                        _hover={{ color: 'red.500' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteFolder(folder.folderId)
+                          onOpen()
+                        }}
+                      />
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+                </h2>
+                <AccordionPanel pb={4}>
+                  {hasResults ? (
+                    <Grid
+                      templateColumns="repeat(auto-fit, minmax(min(250px, 100%), 1fr))"
+                      gap="2"
+                      width="100%"
+                    >
+                      {filteredTemplates.map((template, index) => (
+                        <Flex
+                          key={index}
+                          position="relative"
+                          p="15px"
+                          borderRadius="md"
+                          border="1px solid"
+                          borderColor={
+                            selectedTemplate?.title === template.title &&
+                            selectedTemplate?.templateId === template.templateId
+                              ? 'blue.500'
+                              : 'gray.200'
+                          }
+                          width="100%"
+                          minWidth="0"
+                          containerType="inline-size"
+                          bg={
+                            selectedTemplate?.title === template.title &&
+                            selectedTemplate?.templateId === template.templateId
+                              ? 'blue.50'
+                              : 'white'
+                          }
+                          _hover={{
+                            bg: 'gray.100',
+                            borderColor: 'blue.500',
+                            boxShadow: 'xl',
                           }}
-                        />
-                      </Flex>
-                    ))}
-                  </Grid>
-                ) : (
-                  <Box textAlign="center" py={4} color="gray.500">
-                    템플릿이 없습니다.
-                  </Box>
-                )}
-              </AccordionPanel>
-            </AccordionItem>
-          )
-        })}
+                          cursor="pointer"
+                          onClick={() => handleTemplateSelect(folder, template)}
+                          role="group"
+                        >
+                          <Box width="100%">
+                            <Text fontSize="18px" fontWeight={600} noOfLines={1}>
+                              {template.title}
+                            </Text>
+                            <Text fontSize="14px" noOfLines={1}>
+                              {template.description}
+                            </Text>
+                          </Box>
+                          <Button
+                            position="absolute"
+                            top="0"
+                            right="0"
+                            p="10px"
+                            bg="transparent"
+                            as={FaTrash}
+                            opacity={0}
+                            _groupHover={{ opacity: 1 }}
+                            transition="opacity 0.2s ease-in-out"
+                            _hover={{ color: 'red.500', bg: 'gray.100' }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteTemplate(template.templateId)
+                              onOpen()
+                            }}
+                          />
+                        </Flex>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Box textAlign="center" py={4} color="gray.500">
+                      템플릿이 없습니다.
+                    </Box>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+            )
+          })}
       </Accordion>
 
       {/* 검색 결과가 없을 때 메시지 */}

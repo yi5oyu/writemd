@@ -66,7 +66,14 @@ const GitScreen = ({
   const handleCommitClick = (message) => {
     if (isLoading) return
 
-    selectedFile.path
+    selectedFile.type === 'dir'
+      ? handleNewFileClick(
+          selectedFile.repo,
+          `${selectedFile.path}/${name}${name.endsWith('.md') ? '' : '.md'}`,
+          message,
+          selectedFile.sha
+        )
+      : selectedFile.path
       ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
       : handleNewFileClick(
           selectedFile.repo,
@@ -74,6 +81,11 @@ const GitScreen = ({
           message
         )
   }
+
+  // 파일 업데이트
+  useEffect(() => {
+    console.log(selectedFile)
+  }, [selectedFile])
 
   // 폴더 업로드
   const handleCommitFolder = (message) => {

@@ -280,13 +280,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     }
   }
 
-  // 깃 정보 조회
-  const handleGitLoad = () => {
-    if (user && user.userId) {
-      getRepo({ userId: user.userId })
-    }
-  }
-
   // 깃 파일 조회
   const handleGetClick = (repo, path) => {
     getFileContent({
@@ -336,7 +329,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       markdownText,
       sha,
     })
-    getRepo({ userId: user.userId })
+    handleGitLoad()
   }
 
   // 깃 폴더 조회
@@ -355,6 +348,13 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       repo,
       sha,
     })
+  }
+
+  // 깃 정보 조회
+  const handleGitLoad = () => {
+    if (user && user.userId) {
+      getRepo({ userId: user.userId })
+    }
   }
 
   return (

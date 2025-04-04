@@ -15,6 +15,7 @@ const GitScreen = ({
   handleNewFileClick,
   handleGetFolderClick,
   handleGetBlobFileClick,
+  handleBlobFileUpdate,
   gitLoading,
   gitError,
   gitGetFileLoading,
@@ -24,6 +25,7 @@ const GitScreen = ({
   gitUpdatedData,
   gitFolderData,
   gitFolderSetData,
+  gitUpdatedBlobFileData,
 }) => {
   const [active, setActive] = useState([])
   const [selectedFile, setSelectedFile] = useState(null)
@@ -34,6 +36,15 @@ const GitScreen = ({
 
   // 로딩
   const isLoading = gitLoading || gitGetFileLoading || gitFileLoading
+
+  // 커밋 후 초기화
+  // useEffect(() => {
+  //   if (gitUpdatedBlobFileData && selectedFile) {
+  //     gitFolderSetData(null)
+  //     setSelectedFile(null)
+  //     setActive([])
+  //   }
+  // }, [gitUpdatedBlobFileData])
 
   // 리스트 토글, 폴더 선택/토글
   const handleRepoClick = (repoId, repo) => {
@@ -73,6 +84,8 @@ const GitScreen = ({
           message,
           selectedFile.sha
         )
+      : selectedFile.path.includes('/')
+      ? handleBlobFileUpdate(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
       : selectedFile.path
       ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
       : handleNewFileClick(
@@ -81,11 +94,6 @@ const GitScreen = ({
           message
         )
   }
-
-  // 파일 업데이트
-  useEffect(() => {
-    console.log(selectedFile)
-  }, [selectedFile])
 
   // 폴더 업로드
   const handleCommitFolder = (message) => {

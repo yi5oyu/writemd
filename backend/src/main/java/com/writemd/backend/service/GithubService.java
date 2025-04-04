@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -232,4 +231,41 @@ public class GithubService {
                 .build());
 
     }
+
+    // 폴더안 파일 업데이트
+    public Mono<Map<String, Object>> updateBlobFile(String principalName, String owner,
+        String repo, String path, String message, String fileContent, String sha) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+        if (client == null) {
+            return Mono.error(new IllegalStateException("GitHub OAuth2 로그인 안됨"));
+        }
+
+        String accessToken = client.getAccessToken().getTokenValue();
+        String encodedContent = Base64.getEncoder()
+            .encodeToString(fileContent.getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("message", message);
+        requestBody.put("content", encodedContent);
+        
+        if (sha != null && !sha.isEmpty()) {
+            requestBody.put("sha", sha);
+        } else {
+            return Mono.error(new IllegalArgumentException("파일 업데이트를 위해 SHA가 필요합니다"));
+        }
+
+        return webClient.put()
+            .uri("https://api.github.com/repos/{owner}/{repo}/contents/{path}", owner, repo, path)
+            .headers(headers -> headers.setBearerAuth(accessToken))
+            .bodyValue(requestBody)
+
+            .retrieve()
+
+            .onStatus(status -> status.isError(), clientResponse ->
+                clientResponse.bodyToMono(String.class)
+                    .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error: " + errorBody)))
+            )
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
 }

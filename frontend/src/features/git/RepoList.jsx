@@ -26,7 +26,14 @@ const RepoList = ({
             ml="10px"
             alignItems="center"
             my="3px"
-            fontWeight={selectedFile?.path === content.path ? 500 : 400}
+            fontWeight={
+              isConnected && selectedFile?.path.split('/').pop() === content.path
+                ? 500
+                : selectedFile?.path === content.path ||
+                  selectedFile?.path?.startsWith(content.path)
+                ? 500
+                : 400
+            }
             w="100%"
             pr="20px"
             onClick={() =>
@@ -54,18 +61,25 @@ const RepoList = ({
             }
             cursor={isConnected && content.type === 'dir' ? '' : 'pointer'}
           >
-            {content.type === 'file' ? (
+            {content.type === 'file' || isConnected ? (
               <Box ml="15px"></Box>
-            ) : content.type === 'dir' ? (
-              <Icon
-                as={
-                  selectedFile?.path === content.path ? MdKeyboardArrowDown : MdKeyboardArrowRight
-                }
-              />
-            ) : null}
+            ) : (
+              content.type === 'dir' && (
+                <Icon
+                  as={selectedFolder === content.path ? MdKeyboardArrowDown : MdKeyboardArrowRight}
+                />
+              )
+            )}
 
             <Icon
-              color={selectedFile?.path === content.path ? 'black' : 'gray.500'}
+              color={
+                isConnected && selectedFile?.path.split('/').pop() === content.path
+                  ? 'black'
+                  : selectedFile?.path === content.path ||
+                    selectedFile?.path?.startsWith(content.path)
+                  ? 'black'
+                  : 'gray.500'
+              }
               as={
                 content.type === 'file'
                   ? GoFile

@@ -19,8 +19,8 @@ const RepoBox = ({ title, onClick, isDisabled, selectedFile }) => {
       <Icon
         color={selectedFile?.repo === title ? 'black' : 'gray.500'}
         as={selectedFile?.repo === title ? RiGitRepositoryFill : RiGitRepositoryLine}
-        ml="5px"
-        mr="5px"
+        ml="3px"
+        mr="3px"
       />
       <Box
         bg={

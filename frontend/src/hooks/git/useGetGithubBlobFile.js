@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import axios from 'axios'
 
-function useGetGithubFile() {
+function useGetGithubBlobFile() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
-  const getFileContent = async ({ owner, repo, path }) => {
+  const getBlobFile = async ({ owner, repo, sha }) => {
     setData(null)
     setLoading(true)
     setError(null)
+
     try {
       const response = await axios.get(
-        `http://localhost:8888/api/github/repo/${owner}/${repo}/contents/${path}`,
+        `http://localhost:8888/api/github/repo/${owner}/${repo}/blobs/${sha}`,
         {
           withCredentials: true,
         }
@@ -25,7 +26,7 @@ function useGetGithubFile() {
     }
   }
 
-  return { getFileContent, loading, error, data }
+  return { getBlobFile, loading, error, data }
 }
 
-export default useGetGithubFile
+export default useGetGithubBlobFile

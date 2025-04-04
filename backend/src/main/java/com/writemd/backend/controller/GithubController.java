@@ -78,4 +78,15 @@ public class GithubController {
         return githubService.getFolderContents(principalName, owner, repo, sha);
     }
 
+    // 폴더안 파일 조회
+    @GetMapping("/repo/{owner}/{repo}/blobs/{sha}")
+    public Mono<GitContentDTO> getBlobFile(
+        @AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @PathVariable String sha) {
+
+        return githubService.getblobFile(principalName, owner, repo, sha);
+    }
+
 }

@@ -210,4 +210,26 @@ public class GithubService {
         }
     }
 
+    // 폴더안 파일 조회
+    public Mono<GitContentDTO> getblobFile(String principalName, String owner, String repo, String sha) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+        if (client == null) {
+            throw new IllegalStateException("GitHub OAuth2 login required.");
+        }
+
+        String accessToken = client.getAccessToken().getTokenValue();
+
+        return webClient.get()
+            .uri("https://api.github.com/repos/{owner}/{repo}/git/blobs/{sha}", owner, repo, sha)
+            .headers(headers -> headers.setBearerAuth(accessToken))
+            .retrieve()
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .map(response -> GitContentDTO.builder()
+                .path("")
+                .type("file")
+                .sha(sha)
+                .content((String) response.get("content"))
+                .build());
+
+    }
 }

@@ -29,8 +29,6 @@ import NoteInputBox from '../../features/note/NoteInputBox'
 import NoteBox from '../../features/note/NoteBox'
 import useDeleteNote from '../../hooks/useDeleteNote'
 import ErrorToast from '../ui/toast/ErrorToast'
-import useGithubFile from '../../hooks/useGithubFile'
-import useGetGithubFile from '../../hooks/useGetGithubFile'
 
 const MotionBox = motion(Box)
 

@@ -21,11 +21,12 @@ import useDeleteSession from '../../hooks/useDeleteSession'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ToolBox from '../markdown/ToolBox'
 import EmojiBox from '../markdown/EmojiBox'
-import useGit from '../../hooks/useGit'
+import useGit from '../../hooks/git/useGit'
 import GitScreen from '../git/GitScreen'
-import useGetGithubFile from '../../hooks/useGetGithubFile'
-import useGithubFile from '../../hooks/useGithubFile'
-import useGetGithubFolder from '../../hooks/useGetGithubFolder'
+import useGetGithubFile from '../../hooks/git/useGetGithubFile'
+import useGithubFile from '../../hooks/git/useGithubFile'
+import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
+import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -66,7 +67,14 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     loading: gitFolderLoading,
     error: gitFolderError,
     data: gitFolderData,
+    setData: gitFolderSetData,
   } = useGetGithubFolder()
+  const {
+    getBlobFile,
+    loading: gitBlobFileLoading,
+    error: gitBlobFileError,
+    data: gitBlobFileData,
+  } = useGetGithubBlobFile()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -303,6 +311,21 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     }
   }, [gitFileData])
 
+  // Base64 디코딩, UTF-8 변환
+  useEffect(() => {
+    if (gitBlobFileData) {
+      const decodedContent = atob(gitBlobFileData)
+
+      const byteArray = new Uint8Array(decodedContent.length)
+      for (let i = 0; i < decodedContent.length; i++) {
+        byteArray[i] = decodedContent.charCodeAt(i)
+      }
+      const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
+
+      setMarkdownText(decodedText)
+    }
+  }, [gitBlobFileData])
+
   // 파일 업로드
   const handleNewFileClick = (repo, path, message, sha) => {
     createOrUpdateFile({
@@ -319,6 +342,15 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   // 깃 폴더 조회
   const handleGetFolderClick = (repo, sha) => {
     getFolderContents({
+      owner: user.githubId,
+      repo,
+      sha,
+    })
+  }
+
+  // 폴더안 파일 조회
+  const handleGetBlobFileClick = (repo, sha) => {
+    getBlobFile({
       owner: user.githubId,
       repo,
       sha,
@@ -463,8 +495,10 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 handleGetClick={handleGetClick}
                 handleNewFileClick={handleNewFileClick}
                 handleGetFolderClick={handleGetFolderClick}
+                handleGetBlobFileClick={handleGetBlobFileClick}
                 gitUpdatedData={gitUpdatedData}
                 gitFolderData={gitFolderData}
+                gitFolderSetData={gitFolderSetData}
                 gitLoading={gitLoading}
                 gitError={gitError}
                 gitGetFileLoading={gitGetFileLoading}

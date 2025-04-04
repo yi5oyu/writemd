@@ -26,7 +26,7 @@ function useGetGithubFolder() {
     }
   }
 
-  return { getFolderContents, loading, error, data }
+  return { getFolderContents, loading, error, data, setData }
 }
 
 export default useGetGithubFolder

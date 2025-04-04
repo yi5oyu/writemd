@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { Flex, Box, Icon, Text } from '@chakra-ui/react'
 import { GoFile, GoFileDirectoryFill } from 'react-icons/go'
-import { MdKeyboardArrowRight } from 'react-icons/md'
+import { MdKeyboardArrowRight, MdKeyboardArrowDown } from 'react-icons/md'
 
 const RepoList = ({
   contents,
@@ -9,21 +9,61 @@ const RepoList = ({
   repo,
   handleFileClick,
   handleFolderClick,
+  handleBlobFileClick,
   selectedFile,
+  selectedFolder,
+  setSelectedFolder,
+  gitFolderData,
+  isDisabled,
+  isConnected,
+  currentPath,
 }) => {
   return (
-    <Flex my="5px" display={isActive ? 'block' : 'none'}>
-      {contents.map((content) => (
-        <Flex direction="column" h="auto" key={content.sha}>
+    <Flex my="3px" display={isActive ? 'block' : 'none'}>
+      {contents.map((content, index) => (
+        <Flex direction="column" h="auto" key={`${content.sha}-${index}`}>
           <Flex
-            ml="25px"
+            ml="10px"
             alignItems="center"
-            my="4px"
+            my="3px"
             fontWeight={selectedFile?.path === content.path ? 500 : 400}
             w="100%"
             pr="20px"
+            onClick={() =>
+              isConnected
+                ? content.type === 'file'
+                  ? handleBlobFileClick(
+                      repo,
+                      currentPath ? `${currentPath}/${content.path}` : content.path,
+                      content.sha,
+                      content.type
+                    )
+                  : null
+                : content.type === 'file'
+                ? handleFileClick(repo, content.path, content.sha, content.type)
+                : (handleFolderClick(
+                    repo,
+                    currentPath ? `${currentPath}/${content.path}` : content.path,
+                    content.sha,
+                    content.type,
+                    content.path
+                  ),
+                  selectedFolder === content.path
+                    ? setSelectedFolder(null)
+                    : setSelectedFolder(content.path))
+            }
+            cursor={isConnected && content.type === 'dir' ? '' : 'pointer'}
           >
-            {/* <Icon as={MdKeyboardArrowRight} /> */}
+            {content.type === 'file' ? (
+              <Box ml="15px"></Box>
+            ) : content.type === 'dir' ? (
+              <Icon
+                as={
+                  selectedFile?.path === content.path ? MdKeyboardArrowDown : MdKeyboardArrowRight
+                }
+              />
+            ) : null}
+
             <Icon
               color={selectedFile?.path === content.path ? 'black' : 'gray.500'}
               as={
@@ -33,7 +73,7 @@ const RepoList = ({
                   ? GoFileDirectoryFill
                   : null
               }
-              ml="5px"
+              ml="2px"
               mr="5px"
               flexShrink={0}
             />
@@ -41,40 +81,35 @@ const RepoList = ({
               isTruncated
               whiteSpace="nowrap"
               bg={
-                selectedFile && selectedFile.repo === repo && selectedFile.path === content.path
+                selectedFile?.repo === repo && selectedFile?.path?.split('/').pop() === content.path
                   ? 'blue.100'
                   : 'transparent'
               }
-              onClick={() =>
-                content.type === 'file'
-                  ? handleFileClick(repo, content.path, content.sha, content.type)
-                  : content.type === 'dir'
-                  ? handleFolderClick(repo, content.path, content.sha, content.type)
-                  : null
-              }
-              cursor="pointer"
               title={content.path}
             >
               {content.path}
             </Text>
           </Flex>
 
-          {/* 폴더안 폴더
-          <Flex ml="15px">
+          <Flex ml="10px">
             {gitFolderData &&
-              selectedFile &&
-              selectedFile.repo === repo &&
-              selectedFile.path === content.path && (
+              content.type === 'dir' &&
+              selectedFile?.repo === repo &&
+              selectedFolder === content.path && (
                 <RepoList
                   contents={gitFolderData}
                   selectedFile={selectedFile}
                   repo={repo}
                   handleFileClick={handleFileClick}
                   handleFolderClick={handleFolderClick}
-                  isActive={isActiveFolder}
+                  handleBlobFileClick={handleBlobFileClick}
+                  isActive={true}
+                  isDisabled={isDisabled}
+                  isConnected={true}
+                  currentPath={content.path}
                 />
               )}
-          </Flex> */}
+          </Flex>
         </Flex>
       ))}
 

@@ -14,6 +14,7 @@ const GitScreen = ({
   handleGetClick,
   handleNewFileClick,
   handleGetFolderClick,
+  handleGetBlobFileClick,
   gitLoading,
   gitError,
   gitGetFileLoading,
@@ -22,10 +23,12 @@ const GitScreen = ({
   gitFileError,
   gitUpdatedData,
   gitFolderData,
+  gitFolderSetData,
 }) => {
   const [active, setActive] = useState([])
   const [selectedFile, setSelectedFile] = useState(null)
   const [commit, setCommit] = useState(false)
+  const [selectedFolder, setSelectedFolder] = useState(null)
 
   const toast = useToast()
 
@@ -46,6 +49,8 @@ const GitScreen = ({
         return [...a, repoId]
       }
     })
+    setSelectedFolder(null)
+    gitFolderSetData(null)
   }
 
   // 파일 클릭
@@ -86,20 +91,23 @@ const GitScreen = ({
   }, [gitUpdatedData, toast])
 
   // 폴더 클릭
-  const handleFolderClick = (repo, path, sha, type) => {
+  const handleFolderClick = (repo, path, sha, type, folder) => {
     if (isLoading) return
 
+    setSelectedFolder(folder)
     setSelectedFile({ repo, path, sha, type })
     setCommit(true)
     handleGetFolderClick(repo, sha)
   }
 
-  // 폴더 업데이트
-  useEffect(() => {
-    if (selectedFile) {
-      console.log(selectedFile)
-    }
-  }, [selectedFile, toast])
+  // 폴더안 파일 클릭
+  const handleBlobFileClick = (repo, path, sha, type) => {
+    if (isLoading) return
+
+    setSelectedFile({ repo, path, sha, type })
+    setCommit(true)
+    handleGetBlobFileClick(repo, sha)
+  }
 
   // 에러 토스트
   useEffect(() => {
@@ -166,7 +174,7 @@ const GitScreen = ({
           </Box>
         </Box>
         <Box flex="1" maxW="100%" overflow="hidden" overflowY="auto" m="10px">
-          <Box bg="white" p="10px 10px 10px 0" borderRadius="md">
+          <Box bg="white" p="10px 10px 10px 0" borderRadius="md" boxShadow="md">
             {data &&
               [...data]
                 .sort((a, b) => a.repo.localeCompare(b.repo))
@@ -188,8 +196,13 @@ const GitScreen = ({
                       gitFolderData={gitFolderData}
                       handleFileClick={handleFileClick}
                       handleFolderClick={handleFolderClick}
+                      handleBlobFileClick={handleBlobFileClick}
                       selectedFile={selectedFile}
+                      selectedFolder={selectedFolder}
+                      setSelectedFolder={setSelectedFolder}
                       isDisabled={isLoading}
+                      isConnected={false}
+                      currentPath=""
                     />
                   </Box>
                 ))}

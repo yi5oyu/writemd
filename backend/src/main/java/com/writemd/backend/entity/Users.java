@@ -42,9 +42,4 @@ public class Users {
     @JsonManagedReference
     private List<Notes> notes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    @JsonManagedReference
-    private List<Gits> gits = new ArrayList<>();
-
 }

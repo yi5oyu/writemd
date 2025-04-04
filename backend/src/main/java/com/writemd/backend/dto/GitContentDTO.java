@@ -14,5 +14,6 @@ public class GitContentDTO {
     private String path;
     private String type;
     private String sha;
-    private List<GitContentDTO> tree;
+    private String content;
+//    private List<GitContentDTO> tree;
 }

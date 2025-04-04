@@ -11,7 +11,7 @@ function useGithubFile() {
     setError(null)
     try {
       const response = await axios.post(
-        `http://localhost:8888/api/user/repos/${owner}/${repo}/files`,
+        `http://localhost:8888/api/github/repo/${owner}/${repo}/file`,
         markdownText,
         {
           params: { path, message, sha },

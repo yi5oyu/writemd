@@ -438,7 +438,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
         </Flex>
 
         <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
-          <Box w={screen ? '100%' : '100%'}>
+          <Box flex="1">
             <ToolBox
               onClearText={() => setMarkdownText('')}
               onCopyText={handleCopyMarkdown}
@@ -462,7 +462,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             />
           </Box>
 
-          <Box id="feature" w={screen ? '100%' : '100%'} position="relative">
+          <Box id="feature" flex="1" position="relative">
             {/* 공통 UtilityBox */}
             <UtilityBox
               setBoxForm={setBoxForm}

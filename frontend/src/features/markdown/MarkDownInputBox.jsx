@@ -1,109 +1,108 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Textarea } from '@chakra-ui/react'
-import { debounce } from 'lodash'
+import { Box } from '@chakra-ui/react'
+import { Editor } from '@monaco-editor/react' // monaco 직접 import 제거
+import githubLightTheme from 'monaco-themes/themes/GitHub Light.json'
 
 const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen, mode }) => {
-  const textareaRef = useRef(null)
-  const cursorPositionRef = useRef(null)
+  const editorRef = useRef(null)
+  const monacoRef = useRef(null)
 
-  const [localText, setLocalText] = useState(markdownText)
+  // Monaco Editor 초기화 후 참조 저장
+  const handleEditorMount = (editor, monaco) => {
+    editorRef.current = editor
+    monacoRef.current = monaco
 
-  useEffect(() => {
-    setLocalText(markdownText)
-  }, [markdownText])
-
-  const debouncedSetMarkdownText = useCallback(
-    debounce((value) => {
-      setMarkdownText(value)
-    }, 300),
-    [setMarkdownText]
-  )
-
-  // 텍스트 입력 이벤트트
-  const handleChange = (e) => {
-    const { value, selectionStart, selectionEnd } = e.target
-    cursorPositionRef.current = { selectionStart, selectionEnd }
-    setLocalText(value)
-    debouncedSetMarkdownText(value)
+    // 테마
+    monaco.editor.defineTheme('github-light', githubLightTheme)
+    monaco.editor.setTheme('github-light')
   }
 
-  // 렌더링 후 커서 위치 복원
-  useEffect(() => {
-    if (textareaRef.current && cursorPositionRef.current) {
-      const { selectionStart, selectionEnd } = cursorPositionRef.current
-      textareaRef.current.selectionStart = selectionStart
-      textareaRef.current.selectionEnd = selectionEnd
-    }
-  })
-
-  // 탭 누르면 들여쓰기(4칸)
-  const handleKeyDown = (e) => {
-    if (e.key === 'Tab') {
-      e.preventDefault()
-
-      const start = e.target.selectionStart
-      const end = e.target.selectionEnd
-
-      const indent = '    '
-      const newValue = localText.substring(0, start) + indent + localText.substring(end)
-
-      setLocalText(newValue)
-      debouncedSetMarkdownText(newValue)
-
-      // 커서 위치 조정
-      Promise.resolve().then(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
-            start + indent.length
-        }
-      })
-    }
-  }
-
-  // 이모지 삽입
+  // 이모지/뱃지 삽입
   const handleInsertItem = useCallback(() => {
-    if (!item || !textareaRef.current) return
+    if (!item || !editorRef.current) return
 
-    const textarea = textareaRef.current
-    const position = textarea.selectionStart
-    const newText = localText.slice(0, position) + item + localText.slice(position)
+    const editor = editorRef.current
+    const position = editor.getPosition()
 
-    setLocalText(newText)
-    debouncedSetMarkdownText(newText)
+    const range = {
+      startLineNumber: position.lineNumber,
+      startColumn: position.column,
+      endLineNumber: position.lineNumber,
+      endColumn: position.column,
+    }
+
+    editor.executeEdits('insert-item', [
+      {
+        range: range,
+        text: item,
+        forceMoveMarkers: true,
+      },
+    ])
+
     setItem('')
 
-    // 커서 위치 조정
-    Promise.resolve().then(() => {
-      if (textareaRef.current) {
-        textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
-          position + item.length
-        textareaRef.current.focus()
-      }
-    })
-  }, [item, localText, debouncedSetMarkdownText, setItem])
+    editor.focus()
+  }, [item, setItem])
 
   useEffect(() => {
-    if (item) {
+    if (item && editorRef.current) {
       handleInsertItem()
     }
   }, [item, handleInsertItem])
 
+  // 에디터 옵션 설정
+  const editorOptions = {
+    scrollBeyondLastLine: false,
+    minimap: { enabled: false },
+    lineNumbers: 'on',
+    lineNumbersMinChars: 4,
+    wordWrap: 'off',
+    wrappingIndent: 'none',
+    automaticLayout: true,
+    tabSize: 4,
+    insertSpaces: true,
+    fontSize: 14,
+    fontFamily: 'monospace',
+    scrollbar: {
+      vertical: 'auto',
+      horizontal: 'auto',
+    },
+    overviewRulerLanes: 0,
+    hideCursorInOverviewRuler: true,
+    renderLineHighlight: 'none',
+    contextmenu: true,
+    folding: false,
+    lineDecorationsWidth: 15,
+    glyphMargin: false,
+    padding: {
+      top: 5,
+    },
+  }
+
+  const handleBeforeMount = (monaco) => {
+    monaco.editor.defineTheme('github-light', githubLightTheme)
+  }
+
   return (
-    <Textarea
-      ref={textareaRef}
-      value={localText}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-      placeholder="마크다운 입력"
-      resize="none"
+    <Box
       h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
       w="100%"
-      fontSize="md"
-      p="4"
-      variant="unstyled"
-      bg="white"
       boxShadow="md"
-    />
+      bg="white"
+      borderRadius="md"
+    >
+      <Editor
+        height="100%"
+        width="100%"
+        language="markdown"
+        value={markdownText}
+        onChange={(value) => setMarkdownText(value)}
+        onMount={handleEditorMount}
+        beforeMount={handleBeforeMount}
+        options={editorOptions}
+        theme="github-light"
+      />
+    </Box>
   )
 }
 

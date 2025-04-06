@@ -2,7 +2,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { Box } from '@chakra-ui/react'
 import { Editor, useMonaco } from '@monaco-editor/react'
 import githubLightTheme from 'monaco-themes/themes/GitHub Light.json'
-import { commands } from '../../data/command'
+import { MarkdownCommands } from '../../data/MarkdownCommands'
+import { MarkdownActions } from '../../data/MarkdownActions'
 
 const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen, mode }) => {
   const editorRef = useRef(null)
@@ -36,7 +37,7 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
           }
 
           // 명령어
-          const slashCommands = commands(monaco)
+          const slashCommands = MarkdownCommands(monaco)
 
           // suggestions 객체 생성
           const suggestions = slashCommands.map((cmd) => ({
@@ -55,7 +56,7 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
         },
       })
 
-      // 리소스 해제제
+      // 리소스 해제
       return () => {
         providerDisposable.dispose()
       }
@@ -63,18 +64,19 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
   }, [monaco])
 
   // editor 인스턴스 저장
-  const handleEditorMount = (editor) => {
+  const handleEditorMount = (editor, mountedMonaco) => {
     editorRef.current = editor
+    // 새로 정의한 명령어
+    MarkdownActions(editor, mountedMonaco)
   }
 
-  // 테마 정의 및 설정 권장 위치) ---
+  // 테마 정의/설정
   const handleBeforeMount = (monacoInstance) => {
     try {
       monacoInstance.editor.defineTheme('github-light', githubLightTheme)
     } catch (error) {
       if (!error.message.includes('already defined')) console.error('테마 이미 정의됨:', error)
     }
-    // 테마 정의한 후 설정
     monacoInstance.editor.setTheme('github-light')
   }
 
@@ -125,6 +127,12 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
     lineDecorationsWidth: 15,
     glyphMargin: false,
     padding: { top: 5 },
+    quickSuggestions: {
+      other: true,
+      comments: true,
+      strings: true,
+    },
+    suggestOnTriggerCharacters: true,
   }
 
   return (

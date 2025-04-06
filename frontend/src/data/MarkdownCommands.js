@@ -1,4 +1,4 @@
-export const commands = (monaco) => {
+export const MarkdownCommands = (monaco) => {
   // monaco 인스턴스가 없을 경우 빈 배열 반환 (방어 코드)
   if (!monaco) return []
 

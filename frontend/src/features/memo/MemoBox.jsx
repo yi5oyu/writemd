@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Flex, Box, Text, IconButton, Icon } from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton, Icon, Spacer } from '@chakra-ui/react'
 import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
 import Draggable from 'react-draggable'
 import MemoList from './MemoList'
@@ -39,7 +39,11 @@ const MemoBox = ({
         overflowY="auto"
         filter={isLoading ? 'blur(4px)' : 'none'}
       >
-        <Flex justifyContent="space-between" alignItems="center">
+        <Flex alignItems="center" p="5px" borderBottom="1px solid" borderColor="gray.100">
+          <Text ml="10px" fontSize="20px" fontWeight={600}>
+            메모
+          </Text>
+          <Spacer />
           <IconButton
             variant="ghost"
             size="md"
@@ -47,19 +51,22 @@ const MemoBox = ({
             icon={<Icon as={RiSave3Fill} />}
             aria-label="저장"
             isDisabled={isLoading}
+            mr="5px"
+            color="gray.500"
+            _hover={{ color: 'blue.500' }}
+            title="저장"
           />
-
           <IconButton
             onClick={() => setMemo(!memo)}
             variant="ghost"
-            size="md"
+            size="sm"
             icon={<Icon as={RiCloseLargeLine} />}
+            isDisabled={isLoading}
             aria-label="닫기"
+            _hover={{ color: 'red' }}
+            title="닫기"
           />
         </Flex>
-        <Text fontSize="20px" fontWeight={600} p={2}>
-          스티커 메모
-        </Text>
         <Box p={2}>
           {text.length > 0 ? (
             text.map((item) => (

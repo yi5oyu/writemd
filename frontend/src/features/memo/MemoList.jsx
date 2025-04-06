@@ -53,9 +53,13 @@ const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick }) => {
           e.stopPropagation()
           !isDisabled && handelDelMemoClick(id)
         }}
+        color="gray.300"
         _hover={{
-          color: 'blue.400',
+          color: 'red.400',
         }}
+        aria-label="삭제"
+        title="삭제"
+        isDisabled={isDisabled}
       />
     </Box>
   )

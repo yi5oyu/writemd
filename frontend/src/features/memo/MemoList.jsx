@@ -35,6 +35,7 @@ const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick }) => {
         overflow="hidden"
         textOverflow="ellipsis"
         display="-webkit-box"
+        pr="10px"
         sx={{
           WebkitLineClamp: '3',
           WebkitBoxOrient: 'vertical',

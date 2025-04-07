@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Flex, Box, Text, IconButton, Icon, Spacer } from '@chakra-ui/react'
 import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
+import { FiPlus } from 'react-icons/fi'
 import Draggable from 'react-draggable'
 import MemoList from './MemoList'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
@@ -18,6 +19,7 @@ const MemoBox = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedMemo, setSelectedMemo] = useState(null)
+  const nodeRef = useRef(null)
 
   const isLoading = delMemoLoading || saveMemoLoading || getMemoLoading
 
@@ -30,10 +32,12 @@ const MemoBox = ({
     }
   }
 
-  // TODO 새 메모 추가 (아이콘, 클릭 이벤트 setSelectedMemo(null))
-
   return (
-    <Draggable onStart={() => setIsDragging(true)} onStop={() => setIsDragging(false)}>
+    <Draggable
+      onStart={() => setIsDragging(true)}
+      onStop={() => setIsDragging(false)}
+      nodeRef={nodeRef}
+    >
       <Flex
         flexDirection="column"
         border="1px solid"
@@ -50,14 +54,26 @@ const MemoBox = ({
         overflowY="auto"
         filter={isLoading ? 'blur(4px)' : 'none'}
       >
-        <Flex alignItems="center" p="5px" borderBottom="1px solid" borderColor="gray.100">
-          <Text ml="10px" fontSize="20px" fontWeight={600}>
+        <Flex alignItems="center" my="5px" p="5px" borderBottom="1px solid" borderColor="gray.100">
+          <Text ml="5px" fontSize="20px" fontWeight={600}>
             메모
           </Text>
           <Spacer />
           <IconButton
             variant="ghost"
-            size="md"
+            size="sm"
+            onClick={() => setSelectedMemo(null)} // 메모화면에 컨텐츠 리셋필요
+            icon={<Icon as={FiPlus} />}
+            aria-label="새 메모 추가"
+            isDisabled={isLoading}
+            mr="5px"
+            color="gray.500"
+            _hover={{ color: 'blue.500' }}
+            title="새 메모"
+          />
+          <IconButton
+            variant="ghost"
+            size="sm"
             onClick={() => handleSaveMemo(selectedMemo)}
             icon={<Icon as={RiSave3Fill} />}
             aria-label="저장"

@@ -21,6 +21,17 @@ const MemoBox = ({
 
   const isLoading = delMemoLoading || saveMemoLoading || getMemoLoading
 
+  const handleSaveMemo = async (selectedMemo) => {
+    try {
+      const memoId = await handleSaveMemoClick(selectedMemo ? selectedMemo : null)
+      setSelectedMemo(memoId)
+    } catch (error) {
+      console.error('메모 저장 실패:', error)
+    }
+  }
+
+  // TODO 새 메모 추가 (아이콘, 클릭 이벤트 setSelectedMemo(null))
+
   return (
     <Draggable onStart={() => setIsDragging(true)} onStop={() => setIsDragging(false)}>
       <Flex
@@ -47,7 +58,7 @@ const MemoBox = ({
           <IconButton
             variant="ghost"
             size="md"
-            onClick={() => handleSaveMemoClick(selectedMemo ? selectedMemo : null)}
+            onClick={() => handleSaveMemo(selectedMemo)}
             icon={<Icon as={RiSave3Fill} />}
             aria-label="저장"
             isDisabled={isLoading}

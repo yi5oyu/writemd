@@ -26,9 +26,9 @@ import GitScreen from '../git/GitScreen'
 import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
 import MemoBox from '../memo/MemoBox'
-import useSaveMemo from '../../hooks/useSaveMemo'
-import useGetMemo from '../../hooks/useGetMemo'
-import useDeleteMemo from '../../hooks/useDeleteMemo'
+import useSaveMemo from '../../hooks/memo/useSaveMemo'
+import useGetMemo from '../../hooks/memo/useGetMemo'
+import useDeleteMemo from '../../hooks/memo/useDeleteMemo'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -329,6 +329,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       } else {
         setText((t) => [...t, { memoId: response.id, text: response.text }])
       }
+      return response.id
     } catch (error) {
       console.error('메모 저장 실패: ', error)
     }

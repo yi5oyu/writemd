@@ -13,5 +13,5 @@ import lombok.Setter;
 public class GitRepoDTO {
     private Long repoId;
     private String repo;
-    private List<GitContentDTO> contents;
+    private List<GitBranchDTO> branches;
 }

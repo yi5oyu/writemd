@@ -198,34 +198,42 @@ const GitScreen = ({
             {data &&
               [...data]
                 .sort((a, b) => a.repo.localeCompare(b.repo))
-                .map((repoItem) => (
-                  <Box key={repoItem.repoId} mx="10px" mb="10px">
-                    <RepoBox
-                      title={repoItem.repo}
-                      onClick={() => {
-                        handleRepoClick(repoItem.repoId, repoItem.repo)
-                      }}
-                      handleFileClick={handleFileClick}
-                      isDisabled={isLoading}
-                      selectedFile={selectedFile}
-                    />
-                    <RepoList
-                      repo={repoItem.repo}
-                      contents={repoItem.contents}
-                      isActive={active.includes(repoItem.repoId)}
-                      gitFolderData={gitFolderData}
-                      handleFileClick={handleFileClick}
-                      handleFolderClick={handleFolderClick}
-                      handleBlobFileClick={handleBlobFileClick}
-                      selectedFile={selectedFile}
-                      selectedFolder={selectedFolder}
-                      setSelectedFolder={setSelectedFolder}
-                      isDisabled={isLoading}
-                      isConnected={false}
-                      currentPath=""
-                    />
-                  </Box>
-                ))}
+                .map((repoItem) => {
+                  const branch =
+                    repoItem.branches.find((branch) => branch.branch === 'main') ||
+                    repoItem.branches.find((branch) => branch.branch === 'master')
+
+                  return (
+                    branch && (
+                      <Box key={repoItem.repoId} mx="10px" mb="10px">
+                        <RepoBox
+                          title={repoItem.repo}
+                          onClick={() => {
+                            handleRepoClick(repoItem.repoId, repoItem.repo)
+                          }}
+                          handleFileClick={handleFileClick}
+                          isDisabled={isLoading}
+                          selectedFile={selectedFile}
+                        />
+                        <RepoList
+                          repo={repoItem.repo}
+                          contents={branch.contents}
+                          isActive={active.includes(repoItem.repoId)}
+                          gitFolderData={gitFolderData}
+                          handleFileClick={handleFileClick}
+                          handleFolderClick={handleFolderClick}
+                          handleBlobFileClick={handleBlobFileClick}
+                          selectedFile={selectedFile}
+                          selectedFolder={selectedFolder}
+                          setSelectedFolder={setSelectedFolder}
+                          isDisabled={isLoading}
+                          isConnected={false}
+                          currentPath=""
+                        />
+                      </Box>
+                    )
+                  )
+                })}
           </Box>
         </Box>
       </Flex>

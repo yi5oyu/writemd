@@ -10,11 +10,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @Builder
-public class GitContentDTO {
-    private String path;
-    private String type;
-    private String sha;
-    private String content;
-
-//    private List<GitContentDTO> tree;
+public class GitBranchDTO {
+    private String branch;
+    private List<GitContentDTO> contents;
 }

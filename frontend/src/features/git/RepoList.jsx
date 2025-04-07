@@ -27,10 +27,9 @@ const RepoList = ({
             alignItems="center"
             my="3px"
             fontWeight={
-              isConnected && selectedFile?.path.split('/').pop() === content.path
-                ? 500
-                : selectedFile?.path === content.path ||
-                  selectedFile?.path?.startsWith(content.path)
+              selectedFile?.repo === repo &&
+              selectedFile?.path?.split('/').pop() === content.path &&
+              selectedFile?.sha === content.sha
                 ? 500
                 : 400
             }
@@ -73,10 +72,9 @@ const RepoList = ({
 
             <Icon
               color={
-                isConnected && selectedFile?.path.split('/').pop() === content.path
-                  ? 'black'
-                  : selectedFile?.path === content.path ||
-                    selectedFile?.path?.startsWith(content.path)
+                selectedFile?.repo === repo &&
+                selectedFile?.path?.split('/').pop() === content.path &&
+                selectedFile?.sha === content.sha
                   ? 'black'
                   : 'gray.500'
               }
@@ -95,7 +93,9 @@ const RepoList = ({
               isTruncated
               whiteSpace="nowrap"
               bg={
-                selectedFile?.repo === repo && selectedFile?.path?.split('/').pop() === content.path
+                selectedFile?.repo === repo &&
+                selectedFile?.path?.split('/').pop() === content.path &&
+                selectedFile?.sha === content.sha
                   ? 'blue.100'
                   : 'transparent'
               }

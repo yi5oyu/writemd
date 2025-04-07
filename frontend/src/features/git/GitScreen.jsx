@@ -31,6 +31,7 @@ const GitScreen = ({
   const [selectedFile, setSelectedFile] = useState(null)
   const [commit, setCommit] = useState(false)
   const [selectedFolder, setSelectedFolder] = useState(null)
+  const [selectedItem, setSelectedItem] = useState('폴더/파일을 선택해주세요.')
 
   const toast = useToast()
 
@@ -145,13 +146,20 @@ const GitScreen = ({
     }
   }, [gitError, gitGetFileError, gitFileError, toast])
 
-  const selectedItem = selectedFile?.repo
-    ? selectedFile?.path
-      ? selectedFile?.type === 'file'
-        ? `${selectedFile.repo}/${selectedFile.path}`
-        : `${selectedFile.repo}/${selectedFile.path}/${name}${name.endsWith('.md') ? '' : '.md'}`
-      : `${selectedFile.repo}/${name}${name.endsWith('.md') ? '' : '.md'}`
-    : '폴더/파일을 선택해주세요.'
+  useEffect(() => {
+    let defaultText = '폴더/파일을 선택해주세요.'
+    setSelectedItem(
+      selectedFile?.repo
+        ? selectedFile?.path
+          ? selectedFile?.type === 'file'
+            ? `${selectedFile.repo}/${selectedFile.path}`
+            : `${selectedFile.repo}/${selectedFile.path}/${name}${
+                name.endsWith('.md') ? '' : '.md'
+              }`
+          : `${selectedFile.repo}/${name}${name.endsWith('.md') ? '' : '.md'}`
+        : defaultText
+    )
+  }, [selectedFile, name])
 
   return (
     <>

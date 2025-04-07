@@ -1,0 +1,7 @@
+[
+  {
+    "title": "마크다운 작성 가이드",
+    "description": "",
+    "content": "# \uD83D\uDD6E Write MD 가이드\n\n마크다운 문서를 쉽게 작성할 수 있도록 만들었습니다. \n\n## \uD83D\uDD16 목차\n\n- [Markdown](#Markdown)\n- [기능](#기능)\n\n## ❕ Markdown\n\nMarkdown은 **텍스트 기반의 경량 마크업 언어**로, 간단하고 직관적인 문법을 사용하여 문서를 작성할 수 있습니다.    \nHTML, 리치 텍스트(RTF) 등으로 쉽게 변환이 가능하며, README 파일, 블로그 게시물, 온라인 문서 등에 널리 사용됩니다.\n\n## \uD83D\uDEE0 기능\n\n**Github**에서 사용되는 마크다운 확장 버전 **GFM(GitHub Flavored Markdown)** 문법을 사용합니다.\n\n> 사용되는 문법은 튜토리얼에서 확인해주세요.\n\n**WriteMD**는 문서작성을 쉽고 빠르게 만들기 위해 **템플릿**과 **명령어** 기능을 추가했습니다.\n\n"
+  }
+]

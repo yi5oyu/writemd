@@ -1,27 +1,39 @@
 package com.writemd.backend.service;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.dto.TextDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Chats;
+import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
+import com.writemd.backend.entity.Templates;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ChatRepository;
+import com.writemd.backend.repository.FolderRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
+import com.writemd.backend.repository.TemplateRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,9 +46,10 @@ public class UserService {
     private final TextRepository textRepository;
     private final SessionRepository sessionRepository;
     private final ChatRepository chatRepository;
-
+    private final ObjectMapper objectMapper;
 
     // user 저장
+    @Transactional
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {
         Optional<Users> user = userRepository.findByGithubId(githubId);
         if(user.isPresent()){
@@ -62,10 +75,71 @@ public class UserService {
             .htmlUrl(htmlUrl)
             .avatarUrl(avatarUrl)
             .build();
+
+        Folders myFolder = Folders.builder()
+            .users(newUser)
+            .title("내 템플릿")
+            .build();
+
+        Folders gitFolder = Folders.builder()
+            .users(newUser)
+            .title("깃 허브")
+            .build();
+
+        // JSON 파일에서 템플릿 데이터 로드
+        List<Map<String, String>> myTemplates;
+        List<Map<String, String>> gitTemplates;
+
+        try {
+            Resource myResource = new ClassPathResource("data/template.json");
+            myTemplates = objectMapper.readValue(
+                myResource.getInputStream(),
+                new TypeReference<List<Map<String, String>>>() {}
+            );
+        } catch (IOException e) {
+            myTemplates = Collections.emptyList();
+        }
+
+        for (Map<String, String> templateData : myTemplates) {
+            Templates template = Templates.builder()
+                .folders(myFolder)
+                .title(templateData.getOrDefault("title", ""))
+                .description(templateData.getOrDefault("description", ""))
+                .content(templateData.getOrDefault("content", ""))
+                .build();
+
+            myFolder.getTemplates().add(template);
+        }
+
+        try {
+            Resource resource = new ClassPathResource("data/git_template.json");
+            gitTemplates = objectMapper.readValue(
+                resource.getInputStream(),
+                new TypeReference<List<Map<String, String>>>() {}
+            );
+        } catch (IOException e) {
+            gitTemplates = Collections.emptyList();
+        }
+
+        for (Map<String, String> templateData : gitTemplates) {
+            Templates template = Templates.builder()
+                .folders(gitFolder)
+                .title(templateData.getOrDefault("title", ""))
+                .description(templateData.getOrDefault("description", ""))
+                .content(templateData.getOrDefault("content", ""))
+                .build();
+
+            gitFolder.getTemplates().add(template);
+        }
+
+        newUser.getFolders().add(myFolder);
+        newUser.getFolders().add(gitFolder);
+
         return userRepository.save(newUser);
     }
 
     // user 조회
+    @Transactional
     public UserDTO userInfo(String githubId) {
         // user 찾기
         Users user = userRepository.findByGithubId(githubId)
@@ -91,6 +165,7 @@ public class UserService {
     }
 
     // 노트 내용 조회
+    @Transactional
     public NoteDTO noteContent(Long noteId) {
         Texts texts = textRepository.findByNotes_id(noteId)
                 .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
@@ -116,6 +191,7 @@ public class UserService {
     }
 
     // 채팅 리스트 조회
+    @Transactional
     public List<ChatDTO> chatList(Long sessionId){
         List<Chats> chats = chatRepository.findBySessions_Id(sessionId);
 

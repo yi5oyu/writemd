@@ -385,6 +385,7 @@ const TemplateList = ({
                       position="absolute"
                       top="10px"
                       right="35px"
+                      mt="3px"
                       opacity={0}
                       _groupHover={{ opacity: 1 }}
                       transition="opacity 0.2s ease-in-out"
@@ -393,7 +394,6 @@ const TemplateList = ({
                       <Button
                         p="2px"
                         size="xs"
-                        mr="10px"
                         bg="transparent"
                         color="gray.500"
                         as={edit === folder.folderId ? FiCheck : FiEdit}
@@ -417,6 +417,7 @@ const TemplateList = ({
                       <Button
                         p="2px"
                         size="xs"
+                        mx="10px"
                         bg="transparent"
                         as={FaTrash}
                         color="gray.500"

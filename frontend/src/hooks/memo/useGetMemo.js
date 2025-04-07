@@ -1,35 +1,35 @@
 import { useState, useEffect } from 'react'
 
-const useNote = (noteId) => {
-  const [note, setNote] = useState(null)
+const useGetMemo = (userId) => {
+  const [memo, setMemo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
     setError(null)
-    fetch(`http://localhost:8888/api/note/${noteId}`, {
+    fetch(`http://localhost:8888/api/memo/${userId}`, {
       credentials: 'include',
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error('노트 조회 실패.')
+          throw new Error('메모 조회 실패.')
         }
         return res.json()
       })
       .then((data) => {
-        setNote(data)
+        setMemo(data)
       })
       .catch((err) => {
         setError(err)
-        setNote(null)
+        setMemo(null)
       })
       .finally(() => {
         setLoading(false)
       })
-  }, [noteId])
+  }, [userId])
 
-  return { note, loading, error }
+  return { memo, loading, error }
 }
 
-export default useNote
+export default useGetMemo

@@ -32,6 +32,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final ListPath<Memos, QMemos> memos = this.<Memos, QMemos>createList("memos", Memos.class, QMemos.class, PathInits.DIRECT2);
+
     public final StringPath name = createString("name");
 
     public final ListPath<Notes, QNotes> notes = this.<Notes, QNotes>createList("notes", Notes.class, QNotes.class, PathInits.DIRECT2);

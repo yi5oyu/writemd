@@ -32,6 +32,10 @@ import useTemplate from '../../hooks/useTemplate'
 import useDeleteTemplate from '../../hooks/useDeleteTemplate'
 import useDeleteFolder from '../../hooks/useDeleteFolder'
 import useUpdateFolderName from '../../hooks/useUpdateFolderName'
+import MemoBox from '../memo/MemoBox'
+import useSaveMemo from '../../hooks/memo/useSaveMemo'
+import useGetMemo from '../../hooks/memo/useGetMemo'
+import useDeleteMemo from '../../hooks/memo/useDeleteMemo'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -49,6 +53,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [screen, setScreen] = useState(true)
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
+  const [memo, setMemo] = useState(false)
+  const [text, setText] = useState([])
 
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
@@ -69,6 +75,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
+  const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
+  const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
+  const { deleteMemo, loading: delMemoLoading, error: delMemoError } = useDeleteMemo()
 
   // 템플릿 훅
   const { saveTemplate, loading: saveTemplateLoding, error: saveTemplateError } = useSaveTemplate()
@@ -246,9 +255,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
     setMessages((m) => [...m, { role: 'user', content: questionText }])
     try {
-      console.log('세션id: ', sessionId)
       const response = await sendChatMessage(sessionId, aiModel, questionText)
-      console.log(response)
       let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
       refetch()
@@ -392,6 +399,46 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     getTemplates({ userId: user.userId })
   }
 
+  // 메모 저장/업데이트
+  const handleSaveMemoClick = async (memoId) => {
+    if (saveMemoError) return
+
+    try {
+      const response = await saveMemo(user.userId, markdownText, memoId)
+      if (memoId) {
+        setText((t) =>
+          t.map((memo) => (memo.memoId === memoId ? { ...memo, text: response.text } : memo))
+        )
+      } else {
+        setText((t) => [...t, { memoId: response.id, text: response.text }])
+      }
+      return response.id
+    } catch (error) {
+      console.error('메모 저장 실패: ', error)
+    }
+  }
+
+  // 메모 조회
+  useEffect(() => {
+    if (getMemoError) return
+
+    if (memo && memoData) {
+      setText(memoData)
+    }
+  }, [memo, memoData])
+
+  // 메모 삭제
+  const handelDelMemoClick = async (memoId) => {
+    if (delMemoError) return
+
+    try {
+      await deleteMemo(memoId)
+      setText((t) => t.filter((memo) => memo.memoId !== memoId))
+    } catch (error) {
+      console.error('메모 삭제 실패: ', error)
+    }
+  }
+
   return (
     <Flex
       direction="column"
@@ -452,6 +499,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               setTool={setTool}
               handleGitLoad={handleGitLoad}
               handleGetTemplates={handleGetTemplates}
+              memo={memo}
+              setMemo={setMemo}
             />
             <MarkdownInputBox
               markdownText={markdownText}
@@ -549,6 +598,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             )}
 
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
+
             {boxForm === 'git' && (
               <GitScreen
                 name={name}
@@ -563,6 +613,24 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 gitGetFileError={gitGetFileError}
                 gitFileLoading={gitFileLoading}
                 gitFileError={gitFileError}
+              />
+            )}
+
+            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
+
+            {memo && (
+              <MemoBox
+                text={text}
+                setText={setText}
+                memo={memo}
+                setMemo={setMemo}
+                markdownText={markdownText}
+                setMarkdownText={setMarkdownText}
+                handleSaveMemoClick={handleSaveMemoClick}
+                handelDelMemoClick={handelDelMemoClick}
+                delMemoLoading={delMemoLoading}
+                getMemoLoading={getMemoLoading}
+                saveMemoLoading={saveMemoLoading}
               />
             )}
           </Box>

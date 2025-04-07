@@ -27,11 +27,11 @@ import useGetGithubFile from '../../hooks/useGetGithubFile'
 import useGithubFile from '../../hooks/useGithubFile'
 import TemplateScreen from '../template/TemplateScreen'
 import BookmarkBox from './BookmarkBox'
-import useSaveTemplate from '../../hooks/useSaveTemplate'
-import useTemplate from '../../hooks/useTemplate'
-import useDeleteTemplate from '../../hooks/useDeleteTemplate'
-import useDeleteFolder from '../../hooks/useDeleteFolder'
-import useUpdateFolderName from '../../hooks/useUpdateFolderName'
+import useSaveTemplate from '../../hooks/template/useSaveTemplate'
+import useTemplate from '../../hooks/template/useTemplate'
+import useDeleteTemplate from '../../hooks/template/useDeleteTemplate'
+import useDeleteFolder from '../../hooks/template/useDeleteFolder'
+import useUpdateFolderName from '../../hooks/template/useUpdateFolderName'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')

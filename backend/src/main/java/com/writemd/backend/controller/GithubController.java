@@ -90,25 +90,4 @@ public class GithubController {
         return githubService.getblobFile(principalName, owner, repo, sha);
     }
 
-    // 폴더안 파일 업데이트
-    @PutMapping("/repo/{owner}/{repo}/blob")
-    public Mono<ResponseEntity<Map<String, Object>>> updateBlobFile(
-        @AuthenticationPrincipal(expression = "name") String principalName,
-        @PathVariable String owner,
-        @PathVariable String repo,
-        @RequestParam String path,
-        @RequestParam String message,
-        @RequestParam String sha,
-        @RequestBody String fileContent) {
-        return githubService.updateBlobFile(principalName, owner, repo, path, message, fileContent, sha)
-            .doOnNext(response -> {
-                Map<String, Object> contentInfo = (Map<String, Object>) response.get("content");
-                String newSha = (String) contentInfo.get("sha");
-                System.out.println("업데이트된 파일의 새 SHA: " + newSha);
-            })
-            .map(response -> ResponseEntity.ok(response))
-            .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                Collections.singletonMap("error", e.getMessage())
-            )));
-    }
 }

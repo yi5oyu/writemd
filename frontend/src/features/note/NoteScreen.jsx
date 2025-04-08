@@ -27,7 +27,6 @@ import useGetGithubFile from '../../hooks/git/useGetGithubFile'
 import useGithubFile from '../../hooks/git/useGithubFile'
 import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
 import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
-import useGithubBlobFile from '../../hooks/git/useGithubBlobFile'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
@@ -76,12 +75,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitBlobFileError,
     data: gitBlobFileData,
   } = useGetGithubBlobFile()
-  const {
-    updateBlobFile,
-    loading: gitBlobFileUpdateLoading,
-    error: gitBlobFileUpdateError,
-    data: gitUpdatedBlobFileData,
-  } = useGithubBlobFile()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -339,19 +332,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     handleGitLoad()
   }
 
-  // 폴더안 파일 업데이트
-  const handleBlobFileUpdate = (repo, path, message, sha) => {
-    updateBlobFile({
-      owner: user.githubId,
-      repo,
-      path,
-      message,
-      markdownText,
-      sha,
-    })
-    handleGitLoad()
-  }
-
   useEffect(() => {
     if (gitUpdatedBlobFileData) {
       console.log(gitUpdatedBlobFileData)
@@ -527,7 +507,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 handleNewFileClick={handleNewFileClick}
                 handleGetFolderClick={handleGetFolderClick}
                 handleGetBlobFileClick={handleGetBlobFileClick}
-                handleBlobFileUpdate={handleBlobFileUpdate}
                 gitUpdatedData={gitUpdatedData}
                 gitFolderData={gitFolderData}
                 gitFolderSetData={gitFolderSetData}

@@ -16,7 +16,6 @@ const GitScreen = ({
   handleNewFileClick,
   handleGetFolderClick,
   handleGetBlobFileClick,
-  handleBlobFileUpdate,
   gitLoading,
   gitError,
   gitGetFileLoading,
@@ -88,8 +87,6 @@ const GitScreen = ({
           message,
           selectedFile.sha
         )
-      : selectedFile.path.includes('/')
-      ? handleBlobFileUpdate(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
       : selectedFile.path
       ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
       : handleNewFileClick(
@@ -100,9 +97,9 @@ const GitScreen = ({
   }
 
   // 폴더 업로드
-  // const handleCommitFolder = (message) => {
-  //   if (isLoading) return
-  // }
+  const handleCommitFolder = (message) => {
+    if (isLoading) return
+  }
 
   // 파일 업데이트
   useEffect(() => {

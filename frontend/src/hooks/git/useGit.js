@@ -10,7 +10,7 @@ function useGit() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.get(`http://localhost:8888/api/user/git/repo/${userId}`, {
+      const response = await axios.get(`http://localhost:8888/api/github/repo/${userId}`, {
         withCredentials: true,
       })
       setData(response.data)

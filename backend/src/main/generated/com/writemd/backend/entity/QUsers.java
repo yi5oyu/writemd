@@ -26,8 +26,6 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath githubId = createString("githubId");
 
-    public final ListPath<Gits, QGits> gits = this.<Gits, QGits>createList("gits", Gits.class, QGits.class, PathInits.DIRECT2);
-
     public final StringPath htmlUrl = createString("htmlUrl");
 
     public final NumberPath<Long> id = createNumber("id", Long.class);

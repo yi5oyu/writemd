@@ -7,11 +7,12 @@ function useGetGithubFile() {
   const [data, setData] = useState(null)
 
   const getFileContent = async ({ owner, repo, path }) => {
+    setData(null)
     setLoading(true)
     setError(null)
     try {
       const response = await axios.get(
-        `http://localhost:8888/api/user/repos/${owner}/${repo}/contents/${path}`,
+        `http://localhost:8888/api/github/repo/${owner}/${repo}/contents/${path}`,
         {
           withCredentials: true,
         }

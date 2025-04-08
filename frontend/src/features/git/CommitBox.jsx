@@ -6,7 +6,7 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
   const [message, setMessage] = useState('')
 
   return (
-    <Box m={2}>
+    <Box m="10px">
       <Textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -35,6 +35,16 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
           cursor={isDisabled ? 'not-allowed' : 'pointer'}
           title="commit"
           borderRadius="sm"
+          bg="gray.50"
+          _hover={
+            !isDisabled
+              ? {
+                  color: 'blue.500',
+                  boxShadow: 'md',
+                  bg: 'gray.100',
+                }
+              : {}
+          }
         >
           Commit
         </Button>
@@ -47,6 +57,16 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
           alignItems="center"
           title="unstage"
           borderRadius="sm"
+          bg="gray.50"
+          _hover={
+            !isDisabled
+              ? {
+                  color: 'blue.500',
+                  boxShadow: 'md',
+                  bg: 'gray.100',
+                }
+              : {}
+          }
         >
           <Icon as={MdOutlineHorizontalRule} />
         </Button>

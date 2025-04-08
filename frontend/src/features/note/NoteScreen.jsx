@@ -332,17 +332,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     handleGitLoad()
   }
 
-  useEffect(() => {
-    if (gitUpdatedBlobFileData) {
-      console.log(gitUpdatedBlobFileData)
-
-      handleGetBlobFileClick(
-        gitUpdatedBlobFileData.content.html_url.split('/')[4],
-        gitUpdatedBlobFileData.content.sha
-      )
-    }
-  }, [gitUpdatedBlobFileData])
-
   // 깃 폴더 조회
   const handleGetFolderClick = (repo, sha) => {
     getFolderContents({
@@ -510,7 +499,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 gitUpdatedData={gitUpdatedData}
                 gitFolderData={gitFolderData}
                 gitFolderSetData={gitFolderSetData}
-                gitUpdatedBlobFileData={gitUpdatedBlobFileData}
                 gitLoading={gitLoading}
                 gitError={gitError}
                 gitGetFileLoading={gitGetFileLoading}

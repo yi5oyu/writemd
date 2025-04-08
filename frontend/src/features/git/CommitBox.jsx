@@ -6,7 +6,7 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
   const [message, setMessage] = useState('')
 
   return (
-    <Box m={2}>
+    <Box m="10px">
       <Textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}

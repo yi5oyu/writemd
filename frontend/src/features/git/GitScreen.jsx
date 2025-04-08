@@ -5,6 +5,7 @@ import RepoList from './RepoList'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import CommitBox from './CommitBox'
+import GitInfoBox from './GitInfoBox'
 
 const GitScreen = ({
   name,
@@ -32,6 +33,7 @@ const GitScreen = ({
   const [commit, setCommit] = useState(false)
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [selectedItem, setSelectedItem] = useState('폴더/파일을 선택해주세요.')
+  const [repoBranches, setRepoBranches] = useState([])
 
   const toast = useToast()
 
@@ -39,20 +41,21 @@ const GitScreen = ({
   const isLoading = gitLoading || gitGetFileLoading || gitFileLoading
 
   // 커밋 후 초기화
-  // useEffect(() => {
-  //   if (gitUpdatedBlobFileData && selectedFile) {
-  //     gitFolderSetData(null)
-  //     setSelectedFile(null)
-  //     setActive([])
-  //   }
-  // }, [gitUpdatedBlobFileData])
+  useEffect(() => {
+    if (gitUpdatedBlobFileData && selectedFile) {
+      gitFolderSetData(null)
+      setSelectedFile(null)
+      setActive([])
+    }
+  }, [gitUpdatedBlobFileData])
 
   // 리스트 토글, 폴더 선택/토글
-  const handleRepoClick = (repoId, repo) => {
+  const handleRepoClick = (repoId, repo, branch) => {
     if (isLoading) return
 
     setSelectedFile(() => ({
       repo: repo,
+      branch: branch,
     }))
     setActive((a) => {
       if (a.includes(repoId)) {
@@ -97,9 +100,9 @@ const GitScreen = ({
   }
 
   // 폴더 업로드
-  const handleCommitFolder = (message) => {
-    if (isLoading) return
-  }
+  // const handleCommitFolder = (message) => {
+  //   if (isLoading) return
+  // }
 
   // 파일 업데이트
   useEffect(() => {
@@ -200,6 +203,22 @@ const GitScreen = ({
               isDisabled={isLoading || !selectedFile}
             />
           </Box>
+
+          <Box
+            display={repoBranches.length > 0 ? 'block' : 'none'}
+            borderRadius="md"
+            borderColor="gray.100"
+            m="15px 0 10px 10px"
+            // bg="white"
+            boxShadow="md"
+          >
+            <GitInfoBox
+              isDisabled={isLoading || !selectedFile}
+              selectedFile={selectedFile}
+              repoBranches={repoBranches}
+              githubId={githubId}
+            />
+          </Box>
         </Box>
         <Box flex="1" maxW="100%" overflow="hidden" overflowY="auto" m="10px">
           <Box bg="white" p="10px 10px 10px 0" borderRadius="md" boxShadow="md">
@@ -217,7 +236,10 @@ const GitScreen = ({
                         <RepoBox
                           title={repoItem.repo}
                           onClick={() => {
-                            handleRepoClick(repoItem.repoId, repoItem.repo)
+                            handleRepoClick(repoItem.repoId, repoItem.repo, branch)
+                            setRepoBranches(
+                              data.find((repo) => repo.repoId === repoItem.repoId).branches
+                            )
                           }}
                           handleFileClick={handleFileClick}
                           isDisabled={isLoading}

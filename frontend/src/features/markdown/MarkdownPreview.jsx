@@ -18,6 +18,7 @@ const MarkdownPreview = ({ markdownText, mode }) => {
       overflowY="auto"
       px="7"
       pt="2"
+      wordBreak="break-word"
     >
       <ReactMarkdown
         components={ChakraUIRenderer(ChakraMarkdownGithubLight)}

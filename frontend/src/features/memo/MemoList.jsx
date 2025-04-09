@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Text, Box, Icon, IconButton } from '@chakra-ui/react'
 import { FaTrashAlt } from 'react-icons/fa'
 
-const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick }) => {
+const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick, selected }) => {
   const [isOverflow, setIsOverflow] = useState(false)
 
   const textRef = useRef(null)
@@ -20,13 +20,14 @@ const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick }) => {
       position="relative"
       p={3}
       mb={2}
-      bg="#fff7d1"
+      bg={selected ? '#ede6c2' : '#fff7d1'}
       borderRadius="md"
       cursor="pointer"
       _hover={{ backgroundColor: '#ede6c2' }}
       maxH="100px"
       title="불러오기"
       onClick={onClick}
+      boxShadow={selected && 'md'}
     >
       <Text
         ref={textRef}

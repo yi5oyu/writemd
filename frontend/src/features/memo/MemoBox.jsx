@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Flex, Box, Text, IconButton, Icon, Spacer } from '@chakra-ui/react'
 import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
 import { FiPlus } from 'react-icons/fi'
@@ -10,7 +10,7 @@ const MemoBox = ({
   text,
   memo,
   setMemo,
-  setMarkdownText,
+  setMemoText,
   handleSaveMemoClick,
   handelDelMemoClick,
   delMemoLoading,
@@ -63,7 +63,9 @@ const MemoBox = ({
           <IconButton
             variant="ghost"
             size="sm"
-            onClick={() => setSelectedMemo(null)} // 메모화면에 컨텐츠 리셋필요
+            onClick={() => {
+              setSelectedMemo(null), setMemoText('<!-- 새 메모 -->')
+            }}
             icon={<Icon as={FiPlus} />}
             aria-label="새 메모 추가"
             isDisabled={isLoading}
@@ -103,9 +105,10 @@ const MemoBox = ({
                   id={item.memoId}
                   text={item.text}
                   onClick={() => {
-                    setMarkdownText(item.text)
                     setSelectedMemo(item.memoId)
+                    setMemoText(item.text)
                   }}
+                  selected={selectedMemo === item.memoId}
                   handelDelMemoClick={handelDelMemoClick}
                   isDisabled={isLoading}
                 />

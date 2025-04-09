@@ -19,6 +19,7 @@ const ToolBox = ({
   setTool,
   memo,
   setMemo,
+  setSelectedScreen,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -56,7 +57,9 @@ const ToolBox = ({
         <UtilityBtn
           icon={FaStickyNote}
           label="메모"
-          onClick={() => setMemo(!memo)}
+          onClick={() => {
+            setMemo(!memo), setSelectedScreen('memo')
+          }}
           setColor={memo ? true : false}
         />
       </Flex>

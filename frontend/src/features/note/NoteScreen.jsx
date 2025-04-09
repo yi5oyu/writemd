@@ -48,10 +48,13 @@ import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
+  const [githubName, setGithubName] = useState('WriteMD')
+  const [templateName, setTemplateName] = useState('')
+  const [memoName, setMemoName] = useState('메모')
   const [markdownText, setMarkdownText] = useState('')
   const [templateText, setTemplateText] = useState('')
   const [githubText, setGithubText] = useState('')
-  const [memoText, setMemoText] = useState('')
+  const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
@@ -159,7 +162,13 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   }, [error, sessionError, messageError, chatError, toast])
 
   const handleTitleChange = (e) => {
-    setName(e.target.value)
+    selectedScreen === 'markdown'
+      ? setName(e.target.value)
+      : selectedScreen === 'template'
+      ? setTemplateName(e.target.value)
+      : selectedScreen === 'memo'
+      ? setMemoName(e.target.value)
+      : selectedScreen === 'git' && setGithubName(e.target.value)
   }
 
   // 최초 markdowntext 불러옴
@@ -312,12 +321,31 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
   // 클립보드 복사
   const handleCopyMarkdown = () => {
-    navigator.clipboard.writeText(markdownText)
+    navigator.clipboard.writeText(
+      selectedScreen === 'markdown'
+        ? markdownText
+        : selectedScreen === 'template'
+        ? templateText
+        : selectedScreen === 'memo'
+        ? memoText
+        : selectedScreen === 'git' && githubText
+    )
   }
 
   // 파일 추출
   const exportMarkdown = () => {
-    const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' })
+    const blob = new Blob(
+      [
+        selectedScreen === 'markdown'
+          ? markdownText
+          : selectedScreen === 'template'
+          ? templateText
+          : selectedScreen === 'memo'
+          ? memoText
+          : selectedScreen === 'git' && githubText,
+      ],
+      { type: 'text/markdown;charset=utf-8' }
+    )
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -362,7 +390,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       }
       const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
 
-      setMarkdownText(decodedText)
+      setGithubText(decodedText)
     }
   }, [gitFileData])
 
@@ -377,7 +405,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       }
       const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
 
-      setMarkdownText(decodedText)
+      setGithubText(decodedText)
     }
   }, [gitBlobFileData])
 
@@ -388,7 +416,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       repo,
       path,
       message,
-      markdownText,
+      githubText,
       sha,
     })
     handleGitLoad()
@@ -403,7 +431,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     })
   }
 
-  // 폴더안 파일 조회
+  // 깃 폴더안 파일 조회
   const handleGetBlobFileClick = (repo, sha) => {
     getBlobFile({
       owner: user.githubId,
@@ -463,7 +491,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     if (saveMemoError) return
 
     try {
-      const response = await saveMemo(user.userId, markdownText, memoId)
+      const response = await saveMemo(user.userId, memoText, memoId)
       if (memoId) {
         setText((t) =>
           t.map((memo) => (memo.memoId === memoId ? { ...memo, text: response.text } : memo))
@@ -527,7 +555,15 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
         >
           {/* <Icon as={PiNotebookFill} /> */}
           <Input
-            value={name}
+            value={
+              selectedScreen === 'markdown'
+                ? name
+                : selectedScreen === 'template'
+                ? templateName
+                : selectedScreen === 'memo'
+                ? memoName
+                : selectedScreen === 'git' && githubName
+            }
             fontSize="20px"
             pl="5px"
             variant="unstyled"
@@ -556,6 +592,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               setTool={setTool}
               memo={memo}
               setMemo={setMemo}
+              setSelectedScreen={setSelectedScreen}
             />
             <MarkdownInputBox
               markdownText={
@@ -589,8 +626,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 setText={setText}
                 memo={memo}
                 setMemo={setMemo}
-                markdownText={markdownText}
-                setMarkdownText={setMarkdownText}
+                setMemoText={setMemoText}
                 handleSaveMemoClick={handleSaveMemoClick}
                 handelDelMemoClick={handelDelMemoClick}
                 delMemoLoading={delMemoLoading}
@@ -609,6 +645,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               isConnected={isConnected}
               handleGitLoad={handleGitLoad}
               handleGetTemplates={handleGetTemplates}
+              setSelectedScreen={setSelectedScreen}
             />
 
             {boxForm === 'preview' && (
@@ -687,6 +724,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
             {boxForm === 'template' && (
               <TemplateScreen
+                setName={setTemplateName}
+                setTemplateText={setTemplateText}
                 screen={screen}
                 handleSaveTemplate={handleSaveTemplate}
                 handleDelTemplate={handleDelTemplate}
@@ -701,7 +740,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
             {boxForm === 'git' && (
               <GitScreen
-                name={name}
+                name={githubName}
+                setname={setGithubName}
                 data={gitRepoData}
                 githubId={user.githubId}
                 screen={screen}

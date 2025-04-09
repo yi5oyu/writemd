@@ -10,7 +10,7 @@ import LogoData from '../../data/LogoData'
 const StyledBox = styled(Box)`
   position: absolute;
   top: 60px;
-  left: 0;
+  right: 0;
   border-color: gray.200;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

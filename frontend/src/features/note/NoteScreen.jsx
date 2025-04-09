@@ -544,20 +544,16 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
         </Flex>
 
         <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
-          <Box flex="1">
+          <Box flex="1" position="relative">
             <ToolBox
               onClearText={() => setMarkdownText('')}
               onCopyText={handleCopyMarkdown}
               screen={screen}
               onScreen={() => setScreen(!screen)}
               onExport={exportMarkdown}
-              boxForm={boxForm}
-              setBoxForm={setBoxForm}
               isConnected={isConnected}
               tool={tool}
               setTool={setTool}
-              handleGitLoad={handleGitLoad}
-              handleGetTemplates={handleGetTemplates}
               memo={memo}
               setMemo={setMemo}
             />
@@ -585,6 +581,23 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               setItem={setItem}
               screen={screen}
             />
+            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
+
+            {memo && (
+              <MemoBox
+                text={text}
+                setText={setText}
+                memo={memo}
+                setMemo={setMemo}
+                markdownText={markdownText}
+                setMarkdownText={setMarkdownText}
+                handleSaveMemoClick={handleSaveMemoClick}
+                handelDelMemoClick={handelDelMemoClick}
+                delMemoLoading={delMemoLoading}
+                getMemoLoading={getMemoLoading}
+                saveMemoLoading={saveMemoLoading}
+              />
+            )}
           </Box>
 
           <Box id="feature" flex="1" position="relative">
@@ -594,6 +607,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               handleCheckConnection={handleCheckConnection}
               boxForm={boxForm}
               isConnected={isConnected}
+              handleGitLoad={handleGitLoad}
+              handleGetTemplates={handleGetTemplates}
             />
 
             {boxForm === 'preview' && (
@@ -684,8 +699,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               />
             )}
 
-            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
-
             {boxForm === 'git' && (
               <GitScreen
                 name={name}
@@ -705,22 +718,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 gitGetFileError={gitGetFileError}
                 gitFileLoading={gitFileLoading}
                 gitFileError={gitFileError}
-              />
-            )}
-
-            {memo && (
-              <MemoBox
-                text={text}
-                setText={setText}
-                memo={memo}
-                setMemo={setMemo}
-                markdownText={markdownText}
-                setMarkdownText={setMarkdownText}
-                handleSaveMemoClick={handleSaveMemoClick}
-                handelDelMemoClick={handelDelMemoClick}
-                delMemoLoading={delMemoLoading}
-                getMemoLoading={getMemoLoading}
-                saveMemoLoading={saveMemoLoading}
               />
             )}
           </Box>

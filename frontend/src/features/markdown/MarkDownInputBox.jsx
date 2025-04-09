@@ -1,11 +1,19 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Box } from '@chakra-ui/react'
-import { Editor, useMonaco } from '@monaco-editor/react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Box, Badge, VStack } from '@chakra-ui/react' // Added Badge, VStack
+import Editor, { useMonaco } from '@monaco-editor/react'
 import githubLightTheme from 'monaco-themes/themes/GitHub Light.json'
 import { MarkdownCommands } from '../../data/MarkdownCommands'
 import { MarkdownActions } from '../../data/MarkdownActions'
 
-const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen, mode }) => {
+const MarkdownInputBox = ({
+  markdownText,
+  setMarkdownText,
+  item,
+  setItem,
+  screen,
+  mode,
+  selectedScreen,
+}) => {
   const editorRef = useRef(null)
   const monaco = useMonaco()
 
@@ -135,15 +143,53 @@ const MarkdownInputBox = ({ markdownText, setMarkdownText, item, setItem, screen
     suggestOnTriggerCharacters: true,
   }
 
+  const getScreenDisplayName = (screen) => {
+    switch (screen) {
+      case 'markdown':
+        return '노트'
+      case 'template':
+        return '템플릿'
+      case 'memo':
+        return '메모'
+      case 'git':
+        return '깃허브'
+      default:
+        return screen
+    }
+  }
+
   return (
     <Box
+      position="relative"
       h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
       w="100%"
       boxShadow="md"
       bg="white"
       borderRadius="md"
     >
+      <Badge
+        position="absolute"
+        top="8px"
+        right="10px"
+        zIndex="10"
+        colorScheme={
+          selectedScreen === 'markdown'
+            ? 'green'
+            : selectedScreen === 'template'
+            ? 'blue'
+            : selectedScreen === 'memo'
+            ? 'yellow'
+            : selectedScreen === 'git' && 'gray'
+        }
+        variant="solid"
+        fontSize="xs"
+      >
+        편집: {getScreenDisplayName(selectedScreen)}
+      </Badge>
+
+      {/* Monaco Editor */}
       <Editor
+        // key={selectedScreen} // 상태 손실 문제로 인해 일반적으로는 사용하지 않음
         height="100%"
         width="100%"
         language="markdown"

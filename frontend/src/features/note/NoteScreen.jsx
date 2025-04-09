@@ -673,8 +673,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               />
             )}
 
-            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
-
             {memo && (
               <MemoBox
                 text={text}

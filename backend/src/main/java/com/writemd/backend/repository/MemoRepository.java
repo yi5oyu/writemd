@@ -1,6 +1,5 @@
 package com.writemd.backend.repository;
 
-import com.writemd.backend.entity.Gits;
 import com.writemd.backend.entity.Memos;
 import com.writemd.backend.entity.Sessions;
 import java.util.List;

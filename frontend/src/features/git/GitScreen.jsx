@@ -159,12 +159,13 @@ const GitScreen = ({
   return (
     <>
       <Flex
-        h={screen ? 'calc(100vh - 125px)' : 'calc(100vh - 90px)'}
+        h={'calc(100vh - 145px)'}
         border="1px solid"
         borderColor="gray.200"
         borderRadius="md"
         filter={isLoading ? 'blur(4px)' : 'none'}
         bg="gray.200"
+        boxShadow="md"
       >
         <Box flex="1" maxW="100%" overflow="hidden">
           <Box
@@ -201,7 +202,6 @@ const GitScreen = ({
             borderRadius="md"
             borderColor="gray.100"
             m="15px 0 10px 10px"
-            // bg="white"
             boxShadow="md"
           >
             <GitInfoBox

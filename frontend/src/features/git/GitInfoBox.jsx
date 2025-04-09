@@ -28,7 +28,7 @@ const GitInfoBox = ({ isDisabled, selectedFile, repoBranches, githubId }) => {
 
   return (
     <Flex gap="1" overflowY="auto">
-      <Card>
+      <Card w="100%">
         <CardHeader pb="0">
           <Flex direction="column">
             <Heading size="md" mb="5px">
@@ -99,7 +99,7 @@ const GitInfoBox = ({ isDisabled, selectedFile, repoBranches, githubId }) => {
                   textOverflow="ellipsis"
                   whiteSpace="nowrap"
                   title={`${repoUrl}.git`}
-                  w="231px"
+                  w="100%"
                 >
                   {`${repoUrl}.git`}
                 </Text>

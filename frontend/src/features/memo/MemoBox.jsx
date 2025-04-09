@@ -39,6 +39,7 @@ const MemoBox = ({
       nodeRef={nodeRef}
     >
       <Flex
+        ref={nodeRef}
         flexDirection="column"
         border="1px solid"
         borderColor="gray.200"

@@ -44,7 +44,9 @@ import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
-  const [templateText, setTemplateText] = useState('temp')
+  const [templateText, setTemplateText] = useState('')
+  const [githubText, setGithubText] = useState('')
+  const [memoText, setMemoText] = useState('')
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
@@ -555,8 +557,25 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
               setMemo={setMemo}
             />
             <MarkdownInputBox
-              markdownText={markdownText}
-              setMarkdownText={setMarkdownText}
+              markdownText={
+                selectedScreen === 'markdown'
+                  ? markdownText
+                  : selectedScreen === 'template'
+                  ? templateText
+                  : selectedScreen === 'memo'
+                  ? memoText
+                  : selectedScreen === 'git' && githubText
+              }
+              setMarkdownText={
+                selectedScreen === 'markdown'
+                  ? setMarkdownText
+                  : selectedScreen === 'template'
+                  ? setTemplateText
+                  : selectedScreen === 'memo'
+                  ? setMemoText
+                  : selectedScreen === 'git' && setGithubText
+              }
+              selectedScreen={selectedScreen}
               item={item}
               setItem={setItem}
               screen={screen}
@@ -573,7 +592,18 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             />
 
             {boxForm === 'preview' && (
-              <MarkdownPreview markdownText={markdownText} screen={screen} />
+              <MarkdownPreview
+                markdownText={
+                  selectedScreen === 'markdown'
+                    ? markdownText
+                    : selectedScreen === 'template'
+                    ? templateText
+                    : selectedScreen === 'memo'
+                    ? memoText
+                    : selectedScreen === 'git' && githubText
+                }
+                screen={screen}
+              />
             )}
 
             {boxForm === 'chat' && (

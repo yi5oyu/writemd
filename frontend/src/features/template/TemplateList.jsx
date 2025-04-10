@@ -34,6 +34,8 @@ const TemplateList = ({
   handleUpdateFolder,
   templates,
   isTemplateLoading,
+  setName,
+  setTemplateText,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
@@ -45,6 +47,11 @@ const TemplateList = ({
   const [editedTitles, setEditedTitles] = useState([])
 
   const { isOpen, onOpen, onClose } = useDisclosure()
+
+  // 제목 업데이트
+  useEffect(() => {
+    selectedTemplate && setName(selectedTemplate.title)
+  }, [selectedTemplate])
 
   // 템플릿 저장
   const saveTemplateClick = () => {
@@ -101,6 +108,7 @@ const TemplateList = ({
       folderName: folder.title,
     })
     setIsNewTemplate(false)
+    setTemplateText(template.content)
   }
 
   // 템플릿/폴더 삭제
@@ -109,11 +117,21 @@ const TemplateList = ({
 
     if (deleteTemplate) {
       handleDelTemplate(deleteTemplate)
+      if (selectedTemplate?.templateId === deleteTemplate) {
+        setSelectedTemplate(null)
+        setName('')
+        setTemplateText('')
+      }
       onClose()
       setDeleteTemplate(null)
     }
     if (deleteFolder) {
       handleDelFolder(deleteFolder)
+      if (selectedTemplate?.folderId === deleteFolder) {
+        setSelectedTemplate(null)
+        setName('')
+        setTemplateText('')
+      }
       onClose()
       setDeleteFolder(null)
     }
@@ -129,6 +147,7 @@ const TemplateList = ({
     if (isTemplateLoading) return
 
     handleUpdateFolder(folderId, folderName)
+    setEdit('')
   }
 
   // 템플릿 빈 문자열 검사
@@ -165,23 +184,21 @@ const TemplateList = ({
                       }
                 }
                 onChange={(newValue) => {
-                  if (selectedTemplate) {
+                  selectedTemplate &&
                     setSelectedTemplate({
                       ...selectedTemplate,
                       folderName: newValue.value,
                       folderId: newValue.folderId,
                     })
-                  }
                 }}
                 onCreateOption={(inputValue) => {
                   const newfolder = inputValue
-                  if (selectedTemplate) {
+                  selectedTemplate &&
                     setSelectedTemplate({
                       ...selectedTemplate,
                       folderName: newfolder,
                       folderId: null,
                     })
-                  }
                 }}
                 isClearable={false}
                 isDisabled={!isNewTemplate && !selectedTemplate}
@@ -206,12 +223,13 @@ const TemplateList = ({
                     templateId: null,
                     title: '',
                     description: '',
-                    content: '',
                     folderName: '',
                     folderId: null,
                   })
+                  setTemplateText('')
                 }}
                 _hover={{ color: 'blue.500' }}
+                title="지우개"
               />
               <CloseButton
                 ml="auto"
@@ -220,6 +238,7 @@ const TemplateList = ({
                   setIsNewTemplate(false)
                   setSelectedTemplate(null)
                 }}
+                title="닫기"
               />
             </Flex>
           </CardHeader>
@@ -235,12 +254,11 @@ const TemplateList = ({
                   borderRadius="none"
                   value={selectedTemplate && selectedTemplate.title}
                   onChange={(e) => {
-                    if (selectedTemplate) {
+                    selectedTemplate &&
                       setSelectedTemplate({
                         ...selectedTemplate,
                         title: e.target.value,
                       })
-                    }
                   }}
                   mb="10px"
                 />
@@ -253,12 +271,11 @@ const TemplateList = ({
                     borderRadius="none"
                     value={selectedTemplate && selectedTemplate.description}
                     onChange={(e) => {
-                      if (selectedTemplate) {
+                      selectedTemplate &&
                         setSelectedTemplate({
                           ...selectedTemplate,
                           description: e.target.value,
                         })
-                      }
                     }}
                   />
                   <Button
@@ -272,6 +289,7 @@ const TemplateList = ({
                     onClick={(e) => {
                       !isTemplateValid(selectedTemplate) ? e.preventDefault() : saveTemplateClick()
                     }}
+                    title="저장"
                   />
                 </Flex>
               </Box>
@@ -290,11 +308,12 @@ const TemplateList = ({
               templateId: null,
               title: '',
               description: '',
-              content: '',
               folderName: '',
               folderId: null,
             })
+            setTemplateText('')
           }}
+          title="새 템플릿 생성"
         >
           새 템플릿 생성
         </Button>
@@ -413,6 +432,7 @@ const TemplateList = ({
                                 [folder.folderId]: folder.title,
                               })))
                         }}
+                        title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
                       />
                       <Button
                         p="2px"
@@ -427,6 +447,7 @@ const TemplateList = ({
                           setDeleteFolder(folder.folderId)
                           onOpen()
                         }}
+                        title="폴더 삭제"
                       />
                     </Box>
                     <AccordionIcon />
@@ -447,27 +468,28 @@ const TemplateList = ({
                           borderRadius="md"
                           border="1px solid"
                           borderColor={
-                            selectedTemplate?.title === template.title &&
                             selectedTemplate?.templateId === template.templateId
                               ? 'blue.500'
                               : 'gray.200'
                           }
                           width="100%"
                           minWidth="0"
-                          containerType="inline-size"
                           bg={
-                            selectedTemplate?.title === template.title &&
                             selectedTemplate?.templateId === template.templateId
                               ? 'blue.50'
                               : 'white'
                           }
+                          boxShadow={selectedTemplate?.templateId === template.templateId && 'md'}
                           _hover={{
                             bg: 'gray.100',
                             borderColor: 'blue.500',
                             boxShadow: 'xl',
                           }}
                           cursor="pointer"
-                          onClick={() => handleTemplateSelect(folder, template)}
+                          onClick={() => {
+                            handleTemplateSelect(folder, template),
+                              setTemplateText(template.content)
+                          }}
                           role="group"
                         >
                           <Box width="100%">
@@ -497,6 +519,7 @@ const TemplateList = ({
                               setDeleteTemplate(template.templateId)
                               onOpen()
                             }}
+                            title="템플릿 삭제"
                           />
                         </Flex>
                       ))}

@@ -15,6 +15,7 @@ const UtilityBox = ({
   isConnected,
   handleGitLoad,
   handleGetTemplates,
+  setSelectedScreen,
 }) => {
   return (
     <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
@@ -51,7 +52,9 @@ const UtilityBox = ({
           icon={BsGithub}
           label="깃허브"
           onClick={() => {
-            boxForm !== 'git' ? (handleGitLoad(), setBoxForm('git')) : setBoxForm('preview')
+            boxForm !== 'git'
+              ? (handleGitLoad(), setBoxForm('git'), setSelectedScreen('git'))
+              : setBoxForm('preview')
           }}
           setColor={boxForm === 'git' ? true : false}
         />
@@ -60,7 +63,7 @@ const UtilityBox = ({
           label="템플릿"
           onClick={() => {
             boxForm !== 'template'
-              ? (handleGetTemplates(), setBoxForm('template'))
+              ? (handleGetTemplates(), setBoxForm('template'), setSelectedScreen('template'))
               : setBoxForm('preview')
           }}
           setColor={boxForm === 'template' ? true : false}

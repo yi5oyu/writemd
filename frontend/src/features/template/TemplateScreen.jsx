@@ -6,6 +6,8 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const TemplateScreen = ({
+  setName,
+  setTemplateText,
   screen,
   handleSaveTemplate,
   handleDelTemplate,
@@ -18,6 +20,7 @@ const TemplateScreen = ({
 }) => {
   const toast = useToast()
 
+  // 에러
   useEffect(() => {
     if (isTemplateError) {
       toast({
@@ -47,6 +50,8 @@ const TemplateScreen = ({
         overflowY="auto"
       >
         <TemplateList
+          setName={setName}
+          setTemplateText={setTemplateText}
           handleSaveTemplate={handleSaveTemplate}
           handleDelTemplate={handleDelTemplate}
           handleDelFolder={handleDelFolder}

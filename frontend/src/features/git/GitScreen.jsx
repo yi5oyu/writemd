@@ -37,7 +37,7 @@ const GitScreen = ({
   // 리스트 토글, 폴더 선택/토글
   const handleRepoClick = useCallback(
     (repoId, repo, branch) => {
-      if (isGitLoading || isGitError) return
+      if (isGitLoading) return
 
       setSelectedFile(() => ({
         repo: repo,
@@ -49,25 +49,25 @@ const GitScreen = ({
       setName('')
       setGithubText('')
     },
-    [isGitLoading, isGitError, gitFolderSetData, active, setName, setGithubText]
+    [isGitLoading, gitFolderSetData, active, setName, setGithubText]
   )
 
   // 파일 클릭
   const handleFileClick = useCallback(
     (repo, path, sha, type) => {
-      if (isGitLoading || isGitError) return
+      if (isGitLoading) return
 
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetClick(repo, path)
       setName(path)
     },
-    [isGitLoading, isGitError, handleGetClick, setName]
+    [isGitLoading, handleGetClick, setName]
   )
 
   // 파일 업로드
   const handleCommitClick = (message) => {
-    if (isGitLoading || isGitError || !name || !selectedFile) return
+    if (isGitLoading || !name || !selectedFile) return
 
     let path = selectedFile?.path
       ? `${selectedFile.path.substring(0, selectedFile.path.lastIndexOf('/'))}/${name}`
@@ -75,24 +75,53 @@ const GitScreen = ({
     path = path?.startsWith('/') ? path.substring(1) : path
 
     selectedFile.type === 'dir'
-      ? handleNewFileClick(
-          selectedFile.repo,
-          `${selectedFile.path}/${name}${name.endsWith('.md') ? '' : '.md'}`,
-          message,
-          selectedFile.sha
-        )
+      ? checkFileValid(`${selectedFile.path}/${name}`, 'dir')
+        ? handleNewFileClick(
+            selectedFile.repo,
+            `${selectedFile.path}/${name}`,
+            message,
+            selectedFile.sha
+          )
+        : toast({
+            title: '파일 생성 불가',
+            description: `"${name}" 파일이 해당 디렉토리에 이미 존재합니다.`,
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+            position: 'top',
+          })
       : selectedFile.path
       ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha, path)
-      : handleNewFileClick(
-          selectedFile.repo,
-          `${name}${name.endsWith('.md') ? '' : '.md'}`,
-          message
-        )
+      : checkFileValid(name, 'repo')
+      ? handleNewFileClick(selectedFile.repo, `${name}`, message)
+      : toast({
+          title: '파일 생성 불가',
+          description: `"${name}" 파일이 해당 디렉토리에 이미 존재합니다.`,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top',
+        })
   }
-  // 폴더 업로드
-  const handleCommitFolder = (message) => {
-    if ((isGitLoading, isGitError)) return
+
+  // 파일 중복 확인
+  const checkFileValid = (path, mode) => {
+    if (!selectedFile || !selectedFile.repo) return false
+
+    if (mode === 'repo') {
+      const repo = data.find((item) => item.repo === selectedFile.repo)
+      const branch = repo.branches.find(
+        (branch) => branch.branch === 'main' || branch.branch === 'master'
+      )
+      const valid = branch.contents.find((arr) => arr.path === path)
+      return valid ? false : true
+    } else if (mode === 'dir') {
+      const folder = gitFolderData.find((item) => item.path === name)
+      return folder ? false : true
+    }
   }
+
+  // 파일 검색
 
   // 파일 업데이트, 초기화
   useEffect(() => {
@@ -112,27 +141,27 @@ const GitScreen = ({
   // 폴더 클릭
   const handleFolderClick = useCallback(
     (repo, path, sha, type, folder) => {
-      if (isGitLoading || isGitError) return
+      if (isGitLoading) return
 
       setSelectedFolder(folder)
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetFolderClick(repo, sha)
     },
-    [isGitLoading, isGitError, handleGetFolderClick, setSelectedFile]
+    [isGitLoading, handleGetFolderClick, setSelectedFile]
   )
 
   // 폴더안 파일 클릭
   const handleBlobFileClick = useCallback(
     (repo, path, sha, type) => {
-      if (isGitLoading || isGitError) return
+      if (isGitLoading) return
 
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetBlobFileClick(repo, sha)
       setName(path.split('/').pop())
     },
-    [isGitLoading, isGitError, handleGetBlobFileClick, setName]
+    [isGitLoading, handleGetBlobFileClick, setName]
   )
 
   // 에러 토스트
@@ -171,7 +200,7 @@ const GitScreen = ({
         border="1px solid"
         borderColor="gray.200"
         borderRadius="md"
-        filter={isGitLoading || isGitError ? 'blur(4px)' : 'none'}
+        filter={isGitLoading ? 'blur(4px)' : 'none'}
         bg="gray.200"
         boxShadow="md"
       >
@@ -201,7 +230,7 @@ const GitScreen = ({
               handleCommitClick={handleCommitClick}
               setSelectedFile={setSelectedFile}
               display={commit ? 'block' : 'none'}
-              isDisabled={isGitLoading || isGitError || !selectedFile}
+              isDisabled={isGitLoading || !selectedFile}
               setGithubText={setGithubText}
               setName={setName}
             />
@@ -209,7 +238,7 @@ const GitScreen = ({
           {repoBranches.length > 0 && (
             <Box borderRadius="md" borderColor="gray.100" m="15px 0 10px 10px" boxShadow="md">
               <GitInfoBox
-                isDisabled={isGitLoading || isGitError || !selectedFile}
+                isDisabled={isGitLoading || !selectedFile}
                 selectedFile={selectedFile}
                 repoBranches={repoBranches}
                 githubId={githubId}
@@ -240,7 +269,7 @@ const GitScreen = ({
                             )
                           }}
                           handleFileClick={handleFileClick}
-                          isDisabled={isGitLoading || isGitError}
+                          isDisabled={isGitLoading}
                           selectedFile={selectedFile}
                         />
                         {isActive && (
@@ -254,7 +283,7 @@ const GitScreen = ({
                             selectedFile={selectedFile}
                             selectedFolder={selectedFolder}
                             setSelectedFolder={setSelectedFolder}
-                            isDisabled={isGitLoading || isGitError}
+                            isDisabled={isGitLoading}
                             isConnected={false}
                             currentPath=""
                           />
@@ -267,7 +296,7 @@ const GitScreen = ({
         </Box>
       </Flex>
 
-      {(isGitLoading || isGitError) && <LoadingSpinner />}
+      {isGitLoading && <LoadingSpinner />}
     </>
   )
 }

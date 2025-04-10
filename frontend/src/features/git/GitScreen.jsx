@@ -37,7 +37,7 @@ const GitScreen = ({
   // 리스트 토글, 폴더 선택/토글
   const handleRepoClick = useCallback(
     (repoId, repo, branch) => {
-      if (isGitLoading) return
+      if (isGitLoading || isGitError) return
 
       setSelectedFile(() => ({
         repo: repo,
@@ -49,25 +49,30 @@ const GitScreen = ({
       setName('')
       setGithubText('')
     },
-    [isGitLoading, gitFolderSetData, active, setName, setGithubText]
+    [isGitLoading, isGitError, gitFolderSetData, active, setName, setGithubText]
   )
 
   // 파일 클릭
   const handleFileClick = useCallback(
     (repo, path, sha, type) => {
-      if (isGitLoading) return
+      if (isGitLoading || isGitError) return
 
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetClick(repo, path)
       setName(path)
     },
-    [isGitLoading, handleGetClick, setName]
+    [isGitLoading, isGitError, handleGetClick, setName]
   )
 
   // 파일 업로드
   const handleCommitClick = (message) => {
-    if (isGitLoading || !name) return
+    if (isGitLoading || isGitError || !name || !selectedFile) return
+
+    let path = selectedFile?.path
+      ? `${selectedFile.path.substring(0, selectedFile.path.lastIndexOf('/'))}/${name}`
+      : selectedFile.path
+    path = path?.startsWith('/') ? path.substring(1) : path
 
     selectedFile.type === 'dir'
       ? handleNewFileClick(
@@ -77,17 +82,16 @@ const GitScreen = ({
           selectedFile.sha
         )
       : selectedFile.path
-      ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha)
+      ? handleNewFileClick(selectedFile.repo, selectedFile.path, message, selectedFile.sha, path)
       : handleNewFileClick(
           selectedFile.repo,
           `${name}${name.endsWith('.md') ? '' : '.md'}`,
           message
         )
   }
-
   // 폴더 업로드
   const handleCommitFolder = (message) => {
-    if (isGitLoading) return
+    if ((isGitLoading, isGitError)) return
   }
 
   // 파일 업데이트, 초기화
@@ -108,27 +112,27 @@ const GitScreen = ({
   // 폴더 클릭
   const handleFolderClick = useCallback(
     (repo, path, sha, type, folder) => {
-      if (isGitLoading) return
+      if (isGitLoading || isGitError) return
 
       setSelectedFolder(folder)
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetFolderClick(repo, sha)
     },
-    [isGitLoading, handleGetFolderClick, setSelectedFile]
+    [isGitLoading, isGitError, handleGetFolderClick, setSelectedFile]
   )
 
   // 폴더안 파일 클릭
   const handleBlobFileClick = useCallback(
     (repo, path, sha, type) => {
-      if (isGitLoading) return
+      if (isGitLoading || isGitError) return
 
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetBlobFileClick(repo, sha)
       setName(path.split('/').pop())
     },
-    [isGitLoading, handleGetBlobFileClick, setName]
+    [isGitLoading, isGitError, handleGetBlobFileClick, setName]
   )
 
   // 에러 토스트

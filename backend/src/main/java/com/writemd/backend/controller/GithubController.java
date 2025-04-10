@@ -39,9 +39,10 @@ public class GithubController {
         @RequestParam String path,
         @RequestParam String message,
         @RequestParam(required = false) String sha,
+        @RequestParam(required = false) String newPath,
         @RequestBody String fileContent) {
 
-        return githubService.createOrUpdateFile(principalName, owner, repo, path, message, fileContent, sha)
+        return githubService.createOrUpdateFile(principalName, owner, repo, path, message, fileContent, sha, newPath)
             .map(response -> ResponseEntity.ok(response))
             .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 Collections.singletonMap("error", e.getMessage())

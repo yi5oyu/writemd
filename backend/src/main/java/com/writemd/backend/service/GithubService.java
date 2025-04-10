@@ -15,9 +15,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,39 +36,78 @@ public class GithubService {
 
     // 파일 생성/업데이트
     public Mono<Map<String, Object>> createOrUpdateFile(String principalName, String owner,
-        String repo, String path, String message, String fileContent, String sha) {
+        String repo, String path, String message, String fileContent, String sha, String newPath) {
+
+        boolean isRename = (newPath != null && !newPath.isEmpty() && !newPath.equals(path))
+                                && sha != null && !sha.trim().isEmpty();
+
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github",
             principalName);
         if (client == null) {
             return Mono.error(new IllegalStateException("GitHub OAuth2 로그인 안됨"));
         }
         String accessToken = client.getAccessToken().getTokenValue();
-        String encodedContent = Base64.getEncoder()
-            .encodeToString(fileContent.getBytes(StandardCharsets.UTF_8));
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("message", message);
-        requestBody.put("content", encodedContent);
+        if (isRename) {
+            Map<String, String> deleteBody = new HashMap<>();
+            deleteBody.put("message", "- 기존 파일 삭제: " + path);
+            deleteBody.put("sha", sha);
 
-        // sha 없으면 새 파일
-        if (sha != null && !sha.isEmpty()) {
-            requestBody.put("sha", sha);
+            return webClient.method(HttpMethod.DELETE)
+                .uri("https://api.github.com/repos/{owner}/{repo}/contents/{path}", owner, repo, path)
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .body(BodyInserters.fromValue(deleteBody))
+                .retrieve()
+                .onStatus(status -> status.isError(), clientResponse ->
+                    clientResponse.bodyToMono(String.class)
+                        .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error: " + errorBody)))
+                )
+                .bodyToMono(Void.class)
+                .then(Mono.defer(() -> {
+                    String encodedContent = Base64.getEncoder()
+                        .encodeToString(fileContent.getBytes(StandardCharsets.UTF_8));
+
+                    Map<String, Object> createBody = new HashMap<>();
+                    createBody.put("message", message + "\n- 새파일 생성: " + newPath);
+                    createBody.put("content", encodedContent);
+                    return webClient.put()
+                        .uri("https://api.github.com/repos/{owner}/{repo}/contents/{filePath}", owner, repo, newPath) // 'newPath' 사용
+                        .headers(headers -> headers.setBearerAuth(accessToken))
+                        .bodyValue(createBody)
+                        .retrieve()
+                        .onStatus(status -> status.isError(), clientResponse ->
+                            clientResponse.bodyToMono(String.class)
+                                .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error (Rename - Create Step for " + newPath + "): " + errorBody)))
+                        )
+                        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {}); // 최종 생성 결과 반환
+                }));
+        } else {
+            String encodedContent = Base64.getEncoder()
+                .encodeToString(fileContent.getBytes(StandardCharsets.UTF_8));
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("message", message);
+            requestBody.put("content", encodedContent);
+
+            // sha 값이 있으면 업데이트, 없으면 생성
+            if (sha != null && !sha.trim().isEmpty()) {
+                requestBody.put("sha", sha);
+            }
+
+            return webClient.put()
+                // 생성/업데이트 시에는 'path'가 최종 목표 경로
+                .uri("https://api.github.com/repos/{owner}/{repo}/contents/{filePath}", owner, repo, path)
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .bodyValue(requestBody)
+                .retrieve()
+                .onStatus(status -> status.isError(), clientResponse ->
+                    clientResponse.bodyToMono(String.class)
+                        .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error (Create/Update for " + path + "): " + errorBody)))
+                )
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
         }
+    };
 
-        return webClient.put()
-            .uri("https://api.github.com/repos/{owner}/{repo}/contents/{path}", owner, repo, path)
-            .headers(headers -> headers.setBearerAuth(accessToken))
-            .bodyValue(requestBody)
-            .retrieve()
-            .onStatus(status -> status.isError(), clientResponse ->
-                clientResponse.bodyToMono(String.class)
-                    .flatMap(errorBody -> {
-                        return Mono.error(new RuntimeException("GitHub API Error: " + errorBody));
-                    })
-            )
-            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
-            });
-    }
 
     // 레포지토리, 하위 폴더/파일 조회
     public Mono<List<GitRepoDTO>> getGitInfo(Long userId, String principalName) {
@@ -296,5 +337,7 @@ public class GithubService {
                 .build());
 
     }
+
+
 
 }

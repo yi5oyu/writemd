@@ -435,16 +435,21 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
 
   // 파일 업로드
   const handleNewFileClick = useCallback(
-    (repo, path, message, sha) => {
-      createOrUpdateFile({
-        owner: user.githubId,
-        repo,
-        path,
-        message,
-        content: githubText,
-        sha,
-      })
-      handleGitLoad()
+    async (repo, path, message, sha, newPath) => {
+      try {
+        await createOrUpdateFile({
+          owner: user.githubId,
+          repo,
+          path,
+          message,
+          content: githubText,
+          sha,
+          newPath,
+        })
+        handleGitLoad()
+      } catch (error) {
+        console.error('파일 작업 실패:', error)
+      }
     },
     [user.githubId, createOrUpdateFile, githubText, handleGitLoad]
   )

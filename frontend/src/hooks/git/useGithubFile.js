@@ -6,7 +6,7 @@ function useGithubFile() {
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
-  const createOrUpdateFile = async ({ owner, repo, path, message, content, sha }) => {
+  const createOrUpdateFile = async ({ owner, repo, path, message, content, sha, newPath }) => {
     setLoading(true)
     setError(null)
     try {
@@ -14,7 +14,7 @@ function useGithubFile() {
         `http://localhost:8888/api/github/repo/${owner}/${repo}/file`,
         content,
         {
-          params: { path, message, sha },
+          params: { path, message, sha, newPath },
           headers: { 'Content-Type': 'text/plain' },
           withCredentials: true,
         }

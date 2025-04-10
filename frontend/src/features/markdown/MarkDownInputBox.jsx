@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Box, Badge, VStack } from '@chakra-ui/react' // Added Badge, VStack
+import React, { useEffect, useRef, useCallback, memo } from 'react'
+import { Box, Badge } from '@chakra-ui/react'
 import Editor, { useMonaco } from '@monaco-editor/react'
 import githubLightTheme from 'monaco-themes/themes/GitHub Light.json'
 import { MarkdownCommands } from '../../data/MarkdownCommands'
@@ -140,6 +140,9 @@ const MarkdownInputBox = ({
       comments: true,
       strings: true,
     },
+    suggest: {
+      showWords: false,
+    },
     suggestOnTriggerCharacters: true,
   }
 
@@ -189,7 +192,6 @@ const MarkdownInputBox = ({
 
       {/* Monaco Editor */}
       <Editor
-        // key={selectedScreen} // 상태 손실 문제로 인해 일반적으로는 사용하지 않음
         height="100%"
         width="100%"
         language="markdown"
@@ -203,4 +205,4 @@ const MarkdownInputBox = ({
   )
 }
 
-export default MarkdownInputBox
+export default memo(MarkdownInputBox)

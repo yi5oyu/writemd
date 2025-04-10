@@ -6,13 +6,13 @@ function useGithubFile() {
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
-  const createOrUpdateFile = async ({ owner, repo, path, message, markdownText, sha }) => {
+  const createOrUpdateFile = async ({ owner, repo, path, message, content, sha }) => {
     setLoading(true)
     setError(null)
     try {
       const response = await axios.post(
         `http://localhost:8888/api/github/repo/${owner}/${repo}/file`,
-        markdownText,
+        content,
         {
           params: { path, message, sha },
           headers: { 'Content-Type': 'text/plain' },

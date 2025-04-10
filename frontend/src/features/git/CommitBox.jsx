@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, memo } from 'react'
 import { Flex, Textarea, Box, Button, Icon } from '@chakra-ui/react'
 import { MdOutlineCheck, MdOutlineHorizontalRule } from 'react-icons/md'
 
-const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
+const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile, setGithubText, setName }) => {
   const [message, setMessage] = useState('')
 
   return (
@@ -50,7 +50,13 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
         </Button>
         <Button
           flex="1"
-          onClick={isDisabled ? undefined : () => setSelectedFile(null)}
+          onClick={
+            isDisabled
+              ? undefined
+              : () => {
+                  setSelectedFile(null), setGithubText(''), setName('')
+                }
+          }
           isDisabled={isDisabled}
           cursor={isDisabled ? 'not-allowed' : 'pointer'}
           justifyContent="center"
@@ -75,4 +81,4 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile }) => {
   )
 }
 
-export default CommitBox
+export default memo(CommitBox)

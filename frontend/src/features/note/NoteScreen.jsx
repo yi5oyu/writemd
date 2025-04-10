@@ -48,11 +48,11 @@ import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 
 const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
-  const [githubName, setGithubName] = useState('WriteMD')
+  const [githubName, setGithubName] = useState('')
   const [templateName, setTemplateName] = useState('')
-  const [memoName, setMemoName] = useState('메모')
+  const [memoName, setMemoName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
-  const [templateText, setTemplateText] = useState('')
+  const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
   const [githubText, setGithubText] = useState('')
   const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
   const [questionText, setQuestionText] = useState('')
@@ -76,6 +76,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
+
   const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
   const {
     getFileContent,
@@ -89,6 +90,19 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitFileError,
     data: gitUpdatedData,
   } = useGithubFile()
+  const {
+    getFolderContents,
+    loading: gitFolderLoading,
+    error: gitFolderError,
+    data: gitFolderData,
+    setData: gitFolderSetData,
+  } = useGetGithubFolder()
+  const {
+    getBlobFile,
+    loading: gitBlobFileLoading,
+    error: gitBlobFileError,
+    data: gitBlobFileData,
+  } = useGetGithubBlobFile()
 
   const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
   const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
@@ -109,6 +123,24 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: updateFolderError,
   } = useUpdateFolderName()
 
+  const isGitLoading =
+    gitBlobFileLoading || gitFolderLoading || gitFileLoading || gitGetFileLoading || gitLoading
+
+  const isGitError =
+    gitError || gitGetFileError || gitFileError || gitFolderError || gitBlobFileError
+
+  const isGitErrorMessage = gitError
+    ? gitError.message
+    : gitGetFileError
+    ? gitGetFileError.message
+    : gitFileError
+    ? gitFileError.message
+    : gitFolderError
+    ? gitFolderError.message
+    : gitBlobFileError
+    ? gitBlobFileError.message
+    : null
+
   const isTemplateLoading =
     saveTemplateLoding ||
     templateLoding ||
@@ -128,20 +160,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     : updateFolderError
     ? updateFolderError.message
     : null
-
-  const {
-    getFolderContents,
-    loading: gitFolderLoading,
-    error: gitFolderError,
-    data: gitFolderData,
-    setData: gitFolderSetData,
-  } = useGetGithubFolder()
-  const {
-    getBlobFile,
-    loading: gitBlobFileLoading,
-    error: gitBlobFileError,
-    data: gitBlobFileData,
-  } = useGetGithubBlobFile()
 
   const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
@@ -370,15 +388,6 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     }
   }
 
-  // 깃 파일 조회
-  const handleGetClick = (repo, path) => {
-    getFileContent({
-      owner: user.githubId,
-      repo,
-      path,
-    })
-  }
-
   // Base64 디코딩, UTF-8 변환
   useEffect(() => {
     if (gitFileData) {
@@ -409,43 +418,52 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     }
   }, [gitBlobFileData])
 
-  // 파일 업로드
-  const handleNewFileClick = (repo, path, message, sha) => {
-    createOrUpdateFile({
-      owner: user.githubId,
-      repo,
-      path,
-      message,
-      githubText,
-      sha,
-    })
-    handleGitLoad()
-  }
-
-  // 깃 폴더 조회
-  const handleGetFolderClick = (repo, sha) => {
-    getFolderContents({
-      owner: user.githubId,
-      repo,
-      sha,
-    })
-  }
-
-  // 깃 폴더안 파일 조회
-  const handleGetBlobFileClick = (repo, sha) => {
-    getBlobFile({
-      owner: user.githubId,
-      repo,
-      sha,
-    })
-  }
+  // 깃 파일 조회
+  const handleGetClick = useCallback(
+    (repo, path) => {
+      getFileContent({ owner: user.githubId, repo, path })
+    },
+    [user.githubId, getFileContent]
+  )
 
   // 깃 정보 조회
-  const handleGitLoad = () => {
+  const handleGitLoad = useCallback(() => {
     if (user && user.userId) {
       getRepo({ userId: user.userId })
     }
-  }
+  }, [user, getRepo])
+
+  // 파일 업로드
+  const handleNewFileClick = useCallback(
+    (repo, path, message, sha) => {
+      createOrUpdateFile({
+        owner: user.githubId,
+        repo,
+        path,
+        message,
+        content: githubText,
+        sha,
+      })
+      handleGitLoad()
+    },
+    [user.githubId, createOrUpdateFile, githubText, handleGitLoad]
+  )
+
+  // 깃 폴더 조회
+  const handleGetFolderClick = useCallback(
+    (repo, sha) => {
+      getFolderContents({ owner: user.githubId, repo, sha })
+    },
+    [user.githubId, getFolderContents]
+  )
+
+  // 깃 폴더안 파일 조회
+  const handleGetBlobFileClick = useCallback(
+    (repo, sha) => {
+      getBlobFile({ owner: user.githubId, repo, sha })
+    },
+    [user.githubId, getBlobFile]
+  )
 
   // 템플릿 저장
   const handleSaveTemplate = async (folderId, templateId, folderName, title, description) => {
@@ -569,6 +587,15 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             variant="unstyled"
             onChange={handleTitleChange}
             maxLength={35}
+            placeholder={
+              selectedScreen === 'markdown'
+                ? '제목을 입력해주세요.'
+                : selectedScreen === 'template'
+                ? '템플릿 이름을 입력해주세요.'
+                : selectedScreen === 'memo'
+                ? '메모 이름을 입력해주세요'
+                : selectedScreen === 'git' && '제목을 입력해주세요.'
+            }
           />
           <Icon
             as={PiCheckFatFill}
@@ -741,7 +768,8 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             {boxForm === 'git' && (
               <GitScreen
                 name={githubName}
-                setname={setGithubName}
+                setName={setGithubName}
+                setGithubText={setGithubText}
                 data={gitRepoData}
                 githubId={user.githubId}
                 screen={screen}
@@ -752,12 +780,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 gitUpdatedData={gitUpdatedData}
                 gitFolderData={gitFolderData}
                 gitFolderSetData={gitFolderSetData}
-                gitLoading={gitLoading}
-                gitError={gitError}
-                gitGetFileLoading={gitGetFileLoading}
-                gitGetFileError={gitGetFileError}
-                gitFileLoading={gitFileLoading}
-                gitFileError={gitFileError}
+                isGitLoading={isGitLoading}
+                isGitError={isGitError}
+                isGitErrorMessage={isGitErrorMessage}
               />
             )}
           </Box>

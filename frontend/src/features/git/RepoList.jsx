@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { memo } from 'react'
 import { Flex, Box, Icon, Text } from '@chakra-ui/react'
 import { GoFile, GoFileDirectoryFill } from 'react-icons/go'
 import { MdKeyboardArrowRight, MdKeyboardArrowDown } from 'react-icons/md'
 
 const RepoList = ({
   contents,
-  isActive,
   repo,
   handleFileClick,
   handleFolderClick,
@@ -19,7 +18,7 @@ const RepoList = ({
   currentPath,
 }) => {
   return (
-    <Flex my="3px" display={isActive ? 'block' : 'none'}>
+    <Flex my="3px" direction="column">
       {contents.map((content, index) => (
         <Flex direction="column" h="auto" key={`${content.sha}-${index}`}>
           <Flex
@@ -104,12 +103,11 @@ const RepoList = ({
               {content.path}
             </Text>
           </Flex>
-
-          <Flex ml="10px">
-            {gitFolderData &&
-              content.type === 'dir' &&
-              selectedFile?.repo === repo &&
-              selectedFolder === content.path && (
+          {gitFolderData &&
+            content.type === 'dir' &&
+            selectedFile?.repo === repo &&
+            selectedFolder === content.path && (
+              <Flex ml="10px">
                 <RepoList
                   contents={gitFolderData}
                   selectedFile={selectedFile}
@@ -117,13 +115,12 @@ const RepoList = ({
                   handleFileClick={handleFileClick}
                   handleFolderClick={handleFolderClick}
                   handleBlobFileClick={handleBlobFileClick}
-                  isActive={true}
                   isDisabled={isDisabled}
                   isConnected={true}
                   currentPath={content.path}
                 />
-              )}
-          </Flex>
+              </Flex>
+            )}
         </Flex>
       ))}
 
@@ -132,4 +129,4 @@ const RepoList = ({
   )
 }
 
-export default RepoList
+export default memo(RepoList)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo, useCallback } from 'react'
 import { Flex, Box, Text, useToast } from '@chakra-ui/react'
 import RepoBox from './RepoBox'
 import RepoList from './RepoList'
@@ -9,6 +9,8 @@ import GitInfoBox from './GitInfoBox'
 
 const GitScreen = ({
   name,
+  setName,
+  setGithubText,
   data,
   screen,
   githubId,
@@ -16,17 +18,14 @@ const GitScreen = ({
   handleNewFileClick,
   handleGetFolderClick,
   handleGetBlobFileClick,
-  gitLoading,
-  gitError,
-  gitGetFileLoading,
-  gitGetFileError,
-  gitFileLoading,
-  gitFileError,
+  isGitLoading,
   gitUpdatedData,
   gitFolderData,
   gitFolderSetData,
+  isGitError,
+  isGitErrorMessage,
 }) => {
-  const [active, setActive] = useState([])
+  const [active, setActive] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [commit, setCommit] = useState(false)
   const [selectedFolder, setSelectedFolder] = useState(null)
@@ -35,40 +34,40 @@ const GitScreen = ({
 
   const toast = useToast()
 
-  // 로딩
-  const isLoading = gitLoading || gitGetFileLoading || gitFileLoading
-
   // 리스트 토글, 폴더 선택/토글
-  const handleRepoClick = (repoId, repo, branch) => {
-    if (isLoading) return
+  const handleRepoClick = useCallback(
+    (repoId, repo, branch) => {
+      if (isGitLoading) return
 
-    setSelectedFile(() => ({
-      repo: repo,
-      branch: branch,
-    }))
-    setActive((a) => {
-      if (a.includes(repoId)) {
-        return a.filter((id) => id !== repoId)
-      } else {
-        return [...a, repoId]
-      }
-    })
-    setSelectedFolder(null)
-    gitFolderSetData(null)
-  }
+      setSelectedFile(() => ({
+        repo: repo,
+        branch: branch,
+      }))
+      setActive(active === repoId ? null : repoId)
+      setSelectedFolder(null)
+      gitFolderSetData(null)
+      setName('')
+      setGithubText('')
+    },
+    [isGitLoading, gitFolderSetData, active, setName, setGithubText]
+  )
 
   // 파일 클릭
-  const handleFileClick = (repo, path, sha, type) => {
-    if (isLoading) return
+  const handleFileClick = useCallback(
+    (repo, path, sha, type) => {
+      if (isGitLoading) return
 
-    setSelectedFile({ repo, path, sha, type })
-    setCommit(true)
-    handleGetClick(repo, path)
-  }
+      setSelectedFile({ repo, path, sha, type })
+      setCommit(true)
+      handleGetClick(repo, path)
+      setName(path)
+    },
+    [isGitLoading, handleGetClick, setName]
+  )
 
   // 파일 업로드
   const handleCommitClick = (message) => {
-    if (isLoading) return
+    if (isGitLoading || !name) return
 
     selectedFile.type === 'dir'
       ? handleNewFileClick(
@@ -88,7 +87,7 @@ const GitScreen = ({
 
   // 폴더 업로드
   const handleCommitFolder = (message) => {
-    if (isLoading) return
+    if (isGitLoading) return
   }
 
   // 파일 업데이트, 초기화
@@ -107,39 +106,41 @@ const GitScreen = ({
   }, [gitUpdatedData, toast])
 
   // 폴더 클릭
-  const handleFolderClick = (repo, path, sha, type, folder) => {
-    if (isLoading) return
+  const handleFolderClick = useCallback(
+    (repo, path, sha, type, folder) => {
+      if (isGitLoading) return
 
-    setSelectedFolder(folder)
-    setSelectedFile({ repo, path, sha, type })
-    setCommit(true)
-    handleGetFolderClick(repo, sha)
-  }
+      setSelectedFolder(folder)
+      setSelectedFile({ repo, path, sha, type })
+      setCommit(true)
+      handleGetFolderClick(repo, sha)
+    },
+    [isGitLoading, handleGetFolderClick, setSelectedFile]
+  )
 
   // 폴더안 파일 클릭
-  const handleBlobFileClick = (repo, path, sha, type) => {
-    if (isLoading) return
+  const handleBlobFileClick = useCallback(
+    (repo, path, sha, type) => {
+      if (isGitLoading) return
 
-    setSelectedFile({ repo, path, sha, type })
-    setCommit(true)
-    handleGetBlobFileClick(repo, sha)
-  }
+      setSelectedFile({ repo, path, sha, type })
+      setCommit(true)
+      handleGetBlobFileClick(repo, sha)
+      setName(path.split('/').pop())
+    },
+    [isGitLoading, handleGetBlobFileClick, setName]
+  )
 
   // 에러 토스트
   useEffect(() => {
-    if (gitError || gitGetFileError || gitFileError) {
-      const errorMessage = gitError
-        ? gitError.message
-        : gitGetFileError
-        ? gitGetFileError.message
-        : gitFileError.message
+    if (isGitError) {
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={isGitErrorMessage} />,
       })
     }
-  }, [gitError, gitGetFileError, gitFileError, toast])
+  }, [isGitError, toast])
 
   useEffect(() => {
     let defaultText = '폴더/파일을 선택해주세요.'
@@ -147,11 +148,14 @@ const GitScreen = ({
       selectedFile?.repo
         ? selectedFile?.path
           ? selectedFile?.type === 'file'
-            ? `${selectedFile.repo}/${selectedFile.path}`
-            : `${selectedFile.repo}/${selectedFile.path}/${name}${
-                name.endsWith('.md') ? '' : '.md'
-              }`
-          : `${selectedFile.repo}/${name}${name.endsWith('.md') ? '' : '.md'}`
+            ? selectedFile.path.includes('/')
+              ? `${selectedFile.repo}/${selectedFile.path.substring(
+                  0,
+                  selectedFile.path.lastIndexOf('/')
+                )}/${name}`
+              : `${selectedFile.repo}/${name}`
+            : `${selectedFile.repo}/${selectedFile.path}/${name}`
+          : `${selectedFile.repo}/${name}`
         : defaultText
     )
   }, [selectedFile, name])
@@ -163,7 +167,7 @@ const GitScreen = ({
         border="1px solid"
         borderColor="gray.200"
         borderRadius="md"
-        filter={isLoading ? 'blur(4px)' : 'none'}
+        filter={isGitLoading || isGitError ? 'blur(4px)' : 'none'}
         bg="gray.200"
         boxShadow="md"
       >
@@ -193,24 +197,21 @@ const GitScreen = ({
               handleCommitClick={handleCommitClick}
               setSelectedFile={setSelectedFile}
               display={commit ? 'block' : 'none'}
-              isDisabled={isLoading || !selectedFile}
+              isDisabled={isGitLoading || isGitError || !selectedFile}
+              setGithubText={setGithubText}
+              setName={setName}
             />
           </Box>
-
-          <Box
-            display={repoBranches.length > 0 ? 'block' : 'none'}
-            borderRadius="md"
-            borderColor="gray.100"
-            m="15px 0 10px 10px"
-            boxShadow="md"
-          >
-            <GitInfoBox
-              isDisabled={isLoading || !selectedFile}
-              selectedFile={selectedFile}
-              repoBranches={repoBranches}
-              githubId={githubId}
-            />
-          </Box>
+          {repoBranches.length > 0 && (
+            <Box borderRadius="md" borderColor="gray.100" m="15px 0 10px 10px" boxShadow="md">
+              <GitInfoBox
+                isDisabled={isGitLoading || isGitError || !selectedFile}
+                selectedFile={selectedFile}
+                repoBranches={repoBranches}
+                githubId={githubId}
+              />
+            </Box>
+          )}
         </Box>
         <Box flex="1" maxW="100%" overflow="hidden" overflowY="auto" m="10px">
           <Box bg="white" p="10px 10px 10px 0" borderRadius="md" boxShadow="md">
@@ -222,6 +223,7 @@ const GitScreen = ({
                     repoItem.branches.find((branch) => branch.branch === 'main') ||
                     repoItem.branches.find((branch) => branch.branch === 'master')
 
+                  const isActive = active === repoItem.repoId
                   return (
                     branch && (
                       <Box key={repoItem.repoId} mx="10px" mb="10px">
@@ -234,24 +236,25 @@ const GitScreen = ({
                             )
                           }}
                           handleFileClick={handleFileClick}
-                          isDisabled={isLoading}
+                          isDisabled={isGitLoading || isGitError}
                           selectedFile={selectedFile}
                         />
-                        <RepoList
-                          repo={repoItem.repo}
-                          contents={branch.contents}
-                          isActive={active.includes(repoItem.repoId)}
-                          gitFolderData={gitFolderData}
-                          handleFileClick={handleFileClick}
-                          handleFolderClick={handleFolderClick}
-                          handleBlobFileClick={handleBlobFileClick}
-                          selectedFile={selectedFile}
-                          selectedFolder={selectedFolder}
-                          setSelectedFolder={setSelectedFolder}
-                          isDisabled={isLoading}
-                          isConnected={false}
-                          currentPath=""
-                        />
+                        {isActive && (
+                          <RepoList
+                            repo={repoItem.repo}
+                            contents={branch.contents}
+                            gitFolderData={gitFolderData}
+                            handleFileClick={handleFileClick}
+                            handleFolderClick={handleFolderClick}
+                            handleBlobFileClick={handleBlobFileClick}
+                            selectedFile={selectedFile}
+                            selectedFolder={selectedFolder}
+                            setSelectedFolder={setSelectedFolder}
+                            isDisabled={isGitLoading || isGitError}
+                            isConnected={false}
+                            currentPath=""
+                          />
+                        )}
                       </Box>
                     )
                   )
@@ -260,9 +263,9 @@ const GitScreen = ({
         </Box>
       </Flex>
 
-      {isLoading && <LoadingSpinner />}
+      {(isGitLoading || isGitError) && <LoadingSpinner />}
     </>
   )
 }
 
-export default GitScreen
+export default memo(GitScreen)

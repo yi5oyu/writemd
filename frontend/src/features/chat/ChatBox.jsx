@@ -1,20 +1,18 @@
 import React, { useEffect } from 'react'
-import { Box, Flex, Switch } from '@chakra-ui/react'
+import { Box, Flex, Switch, Spinner } from '@chakra-ui/react'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 
-const ChatBox = ({ messages, isConnected, sessionId }) => {
+const ChatBox = ({ messages, chatLoading, messageLoading }) => {
   return (
     <>
-      <Flex flexDirection="column">
-        <Box mb="1" display="flex" justifyContent="flex-end">
-          {sessionId}
-          <Switch isChecked={isConnected}></Switch>``
-        </Box>
-        {messages.length > 0 ? (
+      <Flex flexDirection="column" filter={chatLoading ? 'blur(4px)' : 'none'}>
+        {messages.length > 0 &&
           messages.map((m, index) => (
             <Box
               key={index}
               p="2"
-              mb="2"
+              my="1.5"
               bg={m.role === 'user' ? 'gray.100' : 'gray.300'}
               alignSelf={m.role === 'user' ? 'flex-end' : 'flex-start'}
               w={m.role == 'user' ? '' : '630px'}
@@ -22,10 +20,11 @@ const ChatBox = ({ messages, isConnected, sessionId }) => {
             >
               {m.content}
             </Box>
-          ))
-        ) : (
-          <></>
-        )}
+          ))}
+
+        {messageLoading && <ContentsSpinner />}
+
+        {chatLoading && <LoadingSpinner />}
       </Flex>
     </>
   )

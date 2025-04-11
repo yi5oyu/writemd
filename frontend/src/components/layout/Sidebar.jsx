@@ -1,5 +1,15 @@
-import React, { useState } from 'react'
-import { useDisclosure, Box, Text, Flex, Icon, Spacer, Avatar } from '@chakra-ui/react'
+import React, { useState, useEffect } from 'react'
+import {
+  useDisclosure,
+  Box,
+  Text,
+  Flex,
+  Icon,
+  Spacer,
+  Avatar,
+  useToast,
+  Spinner,
+} from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { BsQuestionCircle, BsChevronRight } from 'react-icons/bs'
 import { FiHome, FiFolder, FiMinusSquare, FiPlusSquare } from 'react-icons/fi'
@@ -11,24 +21,44 @@ import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
 import LogInfoForm from '../../features/auth/LogInfoForm'
 import NoteBox from '../../features/note/NoteBox'
+import useDeleteNote from '../../hooks/useDeleteNote'
+import ErrorToast from '../ui/toast/ErrorToast'
 
 const MotionBox = motion(Box)
 const MotionFlex = motion(Flex)
 
-const Sidebar = ({
-  notes,
-  user,
-  currentScreen,
-  setCurrentScreen,
-  handleDeleteNote,
-  isFold,
-  setIsFold,
-}) => {
+const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes, isFold, setIsFold }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
 
+  const { deleteNote, loading, error } = useDeleteNote()
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
+
+  const toast = useToast()
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={error.message} />,
+      })
+    }
+  }, [error, toast])
+
+  // 노트 삭제
+  const handleDeleteNote = async (noteId) => {
+    if (error) return
+
+    try {
+      await deleteNote(noteId)
+      setNotes((n) => n.filter((note) => note.noteId !== noteId))
+      setCurrentScreen('home')
+    } catch (error) {
+      console.log('삭제 실패: ' + error)
+    }
+  }
 
   // 사이드바 애니메이션
   const sidebarVariants = {
@@ -76,6 +106,7 @@ const Sidebar = ({
             boxShadow: 'md',
             cursor: 'pointer',
           }}
+          filter={loading ? 'blur(4px)' : 'none'}
         >
           <Flex direction="column" h="100%">
             {/* 상단 */}
@@ -96,6 +127,25 @@ const Sidebar = ({
                   />
                 </Flex>
               )}
+
+              {loading && (
+                <Flex
+                  position="absolute"
+                  top="0"
+                  left="0"
+                  w="100%"
+                  h="100%"
+                  justify="center"
+                  align="center"
+                  bg="rgba(255,255,255,0.5)"
+                  zIndex="2000"
+                >
+                  <Spinner size="xl" color="blue.400" />
+                </Flex>
+              )}
+
+              {/* git */}
+
               {isSideBoxVisible ? (
                 <>
                   <Flex direction="column" borderTop="1px" borderColor="gray.300" mx="20px">

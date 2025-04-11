@@ -22,11 +22,15 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final StringPath avatarUrl = createString("avatarUrl");
 
+    public final ListPath<Folders, QFolders> folders = this.<Folders, QFolders>createList("folders", Folders.class, QFolders.class, PathInits.DIRECT2);
+
     public final StringPath githubId = createString("githubId");
 
     public final StringPath htmlUrl = createString("htmlUrl");
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final ListPath<Memos, QMemos> memos = this.<Memos, QMemos>createList("memos", Memos.class, QMemos.class, PathInits.DIRECT2);
 
     public final StringPath name = createString("name");
 

@@ -28,6 +28,7 @@ const Home = () => {
         isFold={isFold}
         setIsFold={setIsFold}
       />
+
       <Screen
         user={user}
         setNotes={setNotes}

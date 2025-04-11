@@ -1,6 +1,7 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.NoteDTO;
+import com.writemd.backend.entity.Memos;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
@@ -21,6 +22,7 @@ public class NoteService {
     private final TextRepository textRepository;
 
 
+    // 새노트 생성
     public NoteDTO createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
@@ -46,6 +48,7 @@ public class NoteService {
         return note;
     }
 
+    // 노트 업데이트
     public NoteDTO updateNoteName(Long noteId, String newNoteName) {
         Notes notes = noteRepository.findById(noteId)
             .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다."));
@@ -63,6 +66,7 @@ public class NoteService {
     }
 
 
+    // text 저장
     public Texts saveMarkdownText(Long noteId, String markdownText) {
         Notes note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다."));
@@ -78,6 +82,7 @@ public class NoteService {
     }
 
 
+    // 노트 삭제
     public void deleteNote(Long noteId){
         noteRepository.deleteById(noteId);
     }

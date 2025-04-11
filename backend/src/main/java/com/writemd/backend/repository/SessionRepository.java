@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Sessions, Long> {
-    List<Sessions> findByNotes_id(Long NoteId);
+    List<Sessions> findByNotes_id(Long noteId);
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box, Icon, Text, useDisclosure } from '@chakra-ui/react'
-import NoteDeleteBox from './NoteDeleteBox'
+import DeleteBox from '../../components/ui/Modal/DeleteBox'
 
 const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote, currentScreen }) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
@@ -48,7 +48,7 @@ const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote, curre
           onClick={handleDelete}
         />
       </Box>
-      <NoteDeleteBox isOpen={isOpen} onClose={onClose} confirmDelete={confirmDelete} />
+      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title="노트" />
     </>
   )
 }

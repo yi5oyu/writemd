@@ -1,40 +1,198 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
-import { Box, Flex, Icon, Input } from '@chakra-ui/react'
+import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
-import axios from 'axios'
 
+// UI
 import MarkdownInputBox from '../markdown/MarkdownInputBox'
 import UtilityBox from '../chat/UtilityBox'
 import Questionbar from '../chat/Questionbar'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 import ChatBox from '../chat/ChatBox'
-import useNote from '../../hooks/useNote'
-import saveMarkdownText from '../../services/saveMarkdownText'
-import updateNoteName from '../../services/updateNoteName'
-import checkConnection from '../../services/checkConnection'
 import NewChatBox from '../chat/NewChatBox'
-import saveSession from '../../services/saveSession'
 import SessionList from '../chat/SessionList'
-import useChat from '../../hooks/useChat'
-import sendChatMessage from '../../services/sendChatMessage'
+import ToolBox from '../markdown/ToolBox'
+import EmojiBox from '../markdown/EmojiBox'
+import GitScreen from '../git/GitScreen'
+import TemplateScreen from '../template/TemplateScreen'
+import BookmarkBox from './BookmarkBox'
+import MemoBox from '../memo/MemoBox'
 
-const NoteScreen = ({ noteId, handleUpdateNote }) => {
+import ErrorToast from '../../components/ui/toast/ErrorToast'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+
+import saveMarkdownText from '../../services/saveMarkdownText'
+// 훅
+import useNote from '../../hooks/useNote'
+import useChat from '../../hooks/useChat'
+import useSendChatMessage from '../../hooks/useSendChatMessage'
+import useSaveSession from '../../hooks/useSaveSession'
+import useChatConnection from '../../hooks/useChatConnection'
+import useDeleteSession from '../../hooks/useDeleteSession'
+// template
+import useSaveTemplate from '../../hooks/template/useSaveTemplate'
+import useTemplate from '../../hooks/template/useTemplate'
+import useDeleteTemplate from '../../hooks/template/useDeleteTemplate'
+import useDeleteFolder from '../../hooks/template/useDeleteFolder'
+import useUpdateFolderName from '../../hooks/template/useUpdateFolderName'
+// memo
+import useSaveMemo from '../../hooks/memo/useSaveMemo'
+import useGetMemo from '../../hooks/memo/useGetMemo'
+import useDeleteMemo from '../../hooks/memo/useDeleteMemo'
+// git
+import useGit from '../../hooks/git/useGit'
+import useGetGithubFile from '../../hooks/git/useGetGithubFile'
+import useGithubFile from '../../hooks/git/useGithubFile'
+import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
+import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
+
+const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [name, setName] = useState('')
+  const [githubName, setGithubName] = useState('')
+  const [templateName, setTemplateName] = useState('')
+  const [memoName, setMemoName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
+  const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
+  const [githubText, setGithubText] = useState('')
+  const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
+
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
   const [isConnected, setIsConnected] = useState(false)
   const [sessions, setSessions] = useState([])
   const [sessionId, setSessionId] = useState('')
+  const [newChatLoading, setNewChatLoading] = useState(null)
+  const [isSendMessaging, setIsSendMessaging] = useState(false)
+  const [selectedScreen, setSelectedScreen] = useState('markdown')
+  const [screen, setScreen] = useState(true)
+  const [item, setItem] = useState('')
+  const [tool, setTool] = useState(false)
+  const [memo, setMemo] = useState(false)
+  const [text, setText] = useState([])
 
-  const note = useNote(noteId)
-  const chat = useChat({ sessionId })
-  const aiModel = 'llama-3.2-korean-blossom-3b'
+  const { note, loading, error } = useNote(noteId)
+  const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
+  const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
+  const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
+  const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
+  const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
+
+  // 깃
+  const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
+  const {
+    getFileContent,
+    loading: gitGetFileLoading,
+    error: gitGetFileError,
+    data: gitFileData,
+  } = useGetGithubFile()
+  const {
+    createOrUpdateFile,
+    loading: gitFileLoading,
+    error: gitFileError,
+    data: gitUpdatedData,
+  } = useGithubFile()
+  const {
+    getFolderContents,
+    loading: gitFolderLoading,
+    error: gitFolderError,
+    data: gitFolderData,
+    setData: gitFolderSetData,
+  } = useGetGithubFolder()
+  const {
+    getBlobFile,
+    loading: gitBlobFileLoading,
+    error: gitBlobFileError,
+    data: gitBlobFileData,
+  } = useGetGithubBlobFile()
+  const isGitLoading =
+    gitBlobFileLoading || gitFolderLoading || gitFileLoading || gitGetFileLoading || gitLoading
+  const isGitError =
+    gitError || gitGetFileError || gitFileError || gitFolderError || gitBlobFileError
+  const gitErrorMessage = gitError
+    ? gitError.message
+    : gitGetFileError
+    ? gitGetFileError.message
+    : gitFileError
+    ? gitFileError.message
+    : gitFolderError
+    ? gitFolderError.message
+    : gitBlobFileError
+    ? gitBlobFileError.message
+    : null
+
+  // 메모
+  const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
+  const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
+  const { deleteMemo, loading: delMemoLoading, error: delMemoError } = useDeleteMemo()
+  const isMemoLoading = saveMemoLoading || getMemoLoading || delMemoLoading
+  const isMemoError = saveMemoError || getMemoError || delMemoError
+  const memoErrorMessage = saveMemoError
+    ? saveMemoError.message
+    : getMemoError
+    ? getMemoError.message
+    : delMemoError
+    ? delMemoError.message
+    : null
+
+  // 템플릿
+  const { saveTemplate, loading: saveTemplateLoding, error: saveTemplateError } = useSaveTemplate()
+  const { getTemplates, loading: templateLoding, error: templateError, templates } = useTemplate()
+  const {
+    deleteTemplate,
+    loading: delTemplateLoading,
+    error: delTemplateError,
+  } = useDeleteTemplate()
+  const { deleteFolder, loading: delFolderLoading, error: delFolderError } = useDeleteFolder()
+  const {
+    updateFolderName,
+    loading: updateFolderLoading,
+    error: updateFolderError,
+  } = useUpdateFolderName()
+  const isTemplateLoading =
+    saveTemplateLoding ||
+    templateLoding ||
+    delTemplateLoading ||
+    delFolderLoading ||
+    updateFolderLoading
+  const isTemplateError =
+    saveTemplateError || templateError || delTemplateError || delFolderError || updateFolderError
+  const templateErrorMessage = saveTemplateError
+    ? saveTemplateError.message
+    : templateError
+    ? templateError.message
+    : delTemplateError
+    ? delTemplateError.message
+    : updateFolderError
+    ? updateFolderError.message
+    : null
+
+  const aiModel = 'exaone-3.5-7.8b-instruct'
+  //  'llama-3.2-korean-blossom-3b'
+
+  const toast = useToast()
+
+  // 에러 처리
+  useEffect(() => {
+    if (error || sessionError || messageError || chatError) {
+      const errorMessage =
+        error?.message || sessionError?.message || messageError?.message || chatError?.message
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
+      })
+    }
+  }, [error, sessionError, messageError, chatError, toast])
 
   const handleTitleChange = (e) => {
-    setName(e.target.value)
+    selectedScreen === 'markdown'
+      ? setName(e.target.value)
+      : selectedScreen === 'template'
+      ? setTemplateName(e.target.value)
+      : selectedScreen === 'memo'
+      ? setMemoName(e.target.value)
+      : selectedScreen === 'git' && setGithubName(e.target.value)
   }
 
   // 최초 markdowntext 불러옴
@@ -96,31 +254,41 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
 
   // 연결 확인
   const handleCheckConnection = async () => {
-    const message = await checkConnection()
-    if (message) {
-      setIsConnected(true)
-    } else {
+    try {
+      const connect = await chatConnection()
+      if (connect?.status === 200) {
+        setIsConnected(true)
+      } else {
+        setIsConnected(false)
+      }
+    } catch (err) {
       setIsConnected(false)
     }
   }
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
+    setQuestionText('')
+    if (connectError || questionText === '' || sessionError || messageError) return
+
     try {
+      setNewChatLoading(true)
       const maxLen = 30
       const title = questionText.length > maxLen ? questionText.slice(0, maxLen) : questionText
 
       const session = await saveSession(noteId, title)
+
       setSessions((s) => [...s, session])
       setMessages((m) => [...m, { role: 'user', content: questionText }])
       const response = await sendChatMessage(session.sessionId, aiModel, questionText)
       let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-      setQuestionText('')
       setBoxForm('chatBox')
       setSessionId(session.sessionId)
     } catch (error) {
       console.log('세션 생성 실패: ' + error)
+    } finally {
+      setNewChatLoading(null)
     }
   }
 
@@ -132,6 +300,8 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
 
   // 채팅 내역 조회
   useEffect(() => {
+    if (chatError) return
+
     if (boxForm === 'chatBox' && Array.isArray(chat)) {
       setMessages(chat)
     }
@@ -139,126 +309,536 @@ const NoteScreen = ({ noteId, handleUpdateNote }) => {
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
+    setQuestionText('')
+    if (messageError) return
+
     setMessages((m) => [...m, { role: 'user', content: questionText }])
     try {
-      console.log('세션id: ', sessionId)
       const response = await sendChatMessage(sessionId, aiModel, questionText)
-      console.log(response)
       let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-
-      setQuestionText('')
+      refetch()
     } catch (error) {
       console.log('메시지 보내기 실패: ' + error)
       setMessages((m) => [...m, { role: 'assistant', content: '에러' }])
     }
   }
 
-  return (
-    <Flex direction="column" m="auto">
-      <Flex display="flex" alignItems="center" justifyContent="center">
-        <Icon as={PiNotebookFill} />
-        <Input
-          value={name}
-          size="xl"
-          fontSize="18px"
-          variant="unstyled"
-          mx="10px"
-          onChange={handleTitleChange}
-          w="40vw"
-          maxLength={35}
-          _focus={{
-            bg: 'gray.200',
-          }}
-        />
-        <Icon
-          as={PiCheckFatFill}
-          color="blue.400"
-          cursor="pointer"
-          onClick={() => handleUpdateNote(noteId, name)}
-        />
-      </Flex>
+  // loading 초기화
+  useEffect(() => {
+    if (loading) {
+      setBoxForm('preview')
+    }
+  }, [loading])
 
-      <Flex position="relative" gap="5" justifyContent="center">
-        <Box w="600px" direction="column">
-          <UtilityBox />
-          <MarkdownInputBox markdownText={markdownText} setMarkdownText={setMarkdownText} />
-        </Box>
-        <Box w="600px" position="relative">
-          {boxForm === 'preview' ? (
-            <Box w="640px" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                boxForm={boxForm}
-                handleCheckConnection={handleCheckConnection}
+  // 세션 삭제
+  const handleDeleteSession = async (sessionId) => {
+    if (delSessionError) return
+
+    try {
+      await deleteSession(sessionId)
+      setSessions((s) => s.filter((session) => session.sessionId !== sessionId))
+    } catch (error) {
+      console.log('세션 삭제 실패: ' + error)
+    }
+  }
+
+  // 클립보드 복사
+  const handleCopyMarkdown = () => {
+    navigator.clipboard.writeText(
+      selectedScreen === 'markdown'
+        ? markdownText
+        : selectedScreen === 'template'
+        ? templateText
+        : selectedScreen === 'memo'
+        ? memoText
+        : selectedScreen === 'git' && githubText
+    )
+  }
+
+  // 파일 추출
+  const exportMarkdown = () => {
+    const blob = new Blob(
+      [
+        selectedScreen === 'markdown'
+          ? markdownText
+          : selectedScreen === 'template'
+          ? templateText
+          : selectedScreen === 'memo'
+          ? memoText
+          : selectedScreen === 'git' && githubText,
+      ],
+      { type: 'text/markdown;charset=utf-8' }
+    )
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${name}.md`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  // 아이템(이모지, 로고) 선택
+  const handleItemSelect = (item) => {
+    if (item.native) {
+      setItem(item.native)
+    } else {
+      const data = new URL(item.src).pathname
+      setItem(
+        `<img src="https://img.shields.io/badge/${
+          data.split('/')[1]
+        }-edf2f7?style=flat-square&logo=${data.split('/')[1]}&logoColor=${data.split('/')[2]}"> `
+      )
+    }
+  }
+
+  // Base64 디코딩, UTF-8 변환
+  useEffect(() => {
+    if (gitFileData) {
+      const decodedContent = atob(gitFileData)
+
+      const byteArray = new Uint8Array(decodedContent.length)
+      for (let i = 0; i < decodedContent.length; i++) {
+        byteArray[i] = decodedContent.charCodeAt(i)
+      }
+      const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
+
+      setGithubText(decodedText)
+    }
+  }, [gitFileData])
+
+  // Base64 디코딩, UTF-8 변환
+  useEffect(() => {
+    if (gitBlobFileData) {
+      const decodedContent = atob(gitBlobFileData)
+
+      const byteArray = new Uint8Array(decodedContent.length)
+      for (let i = 0; i < decodedContent.length; i++) {
+        byteArray[i] = decodedContent.charCodeAt(i)
+      }
+      const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(byteArray)
+
+      setGithubText(decodedText)
+    }
+  }, [gitBlobFileData])
+
+  // 깃 파일 조회
+  const handleGetClick = useCallback(
+    (repo, path) => {
+      getFileContent({ owner: user.githubId, repo, path })
+    },
+    [user.githubId, getFileContent]
+  )
+
+  // 깃 정보 조회
+  const handleGitLoad = useCallback(() => {
+    if (user && user.userId) {
+      getRepo({ userId: user.userId })
+    }
+  }, [user, getRepo])
+
+  // 파일 업로드
+  const handleNewFileClick = useCallback(
+    async (repo, path, message, sha, newPath) => {
+      try {
+        await createOrUpdateFile({
+          owner: user.githubId,
+          repo,
+          path,
+          message,
+          content: githubText,
+          sha,
+          newPath,
+        })
+        handleGitLoad()
+      } catch (error) {
+        console.error('파일 작업 실패:', error)
+      }
+    },
+    [user.githubId, createOrUpdateFile, githubText, handleGitLoad]
+  )
+
+  // 깃 폴더 조회
+  const handleGetFolderClick = useCallback(
+    (repo, sha) => {
+      getFolderContents({ owner: user.githubId, repo, sha })
+    },
+    [user.githubId, getFolderContents]
+  )
+
+  // 깃 폴더안 파일 조회
+  const handleGetBlobFileClick = useCallback(
+    (repo, sha) => {
+      getBlobFile({ owner: user.githubId, repo, sha })
+    },
+    [user.githubId, getBlobFile]
+  )
+
+  // 템플릿 저장
+  const handleSaveTemplate = async (folderId, templateId, folderName, title, description) => {
+    await saveTemplate(
+      user.userId,
+      folderId,
+      templateId,
+      folderName,
+      title,
+      description,
+      templateText
+    )
+    handleGetTemplates()
+  }
+
+  // 템플릿 삭제
+  const handleDelTemplate = async (templateId) => {
+    await deleteTemplate(templateId)
+    handleGetTemplates()
+  }
+
+  // 템플릿 폴더 삭제
+  const handleDelFolder = async (folderId) => {
+    await deleteFolder(folderId)
+    handleGetTemplates()
+  }
+
+  // 템플릿 폴더 업데이트
+  const handleUpdateFolder = async (folderId, folderName) => {
+    await updateFolderName(folderId, folderName)
+    handleGetTemplates()
+  }
+
+  // 템플릿 조회
+  const handleGetTemplates = () => {
+    if (isTemplateLoading) return
+
+    getTemplates({ userId: user.userId })
+  }
+
+  // 메모 저장/업데이트
+  const handleSaveMemoClick = async (memoId) => {
+    if (saveMemoError) return
+
+    try {
+      const response = await saveMemo(
+        user.userId,
+        selectedScreen === 'markdown'
+          ? markdownText
+          : selectedScreen === 'template'
+          ? templateText
+          : selectedScreen === 'memo'
+          ? memoText
+          : selectedScreen === 'git' && githubText,
+        memoId
+      )
+      if (memoId) {
+        setText((t) =>
+          t.map((memo) =>
+            memo.memoId === memoId
+              ? {
+                  ...memo,
+                  text: response.text,
+                  createdAt: response.createdAt,
+                  updatedAt: response.updatedAt,
+                }
+              : memo
+          )
+        )
+      } else {
+        setText((t) => [
+          ...t,
+          {
+            memoId: response.id,
+            text: response.text,
+            createdAt: response.createdAt,
+            updatedAt: response.updatedAt,
+          },
+        ])
+      }
+      return response.id
+    } catch (error) {
+      console.error('메모 저장 실패: ', error)
+    }
+  }
+
+  // 메모 조회
+  useEffect(() => {
+    if (getMemoError) return
+
+    if (memo && memoData) {
+      setText(memoData)
+    }
+  }, [memo, memoData])
+
+  // 메모 삭제
+  const handelDelMemoClick = async (memoId) => {
+    if (delMemoError) return
+
+    try {
+      await deleteMemo(memoId)
+      setText((t) => t.filter((memo) => memo.memoId !== memoId))
+    } catch (error) {
+      console.error('메모 삭제 실패: ', error)
+    }
+  }
+
+  return (
+    <Flex
+      direction="column"
+      mx="auto"
+      my="15px"
+      px="20px"
+      py="10px"
+      borderRadius="md"
+      bg="gray.50"
+      boxShadow="xl"
+      position="relative"
+      w="85%"
+    >
+      <BookmarkBox
+        screen={screen}
+        selectedScreen={selectedScreen}
+        setSelectedScreen={setSelectedScreen}
+      />
+      <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
+        <Flex
+          h="30px"
+          display={screen ? 'flex' : 'none'}
+          alignItems="center"
+          justifyContent="center"
+          borderBottom="1px solid"
+          borderColor="gray.300"
+        >
+          {/* <Icon as={PiNotebookFill} /> */}
+          <Input
+            value={
+              selectedScreen === 'markdown'
+                ? name
+                : selectedScreen === 'template'
+                ? templateName
+                : selectedScreen === 'memo'
+                ? memoName
+                : selectedScreen === 'git' && githubName
+            }
+            fontSize="20px"
+            pl="5px"
+            variant="unstyled"
+            onChange={handleTitleChange}
+            maxLength={35}
+            placeholder={
+              selectedScreen === 'markdown'
+                ? '제목을 입력해주세요.'
+                : selectedScreen === 'template'
+                ? '템플릿 이름을 입력해주세요.'
+                : selectedScreen === 'memo'
+                ? '메모 이름을 입력해주세요'
+                : selectedScreen === 'git' && '제목을 입력해주세요.'
+            }
+          />
+          <Icon
+            as={PiCheckFatFill}
+            color="gray.200"
+            cursor="pointer"
+            onClick={() => handleUpdateNote(noteId, name)}
+            _hover={{ color: 'blue.400' }}
+          />
+        </Flex>
+
+        <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
+          <Box flex="1" position="relative">
+            <ToolBox
+              onClearText={() => setMarkdownText('')}
+              onCopyText={handleCopyMarkdown}
+              screen={screen}
+              onScreen={() => setScreen(!screen)}
+              onExport={exportMarkdown}
+              isConnected={isConnected}
+              tool={tool}
+              setTool={setTool}
+              memo={memo}
+              setMemo={setMemo}
+              setSelectedScreen={setSelectedScreen}
+            />
+            <MarkdownInputBox
+              markdownText={
+                selectedScreen === 'markdown'
+                  ? markdownText
+                  : selectedScreen === 'template'
+                  ? templateText
+                  : selectedScreen === 'memo'
+                  ? memoText
+                  : selectedScreen === 'git' && githubText
+              }
+              setMarkdownText={
+                selectedScreen === 'markdown'
+                  ? setMarkdownText
+                  : selectedScreen === 'template'
+                  ? setTemplateText
+                  : selectedScreen === 'memo'
+                  ? setMemoText
+                  : selectedScreen === 'git' && setGithubText
+              }
+              selectedScreen={selectedScreen}
+              item={item}
+              setItem={setItem}
+              screen={screen}
+            />
+            {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
+
+            {memo && (
+              <MemoBox
+                text={text}
+                setText={setText}
+                memo={memo}
+                setMemo={setMemo}
+                setMemoText={setMemoText}
+                memorizedData={
+                  selectedScreen === 'markdown'
+                    ? markdownText
+                    : selectedScreen === 'template'
+                    ? templateText
+                    : selectedScreen === 'memo'
+                    ? memoText
+                    : selectedScreen === 'git' && githubText
+                }
+                selectedScreen={selectedScreen}
+                setSelectedScreen={setSelectedScreen}
+                handleSaveMemoClick={handleSaveMemoClick}
+                handelDelMemoClick={handelDelMemoClick}
+                isLoading={isMemoLoading}
+                isError={isMemoError}
+                errorMessage={memoErrorMessage}
               />
-              <MarkdownPreview markdownText={markdownText} />
-            </Box>
-          ) : boxForm === 'chat' ? (
-            <Box w="600px" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
+            )}
+          </Box>
+
+          <Box id="feature" flex="1" position="relative">
+            {/* 공통 UtilityBox */}
+            <UtilityBox
+              setBoxForm={setBoxForm}
+              handleCheckConnection={handleCheckConnection}
+              boxForm={boxForm}
+              isConnected={isConnected}
+              handleGitLoad={handleGitLoad}
+              handleGetTemplates={handleGetTemplates}
+              setSelectedScreen={setSelectedScreen}
+            />
+
+            {boxForm === 'preview' && (
+              <MarkdownPreview
+                markdownText={
+                  selectedScreen === 'markdown'
+                    ? markdownText
+                    : selectedScreen === 'template'
+                    ? templateText
+                    : selectedScreen === 'memo'
+                    ? memoText
+                    : selectedScreen === 'git' && githubText
+                }
+                screen={screen}
               />
+            )}
+
+            {boxForm === 'chat' && (
               <SessionList
                 sessions={sessions}
                 handleSessionId={handleSessionId}
+                handleDeleteSession={handleDeleteSession}
                 setBoxForm={setBoxForm}
                 setMessages={setMessages}
-                isConnected={isConnected}
+                connectError={connectError}
+                delSessionError={delSessionError}
+                connectLoading={connectLoading}
+                delSessionLoading={delSessionLoading}
               />
-            </Box>
-          ) : boxForm === 'newChat' ? (
-            <Box w="600px" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-              />
+            )}
+
+            {boxForm === 'newChat' && (
               <NewChatBox
                 messages={messages}
-                isConnected={isConnected}
                 questionText={questionText}
                 setQuestionText={setQuestionText}
                 handleCreateSession={handleCreateSession}
                 handleSendChatMessage={handleSendChatMessage}
+                loading={newChatLoading}
                 noteId={noteId}
+                connectError={connectError}
+                connectLoading={connectLoading}
+                isSendMessaging={isSendMessaging}
+                setIsSendMessaging={setIsSendMessaging}
               />
-            </Box>
-          ) : boxForm === 'chatBox' ? (
-            <Box w="600px" flex="1">
-              <UtilityBox
-                setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
-                boxForm={boxForm}
-              />
-              <ChatBox messages={messages} isConnected={isConnected} sessionId={sessionId} />
-            </Box>
-          ) : null}
-          <Flex
-            flexDirection="column"
-            justify="center"
-            position="absolute"
-            bottom="5"
-            left="50%"
-            transform="translate(-50%)"
-            zIndex="1000"
-          >
-            {boxForm === 'chatBox' ? (
-              <Box w="600px">
-                <Questionbar
-                  questionText={questionText}
-                  setQuestionText={setQuestionText}
-                  handleSendChatMessage={handleSendChatMessage}
-                />
-              </Box>
-            ) : (
-              <></>
             )}
-          </Flex>
-        </Box>
-      </Flex>
+
+            {boxForm === 'chatBox' && (
+              <>
+                <ChatBox
+                  messages={messages}
+                  chatLoading={chatLoading}
+                  messageLoading={messageLoading}
+                />
+                <Flex
+                  flexDirection="column"
+                  justify="center"
+                  position="absolute"
+                  bottom="5"
+                  left="50%"
+                  transform="translate(-50%)"
+                  zIndex="1000"
+                >
+                  <Box w="600px">
+                    <Questionbar
+                      questionText={questionText}
+                      setQuestionText={setQuestionText}
+                      handleSendChatMessage={handleSendChatMessage}
+                      isSendMessaging={isSendMessaging}
+                      setIsSendMessaging={setIsSendMessaging}
+                    />
+                  </Box>
+                </Flex>
+              </>
+            )}
+
+            {boxForm === 'template' && (
+              <TemplateScreen
+                setName={setTemplateName}
+                setTemplateText={setTemplateText}
+                screen={screen}
+                handleSaveTemplate={handleSaveTemplate}
+                handleDelTemplate={handleDelTemplate}
+                handleDelFolder={handleDelFolder}
+                handleUpdateFolder={handleUpdateFolder}
+                templates={templates}
+                isLoading={isTemplateLoading}
+                isError={isTemplateError}
+                errorMessage={templateErrorMessage}
+              />
+            )}
+
+            {boxForm === 'git' && (
+              <GitScreen
+                name={githubName}
+                setName={setGithubName}
+                setGithubText={setGithubText}
+                data={gitRepoData}
+                githubId={user.githubId}
+                screen={screen}
+                handleGetClick={handleGetClick}
+                handleNewFileClick={handleNewFileClick}
+                handleGetFolderClick={handleGetFolderClick}
+                handleGetBlobFileClick={handleGetBlobFileClick}
+                gitUpdatedData={gitUpdatedData}
+                gitFolderData={gitFolderData}
+                gitFolderSetData={gitFolderSetData}
+                isLoading={isGitLoading}
+                isError={isGitError}
+                errorMessage={gitErrorMessage}
+              />
+            )}
+          </Box>
+        </Flex>
+      </Box>
+      {/* 로딩 시 Spinner */}
+      {(loading || updateLoading) && <LoadingSpinner />}
     </Flex>
   )
 }

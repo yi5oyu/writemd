@@ -32,10 +32,10 @@ HTML, 리치 텍스트(RTF) 등으로 쉽게 변환이 가능하며, README 파�
   )
   return (
     <Flex gap="4" h="full" flex="1">
-      <Box w="640px" direction="column">
+      <Box w="100%" direction="column">
         <MarkdownInputBox markdownText={md} setMarkdownText={setMd} mode={'home'} />
       </Box>
-      <Box w="640px" direction="column">
+      <Box w="100%" direction="column">
         <MarkdownPreview markdownText={md} mode={'home'} />
       </Box>
     </Flex>

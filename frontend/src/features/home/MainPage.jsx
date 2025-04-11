@@ -14,9 +14,10 @@ const MainPage = () => {
       // w="100%"
       direction="column"
       my="15px"
-      p="20px"
+      py="20px"
+      px="25px"
       borderRadius="md"
-      bg="gray.50"
+      bg="gray.100"
       boxShadow="xl"
     >
       {/* w="100%" */}

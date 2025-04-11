@@ -4,7 +4,7 @@ import MarkdownInputBox from '../markdown/MarkdownInputBox'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 import TutorialNavigator from '../../components/ui/navigator/TutorialNavigator'
 import { TutorialBasicContents as BasicContents } from '../../data/TutorialBasicContents'
-import { TutorialContents as contents } from '../../data/tutorialContents'
+import { TutorialContents as contents } from '../../data/TutorialContents'
 
 const TutorialPage = () => {
   const [currentStep, setCurrentStep] = useState(0)

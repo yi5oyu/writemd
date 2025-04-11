@@ -2,7 +2,13 @@ import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
 import MainPage from '../../features/home/MainPage'
 
-const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote, handleCreateSession }) => {
+const Screen = ({
+  currentScreen,
+  handleSaveNote,
+  handleUpdateNote,
+  handleCreateSession,
+  isFold,
+}) => {
   return (
     <>
       {currentScreen === 'home' ? (
@@ -18,6 +24,7 @@ const Screen = ({ currentScreen, handleSaveNote, handleUpdateNote, handleCreateS
           handleUpdateNote={handleUpdateNote}
           noteId={currentScreen}
           handleCreateSession={handleCreateSession}
+          isFold={isFold}
         />
       )}
     </>

@@ -7,12 +7,9 @@ import useAuth from '../hooks/useAuth'
 const Home = () => {
   const user = useAuth()
 
-  /*
-    user
-    avatarUrl, githubId, htmlUrl, name
-  */
   const [currentScreen, setCurrentScreen] = useState('home')
   const [notes, setNotes] = useState([])
+  const [isFold, setIsFold] = useState(true)
 
   useEffect(() => {
     if (user && user.notes) {
@@ -28,12 +25,15 @@ const Home = () => {
         user={user}
         currentScreen={currentScreen}
         setCurrentScreen={setCurrentScreen}
+        isFold={isFold}
+        setIsFold={setIsFold}
       />
       <Screen
         user={user}
         setNotes={setNotes}
         currentScreen={currentScreen}
         setCurrentScreen={setCurrentScreen}
+        isFold={isFold}
       />
     </Flex>
   )

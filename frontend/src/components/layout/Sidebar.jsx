@@ -15,10 +15,17 @@ import NoteBox from '../../features/note/NoteBox'
 const MotionBox = motion(Box)
 const MotionFlex = motion(Flex)
 
-const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, handleDeleteNote }) => {
+const Sidebar = ({
+  notes,
+  user,
+  currentScreen,
+  setCurrentScreen,
+  handleDeleteNote,
+  isFold,
+  setIsFold,
+}) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
-  const [isFold, setIsFold] = useState(true)
 
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
@@ -61,7 +68,7 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, handleDeleteNot
           animate={isSideBoxVisible ? 'open' : 'closed'}
           variants={sidebarVariants}
           borderRadius="xl"
-          m="15px"
+          m="15px 0 15px 15px"
           boxShadow="xl"
           overflow="hidden"
           onClick={() => setIsSideBoxVisible(!isSideBoxVisible)}
@@ -358,7 +365,7 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, handleDeleteNot
           </Flex>
         </MotionBox>
       ) : (
-        <Flex display="fixed" top="0" left="0" zIndex="1000" my="5px" h="50px">
+        <Flex position="fixed" top="0" left="0" zIndex="9999" mt="15px">
           <SideBtn
             icon={TbBookOff}
             hoverIcon={TbBook}

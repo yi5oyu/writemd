@@ -21,6 +21,7 @@
     "axios": "^1.7.9",
     "chakra-react-select": "^5.0.4",
     "chakra-ui-markdown-renderer": "^4.1.0",
+    "date-fns": "^4.1.0",
     "framer-motion": "^6.2.8",
     "lodash": "^4.17.21",
     "mermaid": "^11.4.1",

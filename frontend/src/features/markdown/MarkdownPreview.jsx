@@ -8,13 +8,13 @@ import remarkEmoji from 'remark-emoji'
 import rehypeRaw from 'rehype-raw'
 import ChakraMarkdownGithubLight from '../../components/ui/markdown/ChakraMarkdownGithubLight'
 
-const MarkdownPreview = ({ markdownText, mode }) => {
+const MarkdownPreview = ({ markdownText, mode, screen }) => {
   return (
     <Box
       bg="white"
       borderRadius="md"
       boxShadow="md"
-      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
+      h={mode ? '100%' : screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
       overflowY="auto"
       px="7"
       pt="2"

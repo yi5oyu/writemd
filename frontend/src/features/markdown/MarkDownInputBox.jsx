@@ -164,7 +164,7 @@ const MarkdownInputBox = ({
   return (
     <Box
       position="relative"
-      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
+      h={mode ? '100%' : screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
       w="100%"
       boxShadow="md"
       bg="white"

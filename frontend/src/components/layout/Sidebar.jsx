@@ -16,6 +16,7 @@ import { FiHome, FiFolder, FiMinusSquare, FiPlusSquare } from 'react-icons/fi'
 import { TbBookOff, TbBook } from 'react-icons/tb'
 import { IoMdClose, IoMdCreate } from 'react-icons/io'
 import { PiNoteLight } from 'react-icons/pi'
+import { RiToolsFill } from 'react-icons/ri'
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
@@ -27,7 +28,17 @@ import ErrorToast from '../ui/toast/ErrorToast'
 const MotionBox = motion(Box)
 const MotionFlex = motion(Flex)
 
-const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes, isFold, setIsFold }) => {
+const Sidebar = ({
+  notes,
+  user,
+  currentScreen,
+  setCurrentScreen,
+  setNotes,
+  isFold,
+  setIsFold,
+  screen,
+  setScreen,
+}) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
 
@@ -193,6 +204,28 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes, isFol
                           <Text>새 노트</Text>
                         </Flex>
 
+                        {!screen && (
+                          <Flex
+                            px="5px"
+                            cursor="pointer"
+                            borderRadius="md"
+                            alignItems="center"
+                            color={currentScreen === 'newnote' ? 'blue.500' : 'gray.600'}
+                            _hover={{
+                              bg: 'white',
+                              boxShadow: 'md',
+                              color: currentScreen === 'newnote' ? 'blue.500' : 'black',
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setScreen(!screen)
+                            }}
+                          >
+                            <SideMenuIcon icon={RiToolsFill} />
+                            <Text>도구 상자</Text>
+                          </Flex>
+                        )}
+
                         <Flex direction="column" borderTop="1px" borderColor="gray.300" mt="3">
                           <Flex
                             mt="2"
@@ -293,6 +326,17 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes, isFol
                         }}
                         mode={true}
                       />
+                      {!screen && (
+                        <SideBtn
+                          icon={RiToolsFill}
+                          color={currentScreen === 'folder' ? 'blue.500' : 'gray.500'}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setScreen(!screen)
+                          }}
+                          mode={true}
+                        />
+                      )}
                     </>
                   )}
                 </>
@@ -415,16 +459,30 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes, isFol
           </Flex>
         </MotionBox>
       ) : (
-        <Flex position="fixed" top="0" left="0" zIndex="9999" mt="15px">
-          <SideBtn
-            icon={TbBookOff}
-            hoverIcon={TbBook}
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsFold(!isFold)
-            }}
-          />
-        </Flex>
+        <>
+          <Flex position="fixed" top="0" left="0" zIndex="9999" mt="15px">
+            <SideBtn
+              icon={TbBookOff}
+              hoverIcon={TbBook}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsFold(!isFold)
+              }}
+            />
+          </Flex>
+          {!screen && (
+            <Flex position="fixed" top="35px" left="0" zIndex="9999" mt="15px">
+              <SideBtn
+                icon={RiToolsFill}
+                hoverIcon={RiToolsFill}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setScreen(!screen)
+                }}
+              />
+            </Flex>
+          )}
+        </>
       )}
     </>
   )

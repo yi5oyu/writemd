@@ -196,7 +196,7 @@ const GitScreen = ({
   return (
     <>
       <Flex
-        h={'calc(100vh - 145px)'}
+        h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         border="1px solid"
         borderColor="gray.200"
         borderRadius="md"

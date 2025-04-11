@@ -8,7 +8,16 @@ import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 import ErrorToast from '../ui/toast/ErrorToast'
 import MainPage from '../../features/home/MainPage'
 
-const Screen = ({ currentScreen, setCurrentScreen, user, setNotes, isFold }) => {
+const Screen = ({
+  currentScreen,
+  setCurrentScreen,
+  user,
+  setNotes,
+  isFold,
+  setIsFold,
+  screen,
+  setScreen,
+}) => {
   const { saveNote, loading, error: saveError } = useSaveNote()
   const { updateNoteName, loading: updateLoading, error: updageError } = useUpdateNoteName()
   const [error, setError] = useState(false)
@@ -75,7 +84,10 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes, isFold }) => 
           handleUpdateNote={handleUpdateNote}
           noteId={currentScreen}
           isFold={isFold}
+          setIsFold={setIsFold}
           user={user}
+          screen={screen}
+          setScreen={setScreen}
         />
       )}
     </>

@@ -10,6 +10,7 @@ const Home = () => {
   const [currentScreen, setCurrentScreen] = useState('home')
   const [notes, setNotes] = useState([])
   const [isFold, setIsFold] = useState(true)
+  const [screen, setScreen] = useState(true)
 
   useEffect(() => {
     if (user && user.notes) {
@@ -27,6 +28,8 @@ const Home = () => {
         setCurrentScreen={setCurrentScreen}
         isFold={isFold}
         setIsFold={setIsFold}
+        screen={screen}
+        setScreen={setScreen}
       />
 
       <Screen
@@ -35,6 +38,9 @@ const Home = () => {
         currentScreen={currentScreen}
         setCurrentScreen={setCurrentScreen}
         isFold={isFold}
+        setIsFold={setIsFold}
+        screen={screen}
+        setScreen={setScreen}
       />
     </Flex>
   )

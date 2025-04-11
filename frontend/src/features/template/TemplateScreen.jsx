@@ -38,7 +38,7 @@ const TemplateScreen = ({
       borderRadius="md"
       boxShadow="md"
       bg="gray.100"
-      h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 90px)'}
+      h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
     >
       <Box
         mx="15px"

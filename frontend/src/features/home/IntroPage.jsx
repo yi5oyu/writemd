@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Box, Flex } from '@chakra-ui/react'
-import MarkdownInputBox from '../markdown/MarkdownInputBox'
-import MarkdownPreview from '../markdown/MarkdownPreview'
+import MarkdownInputBox from '../markdown/InputBox'
+import MarkdownPreview from '../markdown/PreviewBox'
 
 const IntroPage = () => {
   const [md, setMd] = useState(

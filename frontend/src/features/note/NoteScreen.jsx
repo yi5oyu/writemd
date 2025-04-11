@@ -4,10 +4,10 @@ import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
 
 // UI
-import MarkdownInputBox from '../markdown/MarkdownInputBox'
+import MarkdownInputBox from '../markdown/InputBox'
 import UtilityBox from '../chat/UtilityBox'
 import Questionbar from '../chat/Questionbar'
-import MarkdownPreview from '../markdown/MarkdownPreview'
+import MarkdownPreview from '../markdown/PreviewBox'
 import ChatBox from '../chat/ChatBox'
 import NewChatBox from '../chat/NewChatBox'
 import SessionList from '../chat/SessionList'

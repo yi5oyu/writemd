@@ -14,7 +14,7 @@ import SearchBar from '../../components/ui/search/SearchBar'
 import ToolDataPicker from './ToolDataPicker'
 import data from '../../data/toolData.json'
 import ToolInfoBox from './ToolInfoBox'
-import MarkdownPreview from './MarkdownPreview'
+import MarkdownPreview from './PreviewBox'
 
 const ToolScreen = ({ boxForm, setItem, screen }) => {
   const [search, setSearch] = useState('')

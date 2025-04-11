@@ -351,7 +351,7 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 수평선
-  thematicBreak: (props) => <Divider my="16px" {...props} />,
+  hr: (props) => <Divider my="16px" borderColor="gray.300" borderWidth="2px" {...props} />,
 
   // 목록
   ul: ({ className, ...props }) => {

@@ -121,7 +121,7 @@ const GitScreen = ({
     }
   }
 
-  // 파일 검색
+  // TODO: 파일 검색 구현
 
   // 파일 업데이트, 초기화
   useEffect(() => {

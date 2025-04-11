@@ -104,8 +104,14 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     data: gitBlobFileData,
   } = useGetGithubBlobFile()
 
+  // 메모
   const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
-  const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
+  const {
+    memo: memoData,
+    loading: getMemoLoading,
+    error: getMemoError,
+    data: memorizedData,
+  } = useGetMemo(user.userId)
   const { deleteMemo, loading: delMemoLoading, error: delMemoError } = useDeleteMemo()
 
   // 템플릿 훅
@@ -514,7 +520,17 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     if (saveMemoError) return
 
     try {
-      const response = await saveMemo(user.userId, memoText, memoId)
+      const response = await saveMemo(
+        user.userId,
+        selectedScreen === 'markdown'
+          ? markdownText
+          : selectedScreen === 'template'
+          ? templateText
+          : selectedScreen === 'memo'
+          ? memoText
+          : selectedScreen === 'git' && githubText,
+        memoId
+      )
       if (memoId) {
         setText((t) =>
           t.map((memo) => (memo.memoId === memoId ? { ...memo, text: response.text } : memo))
@@ -659,6 +675,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 memo={memo}
                 setMemo={setMemo}
                 setMemoText={setMemoText}
+                memorizedData={memorizedData}
+                selectedScreen={selectedScreen}
+                setSelectedScreen={setSelectedScreen}
                 handleSaveMemoClick={handleSaveMemoClick}
                 handelDelMemoClick={handelDelMemoClick}
                 delMemoLoading={delMemoLoading}

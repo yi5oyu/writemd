@@ -4,6 +4,7 @@ import axios from 'axios'
 const useSaveMemo = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [data, setData] = useState(null)
 
   const saveMemo = (userId, text, memoId) => {
     setLoading(true)
@@ -19,6 +20,7 @@ const useSaveMemo = () => {
         }
       )
       .then((response) => {
+        setData(text)
         return response.data
       })
       .catch((err) => {
@@ -30,7 +32,7 @@ const useSaveMemo = () => {
       })
   }
 
-  return { saveMemo, loading, error }
+  return { saveMemo, loading, error, data }
 }
 
 export default useSaveMemo

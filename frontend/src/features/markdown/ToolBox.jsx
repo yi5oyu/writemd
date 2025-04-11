@@ -5,7 +5,7 @@ import UtilityBtn from '../../components/ui/button/UtilityBtn'
 import { RiToolsFill } from 'react-icons/ri'
 import { MdSpellcheck } from 'react-icons/md'
 import { AiOutlineFullscreen, AiOutlineFullscreenExit } from 'react-icons/ai'
-import { FaFileExport, FaStickyNote, FaRegFileAlt } from 'react-icons/fa'
+import { FaFileExport, FaStickyNote } from 'react-icons/fa'
 import { BiSolidEraser } from 'react-icons/bi'
 
 const ToolBox = ({
@@ -19,7 +19,6 @@ const ToolBox = ({
   setTool,
   memo,
   setMemo,
-  setSelectedScreen,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -57,9 +56,7 @@ const ToolBox = ({
         <UtilityBtn
           icon={FaStickyNote}
           label="메모"
-          onClick={() => {
-            setMemo(!memo), setSelectedScreen('memo')
-          }}
+          onClick={() => setMemo(!memo)}
           setColor={memo ? true : false}
         />
       </Flex>

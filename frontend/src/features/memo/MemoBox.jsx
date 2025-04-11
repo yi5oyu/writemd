@@ -16,6 +16,9 @@ const MemoBox = ({
   delMemoLoading,
   saveMemoLoading,
   getMemoLoading,
+  setSelectedScreen,
+  selectedScreen,
+  memorizedData,
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedMemo, setSelectedMemo] = useState(null)
@@ -23,6 +26,7 @@ const MemoBox = ({
 
   const isLoading = delMemoLoading || saveMemoLoading || getMemoLoading
 
+  // 메모 저장
   const handleSaveMemo = async (selectedMemo) => {
     try {
       const memoId = await handleSaveMemoClick(selectedMemo ? selectedMemo : null)
@@ -31,6 +35,11 @@ const MemoBox = ({
       console.error('메모 저장 실패:', error)
     }
   }
+
+  // 화면 전환
+  useEffect(() => {
+    selectedScreen && setSelectedMemo(null)
+  }, [selectedScreen])
 
   return (
     <Draggable
@@ -77,7 +86,11 @@ const MemoBox = ({
           <IconButton
             variant="ghost"
             size="sm"
-            onClick={() => handleSaveMemo(selectedMemo)}
+            onClick={() => {
+              handleSaveMemo(selectedMemo)
+              setSelectedScreen('memo')
+              setMemoText(memorizedData)
+            }}
             icon={<Icon as={RiSave3Fill} />}
             aria-label="저장"
             isDisabled={isLoading}
@@ -107,6 +120,7 @@ const MemoBox = ({
                   onClick={() => {
                     setSelectedMemo(item.memoId)
                     setMemoText(item.text)
+                    setSelectedScreen('memo')
                   }}
                   selected={selectedMemo === item.memoId}
                   handelDelMemoClick={handelDelMemoClick}

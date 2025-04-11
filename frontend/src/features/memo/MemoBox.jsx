@@ -6,6 +6,7 @@ import Draggable from 'react-draggable'
 import MemoList from './MemoList'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
+import SearchBar from '../../components/ui/search/SearchBar'
 
 const MemoBox = ({
   text,
@@ -23,6 +24,7 @@ const MemoBox = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedMemo, setSelectedMemo] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const nodeRef = useRef(null)
 
   const toast = useToast()
@@ -49,11 +51,26 @@ const MemoBox = ({
     selectedScreen !== 'memo' && setSelectedMemo(null)
   }, [selectedScreen])
 
-  // 메모 상태
+  // 선택된 메모 데이터
   const selectedMemoData = useMemo(() => {
     if (!selectedMemo) return null
     return text.find((item) => item.memoId === selectedMemo)
   }, [text, selectedMemo])
+
+  // 검색, 정렬
+  const filteredAndSortedMemos = useMemo(() => {
+    const validText = Array.isArray(text) ? text : []
+
+    const filtered = validText.filter((item) =>
+      item.text.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
+    return filtered.sort((a, b) => {
+      if (a.memoId === selectedMemo && b.memoId !== selectedMemo) return -1
+      if (b.memoId === selectedMemo && a.memoId !== selectedMemo) return 1
+      return 0
+    })
+  }, [text, selectedMemo, searchQuery])
 
   // 에러 토스트
   useEffect(() => {
@@ -64,6 +81,8 @@ const MemoBox = ({
         render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
   }, [isError, toast])
+
+  // TODO 메모 날짜
 
   return (
     <Draggable
@@ -183,11 +202,22 @@ const MemoBox = ({
             )}
           </Box>
 
-          <Badge fontSize="md" variant="solid" colorScheme="yellow" mb="10px">
-            메모 목록 {text.length}개
-          </Badge>
-          {text.length > 0 ? (
-            text.map((item) => (
+          <SearchBar
+            placeholder="메모 검색..."
+            query={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={() => setSearchQuery('')}
+          />
+          {text.length > 0 && (
+            <Text ml="5px" fontSize="sm" color="gray.500" mb="10px">
+              {searchQuery
+                ? `검색된 메모 ${filteredAndSortedMemos.length}개`
+                : `메모 ${text.length}개`}
+            </Text>
+          )}
+
+          {filteredAndSortedMemos.length > 0 ? (
+            filteredAndSortedMemos.map((item) => (
               <Box key={item.memoId}>
                 <MemoList
                   id={item.memoId}
@@ -204,7 +234,25 @@ const MemoBox = ({
               </Box>
             ))
           ) : (
-            <Text>저장된 메모 없음.</Text>
+            <>
+              {searchQuery && text.length > 0 ? (
+                <Text py="10px" bg="gray.50" textAlign="center" borderRadius="md" color="gray.500">
+                  {searchQuery}'에 대한 검색 결과가 없습니다.
+                </Text>
+              ) : (
+                <Text
+                  px="15px"
+                  py="10px"
+                  bg="gray.50"
+                  borderRadius="md"
+                  color="gray.500"
+                  fontSize="sm"
+                >
+                  저장된 메모가 없습니다.
+                  <br />새 메모를 작성하고 저장 버튼을 누르세요.
+                </Text>
+              )}
+            </>
           )}
         </Box>
         {isLoading && <LoadingSpinner />}

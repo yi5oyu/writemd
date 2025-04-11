@@ -26,6 +26,7 @@ import { CreatableSelect } from 'chakra-react-select'
 import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
 import { FaTrash, FaEraser } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
+import SearchBar from '../../components/ui/search/SearchBar'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -321,27 +322,12 @@ const TemplateList = ({
       )}
 
       {/* 검색 */}
-      <InputGroup m="10px" w="auto">
-        <InputLeftElement pointerEvents="none">
-          <SearchIcon color="gray.400" />
-        </InputLeftElement>
-        <Input
-          placeholder="템플릿 검색..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          borderRadius="md"
-          focusBorderColor="blue.500"
-        />
-        <InputRightElement>
-          <CloseIcon
-            p="2px"
-            color="gray.400"
-            cursor="pointer"
-            _hover={{ color: 'black' }}
-            onClick={() => setSearchQuery('')}
-          />
-        </InputRightElement>
-      </InputGroup>
+      <SearchBar
+        placeholder="템플릿 검색..."
+        query={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onClick={() => setSearchQuery('')}
+      />
 
       {/* 목록 */}
       <Accordion

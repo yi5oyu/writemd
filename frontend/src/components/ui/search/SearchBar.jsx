@@ -1,22 +1,29 @@
-import { Input, InputGroup, InputLeftElement, Box } from '@chakra-ui/react'
-import { FiSearch } from 'react-icons/fi'
+import { Input, InputGroup, InputLeftElement, InputRightElement } from '@chakra-ui/react'
+import { CloseIcon, SearchIcon } from '@chakra-ui/icons'
 
-const SearchBar = ({ onSearch, onWidth }) => {
+const SearchBar = ({ placeholder, query, onChange, onClick }) => {
   return (
-    <Box w={onWidth - 40} mx="auto" my="3">
-      <InputGroup>
-        <InputLeftElement pointerEvents="none">
-          <FiSearch color="gray.300" />
-        </InputLeftElement>
-        <Input
-          type="search"
-          placeholder="검색"
-          onChange={(e) => onSearch(e.target.value)}
-          borderRadius="xl"
-          boxShadow="sm"
+    <InputGroup m="10px" w="auto">
+      <InputLeftElement pointerEvents="none">
+        <SearchIcon color="gray.400" />
+      </InputLeftElement>
+      <Input
+        placeholder={placeholder}
+        value={query}
+        onChange={onChange}
+        borderRadius="md"
+        focusBorderColor="blue.500"
+      />
+      <InputRightElement>
+        <CloseIcon
+          p="2px"
+          color="gray.400"
+          cursor="pointer"
+          _hover={{ color: 'black' }}
+          onClick={onClick}
         />
-      </InputGroup>
-    </Box>
+      </InputRightElement>
+    </InputGroup>
   )
 }
 

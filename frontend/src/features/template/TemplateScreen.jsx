@@ -14,26 +14,26 @@ const TemplateScreen = ({
   handleDelFolder,
   handleUpdateFolder,
   templates,
-  isTemplateLoading,
-  isTemplateError,
-  templateErrorMessage,
+  isLoading,
+  isError,
+  errorMessage,
 }) => {
   const toast = useToast()
 
   // 에러
   useEffect(() => {
-    if (isTemplateError) {
+    if (isError) {
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={templateErrorMessage} />,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
     }
-  }, [isTemplateError, toast])
+  }, [isError, toast])
 
   return (
     <Flex
-      filter={isTemplateLoading ? 'blur(4px)' : 'none'}
+      filter={isLoading ? 'blur(4px)' : 'none'}
       direction="column"
       borderRadius="md"
       boxShadow="md"
@@ -57,11 +57,12 @@ const TemplateScreen = ({
           handleDelFolder={handleDelFolder}
           handleUpdateFolder={handleUpdateFolder}
           templates={templates}
-          isTemplateLoading={isTemplateLoading}
+          isLoading={isLoading}
+          isDisabled={isError}
         />
       </Box>
 
-      {isTemplateLoading && <LoadingSpinner />}
+      {isLoading && <LoadingSpinner />}
     </Flex>
   )
 }

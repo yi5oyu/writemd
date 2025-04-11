@@ -55,6 +55,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
   const [githubText, setGithubText] = useState('')
   const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
+
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
@@ -77,6 +78,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
 
+  // 깃
   const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
   const {
     getFileContent,
@@ -103,18 +105,37 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     error: gitBlobFileError,
     data: gitBlobFileData,
   } = useGetGithubBlobFile()
+  const isGitLoading =
+    gitBlobFileLoading || gitFolderLoading || gitFileLoading || gitGetFileLoading || gitLoading
+  const isGitError =
+    gitError || gitGetFileError || gitFileError || gitFolderError || gitBlobFileError
+  const gitErrorMessage = gitError
+    ? gitError.message
+    : gitGetFileError
+    ? gitGetFileError.message
+    : gitFileError
+    ? gitFileError.message
+    : gitFolderError
+    ? gitFolderError.message
+    : gitBlobFileError
+    ? gitBlobFileError.message
+    : null
 
   // 메모
   const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
-  const {
-    memo: memoData,
-    loading: getMemoLoading,
-    error: getMemoError,
-    data: memorizedData,
-  } = useGetMemo(user.userId)
+  const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
   const { deleteMemo, loading: delMemoLoading, error: delMemoError } = useDeleteMemo()
+  const isMemoLoading = saveMemoLoading || getMemoLoading || delMemoLoading
+  const isMemoError = saveMemoError || getMemoError || delMemoError
+  const memoErrorMessage = saveMemoError
+    ? saveMemoError.message
+    : getMemoError
+    ? getMemoError.message
+    : delMemoError
+    ? delMemoError.message
+    : null
 
-  // 템플릿 훅
+  // 템플릿
   const { saveTemplate, loading: saveTemplateLoding, error: saveTemplateError } = useSaveTemplate()
   const { getTemplates, loading: templateLoding, error: templateError, templates } = useTemplate()
   const {
@@ -128,35 +149,14 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
     loading: updateFolderLoading,
     error: updateFolderError,
   } = useUpdateFolderName()
-
-  const isGitLoading =
-    gitBlobFileLoading || gitFolderLoading || gitFileLoading || gitGetFileLoading || gitLoading
-
-  const isGitError =
-    gitError || gitGetFileError || gitFileError || gitFolderError || gitBlobFileError
-
-  const isGitErrorMessage = gitError
-    ? gitError.message
-    : gitGetFileError
-    ? gitGetFileError.message
-    : gitFileError
-    ? gitFileError.message
-    : gitFolderError
-    ? gitFolderError.message
-    : gitBlobFileError
-    ? gitBlobFileError.message
-    : null
-
   const isTemplateLoading =
     saveTemplateLoding ||
     templateLoding ||
     delTemplateLoading ||
     delFolderLoading ||
     updateFolderLoading
-
   const isTemplateError =
     saveTemplateError || templateError || delTemplateError || delFolderError || updateFolderError
-
   const templateErrorMessage = saveTemplateError
     ? saveTemplateError.message
     : templateError
@@ -675,14 +675,22 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 memo={memo}
                 setMemo={setMemo}
                 setMemoText={setMemoText}
-                memorizedData={memorizedData}
+                memorizedData={
+                  selectedScreen === 'markdown'
+                    ? markdownText
+                    : selectedScreen === 'template'
+                    ? templateText
+                    : selectedScreen === 'memo'
+                    ? memoText
+                    : selectedScreen === 'git' && githubText
+                }
                 selectedScreen={selectedScreen}
                 setSelectedScreen={setSelectedScreen}
                 handleSaveMemoClick={handleSaveMemoClick}
                 handelDelMemoClick={handelDelMemoClick}
-                delMemoLoading={delMemoLoading}
-                getMemoLoading={getMemoLoading}
-                saveMemoLoading={saveMemoLoading}
+                isLoading={isMemoLoading}
+                isError={isMemoError}
+                errorMessage={memoErrorMessage}
               />
             )}
           </Box>
@@ -783,9 +791,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 handleDelFolder={handleDelFolder}
                 handleUpdateFolder={handleUpdateFolder}
                 templates={templates}
-                isTemplateLoading={isTemplateLoading}
-                isTemplateError={isTemplateError}
-                templateErrorMessage={templateErrorMessage}
+                isLoading={isTemplateLoading}
+                isError={isTemplateError}
+                errorMessage={templateErrorMessage}
               />
             )}
 
@@ -804,9 +812,9 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
                 gitUpdatedData={gitUpdatedData}
                 gitFolderData={gitFolderData}
                 gitFolderSetData={gitFolderSetData}
-                isGitLoading={isGitLoading}
-                isGitError={isGitError}
-                isGitErrorMessage={isGitErrorMessage}
+                isLoading={isGitLoading}
+                isError={isGitError}
+                errorMessage={gitErrorMessage}
               />
             )}
           </Box>

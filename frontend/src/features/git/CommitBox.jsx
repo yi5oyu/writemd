@@ -22,7 +22,7 @@ const CommitBox = ({ handleCommitClick, isDisabled, setSelectedFile, setGithubTe
         _focus={{
           borderColor: 'gray.400',
         }}
-        disabled={isDisabled}
+        isDisabled={isDisabled}
         placeholder="docs: 변경 내용"
         title="commit message"
       />

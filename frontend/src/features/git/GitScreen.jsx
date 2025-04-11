@@ -18,12 +18,12 @@ const GitScreen = ({
   handleNewFileClick,
   handleGetFolderClick,
   handleGetBlobFileClick,
-  isGitLoading,
   gitUpdatedData,
   gitFolderData,
   gitFolderSetData,
-  isGitError,
-  isGitErrorMessage,
+  isLoading,
+  isError,
+  errorMessage,
 }) => {
   const [active, setActive] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -37,7 +37,7 @@ const GitScreen = ({
   // 리스트 토글, 폴더 선택/토글
   const handleRepoClick = useCallback(
     (repoId, repo, branch) => {
-      if (isGitLoading) return
+      if (isLoading) return
 
       setSelectedFile(() => ({
         repo: repo,
@@ -49,25 +49,25 @@ const GitScreen = ({
       setName('')
       setGithubText('')
     },
-    [isGitLoading, gitFolderSetData, active, setName, setGithubText]
+    [isLoading, gitFolderSetData, active, setName, setGithubText]
   )
 
   // 파일 클릭
   const handleFileClick = useCallback(
     (repo, path, sha, type) => {
-      if (isGitLoading) return
+      if (isLoading) return
 
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetClick(repo, path)
       setName(path)
     },
-    [isGitLoading, handleGetClick, setName]
+    [isLoading, handleGetClick, setName]
   )
 
   // 파일 업로드
   const handleCommitClick = (message) => {
-    if (isGitLoading || !name || !selectedFile) return
+    if (isLoading || !name || !selectedFile) return
 
     let path = selectedFile?.path
       ? `${selectedFile.path.substring(0, selectedFile.path.lastIndexOf('/'))}/${name}`
@@ -141,39 +141,39 @@ const GitScreen = ({
   // 폴더 클릭
   const handleFolderClick = useCallback(
     (repo, path, sha, type, folder) => {
-      if (isGitLoading) return
+      if (isLoading) return
 
       setSelectedFolder(folder)
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetFolderClick(repo, sha)
     },
-    [isGitLoading, handleGetFolderClick, setSelectedFile]
+    [isLoading, handleGetFolderClick, setSelectedFile]
   )
 
   // 폴더안 파일 클릭
   const handleBlobFileClick = useCallback(
     (repo, path, sha, type) => {
-      if (isGitLoading) return
+      if (isLoading) return
 
       setSelectedFile({ repo, path, sha, type })
       setCommit(true)
       handleGetBlobFileClick(repo, sha)
       setName(path.split('/').pop())
     },
-    [isGitLoading, handleGetBlobFileClick, setName]
+    [isLoading, handleGetBlobFileClick, setName]
   )
 
   // 에러 토스트
   useEffect(() => {
-    if (isGitError) {
+    if (isError) {
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={isGitErrorMessage} />,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
     }
-  }, [isGitError, toast])
+  }, [isError, toast])
 
   useEffect(() => {
     let defaultText = '폴더/파일을 선택해주세요.'
@@ -200,7 +200,7 @@ const GitScreen = ({
         border="1px solid"
         borderColor="gray.200"
         borderRadius="md"
-        filter={isGitLoading ? 'blur(4px)' : 'none'}
+        filter={isLoading ? 'blur(4px)' : 'none'}
         bg="gray.200"
         boxShadow="md"
       >
@@ -230,7 +230,7 @@ const GitScreen = ({
               handleCommitClick={handleCommitClick}
               setSelectedFile={setSelectedFile}
               display={commit ? 'block' : 'none'}
-              isDisabled={isGitLoading || !selectedFile}
+              isDisabled={isLoading || !selectedFile}
               setGithubText={setGithubText}
               setName={setName}
             />
@@ -238,7 +238,7 @@ const GitScreen = ({
           {repoBranches.length > 0 && (
             <Box borderRadius="md" borderColor="gray.100" m="15px 0 10px 10px" boxShadow="md">
               <GitInfoBox
-                isDisabled={isGitLoading || !selectedFile}
+                isDisabled={isLoading || !selectedFile}
                 selectedFile={selectedFile}
                 repoBranches={repoBranches}
                 githubId={githubId}
@@ -269,7 +269,7 @@ const GitScreen = ({
                             )
                           }}
                           handleFileClick={handleFileClick}
-                          isDisabled={isGitLoading}
+                          isDisabled={isLoading}
                           selectedFile={selectedFile}
                         />
                         {isActive && (
@@ -283,7 +283,7 @@ const GitScreen = ({
                             selectedFile={selectedFile}
                             selectedFolder={selectedFolder}
                             setSelectedFolder={setSelectedFolder}
-                            isDisabled={isGitLoading}
+                            isDisabled={isLoading}
                             isConnected={false}
                             currentPath=""
                           />
@@ -296,7 +296,7 @@ const GitScreen = ({
         </Box>
       </Flex>
 
-      {isGitLoading && <LoadingSpinner />}
+      {isLoading && <LoadingSpinner />}
     </>
   )
 }

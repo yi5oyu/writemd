@@ -33,9 +33,10 @@ const TemplateList = ({
   handleDelFolder,
   handleUpdateFolder,
   templates,
-  isTemplateLoading,
+  isLoading,
   setName,
   setTemplateText,
+  isDisabled,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
@@ -55,7 +56,7 @@ const TemplateList = ({
 
   // 템플릿 저장
   const saveTemplateClick = () => {
-    if (isTemplateLoading || !isTemplateValid(selectedTemplate)) return
+    if (isLoading || !isTemplateValid(selectedTemplate)) return
 
     handleSaveTemplate(
       selectedTemplate.folderId,
@@ -113,7 +114,7 @@ const TemplateList = ({
 
   // 템플릿/폴더 삭제
   const confirmDelete = () => {
-    if (isTemplateLoading) return
+    if (isLoading) return
 
     if (deleteTemplate) {
       handleDelTemplate(deleteTemplate)
@@ -144,7 +145,7 @@ const TemplateList = ({
       return
     }
 
-    if (isTemplateLoading) return
+    if (isLoading) return
 
     handleUpdateFolder(folderId, folderName)
     setEdit('')
@@ -285,7 +286,7 @@ const TemplateList = ({
                     _hover={
                       isTemplateValid(selectedTemplate) && { color: 'blue.500', bg: 'gray.100' }
                     }
-                    isDisabled={!isTemplateValid(selectedTemplate)}
+                    isDisabled={!isTemplateValid(selectedTemplate) || isDisabled}
                     onClick={(e) => {
                       !isTemplateValid(selectedTemplate) ? e.preventDefault() : saveTemplateClick()
                     }}
@@ -433,6 +434,7 @@ const TemplateList = ({
                               })))
                         }}
                         title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
+                        isDisabled={isDisabled}
                       />
                       <Button
                         p="2px"
@@ -448,6 +450,7 @@ const TemplateList = ({
                           onOpen()
                         }}
                         title="폴더 삭제"
+                        isDisabled={isDisabled}
                       />
                     </Box>
                     <AccordionIcon />
@@ -520,6 +523,7 @@ const TemplateList = ({
                               onOpen()
                             }}
                             title="템플릿 삭제"
+                            isDisabled={isDisabled}
                           />
                         </Flex>
                       ))}

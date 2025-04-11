@@ -6,7 +6,6 @@ import com.writemd.backend.dto.GitRepoDTO;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;

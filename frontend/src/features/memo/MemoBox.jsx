@@ -222,6 +222,8 @@ const MemoBox = ({
                 <MemoList
                   id={item.memoId}
                   text={item.text}
+                  createdAt={item.createdAt}
+                  updatedAt={item.updatedAt}
                   onClick={() => {
                     setSelectedMemo(item.memoId)
                     setMemoText(item.text)

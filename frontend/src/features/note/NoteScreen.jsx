@@ -533,10 +533,27 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       )
       if (memoId) {
         setText((t) =>
-          t.map((memo) => (memo.memoId === memoId ? { ...memo, text: response.text } : memo))
+          t.map((memo) =>
+            memo.memoId === memoId
+              ? {
+                  ...memo,
+                  text: response.text,
+                  createdAt: response.createdAt,
+                  updatedAt: response.updatedAt,
+                }
+              : memo
+          )
         )
       } else {
-        setText((t) => [...t, { memoId: response.id, text: response.text }])
+        setText((t) => [
+          ...t,
+          {
+            memoId: response.id,
+            text: response.text,
+            createdAt: response.createdAt,
+            updatedAt: response.updatedAt,
+          },
+        ])
       }
       return response.id
     } catch (error) {

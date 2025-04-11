@@ -1,8 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Text, Box, Icon, IconButton } from '@chakra-ui/react'
+import { Text, Box, IconButton, Badge } from '@chakra-ui/react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import { FaTrashAlt } from 'react-icons/fa'
 
-const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick, selected }) => {
+const MemoList = ({
+  id,
+  text,
+  handelDelMemoClick,
+  isDisabled,
+  onClick,
+  selected,
+  createdAt,
+  updatedAt,
+}) => {
   const [isOverflow, setIsOverflow] = useState(false)
 
   const textRef = useRef(null)
@@ -15,10 +26,22 @@ const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick, selected 
     }
   }, [text])
 
+  // 날짜 포맷
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    try {
+      const date = new Date(dateString)
+      return format(date, 'yyyy-MM-dd HH:mm', { locale: ko })
+    } catch (e) {
+      console.error('날짜 형식 변환 오류:', e)
+      return '날짜 오류'
+    }
+  }
+
   return (
     <Box
       position="relative"
-      p={3}
+      p="22px 12px 12px 12px"
       mb={2}
       bg={selected ? '#ede6c2' : '#fff7d1'}
       borderRadius="md"
@@ -29,6 +52,7 @@ const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick, selected 
       onClick={onClick}
       boxShadow={selected && 'md'}
     >
+      {/* 메모 텍스트 */}
       <Text
         ref={textRef}
         fontSize="14px"
@@ -44,6 +68,11 @@ const MemoList = ({ id, text, handelDelMemoClick, isDisabled, onClick, selected 
       >
         {text}
       </Text>
+
+      <Text position="absolute" right="8" top="2" color="gray" fontSize="0.1em">
+        {formatDate(updatedAt ? updatedAt : createdAt)}
+      </Text>
+
       <IconButton
         icon={<FaTrashAlt />}
         right="2"

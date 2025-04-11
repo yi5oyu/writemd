@@ -26,25 +26,29 @@ public class MemoService {
         Users user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
+        Memos memo;
+
         if (memoId != null) {
-            Memos memo = memoRepository.findById(memoId)
+            memo= memoRepository.findById(memoId)
                 .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음: " + memoId));
 
             memo.setText(text);
-            return memoRepository.save(memo);
+
         } else{
-            Memos memo = Memos.builder()
+            memo = Memos.builder()
                 .text(text)
                 .users(user)
                 .build();
 
             user.getMemos().add(memo);
 
-            return memoRepository.save(memo);
+
         }
+        return memoRepository.save(memo);
     }
 
     // 메모 전체 조회
+    @Transactional(readOnly = true)
     public List<MemoDTO> getMemos(Long userId){
         List<Memos> memos = memoRepository.findByUsers_Id(userId);
 
@@ -52,6 +56,8 @@ public class MemoService {
             .map(memo -> MemoDTO.builder()
                 .memoId(memo.getId())
                 .text(memo.getText())
+                .createdAt(memo.getCreatedAt())
+                .updatedAt(memo.getUpdatedAt())
                 .build())
             .collect(Collectors.toList());
     }

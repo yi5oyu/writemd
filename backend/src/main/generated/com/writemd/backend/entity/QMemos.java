@@ -22,9 +22,13 @@ public class QMemos extends EntityPathBase<Memos> {
 
     public static final QMemos memos = new QMemos("memos");
 
+    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath text = createString("text");
+
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final QUsers users;
 

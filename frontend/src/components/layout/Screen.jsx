@@ -7,18 +7,32 @@ import useSaveNote from '../../hooks/useSaveNote'
 import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 import ErrorToast from '../ui/toast/ErrorToast'
 import MainPage from '../../features/home/MainPage'
+import useSaveMarkdown from '../../hooks/useSaveMarkdown'
 
 const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
-  const { saveNote, loading, error: saveError } = useSaveNote()
-  const { updateNoteName, loading: updateLoading, error: updageError } = useUpdateNoteName()
-  const [error, setError] = useState(false)
+  const { saveNote, loading: saveLoading, error: saveError } = useSaveNote()
+  const {
+    saveMarkdownText,
+    loading: saveMarkdownLoading,
+    error: saveMarkdownError,
+  } = useSaveMarkdown()
+  const { updateNoteName, loading: updateLoading, error: updateError } = useUpdateNoteName()
 
   const toast = useToast()
 
+  const isLoading = saveLoading || saveMarkdownLoading || updateLoading
+  const isError = saveError || updateError || saveMarkdownError
+  const errorMessage = saveError
+    ? saveError?.message
+    : updateError
+    ? updateError?.message
+    : saveMarkdownError
+    ? saveMarkdownError?.message
+    : null
+
   // 에러
   useEffect(() => {
-    if (saveError || updageError) {
-      const errorMessage = saveError?.message || updageError?.message
+    if (isError && errorMessage) {
       toast({
         duration: 5000,
         isClosable: true,
@@ -26,30 +40,27 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
       })
       setError(false)
     }
-  }, [saveError, updageError, error, toast])
+  }, [isError, errorMessage, toast])
 
   // 새 노트 저장
-  const handleSaveNote = async (title) => {
-    if (saveError) {
-      setError(true)
-      return
-    }
-
+  const handleSaveNote = async (title, text) => {
     try {
       const savedNote = await saveNote(user, title)
-      setNotes((n) => [...n, savedNote])
-      setCurrentScreen(savedNote.noteId)
+      if (savedNote && savedNote.noteId) {
+        setNotes((n) => [...n, savedNote])
+        await saveMarkdownText(savedNote.noteId, text)
+        setCurrentScreen(savedNote.noteId)
+      } else {
+        console.error('노트 저장 후 ID를 받지 못했습니다.')
+      }
     } catch (error) {
-      console.log('저장 실패: ' + error)
+      console.error('저장 오류: ', error)
     }
   }
 
   // 노트 업데이트 (이름)
   const handleUpdateNote = async (noteId, name) => {
-    if (updageError) {
-      setError(true)
-      return
-    }
+    if (updateError) return
 
     try {
       const updatedNote = await updateNoteName(noteId, name)
@@ -64,7 +75,7 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
       {currentScreen === 'home' ? (
         <MainPage />
       ) : currentScreen === 'newnote' ? (
-        <NoteHome isLoading={loading} handleSaveNote={handleSaveNote} user={user} />
+        <NoteHome isLoading={isLoading} handleSaveNote={handleSaveNote} user={user} />
       ) : currentScreen === 'folder' ? (
         <></>
       ) : currentScreen === 'tip' ? (

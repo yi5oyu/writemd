@@ -134,7 +134,13 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
         isDisabled={isLoading || loading}
       />
       <Flex position="absolute" top="10px" right="15px">
-        <Button isDisabled={isLoading || loading} onClick={() => handleSaveNote(title)}>
+        <Button
+          isLoading={isLoading || loading}
+          variant="outline"
+          colorScheme="blue"
+          size="sm"
+          onClick={() => handleSaveNote(title, text)}
+        >
           새 노트 생성
         </Button>
       </Flex>
@@ -150,12 +156,8 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
             index={tabIndex}
             onChange={(index) => {
               setTabIndex(index)
-              if (index === 0) {
-                setScreenSize(1)
-              } else if (index === 1) {
-                setScreenSize(2)
-                getTemplates({ userId: user.userId })
-              }
+              setScreenSize(index === 0 ? 1 : 2)
+              index === 1 && getTemplates({ userId: user.userId })
             }}
           >
             <TabList mb="1em">

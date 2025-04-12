@@ -21,7 +21,7 @@ import MemoBox from '../memo/MemoBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
-import saveMarkdownText from '../../services/saveMarkdownText'
+import useSaveMarkdown from '../../hooks/useSaveMarkdown'
 // 훅
 import useNote from '../../hooks/useNote'
 import useChat from '../../hooks/useChat'
@@ -77,6 +77,13 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
+
+  //
+  const {
+    saveMarkdownText,
+    loading: saveMarkdownLoading,
+    error: saveMarkdownError,
+  } = useSaveMarkdown()
 
   // 깃
   const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()

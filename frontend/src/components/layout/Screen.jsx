@@ -8,8 +8,9 @@ import useUpdateNoteName from '../../hooks/useUpdateNoteName'
 import ErrorToast from '../ui/toast/ErrorToast'
 import MainPage from '../../features/home/MainPage'
 import useSaveMarkdown from '../../hooks/useSaveMarkdown'
+import NoteList from '../../features/note/NoteList'
 
-const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
+const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
   const { saveNote, loading: saveLoading, error: saveError } = useSaveNote()
   const {
     saveMarkdownText,
@@ -77,7 +78,7 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
       ) : currentScreen === 'newnote' ? (
         <NoteHome isLoading={isLoading} handleSaveNote={handleSaveNote} user={user} />
       ) : currentScreen === 'folder' ? (
-        <></>
+        <NoteList notes={notes} setCurrentScreen={setCurrentScreen} />
       ) : currentScreen === 'tip' ? (
         <></>
       ) : (

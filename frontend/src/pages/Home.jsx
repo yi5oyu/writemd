@@ -32,6 +32,7 @@ const Home = () => {
 
       <Screen
         user={user}
+        notes={notes}
         setNotes={setNotes}
         currentScreen={currentScreen}
         setCurrentScreen={setCurrentScreen}

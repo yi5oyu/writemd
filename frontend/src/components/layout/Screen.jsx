@@ -64,7 +64,7 @@ const Screen = ({ currentScreen, setCurrentScreen, user, setNotes }) => {
       {currentScreen === 'home' ? (
         <MainPage />
       ) : currentScreen === 'newnote' ? (
-        <NoteHome loading={loading} handleSaveNote={handleSaveNote} />
+        <NoteHome isLoading={loading} handleSaveNote={handleSaveNote} user={user} />
       ) : currentScreen === 'folder' ? (
         <></>
       ) : currentScreen === 'tip' ? (

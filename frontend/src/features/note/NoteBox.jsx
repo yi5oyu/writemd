@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box, Icon, Text, useDisclosure } from '@chakra-ui/react'
-import DeleteBox from '../../components/ui/Modal/DeleteBox'
+import DeleteBox from '../../components/ui/modal/DeleteBox'
 
 const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote, currentScreen }) => {
   const { isOpen, onOpen, onClose } = useDisclosure()

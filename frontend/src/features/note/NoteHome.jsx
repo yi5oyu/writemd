@@ -24,6 +24,7 @@ import SearchBar from '../../components/ui/search/SearchBar'
 import useTemplate from '../../hooks/template/useTemplate'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import MarkdownPreview from '../markdown/PreviewBox'
+import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const NoteHome = ({ handleSaveNote, isLoading, user }) => {
   const { getTemplates, loading, error, templates } = useTemplate()
@@ -36,10 +37,6 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
   const [tabIndex, setTabIndex] = useState(0)
 
   const toast = useToast()
-
-  useEffect(() => {
-    console.log('screenSize changed:', screenSize)
-  }, [screenSize])
 
   // 제목 업데이트
   useEffect(() => {
@@ -87,11 +84,6 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
     })
 
     setText(template.content)
-  }
-
-  const click = () => {
-    console.log('aaa')
-    setScreenSize(true)
   }
 
   // 에러

@@ -3,11 +3,11 @@ import { useToast } from '@chakra-ui/react'
 
 import NoteScreen from '../../features/note/NoteScreen'
 import NoteHome from '../../features/note/NoteHome'
-import useSaveNote from '../../hooks/useSaveNote'
-import useUpdateNoteName from '../../hooks/useUpdateNoteName'
+import useSaveNote from '../../hooks/note/useSaveNote'
+import useUpdateNoteName from '../../hooks/note/useUpdateNoteName'
 import ErrorToast from '../ui/toast/ErrorToast'
 import MainPage from '../../features/home/MainPage'
-import useSaveMarkdown from '../../hooks/useSaveMarkdown'
+import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 import NoteList from '../../features/note/NoteList'
 
 const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
@@ -48,6 +48,7 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
     try {
       const savedNote = await saveNote(user, title)
       if (savedNote && savedNote.noteId) {
+        console.log(notes)
         setNotes((n) => [...n, savedNote])
         await saveMarkdownText(savedNote.noteId, text)
         setCurrentScreen(savedNote.noteId)

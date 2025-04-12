@@ -22,6 +22,8 @@ public class QNotes extends EntityPathBase<Notes> {
 
     public static final QNotes notes = new QNotes("notes");
 
+    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath noteName = createString("noteName");
@@ -29,6 +31,8 @@ public class QNotes extends EntityPathBase<Notes> {
     public final ListPath<Sessions, QSessions> sessions = this.<Sessions, QSessions>createList("sessions", Sessions.class, QSessions.class, PathInits.DIRECT2);
 
     public final QTexts texts;
+
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final QUsers users;
 

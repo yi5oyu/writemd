@@ -21,9 +21,9 @@ import MemoBox from '../memo/MemoBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
-import useSaveMarkdown from '../../hooks/useSaveMarkdown'
+import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 // 훅
-import useNote from '../../hooks/useNote'
+import useNote from '../../hooks/note/useNote'
 import useChat from '../../hooks/useChat'
 import useSendChatMessage from '../../hooks/useSendChatMessage'
 import useSaveSession from '../../hooks/useSaveSession'

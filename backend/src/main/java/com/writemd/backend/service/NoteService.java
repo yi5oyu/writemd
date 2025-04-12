@@ -43,6 +43,8 @@ public class NoteService {
         NoteDTO note = NoteDTO.builder()
             .noteId(savedNote.getId())
             .noteName(savedNote.getNoteName())
+            .createdAt(savedNote.getCreatedAt())
+            .updatedAt(savedNote.getUpdatedAt())
             .build();
 
         return note;

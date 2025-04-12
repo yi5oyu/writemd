@@ -21,7 +21,7 @@ import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
 import LogInfoForm from '../../features/auth/LogInfoForm'
 import NoteBox from '../../features/note/NoteBox'
-import useDeleteNote from '../../hooks/useDeleteNote'
+import useDeleteNote from '../../hooks/note/useDeleteNote'
 import ErrorToast from '../ui/toast/ErrorToast'
 
 const MotionBox = motion(Box)

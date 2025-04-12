@@ -150,8 +150,14 @@ public class UserService {
         Notes notes = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없음"));
 
-        NoteDTO note = NoteDTO.builder().noteId(noteId).noteName(notes.getNoteName())
-                .sessions(sessionInfo).texts(convertText(texts)).build();
+        NoteDTO note = NoteDTO.builder()
+                .noteId(noteId)
+                .noteName(notes.getNoteName())
+                .createdAt(notes.getCreatedAt())
+                .updatedAt(notes.getUpdatedAt())
+                .sessions(sessionInfo)
+                .texts(convertText(texts))
+                .build();
 
         return note;
     }
@@ -167,8 +173,12 @@ public class UserService {
     }
 
     private NoteDTO convertNote(Notes notes) {
-        NoteDTO note =
-                NoteDTO.builder().noteId(notes.getId()).noteName(notes.getNoteName()).build();
+        NoteDTO note = NoteDTO.builder()
+            .noteId(notes.getId())
+            .noteName(notes.getNoteName())
+            .createdAt(notes.getCreatedAt())
+            .updatedAt(notes.getUpdatedAt())
+            .build();
 
         return note;
     }

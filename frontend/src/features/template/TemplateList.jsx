@@ -38,6 +38,7 @@ const TemplateList = ({
   setName,
   setTemplateText,
   isDisabled,
+  screen,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
@@ -330,201 +331,204 @@ const TemplateList = ({
       />
 
       {/* 목록 */}
-      <Accordion
-        index={openAccordions}
-        allowMultiple
-        onChange={(index) => setOpenAccordions(index)}
-      >
-        {templates
-          .filter((folder) => searchQuery.trim() === '' || filterItems(folder.template).length > 0)
-          .map((folder) => {
-            const filteredTemplates = filterItems(folder.template)
-            const hasResults = filteredTemplates.length > 0
+      <Box overflowY="auto" maxH={screen ? 'calc(100vh - 410px)' : 'calc(100vh - 350px)'}>
+        <Accordion
+          index={openAccordions}
+          allowMultiple
+          onChange={(index) => setOpenAccordions(index)}
+        >
+          {templates
+            .filter(
+              (folder) => searchQuery.trim() === '' || filterItems(folder.template).length > 0
+            )
+            .map((folder) => {
+              const filteredTemplates = filterItems(folder.template)
+              const hasResults = filteredTemplates.length > 0
 
-            return (
-              <AccordionItem key={folder.folderId}>
-                <h2>
-                  <AccordionButton role="group" position="relative">
-                    {searchQuery && hasResults && (
-                      <Text as="span" mr="5px" flexShrink={0} fontSize="sm" color="gray.500">
-                        ({filteredTemplates.length}개)
-                      </Text>
-                    )}
-                    <Input
-                      value={
-                        editedTitles[folder.folderId] !== undefined
-                          ? editedTitles[folder.folderId]
-                          : folder.title
-                      }
-                      onChange={(e) => {
-                        setEditedTitles((t) => ({
-                          ...t,
-                          [folder.folderId]: e.target.value,
-                        }))
-                      }}
-                      onKeyDown={(e) => {
-                        e.key === 'Escape'
-                          ? (setEdit(''),
-                            setEditedTitles((t) => ({
-                              ...t,
-                              [folder.folderId]: folder.title,
-                            })))
-                          : e.key === 'Enter' &&
-                            (handleUpdateFolderName(
-                              folder.folderId,
-                              editedTitles[folder.folderId] || folder.title,
-                              folder.title
-                            ),
-                            setEdit(''))
-                      }}
-                      readOnly={edit !== folder.folderId}
-                      variant="flushed"
-                      isDisabled={
-                        !isTemplateValid(selectedTemplate) &&
-                        searchQuery.trim() !== '' &&
-                        !hasResults
-                      }
-                      maxLength={35}
-                    />
-
-                    <Box
-                      position="absolute"
-                      top="10px"
-                      right="35px"
-                      mt="3px"
-                      opacity={0}
-                      _groupHover={{ opacity: 1 }}
-                      transition="opacity 0.2s ease-in-out"
-                      display={searchQuery.trim() !== '' && !hasResults ? 'none' : 'inline-block'}
-                    >
-                      <Button
-                        p="2px"
-                        size="xs"
-                        bg="transparent"
-                        color="gray.500"
-                        as={edit === folder.folderId ? FiCheck : FiEdit}
-                        _hover={{ color: 'blue.500' }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          edit === folder.folderId
-                            ? (handleUpdateFolderName(
+              return (
+                <AccordionItem key={folder.folderId}>
+                  <h2>
+                    <AccordionButton role="group" position="relative">
+                      {searchQuery && hasResults && (
+                        <Text as="span" mr="5px" flexShrink={0} fontSize="sm" color="gray.500">
+                          ({filteredTemplates.length}개)
+                        </Text>
+                      )}
+                      <Input
+                        value={
+                          editedTitles[folder.folderId] !== undefined
+                            ? editedTitles[folder.folderId]
+                            : folder.title
+                        }
+                        onChange={(e) => {
+                          setEditedTitles((t) => ({
+                            ...t,
+                            [folder.folderId]: e.target.value,
+                          }))
+                        }}
+                        onKeyDown={(e) => {
+                          e.key === 'Escape'
+                            ? (setEdit(''),
+                              setEditedTitles((t) => ({
+                                ...t,
+                                [folder.folderId]: folder.title,
+                              })))
+                            : e.key === 'Enter' &&
+                              (handleUpdateFolderName(
                                 folder.folderId,
                                 editedTitles[folder.folderId] || folder.title,
                                 folder.title
                               ),
                               setEdit(''))
-                            : (setEdit(folder.folderId),
-                              setEditedTitles((t) => ({
-                                ...t,
-                                [folder.folderId]: folder.title,
-                              })))
                         }}
-                        title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
-                        isDisabled={isDisabled}
+                        readOnly={edit !== folder.folderId}
+                        variant="flushed"
+                        isDisabled={
+                          !isTemplateValid(selectedTemplate) &&
+                          searchQuery.trim() !== '' &&
+                          !hasResults
+                        }
+                        maxLength={35}
                       />
-                      <Button
-                        p="2px"
-                        size="xs"
-                        mx="10px"
-                        bg="transparent"
-                        as={FaTrash}
-                        color="gray.500"
-                        _hover={{ color: 'red.500' }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDeleteFolder(folder.folderId)
-                          onOpen()
-                        }}
-                        title="폴더 삭제"
-                        isDisabled={isDisabled}
-                      />
-                    </Box>
-                    <AccordionIcon />
-                  </AccordionButton>
-                </h2>
-                <AccordionPanel pb={4}>
-                  {hasResults ? (
-                    <Grid
-                      templateColumns="repeat(auto-fit, minmax(min(250px, 100%), 1fr))"
-                      gap="2"
-                      width="100%"
-                    >
-                      {filteredTemplates.map((template, index) => (
-                        <Flex
-                          key={index}
-                          position="relative"
-                          p="15px"
-                          borderRadius="md"
-                          border="1px solid"
-                          borderColor={
-                            selectedTemplate?.templateId === template.templateId
-                              ? 'blue.500'
-                              : 'gray.200'
-                          }
-                          width="100%"
-                          minWidth="0"
-                          bg={
-                            selectedTemplate?.templateId === template.templateId
-                              ? 'blue.50'
-                              : 'white'
-                          }
-                          boxShadow={selectedTemplate?.templateId === template.templateId && 'md'}
-                          _hover={{
-                            bg: 'gray.100',
-                            borderColor: 'blue.500',
-                            boxShadow: 'xl',
-                          }}
-                          cursor="pointer"
-                          onClick={() => {
-                            handleTemplateSelect(folder, template),
-                              setTemplateText(template.content)
-                          }}
-                          role="group"
-                        >
-                          <Box width="100%">
-                            <Text fontSize="18px" fontWeight={600} noOfLines={1}>
-                              {template.title}
-                            </Text>
-                            <Text fontSize="14px" noOfLines={1}>
-                              {template.description}
-                            </Text>
-                          </Box>
-                          <Button
-                            position="absolute"
-                            top="0"
-                            right="0"
-                            p="2px"
-                            m="5px"
-                            size="xs"
-                            bg="transparent"
-                            as={FaTrash}
-                            opacity={0}
-                            color="gray.500"
-                            _groupHover={{ opacity: 1 }}
-                            transition="opacity 0.2s ease-in-out"
-                            _hover={{ color: 'red.500', bg: 'gray.100' }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDeleteTemplate(template.templateId)
-                              onOpen()
-                            }}
-                            title="템플릿 삭제"
-                            isDisabled={isDisabled}
-                          />
-                        </Flex>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Box textAlign="center" py={4} color="gray.500">
-                      템플릿이 없습니다.
-                    </Box>
-                  )}
-                </AccordionPanel>
-              </AccordionItem>
-            )
-          })}
-      </Accordion>
 
+                      <Box
+                        position="absolute"
+                        top="10px"
+                        right="35px"
+                        mt="3px"
+                        opacity={0}
+                        _groupHover={{ opacity: 1 }}
+                        transition="opacity 0.2s ease-in-out"
+                        display={searchQuery.trim() !== '' && !hasResults ? 'none' : 'inline-block'}
+                      >
+                        <Button
+                          p="2px"
+                          size="xs"
+                          bg="transparent"
+                          color="gray.500"
+                          as={edit === folder.folderId ? FiCheck : FiEdit}
+                          _hover={{ color: 'blue.500' }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            edit === folder.folderId
+                              ? (handleUpdateFolderName(
+                                  folder.folderId,
+                                  editedTitles[folder.folderId] || folder.title,
+                                  folder.title
+                                ),
+                                setEdit(''))
+                              : (setEdit(folder.folderId),
+                                setEditedTitles((t) => ({
+                                  ...t,
+                                  [folder.folderId]: folder.title,
+                                })))
+                          }}
+                          title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
+                          isDisabled={isDisabled}
+                        />
+                        <Button
+                          p="2px"
+                          size="xs"
+                          mx="10px"
+                          bg="transparent"
+                          as={FaTrash}
+                          color="gray.500"
+                          _hover={{ color: 'red.500' }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeleteFolder(folder.folderId)
+                            onOpen()
+                          }}
+                          title="폴더 삭제"
+                          isDisabled={isDisabled}
+                        />
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                  </h2>
+                  <AccordionPanel pb={4}>
+                    {hasResults ? (
+                      <Grid
+                        templateColumns="repeat(auto-fit, minmax(min(250px, 100%), 1fr))"
+                        gap="2"
+                        width="100%"
+                      >
+                        {filteredTemplates.map((template, index) => (
+                          <Flex
+                            key={index}
+                            position="relative"
+                            p="15px"
+                            borderRadius="md"
+                            border="1px solid"
+                            borderColor={
+                              selectedTemplate?.templateId === template.templateId
+                                ? 'blue.500'
+                                : 'gray.200'
+                            }
+                            width="100%"
+                            minWidth="0"
+                            bg={
+                              selectedTemplate?.templateId === template.templateId
+                                ? 'blue.50'
+                                : 'white'
+                            }
+                            boxShadow={selectedTemplate?.templateId === template.templateId && 'md'}
+                            _hover={{
+                              bg: 'gray.100',
+                              borderColor: 'blue.500',
+                              boxShadow: 'xl',
+                            }}
+                            cursor="pointer"
+                            onClick={() => {
+                              handleTemplateSelect(folder, template),
+                                setTemplateText(template.content)
+                            }}
+                            role="group"
+                          >
+                            <Box width="100%">
+                              <Text fontSize="18px" fontWeight={600} noOfLines={1}>
+                                {template.title}
+                              </Text>
+                              <Text fontSize="14px" noOfLines={1}>
+                                {template.description}
+                              </Text>
+                            </Box>
+                            <Button
+                              position="absolute"
+                              top="0"
+                              right="0"
+                              p="2px"
+                              m="5px"
+                              size="xs"
+                              bg="transparent"
+                              as={FaTrash}
+                              opacity={0}
+                              color="gray.500"
+                              _groupHover={{ opacity: 1 }}
+                              transition="opacity 0.2s ease-in-out"
+                              _hover={{ color: 'red.500', bg: 'gray.100' }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDeleteTemplate(template.templateId)
+                                onOpen()
+                              }}
+                              title="템플릿 삭제"
+                              isDisabled={isDisabled}
+                            />
+                          </Flex>
+                        ))}
+                      </Grid>
+                    ) : (
+                      <Box textAlign="center" py={4} color="gray.500">
+                        템플릿이 없습니다.
+                      </Box>
+                    )}
+                  </AccordionPanel>
+                </AccordionItem>
+              )
+            })}
+        </Accordion>
+      </Box>
       {/* 검색 결과가 없을 때 메시지 */}
       {searchQuery.trim() !== '' &&
         !templates.some((folder) => filterItems(folder.template).length > 0) && (

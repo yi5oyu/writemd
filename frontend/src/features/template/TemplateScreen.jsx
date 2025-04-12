@@ -40,15 +40,7 @@ const TemplateScreen = ({
       bg="gray.100"
       h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 90px)'}
     >
-      <Box
-        mx="15px"
-        my="15px"
-        h="100%"
-        borderRadius="md"
-        boxShadow="md"
-        bg="white"
-        overflowY="auto"
-      >
+      <Box mx="15px" my="15px" h="100%" borderRadius="md" boxShadow="md" bg="white">
         <TemplateList
           setName={setName}
           setTemplateText={setTemplateText}
@@ -59,6 +51,7 @@ const TemplateScreen = ({
           templates={templates}
           isLoading={isLoading}
           isDisabled={isError}
+          screen={screen}
         />
       </Box>
 

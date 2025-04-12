@@ -163,124 +163,130 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
             <TabList mb="1em">
               <Tab>프리뷰</Tab>
               <Tab>템플릿</Tab>
+              <Tab>참고자료</Tab>
             </TabList>
 
-            <TabIndicator mt="-1.5px" height="2px" bg="blue.500" borderRadius="1px" />
+            <TabIndicator mt="-10px" height="2px" bg="blue.500" borderRadius="1px" />
             <TabPanels>
-              <TabPanel>
+              {/* 프리뷰 */}
+              <TabPanel p="0">
                 <MarkdownPreview markdownText={text} screen={false} />
               </TabPanel>
+
               {/* 템플릿 */}
-              <TabPanel>
+              <TabPanel p="0">
                 <SearchBar
                   placeholder="템플릿 검색..."
                   query={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClick={() => setSearchQuery('')}
                 />
-
-                <Accordion
-                  index={openAccordions}
-                  allowMultiple
-                  onChange={(index) => setOpenAccordions(index)}
-                >
-                  {templates
-                    .filter(
-                      (folder) =>
-                        searchQuery.trim() === '' || filterItems(folder.template).length > 0
-                    )
-                    .map((folder) => {
-                      const filteredTemplates = filterItems(folder.template)
-                      const hasResults = filteredTemplates.length > 0
-
-                      return (
-                        <AccordionItem key={folder.folderId}>
-                          <h2>
-                            <AccordionButton role="group" position="relative">
-                              {searchQuery && hasResults && (
-                                <Text
-                                  as="span"
-                                  mr="5px"
-                                  flexShrink={0}
-                                  fontSize="sm"
-                                  color="gray.500"
-                                >
-                                  ({filteredTemplates.length}개)
-                                </Text>
-                              )}
-                              <Input
-                                value={folder.title}
-                                readOnly
-                                variant="flushed"
-                                maxLength={35}
-                              />
-
-                              <AccordionIcon />
-                            </AccordionButton>
-                          </h2>
-                          <AccordionPanel pb={4}>
-                            {hasResults ? (
-                              <Grid
-                                templateColumns="repeat(auto-fit, minmax(min(250px, 100%), 1fr))"
-                                gap="2"
-                                width="100%"
-                              >
-                                {filteredTemplates.map((template, index) => (
-                                  <Flex
-                                    key={index}
-                                    position="relative"
-                                    p="15px"
-                                    borderRadius="md"
-                                    border="1px solid"
-                                    borderColor={
-                                      selectedTemplate?.templateId === template.templateId
-                                        ? 'blue.500'
-                                        : 'gray.200'
-                                    }
-                                    width="100%"
-                                    minWidth="0"
-                                    bg={
-                                      selectedTemplate?.templateId === template.templateId
-                                        ? 'blue.50'
-                                        : 'white'
-                                    }
-                                    boxShadow={
-                                      selectedTemplate?.templateId === template.templateId && 'md'
-                                    }
-                                    _hover={{
-                                      bg: 'gray.100',
-                                      borderColor: 'blue.500',
-                                      boxShadow: 'xl',
-                                    }}
-                                    cursor="pointer"
-                                    onClick={() => {
-                                      handleTemplateSelect(folder, template),
-                                        setText(template.content)
-                                    }}
-                                    role="group"
-                                  >
-                                    <Box width="100%">
-                                      <Text fontSize="18px" fontWeight={600} noOfLines={1}>
-                                        {template.title}
-                                      </Text>
-                                      <Text fontSize="14px" noOfLines={1}>
-                                        {template.description}
-                                      </Text>
-                                    </Box>
-                                  </Flex>
-                                ))}
-                              </Grid>
-                            ) : (
-                              <Box textAlign="center" py={4} color="gray.500">
-                                템플릿이 없습니다.
-                              </Box>
-                            )}
-                          </AccordionPanel>
-                        </AccordionItem>
+                <Box maxH="calc(100vh - 220px)" overflowY="auto">
+                  <Accordion
+                    index={openAccordions}
+                    allowMultiple
+                    onChange={(index) => setOpenAccordions(index)}
+                  >
+                    {templates
+                      .filter(
+                        (folder) =>
+                          searchQuery.trim() === '' || filterItems(folder.template).length > 0
                       )
-                    })}
-                </Accordion>
+                      .map((folder) => {
+                        const filteredTemplates = filterItems(folder.template)
+                        const hasResults = filteredTemplates.length > 0
+
+                        return (
+                          <AccordionItem key={folder.folderId}>
+                            <h2>
+                              <AccordionButton role="group" position="relative">
+                                {searchQuery && hasResults && (
+                                  <Text
+                                    as="span"
+                                    mr="5px"
+                                    flexShrink={0}
+                                    fontSize="sm"
+                                    color="gray.500"
+                                  >
+                                    ({filteredTemplates.length}개)
+                                  </Text>
+                                )}
+                                <Input
+                                  value={folder.title}
+                                  readOnly
+                                  variant="flushed"
+                                  maxLength={35}
+                                />
+
+                                <AccordionIcon />
+                              </AccordionButton>
+                            </h2>
+                            <AccordionPanel pb={4}>
+                              {hasResults ? (
+                                <Grid
+                                  templateColumns="repeat(auto-fit, minmax(min(250px, 100%), 1fr))"
+                                  gap="2"
+                                  width="100%"
+                                >
+                                  {filteredTemplates.map((template, index) => (
+                                    <Flex
+                                      key={index}
+                                      position="relative"
+                                      p="15px"
+                                      borderRadius="md"
+                                      border="1px solid"
+                                      borderColor={
+                                        selectedTemplate?.templateId === template.templateId
+                                          ? 'blue.500'
+                                          : 'gray.200'
+                                      }
+                                      width="100%"
+                                      minWidth="0"
+                                      bg={
+                                        selectedTemplate?.templateId === template.templateId
+                                          ? 'blue.50'
+                                          : 'white'
+                                      }
+                                      boxShadow={
+                                        selectedTemplate?.templateId === template.templateId && 'md'
+                                      }
+                                      _hover={{
+                                        bg: 'gray.100',
+                                        borderColor: 'blue.500',
+                                        boxShadow: 'xl',
+                                      }}
+                                      cursor="pointer"
+                                      onClick={() => {
+                                        handleTemplateSelect(folder, template),
+                                          setText(template.content)
+                                      }}
+                                      role="group"
+                                    >
+                                      <Box width="100%">
+                                        <Text fontSize="18px" fontWeight={600} noOfLines={1}>
+                                          {template.title}
+                                        </Text>
+                                        <Text fontSize="14px" noOfLines={1}>
+                                          {template.description}
+                                        </Text>
+                                      </Box>
+                                    </Flex>
+                                  ))}
+                                </Grid>
+                              ) : (
+                                <Box textAlign="center" py={4} color="gray.500">
+                                  템플릿이 없습니다.
+                                </Box>
+                              )}
+                            </AccordionPanel>
+                          </AccordionItem>
+                        )
+                      })}
+                  </Accordion>
+                </Box>
               </TabPanel>
+
+              <TabPanel></TabPanel>
             </TabPanels>
           </Tabs>
         </Box>

@@ -21,7 +21,6 @@ public class NoteService {
     private final UserRepository userRepository;
     private final TextRepository textRepository;
 
-
     // 새노트 생성
     public NoteDTO createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)
@@ -62,6 +61,8 @@ public class NoteService {
         NoteDTO note = NoteDTO.builder()
             .noteId(updatedNote.getId())
             .noteName(updatedNote.getNoteName())
+            .createdAt(updatedNote.getCreatedAt())
+            .updatedAt(updatedNote.getUpdatedAt())
             .build();
 
         return note;

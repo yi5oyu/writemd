@@ -9,6 +9,7 @@ import ErrorToast from '../ui/toast/ErrorToast'
 import MainPage from '../../features/home/MainPage'
 import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 import NoteList from '../../features/note/NoteList'
+import useDeleteNote from '../../hooks/note/useDeleteNote'
 
 const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
   const { saveNote, loading: saveLoading, error: saveError } = useSaveNote()
@@ -18,8 +19,17 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
     error: saveMarkdownError,
   } = useSaveMarkdown()
   const { updateNoteName, loading: updateLoading, error: updateError } = useUpdateNoteName()
+  const { deleteNote, loading: deleteLoading, error: deleteError } = useDeleteNote()
 
   const toast = useToast()
+
+  const isListLoading = deleteLoading || saveLoading
+  const isListError = saveError || deleteError
+  const listErrorMessage = saveError
+    ? saveError?.message
+    : deleteError
+    ? deleteError?.message
+    : null
 
   const isLoading = saveLoading || saveMarkdownLoading || updateLoading
   const isError = saveError || updateError || saveMarkdownError
@@ -72,6 +82,18 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
     }
   }
 
+  // 노트 삭제
+  const handleDeleteNote = async (noteId) => {
+    if (deleteError) return
+
+    try {
+      await deleteNote(noteId)
+      setNotes((n) => n.filter((note) => note.noteId !== noteId))
+    } catch (error) {
+      console.log('삭제 실패: ' + error)
+    }
+  }
+
   return (
     <>
       {currentScreen === 'home' ? (
@@ -79,7 +101,15 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
       ) : currentScreen === 'newnote' ? (
         <NoteHome isLoading={isLoading} handleSaveNote={handleSaveNote} user={user} />
       ) : currentScreen === 'folder' ? (
-        <NoteList notes={notes} setCurrentScreen={setCurrentScreen} />
+        <NoteList
+          notes={notes}
+          setCurrentScreen={setCurrentScreen}
+          handleSaveNote={handleSaveNote}
+          handleDeleteNote={handleDeleteNote}
+          isLoading={isListLoading}
+          isError={isListError}
+          errorMessage={listErrorMessage}
+        />
       ) : currentScreen === 'tip' ? (
         <></>
       ) : (

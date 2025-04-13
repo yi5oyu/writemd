@@ -15,7 +15,7 @@ const DeleteBox = ({ isOpen, onClose, onClick, title }) => {
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>{title} 삭제</ModalHeader>
+        <ModalHeader p="16px 30px 16px 24px">{title} 삭제</ModalHeader>
         <ModalCloseButton />
         <ModalBody>정말로 삭제하시겠습니까?</ModalBody>
         <ModalFooter>

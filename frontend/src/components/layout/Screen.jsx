@@ -58,7 +58,6 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
     try {
       const savedNote = await saveNote(user, title)
       if (savedNote && savedNote.noteId) {
-        console.log(notes)
         setNotes((n) => [...n, savedNote])
         await saveMarkdownText(savedNote.noteId, text)
         setCurrentScreen(savedNote.noteId)

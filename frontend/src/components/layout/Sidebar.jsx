@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   useDisclosure,
   Box,
@@ -82,6 +82,21 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => 
       },
     },
   }
+
+  // 노트 정렬
+  const sortedNotes = useMemo(() => {
+    if (!notes) return []
+
+    console.log('sorted:', notes)
+    // console.log('sorted 발생')
+
+    return [...notes].sort((a, b) => {
+      const dateA = new Date(a.updatedAt)
+      const dateB = new Date(b.updatedAt)
+
+      return dateB - dateA
+    })
+  }, [notes])
 
   return (
     <>
@@ -240,7 +255,7 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => 
                             transition={{ duration: 0.3 }}
                             overflow="hidden"
                           >
-                            {notes.map((note) => (
+                            {sortedNotes.map((note) => (
                               <NoteBox
                                 key={note.noteId}
                                 noteId={note.noteId}

@@ -9,9 +9,10 @@ import {
   Avatar,
   useToast,
   Spinner,
+  Button,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { BsQuestionCircle, BsChevronRight } from 'react-icons/bs'
+import { BsQuestionCircle, BsChevronRight, BsChevronDown, BsChevronUp } from 'react-icons/bs'
 import { FiHome, FiFolder, FiMinusSquare, FiPlusSquare } from 'react-icons/fi'
 import { TbBookOff, TbBook } from 'react-icons/tb'
 import { IoMdClose, IoMdCreate } from 'react-icons/io'
@@ -31,6 +32,7 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => 
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
   const [isFold, setIsFold] = useState(true)
+  const [showNotes, setShowNotes] = useState(false)
 
   const { deleteNote, loading, error } = useDeleteNote()
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
@@ -87,9 +89,6 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => 
   const sortedNotes = useMemo(() => {
     if (!notes) return []
 
-    console.log('sorted:', notes)
-    // console.log('sorted 발생')
-
     return [...notes].sort((a, b) => {
       const dateA = new Date(a.updatedAt)
       const dateB = new Date(b.updatedAt)
@@ -97,6 +96,8 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => 
       return dateB - dateA
     })
   }, [notes])
+  const topNotes = sortedNotes.slice(0, 5)
+  const bottomNotes = sortedNotes.slice(5)
 
   return (
     <>
@@ -244,33 +245,77 @@ const Sidebar = ({ notes, user, currentScreen, setCurrentScreen, setNotes }) => 
                               }}
                             />
                           </Flex>
+                          {isNoteBoxVisible && (
+                            <MotionBox
+                              overflowY="auto"
+                              maxH="calc(100vh - 360px)"
+                              mr="-14px"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              style={{
+                                scrollbarGutter: 'stable',
+                              }}
+                            >
+                              {topNotes.map((note) => (
+                                <NoteBox
+                                  key={note.noteId}
+                                  noteId={note.noteId}
+                                  name={note.noteName}
+                                  icon={PiNoteLight}
+                                  delIcon={IoMdClose}
+                                  handleDeleteNote={handleDeleteNote}
+                                  currentScreen={currentScreen}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setCurrentScreen(note.noteId)
+                                  }}
+                                />
+                              ))}
 
-                          <MotionFlex
-                            direction="column"
-                            initial={{ height: 'auto' }}
-                            animate={{
-                              height: isNoteBoxVisible ? 'auto' : 0,
-                              opacity: isNoteBoxVisible ? 1 : 0,
-                            }}
-                            transition={{ duration: 0.3 }}
-                            overflow="hidden"
-                          >
-                            {sortedNotes.map((note) => (
-                              <NoteBox
-                                key={note.noteId}
-                                noteId={note.noteId}
-                                name={note.noteName}
-                                icon={PiNoteLight}
-                                delIcon={IoMdClose}
-                                handleDeleteNote={handleDeleteNote}
-                                currentScreen={currentScreen}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setCurrentScreen(note.noteId)
-                                }}
-                              />
-                            ))}
-                          </MotionFlex>
+                              {bottomNotes.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  mt="5px"
+                                  color={showNotes ? 'gray.500' : 'black'}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setShowNotes(!showNotes)
+                                  }}
+                                  leftIcon={<Icon as={showNotes ? BsChevronUp : BsChevronDown} />}
+                                  colorScheme="gray"
+                                  justifyContent="flex-start"
+                                  w="full"
+                                  _hover={{ bg: 'gray.200', color: 'black' }}
+                                  pl="7px"
+                                >
+                                  {showNotes ? '간략히' : `더 보기 (${bottomNotes.length})`}
+                                </Button>
+                              )}
+
+                              {showNotes && (
+                                <Box>
+                                  {bottomNotes.map((note) => (
+                                    <NoteBox
+                                      key={note.noteId}
+                                      noteId={note.noteId}
+                                      name={note.noteName}
+                                      icon={PiNoteLight}
+                                      delIcon={IoMdClose}
+                                      handleDeleteNote={handleDeleteNote}
+                                      currentScreen={currentScreen}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setCurrentScreen(note.noteId)
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              )}
+                            </MotionBox>
+                          )}
                         </Flex>
                       </>
                     )}

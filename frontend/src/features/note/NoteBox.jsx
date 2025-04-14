@@ -18,24 +18,37 @@ const NoteBox = ({ name, icon, onClick, delIcon, noteId, handleDeleteNote, curre
   return (
     <>
       <Box
-        ml="5px"
+        role="group"
         mt="1"
         px="5px"
         h="30px"
         display="flex"
         alignItems="center"
         borderRadius="md"
+        bg={currentScreen === noteId && 'white'}
+        boxShadow={currentScreen === noteId && 'md'}
         color={currentScreen === noteId ? 'blue.500' : 'gray.600'}
         _hover={{
           bg: 'white',
-          boxShadow: 'md',
+          boxShadow: 'sm',
           color: currentScreen === noteId ? 'blue.500' : 'black',
         }}
         cursor="pointer"
         onClick={onClick}
       >
-        <Icon w="18px" h="18px" as={icon} />
-        <Text mx="10px" isTruncated>
+        <Icon
+          w="18px"
+          h="18px"
+          as={icon}
+          color={currentScreen === noteId ? 'blue.500' : 'gray.500'}
+          _groupHover={{ color: currentScreen !== noteId && 'black' }}
+        />
+        <Text
+          mx="10px"
+          color={currentScreen === noteId ? 'blue.500' : 'gray.500'}
+          isTruncated
+          _groupHover={{ color: currentScreen !== noteId && 'black' }}
+        >
           {name}
         </Text>
         <Icon

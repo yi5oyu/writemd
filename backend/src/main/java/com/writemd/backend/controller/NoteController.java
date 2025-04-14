@@ -42,9 +42,9 @@ public class NoteController {
     }
 
     // 노트 이름 변경
-    @PutMapping("/{noteId}/{noteName}")
-    public ResponseEntity<NoteDTO> updateNoteName(@PathVariable Long noteId, @PathVariable String noteName){
-        NoteDTO updatedNote = noteService.updateNoteName(noteId, noteName);
+    @PutMapping("/name/{noteId}")
+    public ResponseEntity<NoteDTO> updateNoteName(@PathVariable Long noteId, @RequestBody Map<String, Object> requestPayload){
+        NoteDTO updatedNote = noteService.updateNoteName(noteId, (String) requestPayload.get("noteName"));
 
         return ResponseEntity.ok(updatedNote);
     }

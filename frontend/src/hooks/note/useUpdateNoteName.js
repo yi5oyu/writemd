@@ -9,9 +9,13 @@ const useUpdateNoteName = () => {
     setLoading(true)
     setError(null)
     return axios
-      .put(`http://localhost:8888/api/note/${noteId}/${noteName}`, null, {
-        withCredentials: true,
-      })
+      .put(
+        `http://localhost:8888/api/note/name/${noteId}`,
+        { noteName: noteName.trim() },
+        {
+          withCredentials: true,
+        }
+      )
       .then((response) => {
         return response.data
       })

@@ -3,6 +3,8 @@ import { Box, Flex, Button } from '@chakra-ui/react'
 
 import IntroPage from './IntroPage'
 import TutorialPage from './TutorialPage'
+import TemplatePage from './TemplatePage'
+import CommandPage from './CommandPage'
 
 const MainPage = () => {
   const [page, setPage] = useState('intro')
@@ -54,14 +56,22 @@ const MainPage = () => {
             w="100px"
             boxShadow="md"
             bg="white"
-            color={page === 'console' && 'blue.500'}
-            onClick={() => setPage('console')}
+            color={page === 'command' && 'blue.500'}
+            onClick={() => setPage('command')}
           >
             명령어
           </Button>
         </Flex>
         <Box mt="10px" h="calc(100% - 65px)" borderRadius="md">
-          {page === 'intro' ? <IntroPage /> : page === 'tutorial' ? <TutorialPage /> : <></>}
+          {page === 'intro' ? (
+            <IntroPage />
+          ) : page === 'tutorial' ? (
+            <TutorialPage />
+          ) : page === 'template' ? (
+            <TemplatePage />
+          ) : page === 'command' ? (
+            <CommandPage />
+          ) : null}
         </Box>
       </Box>
     </Flex>

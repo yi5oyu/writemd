@@ -5,8 +5,6 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  InputGroup,
-  InputLeftElement,
   Input,
   Grid,
   Flex,
@@ -19,9 +17,7 @@ import {
   CardBody,
   CardHeader,
   useDisclosure,
-  InputRightElement,
 } from '@chakra-ui/react'
-import { CloseIcon, SearchIcon } from '@chakra-ui/icons'
 import { CreatableSelect } from 'chakra-react-select'
 import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
 import { FaTrash, FaEraser } from 'react-icons/fa'
@@ -38,6 +34,7 @@ const TemplateList = ({
   setName,
   setTemplateText,
   isDisabled,
+  isReadOnly = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
@@ -159,7 +156,7 @@ const TemplateList = ({
 
   return (
     <Box>
-      {(isNewTemplate || selectedTemplate) && (
+      {!isReadOnly && (isNewTemplate || selectedTemplate) && (
         <Card mb="5px" variant="outline" borderColor="blue.500">
           <CardHeader>
             <Flex alignItems="center">
@@ -300,7 +297,7 @@ const TemplateList = ({
         </Card>
       )}
 
-      {!(isNewTemplate || selectedTemplate) && (
+      {!isReadOnly && !(isNewTemplate || selectedTemplate) && (
         <Button
           m="10px"
           _hover={{ color: 'blue.500' }}
@@ -395,7 +392,11 @@ const TemplateList = ({
                       opacity={0}
                       _groupHover={{ opacity: 1 }}
                       transition="opacity 0.2s ease-in-out"
-                      display={searchQuery.trim() !== '' && !hasResults ? 'none' : 'inline-block'}
+                      display={
+                        (searchQuery.trim() !== '' && !hasResults) || isReadOnly
+                          ? 'none'
+                          : 'inline-block'
+                      }
                     >
                       <Button
                         p="2px"
@@ -490,6 +491,7 @@ const TemplateList = ({
                             </Text>
                           </Box>
                           <Button
+                            display={isReadOnly ? 'none' : 'block'}
                             position="absolute"
                             top="0"
                             right="0"

@@ -4,7 +4,7 @@ import { Box, Flex, Button } from '@chakra-ui/react'
 import IntroPage from './IntroPage'
 import TutorialPage from './TutorialPage'
 import TemplatePage from './TemplatePage'
-import CommandPage from './CommandPage'
+import EditorPage from './EditorPage'
 
 const MainPage = () => {
   const [page, setPage] = useState('intro')
@@ -56,10 +56,10 @@ const MainPage = () => {
             w="100px"
             boxShadow="md"
             bg="white"
-            color={page === 'command' && 'blue.500'}
-            onClick={() => setPage('command')}
+            color={page === 'editor' && 'blue.500'}
+            onClick={() => setPage('editor')}
           >
-            명령어
+            에디터
           </Button>
         </Flex>
         <Box mt="10px" h="calc(100% - 65px)" borderRadius="md">
@@ -69,8 +69,8 @@ const MainPage = () => {
             <TutorialPage />
           ) : page === 'template' ? (
             <TemplatePage />
-          ) : page === 'command' ? (
-            <CommandPage />
+          ) : page === 'editor' ? (
+            <EditorPage />
           ) : null}
         </Box>
       </Box>

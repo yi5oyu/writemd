@@ -5,7 +5,7 @@ import githubLightTheme from 'monaco-themes/themes/GitHub Light.json'
 import { MarkdownCommands } from '../../data/MarkdownCommands'
 import { MarkdownActions } from '../../data/MarkdownActions'
 
-const MarkdownInputBox = ({
+const InputBox = ({
   markdownText,
   setMarkdownText,
   item,
@@ -164,7 +164,7 @@ const MarkdownInputBox = ({
   return (
     <Box
       position="relative"
-      h={mode === 'home' ? '100%' : mode === 'simple' ? '100%' : 'calc(100vh - 145px)'}
+      h={mode ? '100%' : screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
       w="100%"
       boxShadow="md"
       bg="white"
@@ -205,4 +205,4 @@ const MarkdownInputBox = ({
   )
 }
 
-export default memo(MarkdownInputBox)
+export default memo(InputBox)

@@ -4,7 +4,7 @@ import BookmarkBtn from '../../components/ui/button/BookmarkBtn'
 
 const BookmarkBox = ({ screen, selectedScreen, setSelectedScreen }) => {
   return (
-    <Flex position="absolute" direction="column" top={screen ? '100px' : '70px'} left="-20px">
+    <Flex position="absolute" direction="column" top={screen ? '100px' : '55px'} left="-20px">
       <BookmarkBtn
         color="green"
         opacity={selectedScreen === 'markdown' ? 1 : 0.2}

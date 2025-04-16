@@ -11,7 +11,17 @@ import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 import NoteList from '../../features/note/NoteList'
 import useDeleteNote from '../../hooks/note/useDeleteNote'
 
-const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
+const Screen = ({
+  currentScreen,
+  setCurrentScreen,
+  user,
+  notes,
+  setNotes,
+  isFold,
+  setIsFold,
+  screen,
+  setScreen,
+}) => {
   const { saveNote, loading: saveLoading, error: saveError } = useSaveNote()
   const {
     saveMarkdownText,
@@ -98,7 +108,12 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
       {currentScreen === 'home' ? (
         <MainPage />
       ) : currentScreen === 'newnote' ? (
-        <NoteHome isLoading={isLoading} handleSaveNote={handleSaveNote} user={user} />
+        <NoteHome
+          isLoading={isLoading}
+          handleSaveNote={handleSaveNote}
+          user={user}
+          isFold={isFold}
+        />
       ) : currentScreen === 'folder' ? (
         <NoteList
           notes={notes}
@@ -116,7 +131,11 @@ const Screen = ({ currentScreen, setCurrentScreen, user, notes, setNotes }) => {
           updateLoading={updateLoading}
           handleUpdateNote={handleUpdateNote}
           noteId={currentScreen}
+          isFold={isFold}
+          setIsFold={setIsFold}
           user={user}
+          screen={screen}
+          setScreen={setScreen}
         />
       )}
     </>

@@ -46,7 +46,16 @@ import useGithubFile from '../../hooks/git/useGithubFile'
 import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
 import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 
-const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
+const NoteScreen = ({
+  user,
+  noteId,
+  handleUpdateNote,
+  updateLoading,
+  isFold,
+  setIsFold,
+  screen,
+  setScreen,
+}) => {
   const [name, setName] = useState('')
   const [githubName, setGithubName] = useState('')
   const [templateName, setTemplateName] = useState('')
@@ -65,7 +74,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [selectedScreen, setSelectedScreen] = useState('markdown')
-  const [screen, setScreen] = useState(true)
+
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
   const [memo, setMemo] = useState(false)
@@ -590,7 +599,7 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
   }
 
   return (
-    <Flex
+    <Box
       direction="column"
       mx="auto"
       my="15px"
@@ -600,17 +609,17 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
       bg="gray.50"
       boxShadow="xl"
       position="relative"
-      w="85%"
+      w={isFold ? 'calc(100% - 300px)' : 'calc(100% - 130px)'}
     >
       <BookmarkBox
         screen={screen}
         selectedScreen={selectedScreen}
         setSelectedScreen={setSelectedScreen}
       />
-      <Box filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
+      <Flex direction="column" filter={loading || updateLoading ? 'blur(4px)' : 'none'}>
         <Flex
           h="30px"
-          display={screen ? 'flex' : 'none'}
+          mb={!screen && '10px'}
           alignItems="center"
           justifyContent="center"
           borderBottom="1px solid"
@@ -651,21 +660,24 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
           />
         </Flex>
 
-        <Flex position="relative" w="100%" h="100%" gap="3" justifyContent="center">
-          <Box flex="1" position="relative">
-            <ToolBox
-              onClearText={() => setMarkdownText('')}
-              onCopyText={handleCopyMarkdown}
-              screen={screen}
-              onScreen={() => setScreen(!screen)}
-              onExport={exportMarkdown}
-              isConnected={isConnected}
-              tool={tool}
-              setTool={setTool}
-              memo={memo}
-              setMemo={setMemo}
-              setSelectedScreen={setSelectedScreen}
-            />
+        <Flex position="relative" w="100%" h="100%" gap="5" justifyContent="center">
+          <Box flex="1" position="relative" w="50%">
+            {screen && (
+              <ToolBox
+                onClearText={() => setMarkdownText('')}
+                onCopyText={handleCopyMarkdown}
+                screen={screen}
+                onScreen={() => setScreen(!screen)}
+                onExport={exportMarkdown}
+                isConnected={isConnected}
+                tool={tool}
+                setTool={setTool}
+                memo={memo}
+                setMemo={setMemo}
+                setSelectedScreen={setSelectedScreen}
+                setIsFold={setIsFold}
+              />
+            )}
             <MarkdownInputBox
               markdownText={
                 selectedScreen === 'markdown'
@@ -719,17 +731,19 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             )}
           </Box>
 
-          <Box id="feature" flex="1" position="relative">
+          <Box id="feature" flex="1" position="relative" w="50%">
             {/* 공통 UtilityBox */}
-            <UtilityBox
-              setBoxForm={setBoxForm}
-              handleCheckConnection={handleCheckConnection}
-              boxForm={boxForm}
-              isConnected={isConnected}
-              handleGitLoad={handleGitLoad}
-              handleGetTemplates={handleGetTemplates}
-              setSelectedScreen={setSelectedScreen}
-            />
+            {screen && (
+              <UtilityBox
+                setBoxForm={setBoxForm}
+                handleCheckConnection={handleCheckConnection}
+                boxForm={boxForm}
+                isConnected={isConnected}
+                handleGitLoad={handleGitLoad}
+                handleGetTemplates={handleGetTemplates}
+                setSelectedScreen={setSelectedScreen}
+              />
+            )}
 
             {boxForm === 'preview' && (
               <MarkdownPreview
@@ -843,10 +857,10 @@ const NoteScreen = ({ user, noteId, handleUpdateNote, updateLoading }) => {
             )}
           </Box>
         </Flex>
-      </Box>
+      </Flex>
       {/* 로딩 시 Spinner */}
       {(loading || updateLoading) && <LoadingSpinner />}
-    </Flex>
+    </Box>
   )
 }
 

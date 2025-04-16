@@ -6,7 +6,7 @@ import TutorialNavigator from '../../components/ui/navigator/TutorialNavigator'
 import { TutorialBasicContents as BasicContents } from '../../data/TutorialBasicContents'
 import { TutorialContents as contents } from '../../data/TutorialContents'
 
-const TutorialPage = () => {
+const TutorialPage = ({ showMarkdown, showPreview }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [isBasicMode, setIsBasicMode] = useState(true)
   const [md, setMd] = useState(BasicContents[0].markdownContents)
@@ -56,10 +56,16 @@ const TutorialPage = () => {
       </Box>
 
       <Flex gap="4" h="full" flex="1" overflow="hidden">
-        <Box w="640px">
+        <Box
+          w={showMarkdown && showPreview ? '50%' : '100%'}
+          display={showMarkdown ? 'block' : 'none'}
+        >
           <MarkdownInputBox markdownText={md} setMarkdownText={setMd} mode={'simple'} />
         </Box>
-        <Box w="640px">
+        <Box
+          w={showMarkdown && showPreview ? '50%' : '100%'}
+          display={showPreview ? 'block' : 'none'}
+        >
           <MarkdownPreview markdownText={md} mode={'simple'} />
         </Box>
       </Flex>

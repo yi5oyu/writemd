@@ -7,6 +7,7 @@ import { MdSpellcheck } from 'react-icons/md'
 import { AiOutlineFullscreen, AiOutlineFullscreenExit } from 'react-icons/ai'
 import { FaFileExport, FaStickyNote } from 'react-icons/fa'
 import { BiSolidEraser } from 'react-icons/bi'
+import { BsEmojiSmile } from 'react-icons/bs'
 
 const ToolBox = ({
   onClearText,
@@ -19,6 +20,7 @@ const ToolBox = ({
   setTool,
   memo,
   setMemo,
+  setIsFold,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -31,7 +33,8 @@ const ToolBox = ({
 
   return (
     <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
-      <Flex alignItems="center" w="100%">
+      <Flex alignItems="center">
+        <UtilityBtn icon={RiToolsFill} label="도구상자 토글" onClick={onScreen} />
         <UtilityBtn
           icon={MdSpellcheck}
           label="맞춤법 검사"
@@ -39,8 +42,8 @@ const ToolBox = ({
           onClick={() => {}}
         />
         <UtilityBtn
-          icon={RiToolsFill}
-          label="도구상자"
+          icon={BsEmojiSmile}
+          label="이모지/뱃지"
           onClick={() => setTool(!tool)}
           setColor={tool ? true : false}
         />
@@ -49,7 +52,9 @@ const ToolBox = ({
         <UtilityBtn
           icon={screen ? AiOutlineFullscreen : AiOutlineFullscreenExit}
           label="화면 크기"
-          onClick={onScreen}
+          onClick={() => {
+            onScreen(), setIsFold(false)
+          }}
         />
         <UtilityBtn icon={FaFileExport} label="추출" onClick={onExport} />
 

@@ -26,7 +26,7 @@ import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import MarkdownPreview from '../markdown/PreviewBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 
-const NoteHome = ({ handleSaveNote, isLoading, user }) => {
+const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
   const { getTemplates, loading, error, templates } = useTemplate()
   const [title, setTitle] = useState('writeMD')
   const [text, setText] = useState('<!-- 입력해주세요. -->')
@@ -100,13 +100,13 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
   return (
     <Flex
       my="15px"
-      mx="25px"
+      mx="auto"
       boxShadow="md"
       borderRadius="md"
-      w="100%"
+      w={isFold ? 'calc(100% - 300px)' : 'calc(100% - 130px)'}
       direction="column"
       bg="gray.50"
-      py="10px"
+      py="15px"
       px="20px"
       position="relative"
       filter={isLoading || loading ? 'blur(4px)' : 'none'}
@@ -161,8 +161,8 @@ const NoteHome = ({ handleSaveNote, isLoading, user }) => {
             <TabIndicator mt="-10px" height="2px" bg="blue.500" borderRadius="1px" />
             <TabPanels>
               {/* 프리뷰 */}
-              <TabPanel p="0">
-                <MarkdownPreview markdownText={text} screen={false} />
+              <TabPanel p="0" h="100%">
+                <MarkdownPreview markdownText={text} screen={'tab'} />
               </TabPanel>
 
               {/* 템플릿 */}

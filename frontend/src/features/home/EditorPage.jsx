@@ -3,7 +3,7 @@ import { Box, Flex } from '@chakra-ui/react'
 import MarkdownInputBox from '../markdown/MarkdownInputBox'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 
-const EditorPage = () => {
+const EditorPage = ({ showMarkdown, showPreview }) => {
   const [md, setMd] = useState(
     `# 마크다운 에디터 사용 가이드
 
@@ -93,10 +93,18 @@ GitHub 스타일의 인터페이스와 다양한 마크다운 기능을 지원�
 
   return (
     <Flex gap="4" h="full" flex="1">
-      <Box w="100%" direction="column">
+      <Box
+        w={showMarkdown && showPreview ? '50%' : '100%'}
+        direction="column"
+        display={showMarkdown ? 'block' : 'none'}
+      >
         <MarkdownInputBox markdownText={md} setMarkdownText={setMd} mode={'home'} />
       </Box>
-      <Box w="100%" direction="column">
+      <Box
+        w={showMarkdown && showPreview ? '50%' : '100%'}
+        direction="column"
+        display={showPreview ? 'block' : 'none'}
+      >
         <MarkdownPreview markdownText={md} mode={'home'} />
       </Box>
     </Flex>

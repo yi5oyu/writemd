@@ -11,10 +11,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
@@ -249,6 +252,17 @@ public class GithubService {
 //            .contents(contentDTOs)
 //            .build();
 //    }
+
+    public String getCurrentUserGithubAccessToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String principalName = authentication.getName();
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+
+        String accessToken = client.getAccessToken().getTokenValue();
+
+        return accessToken;
+    }
 
     // 파일 내용 조회
     public Mono<GitContentDTO> getFileContent(String principalName, String owner, String repo, String path) {

@@ -46,7 +46,7 @@ public class UserService {
 
     // user 저장
     @Transactional
-    public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl) {
+    public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
         Optional<Users> user = userRepository.findByGithubId(githubId);
         if (user.isPresent()) {
             Users existingUser = user.get();
@@ -60,13 +60,17 @@ public class UserService {
                 existingUser.setAvatarUrl(avatarUrl);
                 updated = true;
             }
+            if (!Objects.equals(existingUser.getPrincipalName(), principalName)) {
+                existingUser.setPrincipalName(principalName);
+                updated = true;
+            }
 
             return updated ? userRepository.save(existingUser) : existingUser;
         }
 
         // 새 유저 저장
         Users newUser = Users.builder().githubId(githubId).name(name).htmlUrl(htmlUrl)
-                .avatarUrl(avatarUrl).build();
+                .avatarUrl(avatarUrl).principalName(principalName).build();
 
         Folders myFolder = Folders.builder().users(newUser).title("내 템플릿").build();
 

@@ -36,6 +36,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final ListPath<Notes, QNotes> notes = this.<Notes, QNotes>createList("notes", Notes.class, QNotes.class, PathInits.DIRECT2);
 
+    public final StringPath principalName = createString("principalName");
+
     public QUsers(String variable) {
         super(Users.class, forVariable(variable));
     }

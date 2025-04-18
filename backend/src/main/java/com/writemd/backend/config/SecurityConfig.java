@@ -15,6 +15,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
@@ -36,6 +37,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOriginPattern("http://localhost:5173");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:6277");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
@@ -52,9 +55,9 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**",
-                                "/logout", "/h2-console/**")
-                        .permitAll().requestMatchers("/profile/**", "/api/**").authenticated()
+                        .requestMatchers("/mcp/**","/error", "/oauth2/**", "/login/oauth2/**", "/actuator/**",
+                                "/logout", "/v1/**", "/sse")
+                        .permitAll().requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                         .userInfoEndpoint(
@@ -82,12 +85,13 @@ public class SecurityConfig {
         return userRequest -> {
             OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
 
+
             String githubId = oAuth2User.getAttribute("login");
             String name = oAuth2User.getAttribute("name");
             String htmlUrl = oAuth2User.getAttribute("html_url");
             String avatarUrl = oAuth2User.getAttribute("avatar_url");
-
-            userService.saveUser(githubId, name, htmlUrl, avatarUrl);
+            String principalName = "" + oAuth2User.getAttribute("id");
+            userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
 
             return new DefaultOAuth2User(
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),

@@ -37,6 +37,8 @@ public class Users {
 
     private String avatarUrl;
 
+    private String principalName;
+
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference

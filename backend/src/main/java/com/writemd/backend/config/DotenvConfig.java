@@ -9,5 +9,6 @@ public class DotenvConfig {
         Dotenv dotenv = Dotenv.configure().load();
         System.setProperty("GITHUB_CLIENT_ID", dotenv.get("GITHUB_CLIENT_ID"));
         System.setProperty("GITHUB_CLIENT_SECRET", dotenv.get("GITHUB_CLIENT_SECRET"));
+        System.setProperty("OPENAI_API_KEY", dotenv.get("OPENAI_API_KEY"));
     }
 }

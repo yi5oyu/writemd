@@ -9,16 +9,21 @@ spring:
       enabled: true
   # DB 설정
   datasource:
-    url: jdbc:h2:file:./data/chatdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://localhost:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: yi5oyu
+    password: ${MYSQL_USER_PASSWORD}
+    # url: jdbc:h2:file:./data/chatdb
+    # driver-class-name: org.h2.Driver
+    # username: sa
+    # password:
+  # h2:
+  #   console:
+  #     enabled: true
+  #     path: /h2-console
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
+    # org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -46,6 +51,11 @@ spring:
       server:
         name: md-mcp-server
         enabled: true
+      client:
+        sse:
+          connections:
+            md-mcp-server:
+              url: http://localhost:8888/sse
 
 management:
   endpoints:

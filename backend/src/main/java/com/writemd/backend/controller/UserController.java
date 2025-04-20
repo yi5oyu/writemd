@@ -13,6 +13,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,17 +36,16 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/user")
 @CrossOrigin(origins = "http://localhost:5173")
-@RequiredArgsConstructor
 public class UserController {
 
     // private final OAuth2AuthorizedClientService authorizedClientService;
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/info")
     public UserDTO getUserInfo(@AuthenticationPrincipal OAuth2User oauthUser) {
         return userService.userInfo((String) oauthUser.getAttributes().get("login"));
     }
-
 
     @GetMapping("/current-user")
     public Map<String, Object> getCurrentUser(Principal principal) {

@@ -39,6 +39,8 @@ public class SecurityConfig {
         configuration.addAllowedOriginPattern("http://localhost:5173");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6277");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:5577");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:9888");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

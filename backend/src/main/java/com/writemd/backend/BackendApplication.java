@@ -11,7 +11,7 @@ public class BackendApplication {
 		Dotenv dotenv = Dotenv.configure()
 			.systemProperties()
 			.load();
-
+		
 		SpringApplication.run(BackendApplication.class, args);
 	}
 

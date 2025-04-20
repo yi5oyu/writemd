@@ -9,10 +9,10 @@ spring:
       enabled: true
   # DB 설정
   datasource:
-    url: jdbc:mysql://localhost:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:3307/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: yi5oyu
-    password: ${MYSQL_USER_PASSWORD}
+    password: ${MYSQL_PASSWORD}
     # url: jdbc:h2:file:./data/chatdb
     # driver-class-name: org.h2.Driver
     # username: sa
@@ -48,14 +48,13 @@ spring:
         options:
           model: gpt-4o
     mcp:
-      server:
-        name: md-mcp-server
-        enabled: true
       client:
+        toolcallback:
+          enabled: true
         sse:
           connections:
             md-mcp-server:
-              url: http://localhost:8888/sse
+              url: http://localhost:9888
 
 management:
   endpoints:

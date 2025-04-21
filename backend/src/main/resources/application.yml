@@ -53,8 +53,10 @@ spring:
           enabled: true
         sse:
           connections:
-            md-mcp-server:
+            sb-mcp-server:
               url: http://localhost:9888
+            py-mcp-server:
+              url: http://localhost:9889
 
 management:
   endpoints:

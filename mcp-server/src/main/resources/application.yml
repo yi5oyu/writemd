@@ -14,7 +14,7 @@ spring:
   ai:
     mcp:
       server:
-        name: md-mcp-server
+        name: sb-mcp-server
         version: 1.0.0
         enabled: true
 

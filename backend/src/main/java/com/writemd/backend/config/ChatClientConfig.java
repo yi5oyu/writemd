@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class ChatClientConfig {
-    @Bean
-    public ChatClient customChatClient(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
-        return chatClientBuilder
-            .defaultTools(tools)
-            .build();
-    }
+//    @Bean
+//    public ChatClient customChatClient(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
+//        return chatClientBuilder
+//            .defaultTools(tools)
+//            .build();
+//    }
 }

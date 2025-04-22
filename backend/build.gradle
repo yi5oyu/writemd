@@ -75,11 +75,14 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// Spring AI MCP Server WebMVC Starter
+	// Spring AI MCP Client, openai, anthropic(claude)
 //	implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
 	implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
-
+	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+//	implementation 'org.springframework.ai:spring-ai-openai'
+//	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
 
 	implementation 'org.kohsuke:github-api:1.321'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'

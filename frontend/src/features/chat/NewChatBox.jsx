@@ -16,6 +16,8 @@ const NewChatBox = ({
   loading,
   isSendMessaging,
   setIsSendMessaging,
+  mode,
+  screen,
 }) => {
   const [isSessionCreating, setIsSessionCreating] = useState(false)
 
@@ -35,6 +37,10 @@ const NewChatBox = ({
     <>
       <Flex
         flexDirection="column"
+        bg="white"
+        boxShadow="md"
+        borderRadius="sm"
+        h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         filter={connectError || loading || isSendMessaging ? 'blur(4px)' : 'none'}
       >
         <Flex

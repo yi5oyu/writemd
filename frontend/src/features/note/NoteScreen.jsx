@@ -787,6 +787,7 @@ const NoteScreen = ({
                 connectLoading={connectLoading}
                 isSendMessaging={isSendMessaging}
                 setIsSendMessaging={setIsSendMessaging}
+                screen={screen}
               />
             )}
 

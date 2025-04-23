@@ -1,35 +1,75 @@
-import { Box, IconButton, Flex } from '@chakra-ui/react'
+import { Box, IconButton, Flex, Text } from '@chakra-ui/react'
 import { DeleteIcon } from '@chakra-ui/icons'
 
-const SessionBox = ({ sessionId, title, handleSessionId, handleDeleteSession, error }) => {
+const SessionBox = ({ sessionId, title, handleSessionId, handleDeleteSession, error, time }) => {
   return (
     <Flex
-      w="100%"
-      h="50px"
+      position="relative"
+      p="15px"
       borderRadius="md"
-      bg="gray.300"
-      my="2"
+      border="1px solid"
+      borderColor="gray.200"
+      w="100%"
+      minW="0"
+      bg="gray.50"
+      boxShadow="sm"
+      h="125px"
+      _hover={{
+        bg: 'gray.100',
+        borderColor: 'blue.500',
+        boxShadow: 'xl',
+      }}
       cursor={error ? 'default' : 'pointer'}
-      alignItems="center"
       onClick={() => {
         if (!error) handleSessionId(sessionId)
       }}
-      px="2"
+      role="group"
     >
-      <Box flex="1" ml="2">
-        {title}
+      <Box w="100%">
+        <Text
+          fontSize="18px"
+          fontWeight={600}
+          noOfLines={1}
+          title={title}
+          borderBottom="2px"
+          pb="2px"
+          mb="5px"
+        >
+          {title}
+        </Text>
+        <Text
+          my="10px"
+          pb="5px"
+          fontSize="14px"
+          noOfLines={1}
+          borderBottom="1px"
+          borderColor="gray.300"
+        >
+          {/* 콘텐츠(설명) */}
+        </Text>
+        <Text textAlign="right" fontSize="12px" noOfLines={1} title={time}>
+          {time}
+        </Text>
       </Box>
-
-      <IconButton
-        icon={<DeleteIcon />}
-        aria-label="삭제 세션"
+      <DeleteIcon
+        position="absolute"
+        top="10px"
+        right="10px"
+        opacity="0"
+        _groupHover={{
+          opacity: 1,
+          color: 'red.500',
+        }}
+        boxSize="18px"
+        _hover={{ transform: 'scale(1.3)' }}
+        transition="opacity 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out"
         onClick={(e) => {
           if (!error) {
             e.stopPropagation()
             handleDeleteSession(sessionId)
           }
         }}
-        mr="2"
+        aria-label="세션 삭제"
         variant={error ? 'default' : 'ghost'}
         cursor={error ? 'default' : 'pointer'}
       />

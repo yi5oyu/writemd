@@ -1,6 +1,7 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.ChatDTO;
+import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import java.util.List;
@@ -50,6 +51,12 @@ public class ChatController {
         return userService.chatList(sessionId);
     }
 
+
+    // 세션 리스트 조회
+    @GetMapping("/sessions/{noteId}")
+    public List<SessionDTO> getSessions(@PathVariable Long noteId) {
+        return userService.sessionList(noteId);
+    }
 
     // 세션 삭제
     @DeleteMapping("/{sessionId}")

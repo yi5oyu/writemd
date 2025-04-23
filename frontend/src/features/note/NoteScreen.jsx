@@ -24,11 +24,11 @@ import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 // 훅
 import useNote from '../../hooks/note/useNote'
-import useChat from '../../hooks/useChat'
-import useSendChatMessage from '../../hooks/useSendChatMessage'
-import useSaveSession from '../../hooks/useSaveSession'
-import useChatConnection from '../../hooks/useChatConnection'
-import useDeleteSession from '../../hooks/useDeleteSession'
+import useChat from '../../hooks/chat/useChat'
+import useSendChatMessage from '../../hooks/chat/useSendChatMessage'
+import useSaveSession from '../../hooks/chat/useSaveSession'
+import useChatConnection from '../../hooks/chat/useChatConnection'
+import useDeleteSession from '../../hooks/chat/useDeleteSession'
 // template
 import useSaveTemplate from '../../hooks/template/useSaveTemplate'
 import useTemplate from '../../hooks/template/useTemplate'
@@ -45,6 +45,7 @@ import useGetGithubFile from '../../hooks/git/useGetGithubFile'
 import useGithubFile from '../../hooks/git/useGithubFile'
 import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
 import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
+import useSession from '../../hooks/chat/useSession'
 
 const NoteScreen = ({
   user,
@@ -69,7 +70,6 @@ const NoteScreen = ({
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
   const [isConnected, setIsConnected] = useState(false)
-  const [sessions, setSessions] = useState([])
   const [sessionId, setSessionId] = useState('')
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
@@ -83,9 +83,18 @@ const NoteScreen = ({
   const { note, loading, error } = useNote(noteId)
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
-  const { saveSession, loading: sessionLoading, error: sessionError } = useSaveSession()
+  const { saveSession, loading: saveSessionLoading, error: saveSessionError } = useSaveSession()
   const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
+
+  // 채팅
+  const {
+    sessions,
+    setSessions,
+    loading: sessionLoading,
+    error: sessionError,
+    refetch: fetchSessions,
+  } = useSession({ noteId })
 
   //
   const {
@@ -222,9 +231,6 @@ const NoteScreen = ({
 
     if (note) {
       setName(note.noteName)
-      if (Array.isArray(note.sessions)) {
-        setSessions(note.sessions)
-      }
     }
   }, [note])
 
@@ -742,6 +748,7 @@ const NoteScreen = ({
                 handleGitLoad={handleGitLoad}
                 handleGetTemplates={handleGetTemplates}
                 setSelectedScreen={setSelectedScreen}
+                fetchSessions={fetchSessions}
               />
             )}
 
@@ -771,6 +778,7 @@ const NoteScreen = ({
                 delSessionError={delSessionError}
                 connectLoading={connectLoading}
                 delSessionLoading={delSessionLoading}
+                screen={screen}
               />
             )}
 
@@ -797,6 +805,7 @@ const NoteScreen = ({
                   messages={messages}
                   chatLoading={chatLoading}
                   messageLoading={messageLoading}
+                  screen={screen}
                 />
                 <Flex
                   flexDirection="column"

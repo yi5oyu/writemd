@@ -71,6 +71,8 @@ public class ChatService {
         return response.getBody();
     }
 
+    // 채팅 저장
+    @Transactional
     public void saveChat(Long sessionId, String role, String content) {
         Sessions session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
@@ -79,10 +81,11 @@ public class ChatService {
                 .sessions(session)
                 .role(role)
                 .content(content)
-                .time(LocalDateTime.now())
                 .build();
 
         chatRepository.save(chat);
+        session.setUpdatedAt(LocalDateTime.now());
+        sessionRepository.save(session);
     }
 
     // 세션 생성
@@ -95,11 +98,13 @@ public class ChatService {
                 .title(title)
                 .build();
 
-        sessionRepository.save(sessions);
+        Sessions savedSesssions = sessionRepository.save(sessions);
 
         SessionDTO session = SessionDTO.builder()
-                .SessionId(sessions.getId())
-                .title(sessions.getTitle())
+                .sessionId(savedSesssions.getId())
+                .title(savedSesssions.getTitle())
+                .createdAt(savedSesssions.getCreatedAt())
+                .updatedAt(savedSesssions.getUpdatedAt())
                 .build();
 
         return session;

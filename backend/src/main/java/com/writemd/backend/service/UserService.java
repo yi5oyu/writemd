@@ -159,7 +159,6 @@ public class UserService {
                 .noteName(notes.getNoteName())
                 .createdAt(notes.getCreatedAt())
                 .updatedAt(notes.getUpdatedAt())
-                .sessions(sessionInfo)
                 .texts(convertText(texts))
                 .build();
 
@@ -176,6 +175,16 @@ public class UserService {
         return chat;
     }
 
+    // 세션 리스트 조회
+    @Transactional
+    public List<SessionDTO> sessionList(Long noteId) {
+        List<Sessions> sessions = sessionRepository.findByNotes_id(noteId);
+
+        List<SessionDTO> session = sessions.stream().map(this::convertSession).collect(Collectors.toList());
+
+        return session;
+    }
+
     private NoteDTO convertNote(Notes notes) {
         NoteDTO note = NoteDTO.builder()
             .noteId(notes.getId())
@@ -188,8 +197,12 @@ public class UserService {
     }
 
     private SessionDTO convertSession(Sessions sessions) {
-        SessionDTO session =
-                SessionDTO.builder().SessionId(sessions.getId()).title(sessions.getTitle()).build();
+        SessionDTO session = SessionDTO.builder()
+            .sessionId(sessions.getId())
+            .title(sessions.getTitle())
+            .createdAt(sessions.getCreatedAt())
+            .updatedAt(sessions.getUpdatedAt())
+            .build();
 
         return session;
     }

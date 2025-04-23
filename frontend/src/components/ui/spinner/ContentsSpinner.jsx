@@ -5,7 +5,7 @@ const ContentsSpinner = () => {
     <Flex
       mt="2"
       p="2"
-      w="630px"
+      w="auto"
       h="100px"
       justify="center"
       align="center"

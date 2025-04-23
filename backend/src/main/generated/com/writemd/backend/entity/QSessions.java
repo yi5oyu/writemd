@@ -24,11 +24,15 @@ public class QSessions extends EntityPathBase<Sessions> {
 
     public final ListPath<Chats, QChats> chats = this.<Chats, QChats>createList("chats", Chats.class, QChats.class, PathInits.DIRECT2);
 
+    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final QNotes notes;
 
     public final StringPath title = createString("title");
+
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public QSessions(String variable) {
         this(Sessions.class, forVariable(variable), INITS);

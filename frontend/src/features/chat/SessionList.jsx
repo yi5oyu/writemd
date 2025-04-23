@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Box, Flex, Grid, useToast } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import SearchFlex from '../../components/ui/search/SearchFlex'
 
 const SessionList = ({
   sessions,
@@ -17,6 +18,8 @@ const SessionList = ({
   delSessionError,
   screen,
 }) => {
+  const [searchQuery, setSearchQuery] = useState('')
+
   const toast = useToast()
 
   useEffect(() => {
@@ -42,31 +45,30 @@ const SessionList = ({
     }
   }
 
-  const sortedSessions = useMemo(() => {
-    // sessions 배열이 유효하지 않으면 빈 배열 반환
-    if (!sessions) return []
+  const filteredAndSortedSessions = useMemo(() => {
+    const baseSessions = sessions ?? []
 
-    // 원본 배열을 직접 수정하지 않기 위해 복사본 생성 ([...sessions] 또는 sessions.slice())
-    return [...sessions].sort((a, b) => {
-      // updatedAt 필드를 기준으로 내림차순 정렬 (최신순)
-      // updatedAt 값이 Date 객체로 파싱 가능한 문자열 또는 타임스탬프라고 가정
-      // 만약 updatedAt 형식이 다르거나 유효하지 않은 값이 있을 경우 에러 처리 필요
+    const trimmedQuery = searchQuery ? searchQuery.toLowerCase().trim() : ''
+
+    const filteredSessions = baseSessions.filter(
+      (session) => session.title && session.title.toLowerCase().includes(trimmedQuery)
+    )
+
+    return filteredSessions.sort((a, b) => {
       try {
-        // Date 객체로 변환하여 비교
         const dateA = new Date(a.updatedAt)
         const dateB = new Date(b.updatedAt)
 
-        // 유효하지 않은 날짜 처리 (선택 사항: 유효하지 않은 날짜를 뒤로 보내기)
         if (isNaN(dateB.getTime())) return -1
         if (isNaN(dateA.getTime())) return 1
 
-        return dateB.getTime() - dateA.getTime() // 내림차순 정렬
+        return dateB.getTime() - dateA.getTime()
       } catch (e) {
-        console.error('Error parsing date for sorting sessions:', e)
-        return 0 // 에러 발생 시 순서 변경 안함
+        console.error('세션 정렬 오류:', e)
+        return 0
       }
     })
-  }, [sessions])
+  }, [sessions, searchQuery])
 
   return (
     <>
@@ -84,6 +86,14 @@ const SessionList = ({
           w="100%"
           h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         >
+          <SearchFlex
+            contents={sessions}
+            filteredAndSortedContents={filteredAndSortedSessions}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            name="채팅  "
+          />
+
           <Grid
             templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
             gap="3"
@@ -92,7 +102,7 @@ const SessionList = ({
             overflowY="auto"
             p="10px"
           >
-            {sortedSessions.map((session) => (
+            {filteredAndSortedSessions.map((session) => (
               <SessionBox
                 key={session.sessionId}
                 sessionId={session.sessionId}

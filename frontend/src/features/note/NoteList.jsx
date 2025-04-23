@@ -6,6 +6,7 @@ import { ko } from 'date-fns/locale'
 import SearchBar from '../../components/ui/search/SearchBar'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import SearchFlex from '../../components/ui/search/SearchFlex'
 
 const NoteList = ({
   handleSaveNote,
@@ -94,30 +95,12 @@ const NoteList = ({
       filter={isLoading ? 'blur(4px)' : 'none'}
     >
       <Box bg="white" boxShadow="md" borderRadius="md" w="100%">
-        <Flex
-          lineHeight="60px"
-          h="60px"
-          pl="10px"
-          fontSize="24px"
-          fontWeight={600}
-          mb="15px"
-          borderBottom="1px solid"
-          borderColor="gray.200"
-        >
-          <Text ml="5px">내 노트</Text>
-          {notes.length > 0 && (
-            <Text ml="5px" fontSize="14px" color="gray.500" pt="5px">
-              {searchQuery
-                ? `(검색된 노트 ${filteredAndSortedNotes.length}개)`
-                : `(노트 ${notes.length}개)`}
-            </Text>
-          )}
-        </Flex>
-        <SearchBar
-          placeholder="노트 이름 검색..."
-          query={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onClick={() => setSearchQuery('')}
+        <SearchFlex
+          contents={notes}
+          filteredAndSortedContents={filteredAndSortedNotes}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          name="노트"
         />
 
         <Grid

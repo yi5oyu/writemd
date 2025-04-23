@@ -1,32 +1,42 @@
-import React, { useEffect } from 'react'
-import { Box, Flex, Switch, Spinner } from '@chakra-ui/react'
+import { Flex } from '@chakra-ui/react'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
+import PreviewBox from '../markdown/PreviewBox'
+import UserChatMessage from './UserChatMessage'
 
-const ChatBox = ({ messages, chatLoading, messageLoading }) => {
+const ChatBox = ({ messages, chatLoading, messageLoading, screen }) => {
   return (
-    <>
-      <Flex flexDirection="column" filter={chatLoading ? 'blur(4px)' : 'none'}>
-        {messages.length > 0 &&
-          messages.map((m, index) => (
-            <Box
-              key={index}
-              p="2"
-              my="1.5"
-              bg={m.role === 'user' ? 'gray.100' : 'gray.300'}
-              alignSelf={m.role === 'user' ? 'flex-end' : 'flex-start'}
-              w={m.role == 'user' ? '' : '630px'}
-              borderRadius="md"
-            >
-              {m.content}
-            </Box>
-          ))}
+    <Flex
+      flexDirection="column"
+      bg="white"
+      boxShadow="md"
+      borderRadius="sm"
+      overflowY="auto"
+      sx={{
+        scrollbarGutter: 'stable',
+      }}
+      h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
+      filter={chatLoading ? 'blur(4px)' : 'none'}
+      pl="15px"
+      pb="100px"
+    >
+      {messages.length > 0 &&
+        messages.map((m, index) =>
+          m.role === 'user' ? (
+            <UserChatMessage
+              key={index} // key는 map의 직접적인 자식 요소에 필요
+              content={m.content}
+              lines={3}
+            />
+          ) : (
+            <PreviewBox markdownText={m.content} chat={true} />
+          )
+        )}
 
-        {messageLoading && <ContentsSpinner />}
+      {messageLoading && <ContentsSpinner />}
 
-        {chatLoading && <LoadingSpinner />}
-      </Flex>
-    </>
+      {chatLoading && <LoadingSpinner />}
+    </Flex>
   )
 }
 

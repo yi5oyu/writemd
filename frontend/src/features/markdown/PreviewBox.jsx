@@ -8,14 +8,16 @@ import remarkEmoji from 'remark-emoji'
 import rehypeRaw from 'rehype-raw'
 import ChakraMarkdownGithubLight from '../../components/ui/markdown/ChakraMarkdownGithubLight'
 
-const PreviewBox = ({ markdownText, mode, screen }) => {
+const PreviewBox = ({ markdownText, mode, screen, chat }) => {
   return (
     <Box
       bg="white"
       borderRadius="md"
-      boxShadow="md"
+      boxShadow={!chat && 'md'}
       h={
-        mode
+        chat
+          ? 'auto'
+          : mode
           ? '100%'
           : screen
           ? screen === 'tab'
@@ -23,9 +25,10 @@ const PreviewBox = ({ markdownText, mode, screen }) => {
             : 'calc(100vh - 145px)'
           : 'calc(100vh - 99px)'
       }
-      overflowY="auto"
-      px="7"
-      pt="2"
+      overflowY={chat ? 'none' : 'auto'}
+      px={!chat && '7'}
+      pt={!chat && '2'}
+      my={chat && '10px'}
       wordBreak="break-word"
     >
       <ReactMarkdown

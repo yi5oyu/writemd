@@ -11,7 +11,6 @@ const ContentsSpinner = () => {
       align="center"
       bg="gray.100"
       borderRadius="md"
-      zIndex="2000"
     >
       <Spinner size="xl" color="blue.400" />
     </Flex>

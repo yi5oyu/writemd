@@ -72,52 +72,64 @@ const SessionList = ({
 
   return (
     <>
-      <Flex
-        flexDirection="column"
-        filter={connectError || delSessionLoading || connectLoading ? 'blur(4px)' : 'none'}
-        boxShadow="md"
-        borderRadius="sm"
-        bg="white"
-      >
+      {!sessions || sessions.length === 0 ? (
         <Box
-          bg="white"
           boxShadow="md"
-          borderRadius="md"
-          w="100%"
+          borderRadius="sm"
+          bg="white"
+          p="4"
           h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         >
-          <SearchFlex
-            contents={sessions}
-            filteredAndSortedContents={filteredAndSortedSessions}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            name="채팅  "
-          />
-
-          <Grid
-            templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
-            gap="3"
-            w="100%"
-            maxH="calc(100vh - 200px)"
-            overflowY="auto"
-            p="10px"
-          >
-            {filteredAndSortedSessions.map((session) => (
-              <SessionBox
-                key={session.sessionId}
-                sessionId={session.sessionId}
-                title={session.title}
-                handleChatLoad={handleChatLoad}
-                handleSessionId={handleSessionId}
-                handleDeleteSession={handleDeleteSession}
-                error={connectError}
-                time={formatDate(session.updatedAt)}
-              />
-            ))}
-          </Grid>
+          현재 활성화된 세션이 없습니다.
         </Box>
-        {(!sessions || sessions.length === 0) && <Box p="4">현재 활성화된 세션이 없습니다.</Box>}
-      </Flex>
+      ) : (
+        <Flex
+          flexDirection="column"
+          filter={connectError || delSessionLoading || connectLoading ? 'blur(4px)' : 'none'}
+          boxShadow="md"
+          borderRadius="sm"
+          bg="white"
+          overflowY="auto"
+        >
+          <Box
+            bg="white"
+            boxShadow="md"
+            borderRadius="md"
+            w="100%"
+            h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
+          >
+            <SearchFlex
+              contents={sessions}
+              filteredAndSortedContents={filteredAndSortedSessions}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              name="채팅"
+            />
+
+            <Grid
+              templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
+              gap="3"
+              w="100%"
+              maxH="calc(100vh - 200px)"
+              overflowY="auto"
+              p="10px"
+            >
+              {filteredAndSortedSessions.map((session) => (
+                <SessionBox
+                  key={session.sessionId}
+                  sessionId={session.sessionId}
+                  title={session.title}
+                  handleChatLoad={handleChatLoad}
+                  handleSessionId={handleSessionId}
+                  handleDeleteSession={handleDeleteSession}
+                  error={connectError}
+                  time={formatDate(session.updatedAt)}
+                />
+              ))}
+            </Grid>
+          </Box>
+        </Flex>
+      )}
 
       {(delSessionLoading || connectLoading) && <LoadingSpinner />}
     </>

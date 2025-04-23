@@ -26,7 +26,6 @@ const useSession = ({ noteId }) => {
         return res.json()
       })
       .then((data) => {
-        console.log(data)
         setSessions(data)
         setLoading(false)
       })

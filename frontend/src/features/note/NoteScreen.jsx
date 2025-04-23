@@ -365,6 +365,11 @@ const NoteScreen = ({
     }
   }
 
+  // questionText 초기화
+  useEffect(() => {
+    setQuestionText('')
+  }, [boxForm])
+
   // 클립보드 복사
   const handleCopyMarkdown = () => {
     navigator.clipboard.writeText(
@@ -816,7 +821,7 @@ const NoteScreen = ({
                   transform="translate(-50%)"
                   zIndex="1000"
                 >
-                  <Box w="600px">
+                  <Box mx="auto">
                     <Questionbar
                       questionText={questionText}
                       setQuestionText={setQuestionText}

@@ -49,6 +49,7 @@ const NewChatBox = ({
           justifyContent="center"
           flexDirection="column"
           filter={connectLoading ? 'blur(4px)' : 'none'}
+          mx="auto"
         >
           <Questionbar
             newChat={true}

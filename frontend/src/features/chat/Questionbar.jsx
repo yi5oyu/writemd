@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Box, Textarea, Icon, Flex } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 
@@ -17,28 +17,35 @@ const Questionbar = ({
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
-  const [textWidth, setTextWidth] = useState('600px')
+  const [textWidth, setTextWidth] = useState('calc(50vh)')
   const [borderRadius, setBorderRadius] = useState('2xl')
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
 
-  // input 크기 조절
-  const handleInput = (e) => {
-    let textarea = e.target
-    textarea.style.height = '24px'
-    textarea.style.height = `${textarea.scrollHeight}px`
+  const textareaRef = useRef(null)
 
-    if (textarea.scrollHeight > MAX_TEXTAREA_HEIGHT) {
+  // input 크기 조절
+  const handleInput = () => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    // 높이 계산 및 설정
+    textarea.style.height = '24px'
+    const currentScrollHeight = textarea.scrollHeight
+    textarea.style.height = `${currentScrollHeight}px`
+
+    if (currentScrollHeight > MAX_TEXTAREA_HEIGHT) {
       setScrollFlow('visible')
     } else {
       setScrollFlow('hidden')
     }
-    if (textarea.value.length > 32 || textarea.scrollHeight > 24) {
-      setTextWidth('630px')
+
+    if (textarea.value.length > 32 || currentScrollHeight > 24) {
+      setTextWidth('calc(50vh + 30px)')
       setBorderRadius('md')
       setIsTextFlow(true)
     } else {
-      setTextWidth('600px')
+      setTextWidth('calc(50vh)')
       setBorderRadius('2xl')
       setIsTextFlow(false)
     }
@@ -46,14 +53,19 @@ const Questionbar = ({
 
   // 메시지 전송
   const handleSendMessage = async () => {
-    if (questionText.trim()) {
+    const textToSend = questionText.trim()
+    if (textToSend) {
       try {
-        await handleSendChatMessage(questionText)
+        setQuestionText('')
         setScrollFlow('hidden')
-        setTextWidth('600px')
+        setTextWidth('calc(50vh)')
         setBorderRadius('2xl')
         setIsTextFlow(false)
-        document.querySelector('#questionText').style.height = '24px'
+        if (textareaRef.current) {
+          textareaRef.current.style.height = '24px'
+        }
+
+        await handleSendChatMessage(textToSend)
       } catch (error) {
         console.error(error)
       }
@@ -61,16 +73,19 @@ const Questionbar = ({
   }
 
   const handleQuestionBox = () => {
-    document.getElementById('questionText').focus()
+    if (textareaRef.current) {
+      textareaRef.current.focus()
+    }
   }
 
   return (
     <Box
+      mx="auto"
       zIndex="9999"
       bg="white"
       boxShadow="md"
       p="4"
-      w={!newChat ? textWidth : '630px'}
+      w={!newChat ? textWidth : 'calc(50vh + 20px)'}
       position="relative"
       borderRadius={borderRadius}
       border="2px solid"
@@ -79,7 +94,7 @@ const Questionbar = ({
       onClick={handleQuestionBox}
     >
       <Textarea
-        id="questionText"
+        ref={textareaRef}
         placeholder="질문"
         value={questionText}
         onChange={(e) => setQuestionText(e.target.value)}
@@ -98,6 +113,17 @@ const Questionbar = ({
         }}
         p="0"
         isDisabled={active}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            if (!active && !isSendMessaging) {
+              setIsSendMessaging(true)
+              handleSendMessage().finally(() => {
+                setIsSendMessaging(false)
+              })
+            }
+          }
+        }}
       />
 
       {!isTextFlow && !newChat ? (

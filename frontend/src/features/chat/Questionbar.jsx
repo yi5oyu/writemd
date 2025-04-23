@@ -90,14 +90,16 @@ const Questionbar = ({
       borderRadius={borderRadius}
       border="2px solid"
       borderColor="gray.300"
-      _focusWithin={{ borderColor: 'blue.400' }}
+      _focusWithin={{ borderColor: !active && !isSendMessaging && 'blue.400' }}
       onClick={handleQuestionBox}
     >
       <Textarea
         ref={textareaRef}
         placeholder="질문"
         value={questionText}
-        onChange={(e) => setQuestionText(e.target.value)}
+        onChange={(e) => {
+          if (!active && !isSendMessaging) setQuestionText(e.target.value)
+        }}
         onInput={handleInput}
         size="md"
         resize="none"
@@ -112,7 +114,7 @@ const Questionbar = ({
           overflow: scrollFlow,
         }}
         p="0"
-        isDisabled={active}
+        isDisabled={!(!active && !isSendMessaging)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()

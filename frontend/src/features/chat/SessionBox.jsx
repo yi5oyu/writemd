@@ -1,7 +1,15 @@
 import { Box, IconButton, Flex, Text } from '@chakra-ui/react'
 import { DeleteIcon } from '@chakra-ui/icons'
 
-const SessionBox = ({ sessionId, title, handleSessionId, handleDeleteSession, error, time }) => {
+const SessionBox = ({
+  sessionId,
+  title,
+  handleSessionId,
+  handleDeleteSession,
+  error,
+  time,
+  loading,
+}) => {
   return (
     <Flex
       position="relative"
@@ -14,14 +22,16 @@ const SessionBox = ({ sessionId, title, handleSessionId, handleDeleteSession, er
       bg="gray.50"
       boxShadow="sm"
       h="125px"
-      _hover={{
-        bg: 'gray.100',
-        borderColor: 'blue.500',
-        boxShadow: 'xl',
-      }}
-      cursor={error ? 'default' : 'pointer'}
+      _hover={
+        !(error || loading) && {
+          bg: 'gray.100',
+          borderColor: 'blue.500',
+          boxShadow: 'xl',
+        }
+      }
+      cursor={error || loading ? 'default' : 'pointer'}
       onClick={() => {
-        if (!error) handleSessionId(sessionId)
+        !(error || loading) && handleSessionId(sessionId)
       }}
       role="group"
     >
@@ -64,14 +74,11 @@ const SessionBox = ({ sessionId, title, handleSessionId, handleDeleteSession, er
         _hover={{ transform: 'scale(1.3)' }}
         transition="opacity 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out"
         onClick={(e) => {
-          if (!error) {
-            e.stopPropagation()
-            handleDeleteSession(sessionId)
-          }
+          !(error || loading) && e.stopPropagation(), handleDeleteSession(sessionId)
         }}
         aria-label="세션 삭제"
-        variant={error ? 'default' : 'ghost'}
-        cursor={error ? 'default' : 'pointer'}
+        variant={error || loading ? 'default' : 'ghost'}
+        cursor={error || loading ? 'default' : 'pointer'}
       />
     </Flex>
   )

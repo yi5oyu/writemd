@@ -1,12 +1,32 @@
-import React, { useLayoutEffect, useRef } from 'react'
-import { Flex } from '@chakra-ui/react'
+import React, { useEffect, useLayoutEffect, useRef } from 'react'
+import { Flex, useToast } from '@chakra-ui/react'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 import PreviewBox from '../markdown/PreviewBox'
 import UserChatMessage from './UserChatMessage'
 
-const ChatBox = ({ messages, chatLoading, messageLoading, screen }) => {
+const ChatBox = ({
+  messages,
+  messageLoading,
+  screen,
+  isChatLoading,
+  isChatError,
+  chatErrorMessage,
+}) => {
   const scrollRef = useRef(null)
+
+  const toast = useToast()
+
+  // 에러 처리
+  useEffect(() => {
+    if (isChatError) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={chatErrorMessage} />,
+      })
+    }
+  }, [isChatError, toast])
 
   // 맨아래
   useLayoutEffect(() => {
@@ -57,7 +77,7 @@ const ChatBox = ({ messages, chatLoading, messageLoading, screen }) => {
         },
       }}
       h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
-      filter={chatLoading ? 'blur(4px)' : 'none'}
+      filter={isChatLoading ? 'blur(4px)' : 'none'}
       pl="15px"
       pb="100px"
     >
@@ -72,7 +92,7 @@ const ChatBox = ({ messages, chatLoading, messageLoading, screen }) => {
 
       {messageLoading && <ContentsSpinner />}
 
-      {chatLoading && <LoadingSpinner />}
+      {isChatLoading && <LoadingSpinner />}
     </Flex>
   )
 }

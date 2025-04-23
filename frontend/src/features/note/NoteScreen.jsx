@@ -81,11 +81,6 @@ const NoteScreen = ({
   const [text, setText] = useState([])
 
   const { note, loading, error } = useNote(noteId)
-  const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
-  const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
-  const { saveSession, loading: saveSessionLoading, error: saveSessionError } = useSaveSession()
-  const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
-  const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
 
   // 채팅
   const {
@@ -95,6 +90,26 @@ const NoteScreen = ({
     error: sessionError,
     refetch: fetchSessions,
   } = useSession({ noteId })
+  const { saveSession, loading: saveSessionLoading, error: saveSessionError } = useSaveSession()
+  const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
+  const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
+  const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
+  const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
+  const isChatLoading =
+    sessionLoading || saveSessionLoading || delSessionLoading || chatLoading || connectLoading
+  const isChatError =
+    sessionError || saveSessionError || delSessionError || chatError || connectError
+  const chatErrorMessage = sessionError
+    ? sessionError.message
+    : saveSessionError
+    ? saveSessionError.message
+    : delSessionError
+    ? delSessionError.message
+    : connectError
+    ? connectError.message
+    : chatError
+    ? chatError.message
+    : null
 
   //
   const {
@@ -199,16 +214,15 @@ const NoteScreen = ({
 
   // 에러 처리
   useEffect(() => {
-    if (error || sessionError || messageError || chatError) {
-      const errorMessage =
-        error?.message || sessionError?.message || messageError?.message || chatError?.message
+    if (error) {
+      const errorMessage = error?.message
       toast({
         duration: 5000,
         isClosable: true,
         render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
     }
-  }, [error, sessionError, messageError, chatError, toast])
+  }, [error, toast])
 
   const handleTitleChange = (e) => {
     selectedScreen === 'markdown'
@@ -779,10 +793,9 @@ const NoteScreen = ({
                 handleDeleteSession={handleDeleteSession}
                 setBoxForm={setBoxForm}
                 setMessages={setMessages}
-                connectError={connectError}
-                delSessionError={delSessionError}
-                connectLoading={connectLoading}
-                delSessionLoading={delSessionLoading}
+                isChatLoading={isChatLoading}
+                isChatError={isChatError}
+                chatErrorMessage={chatErrorMessage}
                 screen={screen}
               />
             )}
@@ -794,12 +807,12 @@ const NoteScreen = ({
                 setQuestionText={setQuestionText}
                 handleCreateSession={handleCreateSession}
                 handleSendChatMessage={handleSendChatMessage}
-                loading={newChatLoading}
                 noteId={noteId}
-                connectError={connectError}
-                connectLoading={connectLoading}
                 isSendMessaging={isSendMessaging}
                 setIsSendMessaging={setIsSendMessaging}
+                isChatLoading={isChatLoading}
+                isChatError={isChatError}
+                chatErrorMessage={chatErrorMessage}
                 screen={screen}
               />
             )}
@@ -808,8 +821,10 @@ const NoteScreen = ({
               <>
                 <ChatBox
                   messages={messages}
-                  chatLoading={chatLoading}
                   messageLoading={messageLoading}
+                  isChatLoading={isChatLoading}
+                  isChatError={isChatError}
+                  chatErrorMessage={chatErrorMessage}
                   screen={screen}
                 />
                 <Flex

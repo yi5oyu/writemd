@@ -10,28 +10,28 @@ const NewChatBox = ({
   setQuestionText,
   handleCreateSession,
   handleSendChatMessage,
-  connectLoading,
   noteId,
-  connectError,
-  loading,
   isSendMessaging,
   setIsSendMessaging,
-  mode,
+  isChatLoading,
+  isChatError,
+  chatErrorMessage,
   screen,
 }) => {
   const [isSessionCreating, setIsSessionCreating] = useState(false)
 
   const toast = useToast()
 
+  // 에러 처리
   useEffect(() => {
-    if (connectError) {
+    if (isChatError) {
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={connectError.message} />,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={chatErrorMessage} />,
       })
     }
-  }, [connectError, toast])
+  }, [isChatError, toast])
 
   return (
     <>
@@ -41,16 +41,9 @@ const NewChatBox = ({
         boxShadow="md"
         borderRadius="sm"
         h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
-        filter={connectError || loading || isSendMessaging ? 'blur(4px)' : 'none'}
+        filter={isChatLoading || isSendMessaging ? 'blur(4px)' : 'none'}
       >
-        <Flex
-          flex="1"
-          alignItems="center"
-          justifyContent="center"
-          flexDirection="column"
-          filter={connectLoading ? 'blur(4px)' : 'none'}
-          mx="auto"
-        >
+        <Flex flex="1" alignItems="center" justifyContent="center" flexDirection="column" mx="auto">
           <Questionbar
             newChat={true}
             questionText={questionText}
@@ -62,7 +55,7 @@ const NewChatBox = ({
             isSendMessaging={isSendMessaging}
             setIsSendMessaging={setIsSendMessaging}
             noteId={noteId}
-            active={connectError ? true : false}
+            active={isChatError || isChatLoading ? true : false}
           />
           <Flex mt="4" gap="5">
             <ExamBox
@@ -74,7 +67,7 @@ const NewChatBox = ({
               isSessionCreating={isSessionCreating}
               setIsSessionCreating={setIsSessionCreating}
               isSendMessaging={isSendMessaging}
-              active={connectError ? true : false}
+              active={isChatError || isChatLoading ? true : false}
               text={'마크다운(Markdown) 문법 설명'}
             />
             <ExamBox
@@ -86,14 +79,14 @@ const NewChatBox = ({
               isSessionCreating={isSessionCreating}
               setIsSessionCreating={setIsSessionCreating}
               isSendMessaging={isSendMessaging}
-              active={connectError ? true : false}
+              active={isChatError || isChatLoading ? true : false}
               text={'Markdown과 GFM 차이'}
             />
           </Flex>
         </Flex>
       </Flex>
 
-      {(loading || connectLoading || isSendMessaging) && <LoadingSpinner />}
+      {(isChatLoading || isSendMessaging) && <LoadingSpinner />}
     </>
   )
 }

@@ -12,26 +12,25 @@ const SessionList = ({
   handleChatLoad,
   handleSessionId,
   handleDeleteSession,
-  connectError,
-  connectLoading,
-  delSessionLoading,
-  delSessionError,
+  isChatLoading,
+  isChatError,
+  chatErrorMessage,
   screen,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
 
   const toast = useToast()
 
+  // 에러 처리
   useEffect(() => {
-    if (connectError || delSessionError) {
-      const errorMessage = connectError?.message || delSessionError?.message
+    if (isChatError) {
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message={chatErrorMessage} />,
       })
     }
-  }, [connectError, delSessionError, toast])
+  }, [isChatError, toast])
 
   // 날짜 포맷
   const formatDate = (dateString) => {
@@ -45,6 +44,7 @@ const SessionList = ({
     }
   }
 
+  // 채팅 세션 최신순 정렬/검색 기능
   const filteredAndSortedSessions = useMemo(() => {
     const baseSessions = sessions ?? []
 
@@ -85,7 +85,7 @@ const SessionList = ({
       ) : (
         <Flex
           flexDirection="column"
-          filter={connectError || delSessionLoading || connectLoading ? 'blur(4px)' : 'none'}
+          filter={isChatLoading ? 'blur(4px)' : 'none'}
           boxShadow="md"
           borderRadius="sm"
           bg="white"
@@ -122,7 +122,8 @@ const SessionList = ({
                   handleChatLoad={handleChatLoad}
                   handleSessionId={handleSessionId}
                   handleDeleteSession={handleDeleteSession}
-                  error={connectError}
+                  error={isChatError}
+                  loading={isChatLoading}
                   time={formatDate(session.updatedAt)}
                 />
               ))}
@@ -131,7 +132,7 @@ const SessionList = ({
         </Flex>
       )}
 
-      {(delSessionLoading || connectLoading) && <LoadingSpinner />}
+      {isChatLoading && <LoadingSpinner />}
     </>
   )
 }

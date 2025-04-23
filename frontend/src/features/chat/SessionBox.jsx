@@ -74,7 +74,7 @@ const SessionBox = ({
         _hover={{ transform: 'scale(1.3)' }}
         transition="opacity 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out"
         onClick={(e) => {
-          !(error || loading) && e.stopPropagation(), handleDeleteSession(sessionId)
+          handleDeleteSession(e, title, sessionId)
         }}
         aria-label="세션 삭제"
         variant={error || loading ? 'default' : 'ghost'}

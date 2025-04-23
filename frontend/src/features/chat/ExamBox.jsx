@@ -11,11 +11,13 @@ const ExamBox = ({
 }) => {
   return (
     <Box
-      w="300px"
+      w="25vh"
       h="30px"
       lineHeight="30px"
       borderRadius="md"
       bg="gray.200"
+      noOfLines={1}
+      title={text}
       _hover={
         !active && !isSessionCreating && !isSendMessaging
           ? {

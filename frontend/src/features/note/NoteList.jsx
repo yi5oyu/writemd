@@ -42,7 +42,6 @@ const NoteList = ({
     setNoteTitle(title)
     setNoteId(id)
     onOpen()
-    console.log(notes)
   }
 
   // 노트 삭제 확인

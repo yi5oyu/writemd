@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Flex, Grid, useToast } from '@chakra-ui/react'
+import { Box, Flex, Grid, useDisclosure, useToast } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
+import DeleteBox from '../../components/ui/modal/DeleteBox'
 
 const SessionList = ({
   sessions,
@@ -18,6 +19,9 @@ const SessionList = ({
   screen,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
+  const [sessionTitle, setSessionTitle] = useState('')
+  const [sessionId, setSessionId] = useState('')
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const toast = useToast()
 
@@ -31,6 +35,22 @@ const SessionList = ({
       })
     }
   }, [isChatError, toast])
+
+  // 노트 삭제 클릭
+  const handleDelete = (e, title, id) => {
+    e.stopPropagation()
+    setSessionTitle(title)
+    setSessionId(id)
+    onOpen()
+  }
+
+  // 노트 삭제 확인
+  const confirmDelete = () => {
+    handleDeleteSession(sessionId)
+    setSessionTitle('')
+    setSessionId('')
+    onClose()
+  }
 
   // 날짜 포맷
   const formatDate = (dateString) => {
@@ -121,7 +141,7 @@ const SessionList = ({
                   title={session.title}
                   handleChatLoad={handleChatLoad}
                   handleSessionId={handleSessionId}
-                  handleDeleteSession={handleDeleteSession}
+                  handleDeleteSession={handleDelete}
                   error={isChatError}
                   loading={isChatLoading}
                   time={formatDate(session.updatedAt)}
@@ -131,6 +151,8 @@ const SessionList = ({
           </Box>
         </Flex>
       )}
+
+      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={sessionTitle} />
 
       {isChatLoading && <LoadingSpinner />}
     </>

@@ -23,6 +23,7 @@ import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
 import { FaTrash, FaEraser } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import SearchBar from '../../components/ui/search/SearchBar'
+import CreateCard from '../../components/ui/card/CreateCard'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -155,148 +156,22 @@ const TemplateList = ({
     return template?.folderName?.trim() && template?.title?.trim() && template?.description?.trim()
   }
 
+  const select = {
+    mode: 'template',
+    templates: templates,
+    selectedTemplate: selectedTemplate,
+    setSelectedTemplate: setSelectedTemplate,
+    setTemplateText: setTemplateText,
+    isNewTemplate: isNewTemplate,
+    setIsNewTemplate: setIsNewTemplate,
+    isTemplateValid: isTemplateValid,
+    saveTemplateClick: saveTemplateClick,
+    isDisabled: isDisabled,
+  }
+
   return (
     <Box>
-      {!isReadOnly && (isNewTemplate || selectedTemplate) && (
-        <Card mb="5px" variant="outline" borderColor="blue.500">
-          <CardHeader>
-            <Flex alignItems="center">
-              <CreatableSelect
-                name="folder"
-                minWidth="300px"
-                placeholder="폴더 선택 또는 입력"
-                options={templates?.map((folder) => ({
-                  value: folder.title,
-                  label: folder.title,
-                  folderId: folder.folderId,
-                }))}
-                value={
-                  selectedTemplate?.folderName
-                    ? {
-                        value: selectedTemplate.folderName,
-                        label: selectedTemplate.folderName,
-                      }
-                    : isNewTemplate
-                    ? null
-                    : {
-                        value: templates[0].title,
-                        label: templates[0].title,
-                      }
-                }
-                onChange={(newValue) => {
-                  selectedTemplate &&
-                    setSelectedTemplate({
-                      ...selectedTemplate,
-                      folderName: newValue.value,
-                      folderId: newValue.folderId,
-                    })
-                }}
-                onCreateOption={(inputValue) => {
-                  const newfolder = inputValue
-                  selectedTemplate &&
-                    setSelectedTemplate({
-                      ...selectedTemplate,
-                      folderName: newfolder,
-                      folderId: null,
-                    })
-                }}
-                isClearable={false}
-                isDisabled={!isNewTemplate && !selectedTemplate}
-                chakraStyles={{
-                  container: (provided) => ({
-                    ...provided,
-                    minWidth: '300px',
-                  }),
-                }}
-              />
-
-              <Button
-                as={FaEraser}
-                px="10px"
-                w="22px"
-                h="32px"
-                bg="transparent"
-                color="gray.400"
-                onClick={() => {
-                  setIsNewTemplate(true)
-                  setSelectedTemplate({
-                    templateId: null,
-                    title: '',
-                    description: '',
-                    folderName: '',
-                    folderId: null,
-                  })
-                  setTemplateText('')
-                }}
-                _hover={{ color: 'blue.500' }}
-                title="지우개"
-              />
-              <CloseButton
-                ml="auto"
-                _hover={{ color: 'red' }}
-                onClick={() => {
-                  setIsNewTemplate(false)
-                  setSelectedTemplate(null)
-                }}
-                title="닫기"
-              />
-            </Flex>
-          </CardHeader>
-
-          <CardBody pt="0">
-            <Flex alignItems="flex-start">
-              <Icon as={FiFile} w="24px" h="24px" mr={3} color="blue.500" />
-              <Box flex="1">
-                <Input
-                  variant="unstyled"
-                  placeholder="파일명을 입력하세요."
-                  fontWeight="bold"
-                  borderRadius="none"
-                  value={selectedTemplate && selectedTemplate.title}
-                  onChange={(e) => {
-                    selectedTemplate &&
-                      setSelectedTemplate({
-                        ...selectedTemplate,
-                        title: e.target.value,
-                      })
-                  }}
-                  mb="10px"
-                />
-
-                <Flex>
-                  <Input
-                    variant="unstyled"
-                    placeholder="템플릿에 대한 간단한 설명 입력하세요."
-                    maxLength={40}
-                    borderRadius="none"
-                    value={selectedTemplate && selectedTemplate.description}
-                    onChange={(e) => {
-                      selectedTemplate &&
-                        setSelectedTemplate({
-                          ...selectedTemplate,
-                          description: e.target.value,
-                        })
-                    }}
-                  />
-                  <Button
-                    p="10px"
-                    bg="transparent"
-                    as={FiSave}
-                    _hover={
-                      isTemplateValid(selectedTemplate) && { color: 'blue.500', bg: 'gray.100' }
-                    }
-                    isDisabled={!isTemplateValid(selectedTemplate) || isDisabled}
-                    onClick={(e) => {
-                      !isTemplateValid(selectedTemplate) ? e.preventDefault() : saveTemplateClick()
-                    }}
-                    title="저장"
-                  />
-                </Flex>
-              </Box>
-            </Flex>
-          </CardBody>
-        </Card>
-      )}
+      {!isReadOnly && (isNewTemplate || selectedTemplate) && <CreateCard select={select} />}
 
       {!isReadOnly && !(isNewTemplate || selectedTemplate) && (
         <Button

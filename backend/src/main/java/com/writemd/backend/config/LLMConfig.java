@@ -9,13 +9,13 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class LLMConfig {
-    @Bean
-    public ChatClient openAIChatClient(OpenAiChatModel chatModel) {
-        return ChatClient.create(chatModel);
-    }
-
-    @Bean
-    public ChatClient anthropicChatClient(AnthropicChatModel chatModel){
-        return ChatClient.create(chatModel);
-    }
+//    @Bean
+//    public ChatClient openAIChatClient(OpenAiChatModel chatModel) {
+//        return ChatClient.create(chatModel);
+//    }
+//
+//    @Bean
+//    public ChatClient anthropicChatClient(AnthropicChatModel chatModel){
+//        return ChatClient.create(chatModel);
+//    }
 }

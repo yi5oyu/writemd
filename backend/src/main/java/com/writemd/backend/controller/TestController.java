@@ -1,18 +1,15 @@
 package com.writemd.backend.controller;
 
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.anthropic.AnthropicChatModel;
+import org.springframework.ai.anthropic.AnthropicChatOptions;
+import org.springframework.ai.anthropic.api.AnthropicApi;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -20,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TestController {
 
-    @Qualifier("openAIChatClient")
-    private final ChatClient openAIChatClient;
-
-    @Qualifier("anthropicChatClient")
-    private final ChatClient anthropicChatClient;
+//    @Qualifier("openAIChatClient")
+//    private final ChatClient openAIChatClient;
+//
+//    @Qualifier("anthropicChatClient")
+//    private final ChatClient anthropicChatClient;
 
 
 //
@@ -42,6 +39,25 @@ public class TestController {
 
     @GetMapping("/openai")
     public String testOpenAI() {
+        String apiKey = "key";
+
+        OpenAiApi openAiApi = OpenAiApi.builder()
+            .apiKey(() -> apiKey)
+            .build();
+
+        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
+            .model("gpt-4o")
+            .temperature(0.7)
+//            .maxTokens()
+            .build();
+
+        OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
+            .openAiApi(openAiApi)
+            .defaultOptions(openAiChatOptions)
+            .build();
+
+        ChatClient openAIChatClient = ChatClient.create(openAiChatModel);
+
         return openAIChatClient.prompt()
             .user("너 OpenAI 맞지?")
             .call()
@@ -49,7 +65,24 @@ public class TestController {
     }
 
     @GetMapping("/claude")
-    public String testOllama() {
+    public String testClaude() {
+        String apiKey = "key";
+
+        AnthropicApi anthropicApi = new AnthropicApi(apiKey);
+
+        AnthropicChatOptions anthropicChatOptions = AnthropicChatOptions.builder()
+            .model("")
+            .temperature(0.7)
+            .maxTokens(1000)
+            .build();
+
+        AnthropicChatModel anthropicChatModel = AnthropicChatModel.builder()
+            .anthropicApi(anthropicApi)
+            .defaultOptions(anthropicChatOptions)
+            .build();
+
+        ChatClient anthropicChatClient = ChatClient.create(anthropicChatModel);
+
         return anthropicChatClient.prompt()
             .user("너 모델 이름이 뭐야?")
             .call()

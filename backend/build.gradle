@@ -78,10 +78,12 @@ dependencies {
 	// Spring AI MCP Client, openai, anthropic(claude)
 //	implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
 	implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
-	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
-	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
-//	implementation 'org.springframework.ai:spring-ai-openai'
+//	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+	implementation 'org.springframework.ai:spring-ai-anthropic'
+
+//	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation 'org.springframework.ai:spring-ai-openai'
 //	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
 
 	implementation 'org.kohsuke:github-api:1.321'

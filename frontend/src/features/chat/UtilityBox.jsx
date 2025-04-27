@@ -1,12 +1,11 @@
-import { useState } from 'react'
-import { Box, Flex, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react'
-import { MdPreview, MdChat, MdOutlineSpellcheck } from 'react-icons/md'
-import { RiMarkdownFill, RiInboxUnarchiveLine } from 'react-icons/ri'
+import { Flex } from '@chakra-ui/react'
+import { MdPreview } from 'react-icons/md'
 import { BiMessageSquareAdd } from 'react-icons/bi'
 import UtilityBtn from '../../components/ui/button/UtilityBtn'
 import ConnectIcon from '../../components/ui/icon/ConnectIcon'
 import { BsGithub } from 'react-icons/bs'
-import { FaFileExport, FaStickyNote, FaRegFileAlt } from 'react-icons/fa'
+import { RiRobot2Line } from 'react-icons/ri'
+import { FaRegFileAlt } from 'react-icons/fa'
 
 const UtilityBox = ({
   setBoxForm,
@@ -28,7 +27,7 @@ const UtilityBox = ({
           setColor={boxForm === 'preview' ? true : false}
         />
         <UtilityBtn
-          icon={MdChat}
+          icon={RiRobot2Line}
           label="채팅"
           onClick={() => {
             if (handleCheckConnection) {

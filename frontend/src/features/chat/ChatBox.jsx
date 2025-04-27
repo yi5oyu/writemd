@@ -4,6 +4,7 @@ import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 import PreviewBox from '../markdown/PreviewBox'
 import UserChatMessage from './UserChatMessage'
+import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const ChatBox = ({
   messages,

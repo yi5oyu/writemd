@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Flex, Grid, useDisclosure, useToast } from '@chakra-ui/react'
+import { Box, Flex, Grid, IconButton, Select, useDisclosure, useToast } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { SettingsIcon } from '@chakra-ui/icons'
 import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
@@ -21,6 +22,8 @@ const SessionList = ({
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionTitle, setSessionTitle] = useState('')
   const [sessionId, setSessionId] = useState('')
+  const [isSetting, setIsSetting] = useState(false)
+
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const toast = useToast()
@@ -90,6 +93,11 @@ const SessionList = ({
     })
   }, [sessions, searchQuery])
 
+  const select = {
+    mode: 'session',
+    setIsSetting: setIsSetting,
+  }
+
   return (
     <>
       {!sessions || sessions.length === 0 ? (
@@ -98,12 +106,14 @@ const SessionList = ({
           borderRadius="sm"
           bg="white"
           p="4"
+          // isSetting
           h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         >
           현재 활성화된 세션이 없습니다.
         </Box>
       ) : (
         <Flex
+          position="relative"
           flexDirection="column"
           filter={isChatLoading ? 'blur(4px)' : 'none'}
           boxShadow="md"
@@ -111,6 +121,19 @@ const SessionList = ({
           bg="white"
           overflowY="auto"
         >
+          <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+            <Select size="sm" mr="10px" maxWidth="300px" spacing={3}>
+              <option value="openai">OpenAI(ChatGPT)</option>
+              <option value="anthropic">Anthropic(Claude)</option>
+            </Select>
+            <IconButton
+              bg="transparent"
+              aria-label="설정"
+              icon={<SettingsIcon />}
+              _hover={{ bg: 'transparent', color: 'blue.500' }}
+              onClick={() => setIsSetting(!isSetting)}
+            />
+          </Flex>
           <Box
             bg="white"
             boxShadow="md"
@@ -123,6 +146,8 @@ const SessionList = ({
               filteredAndSortedContents={filteredAndSortedSessions}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
+              isSetting={isSetting}
+              select={select}
               name="채팅"
             />
 

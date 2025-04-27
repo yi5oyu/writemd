@@ -1,7 +1,16 @@
-import { Box, Flex, Grid, useToast, Text } from '@chakra-ui/react'
+import { Flex, Text } from '@chakra-ui/react'
 import SearchBar from './SearchBar'
+import CreateCard from '../card/CreateCard'
 
-const SearchFlex = ({ contents, filteredAndSortedContents, searchQuery, setSearchQuery, name }) => {
+const SearchFlex = ({
+  contents,
+  filteredAndSortedContents,
+  searchQuery,
+  setSearchQuery,
+  name,
+  isSetting,
+  select,
+}) => {
   return (
     <>
       <Flex
@@ -23,6 +32,7 @@ const SearchFlex = ({ contents, filteredAndSortedContents, searchQuery, setSearc
           </Text>
         )}
       </Flex>
+      {isSetting && <CreateCard select={select} />}
       <SearchBar
         placeholder={`${name} 이름 검색...`}
         query={searchQuery}

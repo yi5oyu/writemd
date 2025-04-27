@@ -1,7 +1,9 @@
-import { Flex, Button, CloseButton, Card, CardBody, CardHeader } from '@chakra-ui/react'
-import { FaEraser } from 'react-icons/fa'
+import { Flex, CloseButton, Card, CardBody, CardHeader } from '@chakra-ui/react'
 import TemplateSelect from '../select/TemplateSelect'
 import TemplateBody from './TemplateBody'
+import SessionHeader from '../select/SessionHeader'
+import APIRegisterBody from './APIRegisterBody'
+import APISettingBody from './APISettingBody'
 
 const CreateCard = ({ select }) => {
   return (
@@ -16,7 +18,10 @@ const CreateCard = ({ select }) => {
               isNewTemplate={select.isNewTemplate}
             />
           )}
-          <Button
+
+          {select.mode === 'session' && <SessionHeader header="API 설정" icon="check" />}
+
+          {/* <Button
             as={FaEraser}
             px="10px"
             w="22px"
@@ -38,13 +43,15 @@ const CreateCard = ({ select }) => {
             }}
             _hover={{ color: 'blue.500' }}
             title="지우개"
-          />
+          /> */}
           <CloseButton
             ml="auto"
             _hover={{ color: 'red' }}
             onClick={() => {
               select.mode === 'template'
                 ? (select.setIsNewTemplate(false), select.setSelectedTemplate(null))
+                : select.mode === 'session'
+                ? select.setIsSetting(false)
                 : null
             }}
             title="닫기"
@@ -52,7 +59,7 @@ const CreateCard = ({ select }) => {
         </Flex>
       </CardHeader>
 
-      <CardBody pt="0">
+      <CardBody py="0">
         {select.mode === 'template' && (
           <TemplateBody
             selectedTemplate={select.selectedTemplate}
@@ -62,7 +69,19 @@ const CreateCard = ({ select }) => {
             isDisabled={select.isDisabled}
           />
         )}
+
+        {select.mode === 'session' && <APISettingBody />}
       </CardBody>
+      {select.mode === 'session' && (
+        <>
+          <CardHeader>
+            <SessionHeader header="API 추가" icon="add" />
+          </CardHeader>
+          <CardBody pt="0">
+            <APIRegisterBody />
+          </CardBody>
+        </>
+      )}
     </Card>
   )
 }

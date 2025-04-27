@@ -1,10 +1,12 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.GitContentDTO;
 import com.writemd.backend.dto.GitRepoDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Templates;
+import com.writemd.backend.service.APIService;
 import com.writemd.backend.service.GithubService;
 import com.writemd.backend.service.TemplateService;
 import com.writemd.backend.service.UserService;
@@ -36,11 +38,12 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/user")
 @CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
 public class UserController {
 
     // private final OAuth2AuthorizedClientService authorizedClientService;
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final APIService apiService;
 
     @GetMapping("/info")
     public UserDTO getUserInfo(@AuthenticationPrincipal OAuth2User oauthUser) {
@@ -62,5 +65,15 @@ public class UserController {
         // } else {
         // response.put("accessToken", "토큰x");
         // }
+    }
+
+    @PostMapping("/key/{userId}")
+    public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @RequestBody APIDTO apidto){
+        try {
+            apiService.saveAPIKey(userId, apidto.getAiModel(), apidto.getApiKey());
+            return ResponseEntity.status(HttpStatus.CREATED).body("apikey 저장 성공");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 키 저장 중 오류가 발생했습니다.");
+        }
     }
 }

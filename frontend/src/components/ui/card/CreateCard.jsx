@@ -4,8 +4,12 @@ import TemplateBody from './TemplateBody'
 import SessionHeader from '../select/SessionHeader'
 import APIRegisterBody from './APIRegisterBody'
 import APISettingBody from './APISettingBody'
+import { useState } from 'react'
 
 const CreateCard = ({ select }) => {
+  const [aiModel, setAiModel] = useState('openai')
+  const [apiKey, setApiKey] = useState('')
+
   return (
     <Card mb="5px" variant="outline" borderColor="blue.500">
       <CardHeader>
@@ -75,10 +79,14 @@ const CreateCard = ({ select }) => {
       {select.mode === 'session' && (
         <>
           <CardHeader>
-            <SessionHeader header="API 추가" icon="add" />
+            <SessionHeader
+              header="API 추가"
+              icon="add"
+              onClick={() => select.handleSaveAPI(aiModel, apiKey)}
+            />
           </CardHeader>
           <CardBody pt="0">
-            <APIRegisterBody />
+            <APIRegisterBody setAiModel={setAiModel} setApiKey={setApiKey} />
           </CardBody>
         </>
       )}

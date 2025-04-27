@@ -1,7 +1,7 @@
 import { AddIcon, CheckIcon } from '@chakra-ui/icons'
 import { Flex, Heading, IconButton } from '@chakra-ui/react'
 
-const SessionHeader = ({ header, icon }) => {
+const SessionHeader = ({ header, icon, onClick }) => {
   return (
     <Flex>
       <Heading size="md">{header}</Heading>
@@ -11,6 +11,7 @@ const SessionHeader = ({ header, icon }) => {
         _active={{}}
         icon={icon === 'add' ? <AddIcon /> : icon === 'check' ? <CheckIcon /> : null}
         boxSize={6}
+        onClick={onClick}
       />
     </Flex>
   )

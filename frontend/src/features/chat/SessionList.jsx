@@ -18,6 +18,7 @@ const SessionList = ({
   isChatError,
   chatErrorMessage,
   screen,
+  handleSaveAPI,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionTitle, setSessionTitle] = useState('')
@@ -96,6 +97,7 @@ const SessionList = ({
   const select = {
     mode: 'session',
     setIsSetting: setIsSetting,
+    handleSaveAPI: handleSaveAPI,
   }
 
   return (

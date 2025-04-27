@@ -45,7 +45,9 @@ import useGetGithubFile from '../../hooks/git/useGetGithubFile'
 import useGithubFile from '../../hooks/git/useGithubFile'
 import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
 import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
+
 import useSession from '../../hooks/chat/useSession'
+import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
 
 const NoteScreen = ({
   user,
@@ -83,6 +85,8 @@ const NoteScreen = ({
   const { note, loading, error } = useNote(noteId)
 
   // 채팅
+  const { saveApiKey, loading: saveAPILoading, error: saveAPIError } = useSaveApiKey()
+
   const {
     sessions,
     setSessions,
@@ -623,6 +627,14 @@ const NoteScreen = ({
     }
   }
 
+  // apikey 저장
+  const handleSaveAPI = (aiModel, apiKey) => {
+    console.log(aiModel, apiKey)
+    if (apiKey.trim()) {
+      saveApiKey(user.userId, aiModel, apiKey)
+    }
+  }
+
   return (
     <Box
       direction="column"
@@ -796,6 +808,7 @@ const NoteScreen = ({
                 isChatLoading={isChatLoading}
                 isChatError={isChatError}
                 chatErrorMessage={chatErrorMessage}
+                handleSaveAPI={handleSaveAPI}
                 screen={screen}
               />
             )}

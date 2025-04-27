@@ -99,6 +99,7 @@ const SessionList = ({
     mode: 'session',
     setIsSetting: setIsSetting,
     handleSaveAPI: handleSaveAPI,
+    apiKeys: apiKeys,
   }
 
   return (
@@ -128,7 +129,7 @@ const SessionList = ({
             <Select size="sm" mr="10px" spacing={3}>
               {apiKeys && apiKeys.length > 0 ? (
                 apiKeys.map((apiKeyData) => (
-                  <option key={apiKeyData.id} value={apiKeyData.id}>
+                  <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
                     {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
                   </option>
                 ))

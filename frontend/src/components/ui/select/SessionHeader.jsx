@@ -1,4 +1,4 @@
-import { AddIcon, CheckIcon } from '@chakra-ui/icons'
+import { AddIcon, CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 import { Flex, Heading, IconButton } from '@chakra-ui/react'
 
 const SessionHeader = ({ header, icon, onClick }) => {
@@ -7,9 +7,17 @@ const SessionHeader = ({ header, icon, onClick }) => {
       <Heading size="md">{header}</Heading>
       <IconButton
         bg="transparent"
-        _hover={{ color: 'blue.500' }}
+        _hover={{ color: icon === 'del' ? 'red.500' : 'blue.500' }}
         _active={{}}
-        icon={icon === 'add' ? <AddIcon /> : icon === 'check' ? <CheckIcon /> : null}
+        icon={
+          icon === 'add' ? (
+            <AddIcon />
+          ) : icon === 'check' ? (
+            <CheckIcon />
+          ) : icon === 'del' ? (
+            <DeleteIcon />
+          ) : null
+        }
         boxSize={6}
         onClick={onClick}
       />

@@ -13,18 +13,26 @@ import {
 } from '@chakra-ui/react'
 import { FiSave } from 'react-icons/fi'
 
-const APISettingBody = () => {
+const APISettingBody = ({ apiKeys, setSettingId }) => {
   const [sliderValue, setSliderValue] = useState(50)
 
   return (
     <Flex direction="column">
       <Flex>
-        {/* 사용할 수 있는 AI 목록 */}
-        <Select size="sm" w="auto" spacing={3} mb="10px">
-          <option value="openai">OpenAI(ChatGPT)</option>
-          <option value="anthropic">Anthropic(Claude)</option>
-          {/* <option value="ollama">Ollama</option>
-        <option value="lmstudio">LMStudio</option> */}
+        <Select
+          size="sm"
+          w="auto"
+          spacing={3}
+          mb="10px"
+          onChange={(event) => setSettingId(event.target.value)}
+        >
+          {apiKeys &&
+            apiKeys.length > 0 &&
+            apiKeys.map((apiKeyData) => (
+              <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+              </option>
+            ))}
         </Select>
       </Flex>
       {/* 

@@ -38,6 +38,7 @@ public class APIService {
 
         List<APIDTO> apiDtos = apiEntities.stream()
             .map(api -> APIDTO.builder()
+                .apiId(api.getId())
                 .aiModel(api.getAiModel())
                 .apiKey(maskApiKey(api.getApiKey()))
                 .build())

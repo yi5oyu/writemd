@@ -5,10 +5,13 @@ import SessionHeader from '../select/SessionHeader'
 import APIRegisterBody from './APIRegisterBody'
 import APISettingBody from './APISettingBody'
 import { useState } from 'react'
+import APIDeleteBody from './APIDeleteBody'
 
 const CreateCard = ({ select }) => {
   const [aiModel, setAiModel] = useState('openai')
   const [apiKey, setApiKey] = useState('')
+  const [apiId, setApiId] = useState(select?.apiKeys[0]?.apiId)
+  const [settingId, setSettingId] = useState(select?.apiKeys[0].apiId)
 
   return (
     <Card mb="5px" variant="outline" borderColor="blue.500">
@@ -74,7 +77,9 @@ const CreateCard = ({ select }) => {
           />
         )}
 
-        {select.mode === 'session' && <APISettingBody />}
+        {select.mode === 'session' && (
+          <APISettingBody apiKeys={select.apiKeys} setSettingId={setSettingId} />
+        )}
       </CardBody>
       {select.mode === 'session' && (
         <>
@@ -85,9 +90,24 @@ const CreateCard = ({ select }) => {
               onClick={() => select.handleSaveAPI(aiModel, apiKey)}
             />
           </CardHeader>
-          <CardBody pt="0">
+          <CardBody pt="0" pb={select.apiKeys && select.apiKeys.length > 0 && '0'}>
             <APIRegisterBody setAiModel={setAiModel} setApiKey={setApiKey} />
           </CardBody>
+
+          {select.apiKeys && select.apiKeys.length > 0 && (
+            <>
+              <CardHeader>
+                <SessionHeader
+                  header="API 삭제"
+                  icon="del"
+                  // onClick={() => select.del)}
+                />
+              </CardHeader>
+              <CardBody pt="0">
+                <APIDeleteBody apiKeys={select.apiKeys} setApiId={setApiId} />
+              </CardBody>
+            </>
+          )}
         </>
       )}
     </Card>

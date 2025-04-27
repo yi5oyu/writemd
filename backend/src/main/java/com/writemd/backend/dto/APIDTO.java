@@ -12,6 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class APIDTO {
+    private Long apiId;
     private String aiModel;
     private String apiKey;
 }

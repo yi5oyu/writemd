@@ -61,4 +61,12 @@ public class APIService {
             mask +
             apiKey.substring(totalLength - suffixLength);
     }
+
+    @Transactional
+    public void deleteAPIKey(Long apiId) {
+        if (!apiRepository.existsById(apiId)) {
+            throw new RuntimeException("삭제할 API 키를 찾을 수 없습니다. ID: " + apiId);
+        }
+        apiRepository.deleteById(apiId);
+    }
 }

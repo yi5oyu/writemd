@@ -100,7 +100,7 @@ const CreateCard = ({ select }) => {
                 <SessionHeader
                   header="API 삭제"
                   icon="del"
-                  // onClick={() => select.del)}
+                  onClick={() => select.handleDeleteAPI(apiId)}
                 />
               </CardHeader>
               <CardBody pt="0">

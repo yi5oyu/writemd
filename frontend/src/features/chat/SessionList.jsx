@@ -19,6 +19,7 @@ const SessionList = ({
   chatErrorMessage,
   screen,
   handleSaveAPI,
+  handleDeleteAPI,
   apiKeys,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -99,6 +100,7 @@ const SessionList = ({
     mode: 'session',
     setIsSetting: setIsSetting,
     handleSaveAPI: handleSaveAPI,
+    handleDeleteAPI: handleDeleteAPI,
     apiKeys: apiKeys,
   }
 
@@ -126,6 +128,7 @@ const SessionList = ({
           overflowY="auto"
         >
           <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+            {/* 설정값 바뀌게 */}
             <Select size="sm" mr="10px" spacing={3}>
               {apiKeys && apiKeys.length > 0 ? (
                 apiKeys.map((apiKeyData) => (

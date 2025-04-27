@@ -49,6 +49,7 @@ import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 import useSession from '../../hooks/chat/useSession'
 import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
 import useApiKey from '../../hooks/chat/useApiKey'
+import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 
 const NoteScreen = ({
   user,
@@ -88,6 +89,7 @@ const NoteScreen = ({
   // 채팅
   const { saveApiKey, loading: saveAPILoading, error: saveAPIError } = useSaveApiKey()
   const { fetchApiKeys, apiKeys, loading: getAPILoading, error: getAPIError } = useApiKey()
+  const { deleteApiKey, loading: delAPILoading, error: delAPIError } = useDeleteApiKey()
 
   const {
     sessions,
@@ -631,11 +633,15 @@ const NoteScreen = ({
 
   // apikey 저장
   const handleSaveAPI = async (aiModel, apiKey) => {
-    console.log(aiModel, apiKey)
     if (apiKey.trim()) {
       await saveApiKey(user.userId, aiModel, apiKey)
       await fetchApiKeys(user.userId)
     }
+  }
+
+  const handleDeleteAPI = async (apiId) => {
+    await deleteApiKey(apiId)
+    await fetchApiKeys(user.userId)
   }
 
   return (
@@ -813,6 +819,7 @@ const NoteScreen = ({
                 isChatError={isChatError}
                 chatErrorMessage={chatErrorMessage}
                 handleSaveAPI={handleSaveAPI}
+                handleDeleteAPI={handleDeleteAPI}
                 apiKeys={apiKeys}
                 screen={screen}
               />

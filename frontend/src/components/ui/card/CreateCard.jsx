@@ -85,9 +85,11 @@ const CreateCard = ({ select }) => {
         <>
           <CardHeader>
             <SessionHeader
-              header="API 추가"
+              header="API 생성"
               icon="add"
-              onClick={() => select.handleSaveAPI(aiModel, apiKey)}
+              onClick={() => {
+                select.handleSaveAPI(aiModel, apiKey), setApiKey('')
+              }}
             />
           </CardHeader>
           <CardBody pt="0" pb={select.apiKeys && select.apiKeys.length > 0 && '0'}>

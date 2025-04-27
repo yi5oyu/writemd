@@ -19,6 +19,7 @@ const SessionList = ({
   chatErrorMessage,
   screen,
   handleSaveAPI,
+  apiKeys,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionTitle, setSessionTitle] = useState('')
@@ -124,9 +125,16 @@ const SessionList = ({
           overflowY="auto"
         >
           <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
-            <Select size="sm" mr="10px" maxWidth="300px" spacing={3}>
-              <option value="openai">OpenAI(ChatGPT)</option>
-              <option value="anthropic">Anthropic(Claude)</option>
+            <Select size="sm" mr="10px" spacing={3}>
+              {apiKeys && apiKeys.length > 0 ? (
+                apiKeys.map((apiKeyData) => (
+                  <option key={apiKeyData.id} value={apiKeyData.id}>
+                    {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                  </option>
+                ))
+              ) : (
+                <option disabled>사용 가능한 API 키 없음</option>
+              )}
             </Select>
             <IconButton
               bg="transparent"

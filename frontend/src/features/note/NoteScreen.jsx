@@ -48,6 +48,7 @@ import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 
 import useSession from '../../hooks/chat/useSession'
 import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
+import useApiKey from '../../hooks/chat/useApiKey'
 
 const NoteScreen = ({
   user,
@@ -86,6 +87,7 @@ const NoteScreen = ({
 
   // 채팅
   const { saveApiKey, loading: saveAPILoading, error: saveAPIError } = useSaveApiKey()
+  const { fetchApiKeys, apiKeys, loading: getAPILoading, error: getAPIError } = useApiKey()
 
   const {
     sessions,
@@ -628,10 +630,11 @@ const NoteScreen = ({
   }
 
   // apikey 저장
-  const handleSaveAPI = (aiModel, apiKey) => {
+  const handleSaveAPI = async (aiModel, apiKey) => {
     console.log(aiModel, apiKey)
     if (apiKey.trim()) {
-      saveApiKey(user.userId, aiModel, apiKey)
+      await saveApiKey(user.userId, aiModel, apiKey)
+      await fetchApiKeys(user.userId)
     }
   }
 
@@ -780,6 +783,7 @@ const NoteScreen = ({
                 handleGetTemplates={handleGetTemplates}
                 setSelectedScreen={setSelectedScreen}
                 fetchSessions={fetchSessions}
+                fetchApiKeys={() => fetchApiKeys(user.userId)}
               />
             )}
 
@@ -809,6 +813,7 @@ const NoteScreen = ({
                 isChatError={isChatError}
                 chatErrorMessage={chatErrorMessage}
                 handleSaveAPI={handleSaveAPI}
+                apiKeys={apiKeys}
                 screen={screen}
               />
             )}

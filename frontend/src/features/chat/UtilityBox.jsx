@@ -16,6 +16,7 @@ const UtilityBox = ({
   handleGetTemplates,
   setSelectedScreen,
   fetchSessions,
+  fetchApiKeys,
 }) => {
   return (
     <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
@@ -35,6 +36,7 @@ const UtilityBox = ({
             }
             setBoxForm('chat')
             fetchSessions()
+            fetchApiKeys()
           }}
           setColor={boxForm === 'chat' ? true : false}
         />

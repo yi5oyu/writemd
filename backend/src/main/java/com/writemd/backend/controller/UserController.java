@@ -76,4 +76,10 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 키 저장 중 오류가 발생했습니다.");
         }
     }
+
+    @GetMapping("/key/{userId}")
+    public List<APIDTO> getAPIKeys(@PathVariable Long userId){
+        return apiService.getAPIKeys(userId);
+    }
+
 }

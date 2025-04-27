@@ -54,4 +54,9 @@ public class Users {
     @JsonManagedReference
     private List<Memos> memos = new ArrayList<>();
 
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @JsonManagedReference
+    private List<APIs> apis = new ArrayList<>();
+
 }

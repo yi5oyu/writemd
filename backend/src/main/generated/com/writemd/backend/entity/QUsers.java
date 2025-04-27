@@ -20,6 +20,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public static final QUsers users = new QUsers("users");
 
+    public final ListPath<APIs, QAPIs> apis = this.<APIs, QAPIs>createList("apis", APIs.class, QAPIs.class, PathInits.DIRECT2);
+
     public final StringPath avatarUrl = createString("avatarUrl");
 
     public final ListPath<Folders, QFolders> folders = this.<Folders, QFolders>createList("folders", Folders.class, QFolders.class, PathInits.DIRECT2);

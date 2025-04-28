@@ -1,8 +1,11 @@
 package com.writemd.backend.service;
 
+import java.io.Console;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -11,15 +14,18 @@ public class RedisService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    // 데이터 저장
-    public void saveValue(String key, String value) {
+    // 값 저장
+    public void setValue(String key, String value) {
         redisTemplate.opsForValue().set(key, value);
     }
-    // 데이터 조회
+
+    // 값 조회
     public String getValue(String key) {
-        return (String) redisTemplate.opsForValue().get(key);
+        Object value = redisTemplate.opsForValue().get(key);
+        return value != null ? value.toString() : null;
     }
-    // 데이터 삭제
+
+    // 값 삭제
     public void deleteValue(String key) {
         redisTemplate.delete(key);
     }

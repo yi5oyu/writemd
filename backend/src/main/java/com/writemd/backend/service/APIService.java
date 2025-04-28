@@ -5,9 +5,14 @@ import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
 import com.writemd.backend.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +22,14 @@ public class APIService {
 
     private final UserRepository userRepository;
     private final ApiRepository apiRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
+    // hash 키
+    private String getUserHashKey(Long userId) {
+        return "ai:" + userId;
+    }
+
+    // API 키 저장
     @Transactional
     public APIs saveAPIKey(Long userId, String aiModel ,String apikey) {
         Users users = userRepository.findById(userId)
@@ -29,24 +41,72 @@ public class APIService {
             .users(users)
             .build();
 
-        return apiRepository.save(newapi);
+        APIs api = apiRepository.save(newapi);
+
+        String hashKey = getUserHashKey(userId);
+        String fieldKey = "key:" + api.getId();
+
+        redisTemplate.opsForHash().put(hashKey, fieldKey,
+            APIDTO.builder()
+                .apiId(api.getId())
+                .aiModel(aiModel)
+                .apiKey(apikey)
+                .build()
+        );
+
+        redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
+
+        return api;
     }
 
-    @Transactional
-    public List<APIDTO> getAPIKeys(Long userId){
-        List<APIs> apiEntities = apiRepository.findByUsersId(userId);
+    // API 키 조회
+    @Transactional(readOnly = true)
+    public List<APIDTO> getAPIKeys(Long userId) {
+        // 모든 API 키 조회
+        String hashKey = getUserHashKey(userId);
+        Map<Object, Object> entries = redisTemplate.opsForHash().entries(hashKey);
 
-        List<APIDTO> apiDtos = apiEntities.stream()
-            .map(api -> APIDTO.builder()
+        if (!entries.isEmpty()) {
+            return entries.values().stream()
+                .map(dto -> {
+                    APIDTO apiDto = (APIDTO) dto;
+                    return APIDTO.builder()
+                        .apiId(apiDto.getApiId())
+                        .aiModel(apiDto.getAiModel())
+                        .apiKey(maskApiKey(apiDto.getApiKey()))
+                        .build();
+                })
+                .collect(Collectors.toList());
+        }
+
+        // DB에서 모든 API 키 조회
+        List<APIs> apiEntities = apiRepository.findByUsersId(userId);
+        List<APIDTO> dtos = new ArrayList<>();
+
+        // Redis에 없는 키만 저장
+        Map<String, APIDTO> hashEntries = new HashMap<>();
+        for (APIs api : apiEntities) {
+            APIDTO dto = APIDTO.builder()
                 .apiId(api.getId())
                 .aiModel(api.getAiModel())
-                .apiKey(maskApiKey(api.getApiKey()))
-                .build())
-            .collect(Collectors.toList());
+                .apiKey(api.getApiKey())
+                .build();
 
-        return apiDtos;
+            hashEntries.put("key:" + api.getId(), dto);
+            dtos.add(APIDTO.builder()
+                .apiId(dto.getApiId())
+                .aiModel(dto.getAiModel())
+                .apiKey(maskApiKey(dto.getApiKey()))
+                .build());
+        }
+
+        redisTemplate.opsForHash().putAll(hashKey, hashEntries);
+        redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
+
+        return dtos;
     }
 
+    // 마스킹
     private String maskApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() <= 7) {
             return "**********";
@@ -62,11 +122,16 @@ public class APIService {
             apiKey.substring(totalLength - suffixLength);
     }
 
+    // API 키 삭제
     @Transactional
     public void deleteAPIKey(Long apiId) {
-        if (!apiRepository.existsById(apiId)) {
-            throw new RuntimeException("삭제할 API 키를 찾을 수 없습니다. ID: " + apiId);
-        }
+        APIs api = apiRepository.findById(apiId)
+            .orElseThrow(() -> new RuntimeException("삭제할 API 키를 찾을 수 없습니다. ID: " + apiId));
+
         apiRepository.deleteById(apiId);
+
+        String hashKey = getUserHashKey(api.getUsers().getId());
+        String fieldKey = "key:" + apiId;
+        redisTemplate.opsForHash().delete(hashKey, fieldKey);
     }
 }

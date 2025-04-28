@@ -6,6 +6,9 @@ import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,9 @@ import java.util.Map;
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+
 
     private final UserService userService;
     private final ChatService chatService;
@@ -59,15 +65,31 @@ public class ChatController {
         try {
             String response = chatService.chat(sessionId, userId, apiId, model, content);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            // API 키 없음, 세션 없음, 빈 메시지 등..
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (IllegalStateException e) {
-            // 상태. ChatClient 에러
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ChatClient 에러");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("AI 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        }  catch (RuntimeException e) {
+            Throwable cause = e;
+            NonTransientAiException nte = null;
+            while (cause != null) {
+                if (cause instanceof NonTransientAiException) {
+                    nte = (NonTransientAiException) cause;
+                    break;
+                }
+                cause = cause.getCause();
+            }
+
+            // NonTransientAiException
+            if (nte != null) {
+                String message = nte.getMessage(); // 원본 NonTransientAiException 메시지 사용
+                if (message != null && (message.contains("invalid_api_key") || message.contains("401"))) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("잘못된 API 키가 제공되었습니다. (Wrapped Exception)");
+                } else {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("AI 서비스 통신 중 오류 발생 (Wrapped NonTransient): " + message);
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("처리 중 예기치 않은 런타임 오류 발생: " + e.getMessage());
+            }
         }
     }
 

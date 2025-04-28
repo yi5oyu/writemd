@@ -302,12 +302,14 @@ const NoteScreen = ({
     setQuestionText('')
     // if (connectError || questionText === '' || sessionError || messageError) return
 
+    let session = null
+
     try {
       setNewChatLoading(true)
       const maxLen = 30
       const title = content.length > maxLen ? content.slice(0, maxLen) : content
 
-      const session = await saveSession(noteId, title)
+      session = await saveSession(noteId, title)
 
       setSessions((s) => [...s, session])
       setMessages((m) => [...m, { role: 'user', content: content }])
@@ -325,8 +327,16 @@ const NoteScreen = ({
       let aiResponse = response.data || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
     } catch (error) {
-      console.log('세션 생성 실패: ' + error)
-      await deleteSession(session.sessionId)
+      if (session && session.sessionId) {
+        try {
+          await deleteSession(session.sessionId)
+          setSessions((s) => s.filter((ses) => ses.sessionId !== session.sessionId))
+        } catch (deleteError) {
+          console.error(`세션 삭제 중 추가 오류 발생 (ID: ${session.sessionId}):`, deleteError)
+        }
+      }
+      setSessionId('')
+      setBoxForm('newChat')
     } finally {
       setNewChatLoading(null)
     }
@@ -351,7 +361,6 @@ const NoteScreen = ({
   const handleSendChatMessage = async (questionText) => {
     const content = questionText
     setQuestionText('')
-    if (messageError) return
 
     setMessages((m) => [...m, { role: 'user', content: content }])
     try {
@@ -864,6 +873,7 @@ const NoteScreen = ({
                 apiKeys={apiKeys}
                 selectedAI={selectedAI}
                 setSelectedAI={setSelectedAI}
+                messageError={messageError}
               />
             )}
 

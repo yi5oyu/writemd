@@ -20,6 +20,7 @@ const NewChatBox = ({
   apiKeys,
   selectedAI,
   setSelectedAI,
+  messageError,
 }) => {
   const [isSessionCreating, setIsSessionCreating] = useState(false)
 
@@ -27,14 +28,16 @@ const NewChatBox = ({
 
   // 에러 처리
   useEffect(() => {
-    if (isChatError) {
+    if (isChatError || messageError) {
       toast({
         duration: 5000,
         isClosable: true,
-        render: ({ onClose }) => <ErrorToast onClose={onClose} message={chatErrorMessage} />,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={messageError ? messageError : chatErrorMessage} />
+        ),
       })
     }
-  }, [isChatError, toast])
+  }, [isChatError, messageError, toast])
 
   return (
     <>

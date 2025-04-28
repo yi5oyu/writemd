@@ -26,9 +26,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-  redis:
-    host: localhost
-    port: 6379
+  data:
+    redis:
+      host: localhost
+      port: 6380
+      password: ${REDIS_PASSWORD}
   # 보안
   security:
     oauth2:
@@ -70,7 +72,7 @@ management:
       exposure:
         include: '*'
         exclude: 'info'
-  endpoint: 
+  endpoint:
     health:
       show-details: always
 

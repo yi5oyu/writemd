@@ -45,6 +45,33 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
 
+    // chat
+    @PostMapping("/{userId}/{sessionId}/{apiId}")
+    public ResponseEntity<String> chat(@PathVariable Long userId, @PathVariable Long sessionId,
+        @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
+        String content = (String) requestPayload.get("content");
+        String model = (String) requestPayload.get("model");
+
+        if (content == null || content.isBlank()) {
+            return ResponseEntity.badRequest().body("content 없음");
+        }
+
+        try {
+            String response = chatService.chat(sessionId, userId, apiId, model, content);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            // API 키 없음, 세션 없음, 빈 메시지 등..
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException e) {
+            // 상태. ChatClient 에러
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ChatClient 에러");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("AI 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+
     // 채팅 리스트 조회
     @GetMapping("/{sessionId}")
     public List<ChatDTO> getChats(@PathVariable Long sessionId) {

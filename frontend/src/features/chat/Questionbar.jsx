@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Box, Textarea, Icon, Flex } from '@chakra-ui/react'
+import { Box, Textarea, Icon, Flex, Select, Spacer } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 
 const Questionbar = ({
@@ -14,6 +14,9 @@ const Questionbar = ({
   setIsSessionCreating,
   isSendMessaging,
   setIsSendMessaging,
+  apiKeys,
+  selectedAI,
+  setSelectedAI,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -21,6 +24,7 @@ const Questionbar = ({
   const [borderRadius, setBorderRadius] = useState('2xl')
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
+  const [isSelectActive, setIsSelectActive] = useState(false)
 
   const textareaRef = useRef(null)
 
@@ -92,6 +96,10 @@ const Questionbar = ({
       borderColor="gray.300"
       _focusWithin={{ borderColor: !active && !isSendMessaging && 'blue.400' }}
       onClick={handleQuestionBox}
+      onFocus={() => setIsSelectActive(true)}
+      onBlur={(e) => {
+        !e.currentTarget.contains(e.relatedTarget) && setIsSelectActive(false)
+      }}
     >
       <Textarea
         ref={textareaRef}
@@ -129,35 +137,80 @@ const Questionbar = ({
       />
 
       {!isTextFlow && !newChat ? (
-        <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
-          <Icon
-            borderRadius="2xl"
-            bg="gray.100"
-            as={ArrowForwardIcon}
-            color="gray.400"
-            boxSize="8"
-            cursor={!active && !isSendMessaging ? 'pointer' : 'default'}
-            onClick={() => {
-              if (!active && !isSendMessaging) {
-                setIsSendMessaging(true)
-                handleSendMessage().finally(() => {
-                  setIsSendMessaging(false)
-                })
+        <>
+          <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
+            <Icon
+              borderRadius="2xl"
+              bg="gray.100"
+              as={ArrowForwardIcon}
+              color="gray.400"
+              boxSize="8"
+              cursor={!active && !isSendMessaging ? 'pointer' : 'default'}
+              onClick={() => {
+                if (!active && !isSendMessaging) {
+                  setIsSendMessaging(true)
+                  handleSendMessage().finally(() => {
+                    setIsSendMessaging(false)
+                  })
+                }
+              }}
+              _hover={
+                !active && !isSendMessaging
+                  ? {
+                      color: 'blue.400',
+                      bg: 'gray.200',
+                    }
+                  : {}
               }
-            }}
-            _hover={
-              !active && !isSendMessaging
-                ? {
-                    color: 'blue.400',
-                    bg: 'gray.200',
-                  }
-                : {}
-            }
-          />
-        </Box>
+            />
+          </Box>
+          <Select
+            display={isSelectActive ? 'block' : 'none'}
+            position="absolute"
+            bottom="16"
+            right="0"
+            w="auto"
+            size="sm"
+            mr="10px"
+            spacing={3}
+            onChange={(event) => setSelectedAI(event.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            value={selectedAI || ''}
+          >
+            {apiKeys && apiKeys.length > 0 ? (
+              apiKeys.map((apiKeyData) => (
+                <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                  {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                </option>
+              ))
+            ) : (
+              <option disabled>사용 가능한 API 키 없음</option>
+            )}
+          </Select>
+        </>
       ) : isTextFlow ? (
         <Flex justify="space-between" mt="2">
-          <Box></Box>
+          <Spacer />
+          <Select
+            w="auto"
+            size="sm"
+            mr="10px"
+            spacing={3}
+            onChange={(event) => setSelectedAI(event.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            value={selectedAI}
+          >
+            {apiKeys && apiKeys.length > 0 ? (
+              apiKeys.map((apiKeyData) => (
+                <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                  {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                </option>
+              ))
+            ) : (
+              <option disabled>사용 가능한 API 키 없음</option>
+            )}
+          </Select>
+
           <Icon
             as={ArrowForwardIcon}
             borderRadius="2xl"
@@ -185,7 +238,26 @@ const Questionbar = ({
         </Flex>
       ) : (
         <Flex justify="space-between" mt="2">
-          <Box></Box>
+          <Spacer />
+          <Select
+            w="auto"
+            size="sm"
+            mr="10px"
+            spacing={3}
+            onChange={(event) => setSelectedAI(event.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            value={selectedAI}
+          >
+            {apiKeys && apiKeys.length > 0 ? (
+              apiKeys.map((apiKeyData) => (
+                <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                  {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                </option>
+              ))
+            ) : (
+              <option disabled>사용 가능한 API 키 없음</option>
+            )}
+          </Select>
           <Icon
             as={ArrowForwardIcon}
             borderRadius="2xl"

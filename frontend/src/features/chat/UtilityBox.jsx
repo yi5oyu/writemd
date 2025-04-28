@@ -9,7 +9,7 @@ import { FaRegFileAlt } from 'react-icons/fa'
 
 const UtilityBox = ({
   setBoxForm,
-  handleCheckConnection,
+  // handleCheckConnection,
   boxForm,
   isConnected,
   handleGitLoad,
@@ -17,6 +17,7 @@ const UtilityBox = ({
   setSelectedScreen,
   fetchSessions,
   fetchApiKeys,
+  setSessionId,
 }) => {
   return (
     <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
@@ -31,9 +32,9 @@ const UtilityBox = ({
           icon={RiRobot2Line}
           label="채팅"
           onClick={() => {
-            if (handleCheckConnection) {
-              handleCheckConnection()
-            }
+            // if (handleCheckConnection) {
+            //   handleCheckConnection()
+            // }
             setBoxForm('chat')
             fetchSessions()
             fetchApiKeys()
@@ -44,10 +45,11 @@ const UtilityBox = ({
           icon={BiMessageSquareAdd}
           label="새채팅"
           onClick={() => {
-            if (handleCheckConnection) {
-              handleCheckConnection()
-            }
+            // if (handleCheckConnection) {
+            //   handleCheckConnection()
+            // }
             setBoxForm('newChat')
+            setSessionId('')
           }}
           setColor={boxForm === 'newChat' ? true : false}
         />

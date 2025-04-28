@@ -17,6 +17,9 @@ const NewChatBox = ({
   isChatError,
   chatErrorMessage,
   screen,
+  apiKeys,
+  selectedAI,
+  setSelectedAI,
 }) => {
   const [isSessionCreating, setIsSessionCreating] = useState(false)
 
@@ -56,6 +59,9 @@ const NewChatBox = ({
             setIsSendMessaging={setIsSendMessaging}
             noteId={noteId}
             active={isChatError || isChatLoading ? true : false}
+            apiKeys={apiKeys}
+            selectedAI={selectedAI}
+            setSelectedAI={setSelectedAI}
           />
           <Flex mt="4" gap="5">
             <ExamBox

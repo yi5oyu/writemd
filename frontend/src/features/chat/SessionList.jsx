@@ -20,6 +20,8 @@ const SessionList = ({
   screen,
   handleSaveAPI,
   handleDeleteAPI,
+  setSelectedAI,
+  selectedAI,
   apiKeys,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -129,7 +131,13 @@ const SessionList = ({
         >
           <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
             {/* 설정값 바뀌게 */}
-            <Select size="sm" mr="10px" spacing={3}>
+            <Select
+              size="sm"
+              mr="10px"
+              spacing={3}
+              onChange={(event) => setSelectedAI(event.target.value)}
+              value={selectedAI || ''}
+            >
               {apiKeys && apiKeys.length > 0 ? (
                 apiKeys.map((apiKeyData) => (
                   <option key={apiKeyData.apiId} value={apiKeyData.apiId}>

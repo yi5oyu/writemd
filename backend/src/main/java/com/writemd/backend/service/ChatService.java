@@ -2,6 +2,7 @@ package com.writemd.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
@@ -14,7 +15,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.anthropic.AnthropicChatModel;
+import org.springframework.ai.anthropic.AnthropicChatOptions;
+import org.springframework.ai.anthropic.api.AnthropicApi;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +45,109 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final SessionRepository sessionRepository;
     private final NoteRepository noteRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private ChatClient openai(String apikey, String model, Double temperature){
+        OpenAiApi openAiApi = OpenAiApi.builder()
+            .apiKey(() -> apikey)
+            .build();
+
+        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
+            .model(model) // "gpt-4o"
+            .temperature(temperature) // 0~1.0
+//            .maxTokens()
+            .build();
+
+        OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
+            .openAiApi(openAiApi)
+            .defaultOptions(openAiChatOptions)
+            .build();
+
+        return ChatClient.create(openAiChatModel);
+    }
+
+    private ChatClient claude(String apikey, String model, Double temperature){
+        AnthropicApi anthropicApi = new AnthropicApi(apikey);
+
+        AnthropicChatOptions anthropicChatOptions = AnthropicChatOptions.builder()
+            .model(model)
+            .temperature(temperature)
+            .maxTokens(1000)
+            .build();
+
+        AnthropicChatModel anthropicChatModel = AnthropicChatModel.builder()
+            .anthropicApi(anthropicApi)
+            .defaultOptions(anthropicChatOptions)
+            .build();
+
+       return ChatClient.create(anthropicChatModel);
+    }
+
+    private APIDTO getApiKey(Long userId, Long apiId){
+        Object value = redisTemplate.opsForHash().get("ai:" + userId, "key:" + apiId);
+        if (value instanceof APIDTO) {
+            return (APIDTO) value;
+        } else if (value instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) value;
+            return APIDTO.builder()
+                .apiId(apiId)
+                .aiModel((String) map.get("aiModel"))
+                .apiKey((String) map.get("apiKey"))
+                .build();
+        }
+        return null;
+    }
+
+    @Transactional
+    public String chat(Long sessionId, Long userId, Long apiId, String model, String content){
+        APIDTO api = getApiKey(userId, apiId);
+        String aiModel = api.getAiModel();
+        String apiKey = api.getApiKey();
+
+        ChatClient chatClient = null;
+
+        if(aiModel.equals("openai")){
+            chatClient = openai(apiKey, "gpt-4o", 0.7); // "gpt-4o"
+        } else if (aiModel.equals("anthropic")){
+            chatClient = claude(apiKey, "claude-3-5-sonnet-20240620", 0.7); // "claude-3-5-sonnet-20240620"
+        }
+
+        // 채팅 조회
+        List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
+        List<Message> messages = new ArrayList<>();
+
+        Map<String, Object> messageMap = new HashMap<>();
+
+        for (Chats chat : chatHistory) {
+            String role = chat.getRole().toLowerCase();
+            String contents = chat.getContent();
+
+            if ("user".equals(role)) {
+                messages.add(new UserMessage(contents));
+            } else if ("assistant".equals(role) || "ai".equals(role)) {
+                messages.add(new AssistantMessage(contents));
+            }
+        }
+        messages.add(new UserMessage(content));
+
+        String responseContent = null;
+        try {
+            responseContent = chatClient.prompt()
+                .messages(messages)
+                .call()
+                .content();
+
+            if(responseContent != null && !responseContent.isBlank()){
+                saveChat(sessionId, "user", content);
+                saveChat(sessionId, "assistant", responseContent);
+            }
+        } catch (Exception e){
+            throw new RuntimeException("채팅 실패: " + e.getMessage(), e);
+        }
+
+        return responseContent;
+    }
+
 
     // 연결 확인
     public boolean isConnected() {
@@ -130,4 +247,6 @@ public class ChatService {
             return "오류";
         }
     }
+
+
 }

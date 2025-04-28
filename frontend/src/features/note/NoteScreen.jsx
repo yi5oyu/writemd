@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
 import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
-import { PiCheckFatFill, PiNotebookFill } from 'react-icons/pi'
+import { PiCheckFatFill } from 'react-icons/pi'
 
 // UI
 import MarkdownInputBox from '../markdown/InputBox'
@@ -73,7 +73,7 @@ const NoteScreen = ({
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnected, setIsConnected] = useState(true)
   const [sessionId, setSessionId] = useState('')
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
@@ -102,22 +102,22 @@ const NoteScreen = ({
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
   const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
-  const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
-  const isChatLoading =
-    sessionLoading || saveSessionLoading || delSessionLoading || chatLoading || connectLoading
-  const isChatError =
-    sessionError || saveSessionError || delSessionError || chatError || connectError
+  // const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
+  const isChatLoading = sessionLoading || saveSessionLoading || delSessionLoading || chatLoading // || connectLoading
+  const isChatError = sessionError || saveSessionError || delSessionError || chatError // || connectError
   const chatErrorMessage = sessionError
     ? sessionError.message
     : saveSessionError
     ? saveSessionError.message
     : delSessionError
     ? delSessionError.message
-    : connectError
-    ? connectError.message
-    : chatError
+    : // : connectError
+    // ? connectError.message
+    chatError
     ? chatError.message
     : null
+
+  const [selectedAI, setSelectedAI] = useState(``)
 
   //
   const {
@@ -296,41 +296,37 @@ const NoteScreen = ({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [markdownText])
 
-  // 연결 확인
-  const handleCheckConnection = async () => {
-    try {
-      const connect = await chatConnection()
-      if (connect?.status === 200) {
-        setIsConnected(true)
-      } else {
-        setIsConnected(false)
-      }
-    } catch (err) {
-      setIsConnected(false)
-    }
-  }
-
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
+    const content = questionText
     setQuestionText('')
-    if (connectError || questionText === '' || sessionError || messageError) return
+    // if (connectError || questionText === '' || sessionError || messageError) return
 
     try {
       setNewChatLoading(true)
       const maxLen = 30
-      const title = questionText.length > maxLen ? questionText.slice(0, maxLen) : questionText
+      const title = content.length > maxLen ? content.slice(0, maxLen) : content
 
       const session = await saveSession(noteId, title)
 
       setSessions((s) => [...s, session])
-      setMessages((m) => [...m, { role: 'user', content: questionText }])
-      const response = await sendChatMessage(session.sessionId, aiModel, questionText)
-      let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
-      setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-      setBoxForm('chatBox')
+      setMessages((m) => [...m, { role: 'user', content: content }])
       setSessionId(session.sessionId)
+      setBoxForm('chatBox')
+
+      const response = await sendChatMessage({
+        userId: user.userId,
+        sessionId: session.sessionId,
+        apiId: selectedAI,
+        aiModel: aiModel,
+        questionText: content,
+      })
+      // response.data.choices[0]?.message?.content (LMstuio)
+      let aiResponse = response.data || 'AI 응답없음'
+      setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
     } catch (error) {
       console.log('세션 생성 실패: ' + error)
+      await deleteSession(session.sessionId)
     } finally {
       setNewChatLoading(null)
     }
@@ -353,13 +349,21 @@ const NoteScreen = ({
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
+    const content = questionText
     setQuestionText('')
     if (messageError) return
 
-    setMessages((m) => [...m, { role: 'user', content: questionText }])
+    setMessages((m) => [...m, { role: 'user', content: content }])
     try {
-      const response = await sendChatMessage(sessionId, aiModel, questionText)
-      let aiResponse = response.data.choices[0]?.message?.content || 'AI 응답없음'
+      const response = await sendChatMessage({
+        userId: user.userId,
+        sessionId: sessionId,
+        apiId: selectedAI,
+        aiModel: aiModel,
+        questionText: content,
+      })
+      // response.data.choices[0]?.message?.content
+      let aiResponse = response.data || 'AI 응답없음'
       setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
       refetch()
     } catch (error) {
@@ -639,10 +643,25 @@ const NoteScreen = ({
     }
   }
 
+  // api 삭제
   const handleDeleteAPI = async (apiId) => {
     await deleteApiKey(apiId)
     await fetchApiKeys(user.userId)
   }
+
+  // apiId(selectedAI) 초기화
+  useEffect(() => {
+    if (apiKeys && apiKeys.length > 0 && !selectedAI) {
+      setSelectedAI(apiKeys[0].apiId)
+    }
+  }, [apiKeys])
+
+  // apiKeys 초기화
+  useEffect(() => {
+    if (user && user.userId) {
+      fetchApiKeys(user.userId)
+    }
+  }, [user])
 
   return (
     <Box
@@ -782,7 +801,7 @@ const NoteScreen = ({
             {screen && (
               <UtilityBox
                 setBoxForm={setBoxForm}
-                handleCheckConnection={handleCheckConnection}
+                // handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
                 isConnected={isConnected}
                 handleGitLoad={handleGitLoad}
@@ -790,6 +809,7 @@ const NoteScreen = ({
                 setSelectedScreen={setSelectedScreen}
                 fetchSessions={fetchSessions}
                 fetchApiKeys={() => fetchApiKeys(user.userId)}
+                setSessionId={setSessionId}
               />
             )}
 
@@ -821,6 +841,8 @@ const NoteScreen = ({
                 handleSaveAPI={handleSaveAPI}
                 handleDeleteAPI={handleDeleteAPI}
                 apiKeys={apiKeys}
+                setSelectedAI={setSelectedAI}
+                selectedAI={selectedAI}
                 screen={screen}
               />
             )}
@@ -839,6 +861,9 @@ const NoteScreen = ({
                 isChatError={isChatError}
                 chatErrorMessage={chatErrorMessage}
                 screen={screen}
+                apiKeys={apiKeys}
+                selectedAI={selectedAI}
+                setSelectedAI={setSelectedAI}
               />
             )}
 
@@ -868,6 +893,9 @@ const NoteScreen = ({
                       handleSendChatMessage={handleSendChatMessage}
                       isSendMessaging={isSendMessaging}
                       setIsSendMessaging={setIsSendMessaging}
+                      apiKeys={apiKeys}
+                      selectedAI={selectedAI}
+                      setSelectedAI={setSelectedAI}
                     />
                   </Box>
                 </Flex>

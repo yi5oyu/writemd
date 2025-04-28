@@ -10,8 +10,8 @@ import APIDeleteBody from './APIDeleteBody'
 const CreateCard = ({ select }) => {
   const [aiModel, setAiModel] = useState('openai')
   const [apiKey, setApiKey] = useState('')
-  const [apiId, setApiId] = useState(select?.apiKeys[0]?.apiId)
-  const [settingId, setSettingId] = useState(select?.apiKeys[0].apiId)
+  const [apiId, setApiId] = useState(select?.apiKeys?.[0]?.apiId)
+  const [settingId, setSettingId] = useState(select?.apiKeys?.[0]?.apiId)
 
   return (
     <Card mb="5px" variant="outline" borderColor="blue.500">

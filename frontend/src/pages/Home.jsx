@@ -11,6 +11,7 @@ const Home = () => {
   const [notes, setNotes] = useState([])
   const [isFold, setIsFold] = useState(true)
   const [screen, setScreen] = useState(true)
+  const [selectedAI, setSelectedAI] = useState(``)
 
   useEffect(() => {
     if (user && user.notes) {
@@ -30,6 +31,8 @@ const Home = () => {
         setIsFold={setIsFold}
         screen={screen}
         setScreen={setScreen}
+        selectedAI={selectedAI}
+        setSelectedAI={setSelectedAI}
       />
 
       <Screen
@@ -42,6 +45,8 @@ const Home = () => {
         setIsFold={setIsFold}
         screen={screen}
         setScreen={setScreen}
+        selectedAI={selectedAI}
+        setSelectedAI={setSelectedAI}
       />
     </Flex>
   )

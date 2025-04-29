@@ -60,6 +60,8 @@ const NoteScreen = ({
   setIsFold,
   screen,
   setScreen,
+  selectedAI,
+  setSelectedAI,
 }) => {
   const [name, setName] = useState('')
   const [githubName, setGithubName] = useState('')
@@ -116,8 +118,6 @@ const NoteScreen = ({
     chatError
     ? chatError.message
     : null
-
-  const [selectedAI, setSelectedAI] = useState(``)
 
   //
   const {

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-export const useLogout = () => {
+const useLogout = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -45,3 +45,5 @@ export const useLogout = () => {
 
   return { logout, isLoading, error }
 }
+
+export default useLogout

@@ -35,6 +35,7 @@ import useLogout from '../../hooks/auth/useLogout'
 import useApiKey from '../../hooks/chat/useApiKey'
 import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
 import APIInputGroup from '../../components/ui/input/APIInputGroup'
+import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 
 const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const [confirm, setConfirm] = useState('')
@@ -48,7 +49,8 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
 
   const { fetchApiKeys, apiKeys, loading: apiLoading, error: apiError } = useApiKey()
-  const { saveApiKey, loading: saveApiLoading, error: SaveApiError } = useSaveApiKey()
+  const { saveApiKey, loading: saveApiLoading, error: saveApiError } = useSaveApiKey()
+  const { deleteApiKey, loading: delApiLoading, error: delApiError } = useDeleteApiKey()
   const { logout, isLoading, error } = useLogout()
 
   const confirmDeleteAuth = () => {
@@ -57,8 +59,8 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   }
 
   const confirmDeleteAPI = () => {
-    // handleDeleteNote(noteId)
     onDelAPIClose()
+    handleDeleteAPI(selectedAI)
   }
 
   const confirmDeleteData = () => {
@@ -101,6 +103,14 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
       await fetchApiKeys(user.userId)
     }
   }
+
+  // api 삭제
+  const handleDeleteAPI = async (apiId) => {
+    await deleteApiKey(apiId)
+    await fetchApiKeys(user.userId)
+    setSelectedAI('')
+  }
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} isCentered>

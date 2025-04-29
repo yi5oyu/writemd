@@ -28,11 +28,13 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
+
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
 import useLogout from '../../hooks/auth/useLogout'
 import useApiKey from '../../hooks/chat/useApiKey'
 import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
+import APIInputGroup from '../../components/ui/input/APIInputGroup'
 
 const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const [confirm, setConfirm] = useState('')
@@ -84,7 +86,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
   }, [apiKeys])
 
-  //
+  // api 초기화
   useEffect(() => {
     if (selectedAI && apiKeys && apiKeys.length > 0) {
       const selectedApiKeyData = apiKeys.find((keyData) => keyData.apiId.toString() === selectedAI)
@@ -282,39 +284,15 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                       <option disabled>사용 가능한 API 키 없음</option>
                     )}
                   </Select>
-                  <InputGroup size="sm">
-                    <InputLeftAddon p="0" w="fit-content">
-                      <Select
-                        size="sm"
-                        spacing={3}
-                        onChange={(event) => setAiModel(event.target.value)}
-                      >
-                        <option value="openai">OpenAI(ChatGPT)</option>
-                        <option value="anthropic">Anthropic(Claude)</option>
-                        {/* <option value="ollama">Ollama</option>
-        <option value="lmstudio">LMStudio</option> */}
-                      </Select>
-                    </InputLeftAddon>
-                    <Input
-                      placeholder="API를 입력해주세요"
-                      maxLength={200}
-                      pr="25px"
-                      onChange={(event) => setApiKey(event.target.value)}
-                    />
-                    <Tooltip label="API 등록" placement="top" hasArrow>
-                      <InputRightElement>
-                        <CheckIcon
-                          color="gray.500"
-                          cursor="pointer"
-                          _hover={{ color: 'blue.500' }}
-                          onClick={() => {
-                            handleSaveAPI(aiModel, apiKey)
-                            setApiKey('')
-                          }}
-                        />
-                      </InputRightElement>
-                    </Tooltip>
-                  </InputGroup>
+                  <APIInputGroup
+                    onChangeSelect={(event) => setAiModel(event.target.value)}
+                    onChangeInput={(event) => setApiKey(event.target.value)}
+                    onClick={() => {
+                      handleSaveAPI(aiModel, apiKey)
+                      setApiKey('')
+                    }}
+                    apiKey={apiKey}
+                  />
                 </Flex>
 
                 <Divider borderWidth="2px" my="15px" />

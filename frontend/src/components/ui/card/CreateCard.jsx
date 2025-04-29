@@ -1,11 +1,12 @@
+import { useState } from 'react'
 import { Flex, CloseButton, Card, CardBody, CardHeader } from '@chakra-ui/react'
+
 import TemplateSelect from '../select/TemplateSelect'
 import TemplateBody from './TemplateBody'
 import SessionHeader from '../select/SessionHeader'
-import APIRegisterBody from './APIRegisterBody'
 import APISettingBody from './APISettingBody'
-import { useState } from 'react'
 import APIDeleteBody from './APIDeleteBody'
+import APIInputGroup from '../input/APIInputGroup'
 
 const CreateCard = ({ select }) => {
   const [aiModel, setAiModel] = useState('openai')
@@ -84,16 +85,18 @@ const CreateCard = ({ select }) => {
       {select.mode === 'session' && (
         <>
           <CardHeader>
-            <SessionHeader
-              header="API 생성"
-              icon="add"
-              onClick={() => {
-                select.handleSaveAPI(aiModel, apiKey), setApiKey('')
-              }}
-            />
+            <SessionHeader header="API 등록" />
           </CardHeader>
           <CardBody pt="0" pb={select.apiKeys && select.apiKeys.length > 0 && '0'}>
-            <APIRegisterBody setAiModel={setAiModel} setApiKey={setApiKey} />
+            <APIInputGroup
+              onChangeSelect={(event) => setAiModel(event.target.value)}
+              onChangeInput={(event) => setApiKey(event.target.value)}
+              onClick={() => {
+                handleSaveAPI(aiModel, apiKey)
+                setApiKey('')
+              }}
+              apiKey={apiKey}
+            />
           </CardBody>
 
           {select.apiKeys && select.apiKeys.length > 0 && (

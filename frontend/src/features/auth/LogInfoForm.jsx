@@ -32,10 +32,13 @@ import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
 import useLogout from '../../hooks/auth/useLogout'
 import useApiKey from '../../hooks/chat/useApiKey'
+import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
 
 const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const [confirm, setConfirm] = useState('')
   const [api, setApi] = useState('')
+  const [aiModel, setAiModel] = useState('openai')
+  const [apiKey, setApiKey] = useState('')
 
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
@@ -43,6 +46,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
 
   const { fetchApiKeys, apiKeys, loading: apiLoading, error: apiError } = useApiKey()
+  const { saveApiKey, loading: saveApiLoading, error: SaveApiError } = useSaveApiKey()
   const { logout, isLoading, error } = useLogout()
 
   const confirmDeleteAuth = () => {
@@ -80,12 +84,21 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
   }, [apiKeys])
 
+  //
   useEffect(() => {
     if (selectedAI && apiKeys && apiKeys.length > 0) {
       const selectedApiKeyData = apiKeys.find((keyData) => keyData.apiId.toString() === selectedAI)
       selectedApiKeyData && setApi(`${selectedApiKeyData.aiModel}(${selectedApiKeyData.apiKey})`)
     }
   }, [selectedAI, apiKeys])
+
+  // apikey 저장
+  const handleSaveAPI = async (aiModel, apiKey) => {
+    if (apiKey.trim()) {
+      await saveApiKey(user.userId, aiModel, apiKey)
+      await fetchApiKeys(user.userId)
+    }
+  }
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
@@ -229,7 +242,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                   </Heading>
                   <Box ml="10px">
                     <Badge mb="5px" variant="outline" colorScheme="green">
-                      {api}
+                      {api ? api : '선택된 AI 없음'}
                     </Badge>
                   </Box>
                   <Tooltip label="API 삭제" placement="top" hasArrow>
@@ -270,14 +283,34 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                     )}
                   </Select>
                   <InputGroup size="sm">
-                    <InputLeftAddon>API 등록</InputLeftAddon>
-                    <Input placeholder="API를 입력해주세요" pr="25px" />
+                    <InputLeftAddon p="0" w="fit-content">
+                      <Select
+                        size="sm"
+                        spacing={3}
+                        onChange={(event) => setAiModel(event.target.value)}
+                      >
+                        <option value="openai">OpenAI(ChatGPT)</option>
+                        <option value="anthropic">Anthropic(Claude)</option>
+                        {/* <option value="ollama">Ollama</option>
+        <option value="lmstudio">LMStudio</option> */}
+                      </Select>
+                    </InputLeftAddon>
+                    <Input
+                      placeholder="API를 입력해주세요"
+                      maxLength={200}
+                      pr="25px"
+                      onChange={(event) => setApiKey(event.target.value)}
+                    />
                     <Tooltip label="API 등록" placement="top" hasArrow>
                       <InputRightElement>
                         <CheckIcon
                           color="gray.500"
                           cursor="pointer"
                           _hover={{ color: 'blue.500' }}
+                          onClick={() => {
+                            handleSaveAPI(aiModel, apiKey)
+                            setApiKey('')
+                          }}
                         />
                       </InputRightElement>
                     </Tooltip>

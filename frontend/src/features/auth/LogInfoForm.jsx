@@ -19,11 +19,21 @@ import {
   Text,
   useDisclosure,
   Heading,
+  Badge,
+  Select,
+  Input,
+  InputGroup,
+  InputLeftAddon,
+  InputRightElement,
+  Tooltip,
 } from '@chakra-ui/react'
+import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
+import AiModel from '../../data/model.json'
 
 const LogInfoForm = ({ isOpen, onClose, user }) => {
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
+  const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
 
   const handleDelete = (e) => {
     e.stopPropagation()
@@ -32,7 +42,17 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
 
   const confirmDelete = () => {
     // handleDeleteNote(noteId)
-    onClose()
+    onDeleteClose()
+  }
+
+  const handleDeleteAPI = (e) => {
+    e.stopPropagation()
+    onDelAPIOpen()
+  }
+
+  const confirmDeleteAPI = () => {
+    // handleDeleteNote(noteId)
+    onDelAPIClose()
   }
 
   const handleLogout = async () => {
@@ -69,7 +89,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
               <Tab>API</Tab>
             </TabList>
             <TabIndicator mt="-1.5px" height="2px" bg="blue.500" borderRadius="1px" />
-            <TabPanels mt="15px" bg="white" borderRadius="md" h="calc(50vh - 200px)">
+            <TabPanels mt="15px" bg="white" borderRadius="md" h="calc(50vh - 100px)">
               <TabPanel h="100%" display="flex" flexDirection="column">
                 <Heading as="h5" size="sm">
                   프로필 정보
@@ -138,8 +158,98 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                   </Flex>
                 </Flex>
               </TabPanel>
-              <TabPanel>
-                <p>two!</p>
+              <TabPanel h="100%" display="flex" flexDirection="column">
+                <Flex mb="5px" position="relative">
+                  <Heading as="h5" size="sm">
+                    API
+                  </Heading>
+                  <Box ml="10px">
+                    <Badge mb="5px" variant="outline" colorScheme="green">
+                      Openai(sk-sd*******asdasd)
+                    </Badge>
+                  </Box>
+                  <Tooltip label="API 삭제" placement="top" hasArrow>
+                    <DeleteIcon
+                      position="absolute"
+                      top="0"
+                      right="0"
+                      cursor="pointer"
+                      aria-label="API 삭제"
+                      _hover={{ color: 'red.500' }}
+                      onClick={(e) => handleDeleteAPI(e)}
+                    />
+                  </Tooltip>
+                </Flex>
+
+                <Flex direction="column">
+                  <Select w="fit-content" variant="filled" size="sm" mb="10px">
+                    <option value="option1">Openai(sk-sd*******asdasd)</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                  </Select>
+                  <InputGroup size="sm">
+                    <InputLeftAddon>API 등록</InputLeftAddon>
+                    <Input placeholder="API를 입력해주세요" pr="25px" />
+                    <Tooltip label="API 등록" placement="top" hasArrow>
+                      <InputRightElement>
+                        <CheckIcon
+                          color="gray.500"
+                          cursor="pointer"
+                          _hover={{ color: 'blue.500' }}
+                        />
+                      </InputRightElement>
+                    </Tooltip>
+                  </InputGroup>
+                </Flex>
+
+                <Divider borderWidth="2px" my="15px" />
+
+                <Flex direction="column" mb="10px">
+                  <Heading as="h5" size="sm" mb="10px">
+                    모델 목록
+                  </Heading>
+                  <Flex direction="column">
+                    <Box>
+                      <Flex direction="column">
+                        <Heading as="h6" size="xs" mb="10px">
+                          OpenAI(ChatGPT)
+                        </Heading>
+                        <Flex gap={2}>
+                          {AiModel.openai.model.map((m, index) => (
+                            <Badge variant="outline" colorScheme="green" key={index}>
+                              {m}
+                            </Badge>
+                          ))}
+                        </Flex>
+                        <Heading as="h6" size="xs" my="10px">
+                          Anthropic(Claude)
+                        </Heading>
+                        <Flex gap={2} wrap="wrap">
+                          {AiModel.anthropic.model.map((m, index) => (
+                            <Badge variant="outline" colorScheme="orange" key={index}>
+                              {m}
+                            </Badge>
+                          ))}
+                        </Flex>
+                        <Heading as="h6" size="xs" my="10px">
+                          로컬(Ollama, LMstuio)
+                        </Heading>
+                        {/* <Badge variant="outline"  key={index}>
+                              {m}
+                            </Badge> */}
+                      </Flex>
+                    </Box>
+                  </Flex>
+                </Flex>
+                <InputGroup size="sm" mt="auto">
+                  <InputLeftAddon>모델 등록</InputLeftAddon>
+                  <Input placeholder="모델 이름을 입력해주세요" pr="25px" />
+                  <Tooltip label="API 등록" placement="top" hasArrow>
+                    <InputRightElement>
+                      <CheckIcon color="gray.500" cursor="pointer" _hover={{ color: 'blue.500' }} />
+                    </InputRightElement>
+                  </Tooltip>
+                </InputGroup>
               </TabPanel>
             </TabPanels>
           </Tabs>
@@ -150,6 +260,13 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
         onClose={onDeleteClose}
         onClick={confirmDelete}
         title="계정"
+      />
+
+      <DeleteBox
+        isOpen={isDelAPIOpen}
+        onClose={onDelAPIClose}
+        onClick={confirmDeleteAPI}
+        title="API"
       />
     </>
   )

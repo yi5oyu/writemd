@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Button,
   Box,
@@ -33,26 +33,30 @@ import AiModel from '../../data/model.json'
 
 const LogInfoForm = ({ isOpen, onClose, user }) => {
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
+  const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
+  const { isOpen: isDelChatOpen, onOpen: onDelChatOpen, onClose: onDelChatClose } = useDisclosure()
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
 
-  const handleDelete = (e) => {
-    e.stopPropagation()
-    onDeleteOpen()
-  }
+  const [confirm, setConfirm] = useState('')
 
-  const confirmDelete = () => {
+  const confirmDeleteAuth = () => {
     // handleDeleteNote(noteId)
     onDeleteClose()
-  }
-
-  const handleDeleteAPI = (e) => {
-    e.stopPropagation()
-    onDelAPIOpen()
   }
 
   const confirmDeleteAPI = () => {
     // handleDeleteNote(noteId)
     onDelAPIClose()
+  }
+
+  const confirmDeleteData = () => {
+    // handleDeleteNote(noteId)
+    onDelDataClose()
+  }
+
+  const confirmDeleteChat = () => {
+    // handleDeleteNote(noteId)
+    onDelChatClose()
   }
 
   const handleLogout = async () => {
@@ -119,7 +123,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                   시스템
                 </Heading>
                 <Flex direction="column" mt="auto">
-                  <Flex justify="space-between" align="center" mb="10px">
+                  <Flex justify="space-between" align="center" mb="5px">
                     <Box>로그아웃</Box>
                     <Button
                       w="85px"
@@ -130,9 +134,59 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         borderColor: 'gray.300',
                         color: 'black',
                       }}
-                      onClick={handleLogout}
+                      onClick={() => handleLogout()}
                     >
                       로그아웃
+                    </Button>
+                  </Flex>
+                  <Flex justify="space-between" align="center" mt="10px">
+                    <Flex direction="column">
+                      <Text>채팅 삭제</Text>
+                      <Box fontSize="14px" color="gray.500">
+                        채팅내역을 영구히 삭제합니다
+                      </Box>
+                    </Flex>
+                    <Button
+                      w="85px"
+                      variant="outline"
+                      size="sm"
+                      _hover={{
+                        bg: 'red.100',
+                        borderColor: 'red.300',
+                        color: 'black',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setConfirm('chat')
+                        onDelChatOpen()
+                      }}
+                    >
+                      채팅 삭제
+                    </Button>
+                  </Flex>
+                  <Flex justify="space-between" align="center" my="10px">
+                    <Flex direction="column">
+                      <Text>데이터 삭제</Text>
+                      <Box fontSize="14px" color="gray.500">
+                        데이터(노트, 템플릿, 채팅등..)를 영구히 삭제합니다
+                      </Box>
+                    </Flex>
+                    <Button
+                      w="85px"
+                      variant="outline"
+                      size="sm"
+                      _hover={{
+                        bg: 'red.100',
+                        borderColor: 'red.300',
+                        color: 'black',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setConfirm('data')
+                        onDelDataOpen()
+                      }}
+                    >
+                      데이터 삭제
                     </Button>
                   </Flex>
                   <Flex justify="space-between" align="center">
@@ -151,7 +205,11 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         borderColor: 'red.300',
                         color: 'black',
                       }}
-                      onClick={(e) => handleDelete(e)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setConfirm('auth')
+                        onDeleteOpen()
+                      }}
                     >
                       계정 삭제
                     </Button>
@@ -176,7 +234,11 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                       cursor="pointer"
                       aria-label="API 삭제"
                       _hover={{ color: 'red.500' }}
-                      onClick={(e) => handleDeleteAPI(e)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setConfirm('api')
+                        onDelAPIOpen()
+                      }}
                     />
                   </Tooltip>
                 </Flex>
@@ -256,17 +318,50 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
         </ModalContent>
       </Modal>
       <DeleteBox
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onClick={confirmDelete}
-        title="계정"
-      />
-
-      <DeleteBox
-        isOpen={isDelAPIOpen}
-        onClose={onDelAPIClose}
-        onClick={confirmDeleteAPI}
-        title="API"
+        isOpen={
+          confirm === 'auth'
+            ? isDeleteOpen
+            : confirm === 'api'
+            ? isDelAPIOpen
+            : confirm === 'chat'
+            ? isDelChatOpen
+            : confirm === 'data'
+            ? isDelDataOpen
+            : null
+        }
+        onClose={
+          confirm === 'auth'
+            ? onDeleteClose
+            : confirm === 'api'
+            ? onDelAPIClose
+            : confirm === 'chat'
+            ? onDelChatClose
+            : confirm === 'data'
+            ? onDelDataClose
+            : null
+        }
+        onClick={
+          confirm === 'auth'
+            ? confirmDeleteAuth
+            : confirm === 'api'
+            ? confirmDeleteAPI
+            : confirm === 'chat'
+            ? confirmDeleteChat
+            : confirm === 'data'
+            ? confirmDeleteData
+            : null
+        }
+        title={
+          confirm === 'auth'
+            ? '계정'
+            : confirm === 'api'
+            ? 'API'
+            : confirm === 'chat'
+            ? '채팅'
+            : confirm === 'data'
+            ? '데이터'
+            : null
+        }
       />
     </>
   )

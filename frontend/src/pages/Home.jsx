@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Screen from '../components/layout/Screen'
 import Sidebar from '../components/layout/Sidebar'
 import { Flex } from '@chakra-ui/react'
-import useAuth from '../hooks/useAuth'
+import useAuth from '../hooks/auth/useAuth'
 
 const Home = () => {
   const user = useAuth()

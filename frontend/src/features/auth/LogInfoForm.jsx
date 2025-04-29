@@ -30,14 +30,17 @@ import {
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
+import { useLogout } from '../../hooks/auth/useLogout'
 
 const LogInfoForm = ({ isOpen, onClose, user }) => {
+  const [confirm, setConfirm] = useState('')
+
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
   const { isOpen: isDelChatOpen, onOpen: onDelChatOpen, onClose: onDelChatClose } = useDisclosure()
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
 
-  const [confirm, setConfirm] = useState('')
+  const { logout, isLoading, error } = useLogout()
 
   const confirmDeleteAuth = () => {
     // handleDeleteNote(noteId)
@@ -59,27 +62,6 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
     onDelChatClose()
   }
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('http://localhost:8888/logout', {
-        method: 'POST',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        throw new Error(`로그아웃 실패: ${response.statusText}`)
-      }
-      const data = await response.json()
-      console.log('로그아웃 성공:', data.message)
-      window.location.href = '/'
-      if (data.message) {
-        console.log(message)
-      }
-    } catch (error) {
-      console.error('로그아웃 중 실패:', error.message)
-    }
-  }
-  // avatarUrl, githubId, htmlUrl, name
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
@@ -134,7 +116,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         borderColor: 'gray.300',
                         color: 'black',
                       }}
-                      onClick={() => handleLogout()}
+                      onClick={() => logout()}
                     >
                       로그아웃
                     </Button>

@@ -124,8 +124,6 @@ const Screen = ({
           isError={isListError}
           errorMessage={listErrorMessage}
         />
-      ) : currentScreen === 'tip' ? (
-        <></>
       ) : (
         <NoteScreen
           updateLoading={updateLoading}

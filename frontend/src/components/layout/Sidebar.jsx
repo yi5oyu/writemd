@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   useDisclosure,
   Box,
@@ -10,6 +10,12 @@ import {
   useToast,
   Spinner,
   Button,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody,
+  Portal,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { BsQuestionCircle, BsChevronRight, BsChevronDown, BsChevronUp } from 'react-icons/bs'
@@ -25,6 +31,7 @@ import LogInfoForm from '../../features/auth/LogInfoForm'
 import NoteBox from '../../features/note/NoteBox'
 import useDeleteNote from '../../hooks/note/useDeleteNote'
 import ErrorToast from '../ui/toast/ErrorToast'
+import HelperBox from '../../features/auth/HelperBox'
 
 const MotionBox = motion(Box)
 const MotionFlex = motion(Flex)
@@ -47,6 +54,9 @@ const Sidebar = ({
   const { deleteNote, loading, error } = useDeleteNote()
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
+  const { isOpen: isHelpOpen, onOpen: onHelpOpen, onClose: onHelpClose } = useDisclosure()
+
+  const helpTriggerRef = useRef()
 
   const toast = useToast()
 
@@ -128,7 +138,10 @@ const Sidebar = ({
           m="15px 0 15px 15px"
           boxShadow="xl"
           overflow="hidden"
-          onClick={() => setIsSideBoxVisible(!isSideBoxVisible)}
+          onClick={() => {
+            setIsSideBoxVisible(!isSideBoxVisible)
+            onHelpClose()
+          }}
           _hover={{
             boxShadow: 'md',
             cursor: 'pointer',
@@ -458,32 +471,55 @@ const Sidebar = ({
                     <Text fontWeight="medium">{user.githubId || user.name}</Text>
                   </Flex>
                 )}
-                <Flex
-                  cursor="pointer"
-                  h="45px"
-                  my="10px"
-                  mx="10px"
-                  _hover={{
-                    bg: 'white',
-                    boxShadow: 'md',
-                  }}
-                  boxShadow="sm"
-                  borderRadius="md"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setCurrentScreen('tip')
-                  }}
+                <Popover
+                  placement="right-end"
+                  isOpen={isHelpOpen}
+                  onClose={onHelpClose}
+                  closeOnBlur={false}
                 >
-                  <Box ml="10px" mt="13px">
-                    <Icon as={BsQuestionCircle} w="20px" h="20px" color="gray.500" />
-                  </Box>
-                  <Text ml="10px" lineHeight="45px">
-                    도움말/가이드
-                  </Text>
-                  <Box ml="auto" mr="10px" mt="13px">
-                    <Icon as={BsChevronRight} w="20px" h="20px" color="gray.500" />
-                  </Box>
-                </Flex>
+                  <PopoverTrigger>
+                    <Flex
+                      cursor="pointer"
+                      h="45px"
+                      my="10px"
+                      mx="10px"
+                      _hover={{
+                        bg: 'white',
+                        boxShadow: 'md',
+                      }}
+                      boxShadow="sm"
+                      borderRadius="md"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!isHelpOpen) onHelpOpen()
+                      }}
+                      alignItems="center"
+                    >
+                      <Box ml="10px" mt="13px">
+                        <Icon as={BsQuestionCircle} w="20px" h="20px" color="gray.500" />
+                      </Box>
+                      <Text ml="10px" lineHeight="45px">
+                        도움말/가이드
+                      </Text>
+                      <Box ml="auto" mr="10px" mt="13px">
+                        <Icon as={BsChevronRight} w="20px" h="20px" color="gray.500" />
+                      </Box>
+                    </Flex>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    zIndex={9999}
+                    p="0"
+                    w="auto"
+                    bg="transparent"
+                    border="none"
+                    boxShadow="none"
+                    cursor="default"
+                  >
+                    <PopoverBody>
+                      <HelperBox />
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
               </>
             ) : (
               <>
@@ -504,16 +540,42 @@ const Sidebar = ({
                     boxShadow: 'md',
                   }}
                 />
-
-                <SideBtn
-                  icon={BsQuestionCircle}
-                  color={currentScreen === 'tip' ? 'blue.500' : 'gray.500'}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setCurrentScreen('tip')
-                  }}
-                  mode={true}
-                />
+                <Popover
+                  placement="right-end"
+                  isOpen={isHelpOpen}
+                  onClose={onHelpClose}
+                  closeOnBlur={false}
+                  initialFocusRef={helpTriggerRef}
+                >
+                  <PopoverTrigger>
+                    <Box ref={helpTriggerRef}>
+                      <SideBtn
+                        icon={BsQuestionCircle}
+                        color={isHelpOpen ? 'blue.500' : 'gray.500'}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!isHelpOpen) onHelpOpen()
+                        }}
+                        mode={true}
+                      />
+                    </Box>
+                  </PopoverTrigger>
+                  <Portal>
+                    <PopoverContent
+                      zIndex={9999}
+                      p="0"
+                      w="auto"
+                      cursor="default"
+                      bg="transparent"
+                      border="none"
+                      boxShadow="none"
+                    >
+                      <PopoverBody>
+                        <HelperBox />
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Portal>
+                </Popover>
               </>
             )}
           </Flex>

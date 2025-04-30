@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Flex, Grid, IconButton, Select, useDisclosure, useToast } from '@chakra-ui/react'
+import { Box, Flex, Grid, useDisclosure, useToast } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { SettingsIcon } from '@chakra-ui/icons'
 import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
+import modelData from '../../data/model.json'
+import AiSelect from '../../components/ui/select/AiSelect'
 
 const SessionList = ({
   sessions,
@@ -23,11 +24,14 @@ const SessionList = ({
   setSelectedAI,
   selectedAI,
   apiKeys,
+  model,
+  setModel,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionTitle, setSessionTitle] = useState('')
   const [sessionId, setSessionId] = useState('')
   const [isSetting, setIsSetting] = useState(false)
+  const [availableModels, setAvailableModels] = useState([])
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -98,12 +102,36 @@ const SessionList = ({
     })
   }, [sessions, searchQuery])
 
+  useEffect(() => {
+    if (selectedAI !== undefined && selectedAI !== null && apiKeys) {
+      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+
+      if (selectedApiKey) {
+        const currentAiModelType = selectedApiKey.aiModel
+        const models = modelData[currentAiModelType]?.model || []
+        setAvailableModels(models)
+      }
+    } else {
+      setAvailableModels([])
+    }
+  }, [selectedAI, apiKeys])
+
+  useEffect(() => {
+    availableModels && availableModels.length > 0 && setModel(availableModels[0])
+  }, [availableModels])
+
   const select = {
     mode: 'session',
     setIsSetting: setIsSetting,
     handleSaveAPI: handleSaveAPI,
     handleDeleteAPI: handleDeleteAPI,
     apiKeys: apiKeys,
+    setModel: setModel,
+    availableModels: availableModels,
+    model: model,
+    selectedAI: selectedAI,
+    setSelectedAI: setSelectedAI,
+    modelData: modelData,
   }
 
   return (
@@ -131,29 +159,15 @@ const SessionList = ({
         >
           <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
             {/* 설정값 바뀌게 */}
-            <Select
-              size="sm"
-              mr="10px"
-              spacing={3}
-              onChange={(event) => setSelectedAI(event.target.value)}
-              value={selectedAI || ''}
-            >
-              {apiKeys && apiKeys.length > 0 ? (
-                apiKeys.map((apiKeyData) => (
-                  <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                    {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-                  </option>
-                ))
-              ) : (
-                <option disabled>사용 가능한 API 키 없음</option>
-              )}
-            </Select>
-            <IconButton
-              bg="transparent"
-              aria-label="설정"
-              icon={<SettingsIcon />}
-              _hover={{ bg: 'transparent', color: 'blue.500' }}
+            <AiSelect
+              apiKeys={apiKeys}
+              availableModels={availableModels}
+              apiChange={(e) => setSelectedAI(e.target.value)}
+              modelChange={(e) => setModel(e.target.value)}
               onClick={() => setIsSetting(!isSetting)}
+              selectedAI={selectedAI}
+              model={model}
+              icon="setting"
             />
           </Flex>
           <Box

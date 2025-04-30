@@ -3,16 +3,12 @@ import { Flex, CloseButton, Card, CardBody, CardHeader } from '@chakra-ui/react'
 
 import TemplateSelect from '../select/TemplateSelect'
 import TemplateBody from './TemplateBody'
-import SessionHeader from '../select/SessionHeader'
-import APISettingBody from './APISettingBody'
-import APIDeleteBody from './APIDeleteBody'
 import APIInputGroup from '../input/APIInputGroup'
+import AiSelect from '../select/AiSelect'
 
 const CreateCard = ({ select }) => {
   const [aiModel, setAiModel] = useState('openai')
   const [apiKey, setApiKey] = useState('')
-  const [apiId, setApiId] = useState(select?.apiKeys?.[0]?.apiId)
-  const [settingId, setSettingId] = useState(select?.apiKeys?.[0]?.apiId)
 
   return (
     <Card mb="5px" variant="outline" borderColor="blue.500">
@@ -27,7 +23,18 @@ const CreateCard = ({ select }) => {
             />
           )}
 
-          {select.mode === 'session' && <SessionHeader header="API 설정" icon="check" />}
+          {select.mode === 'session' && (
+            <AiSelect
+              apiKeys={select.apiKeys}
+              availableModels={select.availableModels}
+              apiChange={(e) => select.setSelectedAI(e.target.value)}
+              modelChange={(e) => select.setModel(e.target.value)}
+              onClick={() => select.handleDeleteAPI(select.selectedAI)}
+              selectedAI={select.selectedAI}
+              model={select.model}
+              icon="del"
+            />
+          )}
 
           {/* <Button
             as={FaEraser}
@@ -66,9 +73,8 @@ const CreateCard = ({ select }) => {
           />
         </Flex>
       </CardHeader>
-
-      <CardBody py="0">
-        {select.mode === 'template' && (
+      {select.mode === 'template' && (
+        <CardBody pb="15px">
           <TemplateBody
             selectedTemplate={select.selectedTemplate}
             setSelectedTemplate={select.setSelectedTemplate}
@@ -76,44 +82,21 @@ const CreateCard = ({ select }) => {
             saveTemplateClick={select.saveTemplateClick}
             isDisabled={select.isDisabled}
           />
-        )}
+        </CardBody>
+      )}
 
-        {select.mode === 'session' && (
-          <APISettingBody apiKeys={select.apiKeys} setSettingId={setSettingId} />
-        )}
-      </CardBody>
       {select.mode === 'session' && (
-        <>
-          <CardHeader>
-            <SessionHeader header="API 등록" />
-          </CardHeader>
-          <CardBody pt="0" pb={select.apiKeys && select.apiKeys.length > 0 && '0'}>
-            <APIInputGroup
-              onChangeSelect={(event) => setAiModel(event.target.value)}
-              onChangeInput={(event) => setApiKey(event.target.value)}
-              onClick={() => {
-                handleSaveAPI(aiModel, apiKey)
-                setApiKey('')
-              }}
-              apiKey={apiKey}
-            />
-          </CardBody>
-
-          {select.apiKeys && select.apiKeys.length > 0 && (
-            <>
-              <CardHeader>
-                <SessionHeader
-                  header="API 삭제"
-                  icon="del"
-                  onClick={() => select.handleDeleteAPI(apiId)}
-                />
-              </CardHeader>
-              <CardBody pt="0">
-                <APIDeleteBody apiKeys={select.apiKeys} setApiId={setApiId} />
-              </CardBody>
-            </>
-          )}
-        </>
+        <CardBody pt="0" pb={select.apiKeys && select.apiKeys.length > 0 && '0'} mb="15px">
+          <APIInputGroup
+            onChangeSelect={(event) => setAiModel(event.target.value)}
+            onChangeInput={(event) => setApiKey(event.target.value)}
+            onClick={() => {
+              select.handleSaveAPI(aiModel, apiKey)
+              setApiKey('')
+            }}
+            apiKey={apiKey}
+          />
+        </CardBody>
       )}
     </Card>
   )

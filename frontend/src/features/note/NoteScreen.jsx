@@ -80,6 +80,7 @@ const NoteScreen = ({
   const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [selectedScreen, setSelectedScreen] = useState('markdown')
+  const [model, setModel] = useState('')
 
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
@@ -215,7 +216,7 @@ const NoteScreen = ({
     ? updateFolderError.message
     : null
 
-  const aiModel = 'exaone-3.5-7.8b-instruct'
+  // const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
 
   const toast = useToast()
@@ -320,7 +321,7 @@ const NoteScreen = ({
         userId: user.userId,
         sessionId: session.sessionId,
         apiId: selectedAI,
-        aiModel: aiModel,
+        aiModel: model,
         questionText: content,
       })
       // response.data.choices[0]?.message?.content (LMstuio)
@@ -368,7 +369,7 @@ const NoteScreen = ({
         userId: user.userId,
         sessionId: sessionId,
         apiId: selectedAI,
-        aiModel: aiModel,
+        aiModel: model,
         questionText: content,
       })
       // response.data.choices[0]?.message?.content
@@ -853,6 +854,8 @@ const NoteScreen = ({
                 setSelectedAI={setSelectedAI}
                 selectedAI={selectedAI}
                 screen={screen}
+                model={model}
+                setModel={setModel}
               />
             )}
 

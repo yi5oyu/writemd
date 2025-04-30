@@ -657,6 +657,11 @@ const NoteScreen = ({
   const handleDeleteAPI = async (apiId) => {
     await deleteApiKey(apiId)
     await fetchApiKeys(user.userId)
+    if (apiKeys && apiKeys.length > 0) {
+      setSelectedAI(apiKeys[0].apiId)
+    } else {
+      setSelectedAI(null)
+    }
   }
 
   // apiId(selectedAI) 초기화
@@ -877,6 +882,8 @@ const NoteScreen = ({
                 selectedAI={selectedAI}
                 setSelectedAI={setSelectedAI}
                 messageError={messageError}
+                model={model}
+                setModel={setModel}
               />
             )}
 
@@ -909,6 +916,8 @@ const NoteScreen = ({
                       apiKeys={apiKeys}
                       selectedAI={selectedAI}
                       setSelectedAI={setSelectedAI}
+                      model={model}
+                      setModel={setModel}
                     />
                   </Box>
                 </Flex>

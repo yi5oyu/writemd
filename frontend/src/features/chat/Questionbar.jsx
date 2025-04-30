@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Box, Textarea, Icon, Flex, Select, Spacer } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
+import modelData from '../../data/model.json'
+import AiQusetionSelect from '../../components/ui/select/AiQusetionSelect'
 
 const Questionbar = ({
   questionText,
@@ -17,6 +19,8 @@ const Questionbar = ({
   apiKeys,
   selectedAI,
   setSelectedAI,
+  model,
+  setModel,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -25,6 +29,7 @@ const Questionbar = ({
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
   const [isSelectActive, setIsSelectActive] = useState(false)
+  const [availableModels, setAvailableModels] = useState([])
 
   const textareaRef = useRef(null)
 
@@ -76,11 +81,32 @@ const Questionbar = ({
     }
   }
 
+  // 하위 textarea로 포커스 이동
   const handleQuestionBox = () => {
     if (textareaRef.current) {
       textareaRef.current.focus()
     }
   }
+
+  // 모델 리스트트 초기화
+  useEffect(() => {
+    if (selectedAI !== undefined && selectedAI !== null && apiKeys) {
+      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+
+      if (selectedApiKey) {
+        const currentAiModelType = selectedApiKey.aiModel
+        const models = modelData[currentAiModelType]?.model || []
+        setAvailableModels(models)
+      }
+    } else {
+      setAvailableModels([])
+    }
+  }, [selectedAI, apiKeys])
+
+  // 모델 초기화
+  useEffect(() => {
+    availableModels && availableModels.length > 0 && setModel(availableModels[0])
+  }, [availableModels])
 
   return (
     <Box
@@ -164,53 +190,62 @@ const Questionbar = ({
               }
             />
           </Box>
-          <Select
-            display={isSelectActive ? 'block' : 'none'}
+
+          <Flex
+            display={isSelectActive ? 'flex' : 'none'}
             position="absolute"
             bottom="16"
             right="0"
-            w="auto"
-            size="sm"
-            mr="10px"
-            spacing={3}
-            onChange={(event) => setSelectedAI(event.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            value={selectedAI || ''}
           >
-            {apiKeys && apiKeys.length > 0 ? (
-              apiKeys.map((apiKeyData) => (
-                <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                  {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-                </option>
-              ))
-            ) : (
-              <option disabled>사용 가능한 API 키 없음</option>
-            )}
-          </Select>
+            <Select
+              w="auto"
+              size="sm"
+              mr="10px"
+              spacing={3}
+              onChange={(event) => setSelectedAI(event.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              value={selectedAI || ''}
+            >
+              {apiKeys && apiKeys.length > 0 ? (
+                apiKeys.map((apiKeyData) => (
+                  <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                    {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                  </option>
+                ))
+              ) : (
+                <option disabled>사용 가능한 API 키 없음</option>
+              )}
+            </Select>
+            <Select
+              size="sm"
+              w="fit-content"
+              spacing={3}
+              mr="10px"
+              value={model || ''}
+              onChange={(e) => setModel(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {availableModels &&
+                availableModels.length > 0 &&
+                availableModels.map((data) => (
+                  <option key={data} value={data}>
+                    {`${data}`}
+                  </option>
+                ))}
+            </Select>
+          </Flex>
         </>
       ) : isTextFlow ? (
         <Flex justify="space-between" mt="2">
           <Spacer />
-          <Select
-            w="auto"
-            size="sm"
-            mr="10px"
-            spacing={3}
-            onChange={(event) => setSelectedAI(event.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            value={selectedAI}
-          >
-            {apiKeys && apiKeys.length > 0 ? (
-              apiKeys.map((apiKeyData) => (
-                <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                  {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-                </option>
-              ))
-            ) : (
-              <option disabled>사용 가능한 API 키 없음</option>
-            )}
-          </Select>
-
+          <AiQusetionSelect
+            apiChange={(e) => setSelectedAI(e.target.value)}
+            selectedAI={selectedAI}
+            apiKeys={apiKeys}
+            modelChange={(e) => setModel(e.target.value)}
+            model={model}
+            availableModels={availableModels}
+          />
           <Icon
             as={ArrowForwardIcon}
             borderRadius="2xl"
@@ -239,25 +274,14 @@ const Questionbar = ({
       ) : (
         <Flex justify="space-between" mt="2">
           <Spacer />
-          <Select
-            w="auto"
-            size="sm"
-            mr="10px"
-            spacing={3}
-            onChange={(event) => setSelectedAI(event.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            value={selectedAI}
-          >
-            {apiKeys && apiKeys.length > 0 ? (
-              apiKeys.map((apiKeyData) => (
-                <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                  {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-                </option>
-              ))
-            ) : (
-              <option disabled>사용 가능한 API 키 없음</option>
-            )}
-          </Select>
+          <AiQusetionSelect
+            apiChange={(e) => setSelectedAI(e.target.value)}
+            selectedAI={selectedAI}
+            apiKeys={apiKeys}
+            modelChange={(e) => setModel(e.target.value)}
+            model={model}
+            availableModels={availableModels}
+          />
           <Icon
             as={ArrowForwardIcon}
             borderRadius="2xl"

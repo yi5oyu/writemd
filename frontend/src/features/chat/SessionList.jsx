@@ -102,6 +102,7 @@ const SessionList = ({
     })
   }, [sessions, searchQuery])
 
+  // 모델 리스트 초기화
   useEffect(() => {
     if (selectedAI !== undefined && selectedAI !== null && apiKeys) {
       const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
@@ -116,6 +117,7 @@ const SessionList = ({
     }
   }, [selectedAI, apiKeys])
 
+  // 모델 초기화
   useEffect(() => {
     availableModels && availableModels.length > 0 && setModel(availableModels[0])
   }, [availableModels])

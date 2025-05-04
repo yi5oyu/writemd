@@ -1,7 +1,9 @@
 package com.writemd.backend.service;
 
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.entity.Chats;
@@ -15,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.anthropic.AnthropicChatOptions;
 import org.springframework.ai.anthropic.api.AnthropicApi;
@@ -27,17 +31,21 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
+import reactor.core.publisher.Flux;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private final RestTemplate restTemplate;
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
@@ -46,7 +54,9 @@ public class ChatService {
     private final SessionRepository sessionRepository;
     private final NoteRepository noteRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final SseEmitterManager sseEmitterManager;
 
+    // openai(chatgpt) 설정
     private ChatClient openai(String apikey, String model, Double temperature){
         OpenAiApi openAiApi = OpenAiApi.builder()
             .apiKey(() -> apikey)
@@ -66,6 +76,7 @@ public class ChatService {
         return ChatClient.create(openAiChatModel);
     }
 
+    // anthropic(claude) 설정
     private ChatClient claude(String apikey, String model, Double temperature){
         AnthropicApi anthropicApi = new AnthropicApi(apikey);
 
@@ -83,6 +94,7 @@ public class ChatService {
        return ChatClient.create(anthropicChatModel);
     }
 
+    // API 조회
     private APIDTO getApiKey(Long userId, Long apiId){
         Object value = redisTemplate.opsForHash().get("ai:" + userId, "key:" + apiId);
         if (value instanceof APIDTO) {
@@ -98,30 +110,14 @@ public class ChatService {
         return null;
     }
 
-    @Transactional
-    public String chat(Long sessionId, Long userId, Long apiId, String model, String content){
-        APIDTO api = getApiKey(userId, apiId);
-        String aiModel = api.getAiModel();
-        String apiKey = api.getApiKey();
-
-        ChatClient chatClient = null;
-
-        if(aiModel.equals("openai")){
-            chatClient = openai(apiKey, "gpt-4o", 0.7); // "gpt-4o"
-        } else if (aiModel.equals("anthropic")){
-            chatClient = claude(apiKey, "claude-3-5-sonnet-20240620", 0.7); // "claude-3-5-sonnet-20240620"
-        }
-
-        // 채팅 조회
+    // 채팅 조회
+    @Transactional(readOnly = true)
+    private List<Message> chatHistory(Long sessionId, String content) {
         List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
         List<Message> messages = new ArrayList<>();
-
-        Map<String, Object> messageMap = new HashMap<>();
-
         for (Chats chat : chatHistory) {
             String role = chat.getRole().toLowerCase();
             String contents = chat.getContent();
-
             if ("user".equals(role)) {
                 messages.add(new UserMessage(contents));
             } else if ("assistant".equals(role) || "ai".equals(role)) {
@@ -129,25 +125,126 @@ public class ChatService {
             }
         }
         messages.add(new UserMessage(content));
-
-        String responseContent = null;
-        try {
-            responseContent = chatClient.prompt()
-                .messages(messages)
-                .call()
-                .content();
-
-            if(responseContent != null && !responseContent.isBlank()){
-                saveChat(sessionId, "user", content);
-                saveChat(sessionId, "assistant", responseContent);
-            }
-        } catch (Exception e){
-            throw new RuntimeException("채팅 실패: " + e.getMessage(), e);
-        }
-
-        return responseContent;
+        return messages;
     }
 
+    // 채팅 저장
+    @Transactional
+    public void saveChat(Long sessionId, String role, String content) {
+        Sessions session = sessionRepository.findById(sessionId)
+            .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
+
+        Chats chat = Chats.builder()
+            .sessions(session)
+            .role(role)
+            .content(content)
+            .build();
+
+        chatRepository.save(chat);
+        session.setUpdatedAt(LocalDateTime.now());
+        sessionRepository.save(session);
+    }
+
+    @Async
+    public void chat(Long sessionId, Long userId, Long apiId, String model, String content){
+        try {
+            APIDTO api = getApiKey(userId, apiId);
+            String aiModel = api.getAiModel();
+            String apiKey = api.getApiKey();
+
+            ChatClient chatClient = null;
+
+            if(aiModel.equals("openai")){
+                chatClient = openai(apiKey, "gpt-4o", 0.7); // "gpt-4o"
+            } else if (aiModel.equals("anthropic")){
+                chatClient = claude(apiKey, "claude-3-5-sonnet-20240620", 0.7); // "claude-3-5-sonnet-20240620"
+            }
+
+            List<Message> messages = chatHistory(sessionId, content);
+
+            Flux<ChatResponse> responseStream = chatClient.prompt(new Prompt(messages))
+                .stream()
+                .chatResponse();
+
+            StringBuilder fullResponse = new StringBuilder();
+
+            responseStream
+                // 각 chunk 처리
+                .doOnNext(chatResponse -> {
+                    String chunk = chatResponse.getResult() != null && chatResponse.getResult().getOutput() != null
+                        ? chatResponse.getResult().getOutput().getText()
+                        : "";
+                    if (chunk != null && !chunk.isEmpty()) {
+                        fullResponse.append(chunk);
+                        sseEmitterManager.sendToSession(sessionId, "message", chunk);
+                    } else {
+                        log.debug("빈 응답 청크 수신 (sessionId: {})", sessionId);
+                    }
+                })
+                // 스트림 처리 중 에러
+                .doOnError(error -> {
+                    log.error("AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(), error);
+                    String errorMessage = "AI 서비스 응답 스트림 처리 중 오류 발생";
+                    if (error instanceof NonTransientAiException) {
+                        errorMessage = "AI 서비스 오류: " + error.getMessage();
+                    } else {
+                        errorMessage = "스트림 처리 중 내부 오류: " + error.getMessage();
+                    }
+                    sseEmitterManager.sendToSession(sessionId, "error", errorMessage);
+                })
+                // 스트림 정상 완료
+                .doOnComplete(() -> {
+                    log.info("AI 스트리밍 완료 (sessionId: {})", sessionId);
+                    sseEmitterManager.sendToSession(sessionId, "complete", "[DONE]");
+                    // DB 저장
+                    try {
+                        saveChat(sessionId, "user", content);
+                        saveChat(sessionId, "assistant", fullResponse.toString());
+                        log.info("채팅 기록 저장 완료 (assistant) (sessionId: {})", sessionId);
+                    } catch (Exception e) {
+                        log.error("최종 응답 DB 저장 실패 (sessionId: {}): {}", sessionId, e.getMessage(), e);
+                        sseEmitterManager.sendToSession(sessionId, "error", "최종 응답 저장 중 오류 발생");
+                    }
+                })
+                .subscribe();
+
+        } catch (Exception e) {
+            log.error("채팅 처리 중 예외 발생 (sessionId: {}): {}", sessionId, e.getMessage(), e);
+
+            String errorMessage;
+            String errorType = "GENERAL_ERROR";
+
+            Throwable cause = e;
+            NonTransientAiException nte = null;
+            while (cause != null) {
+                if (cause instanceof NonTransientAiException) {
+                    nte = (NonTransientAiException) cause;
+                    break;
+                }
+                cause = cause.getCause();
+            }
+
+            if (nte != null) {
+                String message = nte.getMessage() != null ? nte.getMessage().toLowerCase() : "";
+                if (message.contains("invalid_api_key") || message.contains("authentication_error") || message.contains("401")) {
+                    errorMessage = "잘못된 API 키 또는 인증 오류입니다.";
+                    errorType = "INVALID_API_KEY";
+                } else if (message.contains("rate_limit_error") || message.contains("429")) {
+                    errorMessage = "API 사용량 제한을 초과했습니다.";
+                    errorType = "RATE_LIMIT_EXCEEDED";
+                }
+                else {
+                    errorMessage = "AI 서비스 설정 또는 통신 오류: " + nte.getMessage();
+                    errorType = "AI_CONFIG_ERROR";
+                }
+            } else {
+                errorMessage = "채팅 처리 준비 중 오류 발생: " + e.getMessage();
+                errorType = "INTERNAL_SETUP_ERROR";
+            }
+
+            sseEmitterManager.sendToSession(sessionId, "error", errorType + "::" + errorMessage);
+        }
+    }
 
     // 연결 확인
     public boolean isConnected() {
@@ -188,22 +285,6 @@ public class ChatService {
         return response.getBody();
     }
 
-    // 채팅 저장
-    @Transactional
-    public void saveChat(Long sessionId, String role, String content) {
-        Sessions session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
-
-        Chats chat = Chats.builder()
-                .sessions(session)
-                .role(role)
-                .content(content)
-                .build();
-
-        chatRepository.save(chat);
-        session.setUpdatedAt(LocalDateTime.now());
-        sessionRepository.save(session);
-    }
 
     // 세션 생성
     public SessionDTO createSession(Long noteId, String title) {

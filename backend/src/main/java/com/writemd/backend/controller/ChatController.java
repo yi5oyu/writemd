@@ -1,5 +1,6 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.service.ChatService;
@@ -8,12 +9,12 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
@@ -26,6 +27,50 @@ public class ChatController {
 
     private final UserService userService;
     private final ChatService chatService;
+    private final SseEmitterManager sseEmitterManager;
+
+    // 채팅 시작
+    @PostMapping("/{userId}/{sessionId}/{apiId}")
+    public ResponseEntity<String> chat(@PathVariable Long userId, @PathVariable Long sessionId,
+        @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
+        String content = (String) requestPayload.get("content");
+        String model = (String) requestPayload.get("model");
+
+        if (content == null || content.isBlank()) {
+            return ResponseEntity.badRequest().body("content 없음");
+        }
+
+        try {
+            chatService.chat(sessionId, userId, apiId, model, content);
+            return ResponseEntity.accepted().body("채팅 시작. SSE 연결 중...");
+        }  catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("채팅 시작 실패: " + e.getMessage());
+        }
+    }
+
+    // SSE 채팅
+    @GetMapping(value = "/stream/{sessionId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamChat(@PathVariable Long sessionId) {
+        SseEmitter emitter = new SseEmitter(300_000L);
+        // SseEmitter 객체 등록
+        try {
+            sseEmitterManager.addEmitter(sessionId, emitter);
+        } catch (Exception e) {
+            log.error("{}연결 등록 실패", sessionId, e);
+            emitter.completeWithError(new RuntimeException("SSE 연결 등록 실패 " + sessionId));
+            return emitter;
+        }
+        // 연결 확인 메세지 전송
+        try {
+            sseEmitterManager.sendToSession(sessionId, "connect", "세션에 SSE 연결 시작" + sessionId);
+            log.info("연결 시작 {}:", sessionId);
+        } catch (Exception e) {
+            log.warn("연결 시작 실패 {}", sessionId, e);
+        }
+        // SseEmitter 객체 반환
+        return emitter;
+    }
 
     // 연결 확인
     @GetMapping("/connected")
@@ -51,49 +96,6 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
 
-    // chat
-    @PostMapping("/{userId}/{sessionId}/{apiId}")
-    public ResponseEntity<String> chat(@PathVariable Long userId, @PathVariable Long sessionId,
-        @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
-        String content = (String) requestPayload.get("content");
-        String model = (String) requestPayload.get("model");
-
-        if (content == null || content.isBlank()) {
-            return ResponseEntity.badRequest().body("content 없음");
-        }
-
-        try {
-            String response = chatService.chat(sessionId, userId, apiId, model, content);
-            return ResponseEntity.ok(response);
-        }  catch (RuntimeException e) {
-            Throwable cause = e;
-            NonTransientAiException nte = null;
-            while (cause != null) {
-                if (cause instanceof NonTransientAiException) {
-                    nte = (NonTransientAiException) cause;
-                    break;
-                }
-                cause = cause.getCause();
-            }
-
-            // NonTransientAiException
-            if (nte != null) {
-                String message = nte.getMessage(); // 원본 NonTransientAiException 메시지 사용
-                if (message != null && (message.contains("invalid_api_key") || message.contains("401"))) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("잘못된 API 키가 제공되었습니다. (Wrapped Exception)");
-                } else {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("AI 서비스 통신 중 오류 발생 (Wrapped NonTransient): " + message);
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("처리 중 예기치 않은 런타임 오류 발생: " + e.getMessage());
-            }
-        }
-    }
-
-
     // 채팅 리스트 조회
     @GetMapping("/{sessionId}")
     public List<ChatDTO> getChats(@PathVariable Long sessionId) {
@@ -114,4 +116,7 @@ public class ChatController {
         // 204
         return ResponseEntity.noContent().build();
     }
+
+
+
 }

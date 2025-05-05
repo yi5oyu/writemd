@@ -12,13 +12,13 @@ import {
   Text,
   Button,
   useDisclosure,
+  IconButton,
 } from '@chakra-ui/react'
 import { FiEdit, FiCheck } from 'react-icons/fi'
-import { FaTrash } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
-import SearchBar from '../../components/ui/search/SearchBar'
 import CreateCard from '../../components/ui/card/CreateCard'
 import SearchFlex from '../../components/ui/search/SearchFlex'
+import { AddIcon, DeleteIcon } from '@chakra-ui/icons'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -180,30 +180,7 @@ const TemplateList = ({
   }
 
   return (
-    <Box>
-      {!isReadOnly && (isNewTemplate || selectedTemplate) && <CreateCard select={select} />}
-
-      {!isReadOnly && !(isNewTemplate || selectedTemplate) && (
-        <Button
-          m="10px"
-          _hover={{ color: 'blue.500' }}
-          onClick={() => {
-            setIsNewTemplate(true)
-            setSelectedTemplate({
-              templateId: null,
-              title: '',
-              description: '',
-              folderName: '',
-              folderId: null,
-            })
-            setTemplateText('')
-          }}
-          title="새 템플릿 생성"
-        >
-          새 템플릿 생성
-        </Button>
-      )}
-
+    <Box position="relative">
       {/* 검색 */}
       <SearchFlex
         contents={baseTemplates}
@@ -214,8 +191,44 @@ const TemplateList = ({
         isSetting={false}
       />
 
+      {/* 새 템플릿 */}
+      {!isReadOnly && (isNewTemplate || selectedTemplate) && <CreateCard select={select} />}
+
+      {!isReadOnly && !(isNewTemplate || selectedTemplate) && (
+        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+          <IconButton
+            bg="transparent"
+            aria-label="새 템플릿 생성"
+            icon={<AddIcon />}
+            _hover={{ bg: 'transparent', color: 'blue.500' }}
+            onClick={() => {
+              setIsNewTemplate(true)
+              setSelectedTemplate({
+                templateId: null,
+                title: '',
+                description: '',
+                folderName: '',
+                folderId: null,
+              })
+              setTemplateText('')
+            }}
+          />
+        </Flex>
+      )}
+
       {/* 목록 */}
-      <Box overflowY="auto" maxH={screen ? 'calc(100vh - 410px)' : 'calc(100vh - 350px)'}>
+      <Box
+        overflowY="auto"
+        h={
+          screen
+            ? !isReadOnly && (isNewTemplate || selectedTemplate)
+              ? 'calc(100vh - 480px)'
+              : 'calc(100vh - 300px)'
+            : !isReadOnly && (isNewTemplate || selectedTemplate)
+            ? 'calc(100vh - 435px)'
+            : 'calc(100vh - 255px)'
+        }
+      >
         <Accordion
           index={openAccordions}
           allowMultiple
@@ -315,12 +328,11 @@ const TemplateList = ({
                           title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
                           isDisabled={isDisabled}
                         />
-                        <Button
-                          p="2px"
-                          size="xs"
+                        <DeleteIcon
+                          boxSize="20px"
                           mx="10px"
+                          my="2px"
                           bg="transparent"
-                          as={FaTrash}
                           color="gray.500"
                           _hover={{ color: 'red.500' }}
                           onClick={(e) => {
@@ -382,15 +394,13 @@ const TemplateList = ({
                                 {template.description}
                               </Text>
                             </Box>
-                            <Button
+                            <DeleteIcon
                               position="absolute"
                               top="0"
                               right="0"
-                              p="2px"
-                              m="5px"
-                              size="xs"
+                              m="10px"
+                              boxSize="18px"
                               bg="transparent"
-                              as={FaTrash}
                               opacity={0}
                               color="gray.500"
                               _groupHover={{ opacity: 1 }}

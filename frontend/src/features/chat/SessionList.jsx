@@ -127,7 +127,7 @@ const SessionList = ({
           boxShadow="md"
           borderRadius="sm"
           bg="white"
-          overflowY="auto"
+          overflowY="hidden"
         >
           <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
             {/* 설정값 바뀌게 */}

@@ -51,6 +51,7 @@ import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
 import useApiKey from '../../hooks/chat/useApiKey'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 import useSseConnection from '../../hooks/chat/useSseConnection'
+import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
 
 const NoteScreen = ({
   user,
@@ -118,6 +119,7 @@ const NoteScreen = ({
     error: sseError,
     isComplete: sseIsComplete,
   } = useSseConnection(sessionId, isWaitingForStream)
+  const { stopStreaming, isStopping, stopError } = useSseStopConnection(sessionId)
 
   // const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const isChatLoading = sessionLoading || saveSessionLoading || delSessionLoading || chatLoading // || connectLoading
@@ -315,25 +317,20 @@ const NoteScreen = ({
   const handleCreateSession = async (noteId, questionText) => {
     const content = questionText
     setQuestionText('')
-    // if (connectError || questionText === '' || sessionError || messageError) return
-
     let session = null
-    // setNewChatLoading(false)
-
-    // 초기
     const tempAiMessageId = `ai-${Date.now()}`
+
     setMessages((m) => [
       ...m,
       { role: 'user', content: content },
-      // AI 응답 placeholder (content는 초기에 비워두거나 로딩 표시)
       { role: 'assistant', content: '', streaming: true, id: tempAiMessageId },
     ])
     setBoxForm('chatBox')
+    setIsWaitingForStream(true)
 
     try {
       const maxLen = 30
       const title = content.length > maxLen ? content.slice(0, maxLen) : content
-
       session = await saveSession(noteId, title)
       setSessions((s) => [...s, session])
       setSessionId(session.sessionId)
@@ -346,15 +343,13 @@ const NoteScreen = ({
         questionText: content,
       })
 
-      if (response) {
-        setIsWaitingForStream(true)
-      } else {
-        throw new Error('연결 에러')
+      if (!response) {
+        setIsWaitingForStream(false)
+        setMessages((m) => m.filter((msg) => msg.id !== tempAiMessageId && msg.role !== 'user'))
+        setSessionId('')
+        setBoxForm('newChat')
+        throw new Error('메시지 전송 요청 실패 (서버 응답 확인 필요)')
       }
-
-      // response.data.choices[0]?.message?.content (LMstuio)
-      // let aiResponse = response.data || 'AI 응답없음'
-      // setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
     } catch (error) {
       console.error('세션 생성 또는 메시지 전송 실패:', error)
       if (session && session.sessionId) {
@@ -365,12 +360,10 @@ const NoteScreen = ({
           console.error(`세션 삭제 중 추가 오류 발생 (ID: ${session.sessionId}):`, deleteError)
         }
       }
-      setMessages((m) => m.filter((msg) => msg.id !== tempAiMessageId && msg.role !== 'user')) // 예시: user 메시지도 제거
+      setMessages((m) => m.filter((msg) => msg.id !== tempAiMessageId && msg.role !== 'user'))
       setSessionId('')
       setBoxForm('newChat')
       setIsWaitingForStream(false)
-    } finally {
-      // setNewChatLoading(null)
     }
   }
 
@@ -379,20 +372,6 @@ const NoteScreen = ({
     setSessionId(sessionId)
     setBoxForm('chatBox')
   }
-
-  // 채팅 내역 조회
-  // useEffect(() => {
-  //   // sessionId가 존재하고, chatHistory 로딩이 끝났고, 유효한 배열일 때
-  //   if (sessionId && !chatLoading && Array.isArray(chat)) {
-  //     console.log(`[NoteScreen] 세션 변경(${sessionId}), chatHistory 로드 완료:`, chat)
-  //     // messages 상태를 해당 세션의 과거 내역으로 설정
-  //     setMessages(chat)
-  //   } else if (!sessionId) {
-  //     // 선택된 세션이 없으면 messages 비우기
-  //     setMessages([])
-  //   }
-  //   // 이 효과는 sessionId나 해당 ID의 chatHistory 로딩 상태가 변경될 때 주로 실행되어야 함
-  // }, [sessionId, chat, chatLoading])
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
@@ -407,21 +386,8 @@ const NoteScreen = ({
       id: `ai-${Date.now()}`,
     }
 
-    console.log('[handleSendChatMessage] setMessages 호출 전 (과거 내역 포함):', messages) // 이전 메시지 확인용
-
-    // !!! 중요: 현재 상호작용만 messages 상태에 설정 (과거 내역은 chatHistory에 있음) !!!
-    setMessages([userMessage, aiPlaceholder]) // <<<--- 과거 내역(...m) 없이 새 배열로 설정
-
-    setIsWaitingForStream(true) // 스트림 대기 시작
-
-    console.log('[handleSendChatMessage] setMessages 호출 후 즉시 (반영 전일 수 있음)')
-    // --- 로그 추가 ---
-    // React 18 이전 버전에서는 이 로그가 이전 상태를 보여줄 수 있음
-    // React 18+ 라면 다음 렌더링 전에 업데이트된 상태 반영 시도
-    // 확실히 보려면 useEffect(() => { console.log(messages) }, [messages]) 사용
-    // --- 로그 추가 끝 ---
-
-    // setIsSendMessaging(true); // 필요 시
+    setMessages([userMessage, aiPlaceholder])
+    setIsWaitingForStream(true)
 
     try {
       const response = await sendChatMessage({
@@ -432,17 +398,17 @@ const NoteScreen = ({
         questionText: content,
       })
       if (!response) {
-        // sendChatMessage이 성공 시 true를 반환한다고 가정
-        // setIsWaitingForStream(false); // 이미 위에서 true로 설정했으므로 실패 시 여기서 false로 바꿀 필요 없음 (catch에서 처리)
+        setIsWaitingForStream(false)
+        setMessages([
+          userMessage,
+          { role: 'assistant', content: '메시지 전송 요청 실패 (서버 오류)' },
+        ])
         throw new Error('메시지 전송 요청 실패 (서버 응답 확인 필요)')
       }
     } catch (error) {
       console.log('메시지 보내기 실패: ' + error)
-      setMessages([])
-      // setMessages((m) => m.filter((msg) => msg.id !== aiPlaceholder.id))
+      setMessages([userMessage, { role: 'assistant', content: '메시지 보내기 실패' }])
       setIsWaitingForStream(false)
-    } finally {
-      // setIsSendMessaging(false);
     }
   }
 
@@ -742,71 +708,25 @@ const NoteScreen = ({
     }
   }, [user])
 
-  // SSE Content 업데이트
-  // useEffect(() => {
-  //   console.log('[NoteScreen] streamingContent 변경 감지 useEffect 실행됨')
-  //   if (streamingContent && messages.length > 0) {
-  //     console.log('[NoteScreen] 스트리밍 콘텐츠 업데이트 로직 진입')
-  //     const lastMessageIndex = messages.length - 1
-  //     if (
-  //       messages[lastMessageIndex]?.role === 'assistant' &&
-  //       messages[lastMessageIndex]?.streaming
-  //     ) {
-  //       console.log('[NoteScreen] 스트리밍 콘텐츠 업데이트:', streamingContent.slice(-50)) // 마지막 50자 정도만 로그
-  //       setMessages((prevMessages) => {
-  //         const updatedMessages = [...prevMessages]
-  //         updatedMessages[lastMessageIndex] = {
-  //           ...updatedMessages[lastMessageIndex],
-  //           content: streamingContent, // 전체 누적 콘텐츠 할당
-  //         }
-  //         console.log(
-  //           '[NoteScreen] messages 상태 업데이트 완료:',
-  //           updatedMessages[lastMessageIndex].content.slice(-50)
-  //         )
-  //         return updatedMessages
-  //       })
-  //     }
-  //   }
-  // }, [streamingContent])
-
-  // SSE 완료 (수정된 버전)
+  // SSE 완료
   useEffect(() => {
     if (sseIsComplete) {
-      console.log('[SSE Complete] 스트림 완료됨. 로컬 messages 업데이트 및 전체 내역 refetch 시작.')
-      // 현재 messages 상태 (user + AI placeholder) 를 업데이트
       setMessages((prevMessages) =>
         prevMessages.map((msg) => {
           if (msg.streaming === true && msg.role === 'assistant') {
-            console.log('[SSE Complete] 최종 콘텐츠 업데이트:', streamingContent.slice(-50))
             return { ...msg, content: streamingContent, streaming: false }
           }
           return msg
         })
       )
       setIsWaitingForStream(false)
-
-      // --- 중요: 전체 채팅 내역 다시 불러오기 ---
-      console.log('[SSE Complete] 전체 채팅 내역 refetch 호출')
-      refetch() // useChat 훅에서 받은 refetch 함수 호출
-      // --- refetch 호출 끝 ---
-
-      // 선택 사항: refetch 후 로컬 messages를 비울 수도 있음 (다음 입력을 위해)
-      // setMessages([]);
+      refetch()
     }
-    // refetch 함수도 의존성 배열에 추가
   }, [sseIsComplete, streamingContent])
 
   // SSE 에러 처리
   useEffect(() => {
     if (sseError) {
-      console.error('[SSE Error] Error received in component:', sseError)
-      // toast({
-      //   duration: 7000,
-      //   isClosable: true,
-      //   render: ({ onClose }) => (
-      //     <ErrorToast onClose={onClose} message={`[${sseError.type}] ${sseError.message}`} />
-      //   ),
-      // })
       setMessages((prevMessages) => {
         const lastMsg = prevMessages[prevMessages.length - 1]
         if (lastMsg?.role === 'assistant' && lastMsg?.streaming) {
@@ -815,14 +735,42 @@ const NoteScreen = ({
         return prevMessages
       })
       setIsWaitingForStream(false)
+      toast({
+        duration: 7000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={`[${sseError.type}] ${sseError.message}`} />
+        ),
+      })
     }
   }, [sseError, toast])
 
-  // useEffect(() => {
-  //   console.log(messages)
-  // }, [messages])
+  // SSE 중지
+  const handleTriggerStop = useCallback(async () => {
+    if (!sessionId || isStopping) return
 
-  // console.log('[NoteScreen Render] streamingContent:', streamingContent?.slice(-50))
+    try {
+      await stopStreaming()
+      setMessages((prevMessages) => {
+        const updatedMessages = prevMessages.map((msg) =>
+          msg.role === 'assistant' && msg.streaming ? { ...msg, streaming: false } : msg
+        )
+
+        const stopNotification = {
+          role: 'assistant',
+          content: '대답이 중지되었습니다.',
+          id: `assistant-stop-${Date.now()}`,
+        }
+
+        return [...updatedMessages, stopNotification]
+      })
+
+      setIsWaitingForStream(false)
+    } catch (error) {
+      console.error('SSE 중지 오류:', error)
+      setIsWaitingForStream(false)
+    }
+  }, [sessionId, stopStreaming, isStopping, setMessages, setIsWaitingForStream])
 
   return (
     <Box
@@ -1066,6 +1014,9 @@ const NoteScreen = ({
                       setSelectedAI={setSelectedAI}
                       model={model}
                       setModel={setModel}
+                      isStreamingActive={isWaitingForStream}
+                      handleStopStreaming={handleTriggerStop}
+                      isStoppingSse={isStopping}
                     />
                   </Box>
                 </Flex>

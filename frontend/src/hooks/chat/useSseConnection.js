@@ -46,7 +46,7 @@ const useSseConnection = (sessionId, enabled = false) => {
       // 메시지 업데이트
       es.addEventListener('message', (event) => {
         const receivedData = event.data
-        console.log(event)
+        console.log(event.data)
         if (receivedData) {
           setStreamingContent((prevContent) => prevContent + receivedData)
         }

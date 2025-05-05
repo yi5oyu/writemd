@@ -94,21 +94,36 @@ public class SseEmitterManager {
         }
     }
 
+    // SSE 완료
+    public void completeSession(Long sessionId) {
+        SseEmitter emitter = emitters.get(sessionId);
+        if (emitter != null) {
+            try {
+                log.info("세션 {}에 대한 SseEmitter를 명시적으로 완료 처리합니다.", sessionId);
+                emitter.complete(); // Emitter 완료 호출
+
+            } catch (Exception e) {
+                log.warn("SseEmitter 완료 처리 중 오류 발생 (sessionId: {}): {}. Emitter 제거 시도.", sessionId, e.getMessage());
+                removeEmitterInternal(sessionId, emitter, "explicit complete failure");
+            }
+        } else {
+            log.warn("명시적으로 완료 처리할 세션 {}의 활성 Emitter를 찾을 수 없습니다.", sessionId);
+        }
+    }
+
     // 하트비트 전송 메서드 (Scheduler에서 주기적으로 호출)
     public void sendHeartbeatToAll() {
         if (emitters.isEmpty()) return;
 
         int count = 0;
 
-        // 주석 처리 (:)
-        String heartbeatComment = ":heartbeat\n\n";
+        String heartbeatContent = "heartbeat";
 
         for (Map.Entry<Long, SseEmitter> entry : emitters.entrySet()) {
             Long sessionId = entry.getKey();
             SseEmitter emitter = entry.getValue();
             try {
-                // event().comment(heartbeatComment);
-                emitter.send(heartbeatComment);
+                emitter.send(SseEmitter.event().comment(heartbeatContent));
                 // log.info("하트비트 전송 성공 {}", sessionId);
                 log.debug("하트비트 전송 성공 {}", sessionId);
                 count++;

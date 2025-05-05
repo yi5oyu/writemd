@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 @Service
@@ -55,6 +57,9 @@ public class ChatService {
     private final NoteRepository noteRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final SseEmitterManager sseEmitterManager;
+
+    private final Map<Long, Disposable> activeStreams = new ConcurrentHashMap<>();
+
 
     // openai(chatgpt) 설정
     private ChatClient openai(String apikey, String model, Double temperature){
@@ -145,8 +150,32 @@ public class ChatService {
         sessionRepository.save(session);
     }
 
+    // 채팅 중지
+    public void stopChatStream(Long sessionId) {
+        Disposable disposable = activeStreams.get(sessionId);
+
+        if (disposable != null && !disposable.isDisposed()) {
+            log.info("채팅 스트림 중지 요청 수신 {}. 스트림 취소", sessionId);
+            try {
+                disposable.dispose();
+                activeStreams.remove(sessionId);
+                log.info("채팅 스트림 취소 완료 및 activeStreams에서 제거 {}", sessionId);
+
+                sseEmitterManager.completeSession(sessionId);
+            } catch (Exception e) {
+                log.error("채팅 스트림 취소 중 오류 발생 (sessionId: {}): {}", sessionId, e.getMessage(), e);
+                sseEmitterManager.completeSession(sessionId); // 완료 재시도
+                activeStreams.remove(sessionId);
+            }
+        } else {
+            log.warn("중지 처리 실패: 해당 sessionId의 활성 스트림을 찾을 수 없거나 이미 중지됨 {}", sessionId);
+            sseEmitterManager.completeSession(sessionId);
+        }
+    }
+
     @Async
     public void chat(Long sessionId, Long userId, Long apiId, String model, String content){
+        Disposable disposable = null;
         try {
             APIDTO api = getApiKey(userId, apiId);
             String aiModel = api.getAiModel();
@@ -155,9 +184,9 @@ public class ChatService {
             ChatClient chatClient = null;
 
             if(aiModel.equals("openai")){
-                chatClient = openai(apiKey, "gpt-4o", 0.7); // "gpt-4o"
+                chatClient = openai(apiKey, model, 0.7); // "gpt-4o"
             } else if (aiModel.equals("anthropic")){
-                chatClient = claude(apiKey, "claude-3-5-sonnet-20240620", 0.7); // "claude-3-5-sonnet-20240620"
+                chatClient = claude(apiKey, model, 0.7); // "claude-3-5-sonnet-20240620"
             }
 
             List<Message> messages = chatHistory(sessionId, content);
@@ -168,9 +197,13 @@ public class ChatService {
 
             StringBuilder fullResponse = new StringBuilder();
 
-            responseStream
+            disposable = responseStream
                 // 각 chunk 처리
                 .doOnNext(chatResponse -> {
+                    if (activeStreams.get(sessionId) == null || activeStreams.get(sessionId).isDisposed()) {
+                        log.warn("스트림 처리 중 중단 감지 (sessionId: {}), 추가 처리 중단.", sessionId);
+                    }
+
                     String chunk = chatResponse.getResult() != null && chatResponse.getResult().getOutput() != null
                         ? chatResponse.getResult().getOutput().getText()
                         : "";
@@ -206,7 +239,20 @@ public class ChatService {
                         sseEmitterManager.sendToSession(sessionId, "error", "최종 응답 저장 중 오류 발생");
                     }
                 })
+                .doFinally(signalType -> {
+                    log.debug("스트림 종료됨 (Signal: {}), activeStreams에서 제거 시도 (sessionId: {})", signalType, sessionId);
+                    activeStreams.remove(sessionId);
+                    // 여기서 SseEmitter를 명시적으로 complete 할 수도 있으나,
+                    // SseEmitterManager의 콜백에 맡기는 것이 일반적
+                })
                 .subscribe();
+
+            if (disposable != null && !disposable.isDisposed()) {
+                activeStreams.put(sessionId, disposable);
+                log.info("새 스트림 구독 시작 및 activeStreams에 추가됨 (sessionId: {})", sessionId);
+            } else {
+                log.warn("스트림 구독 후 Disposable 객체가 null이거나 이미 취소됨 (sessionId: {}). activeStreams에 추가하지 않음.", sessionId);
+            }
 
         } catch (Exception e) {
             log.error("채팅 처리 중 예외 발생 (sessionId: {}): {}", sessionId, e.getMessage(), e);

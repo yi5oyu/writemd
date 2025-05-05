@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Box, Textarea, Icon, Flex, Select, Spacer } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
+import { BsStopCircleFill } from 'react-icons/bs'
 import modelData from '../../data/model.json'
 import AiQusetionSelect from '../../components/ui/select/AiQusetionSelect'
 
@@ -21,6 +22,9 @@ const Questionbar = ({
   setSelectedAI,
   model,
   setModel,
+  isStreamingActive,
+  handleStopStreaming,
+  isStoppingSse,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -88,7 +92,7 @@ const Questionbar = ({
     }
   }
 
-  // 모델 리스트트 초기화
+  // 모델 리스트 초기화
   useEffect(() => {
     if (selectedAI !== undefined && selectedAI !== null && apiKeys) {
       const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
@@ -168,7 +172,7 @@ const Questionbar = ({
             <Icon
               borderRadius="2xl"
               bg="gray.100"
-              as={ArrowForwardIcon}
+              as={isStreamingActive ? BsStopCircleFill : ArrowForwardIcon}
               color="gray.400"
               boxSize="8"
               cursor={!active && !isSendMessaging ? 'pointer' : 'default'}
@@ -178,6 +182,10 @@ const Questionbar = ({
                   handleSendMessage().finally(() => {
                     setIsSendMessaging(false)
                   })
+                }
+                if (isStreamingActive) {
+                  handleStopStreaming()
+                  console.log('스톱 클릭')
                 }
               }}
               _hover={

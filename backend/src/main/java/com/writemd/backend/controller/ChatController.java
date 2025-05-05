@@ -24,7 +24,6 @@ public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
-
     private final UserService userService;
     private final ChatService chatService;
     private final SseEmitterManager sseEmitterManager;
@@ -68,8 +67,22 @@ public class ChatController {
         } catch (Exception e) {
             log.warn("연결 시작 실패 {}", sessionId, e);
         }
-        // SseEmitter 객체 반환
         return emitter;
+    }
+
+    // SSE 중지
+    @PostMapping("/stop/{sessionId}")
+    public ResponseEntity<String> stopChatStream(@PathVariable Long sessionId) {
+        log.info("채팅 스트림 중지 요청 수신 {}", sessionId);
+        try {
+            chatService.stopChatStream(sessionId);
+            log.info("채팅 스트림 중지 완료 {}", sessionId);
+            return ResponseEntity.ok("채팅 스트림 중지" + sessionId);
+        } catch (Exception e) {
+            log.error("채팅 스트림 중지 처리 중 오류 발생 {}, {}", sessionId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("채팅 스트림 중지 처리 중 오류가 발생: " + e.getMessage());
+        }
     }
 
     // 연결 확인

@@ -19,6 +19,9 @@ import {
 } from '@chakra-ui/react'
 import { LinkIcon } from '@chakra-ui/icons'
 import CodeBlock from './CodeBlock'
+import Callout from './Callout'
+
+const calloutType = ['note', 'tip', 'important', 'warning', 'caution']
 
 const ChakraMarkdownGithubLight = {
   // 제목
@@ -261,17 +264,50 @@ const ChakraMarkdownGithubLight = {
   pre: (props) => <CodeBlock {...props} />,
 
   // 인용문
-  blockquote: (props) => (
-    <Box
-      as="blockquote"
-      pl={4}
-      borderLeft="4px solid"
-      borderColor="gray.300"
-      color="gray.600"
-      mb={4}
-      {...props}
-    />
-  ),
+  blockquote: (props) => {
+    const { node } = props // node 객체 접근
+    let isCallout = false
+    let type = null
+    let title = null
+    let content = ''
+
+    const checkTag = node?.children?.find(
+      (child) => child.type === 'element' && child.tagName === 'p'
+    )
+    if (checkTag) {
+      const value = checkTag.children?.find((child) => child.type === 'text').value?.trim()
+      const match = value.match(/^\[!(\w+)\]/)
+      if (match && match[0]) {
+        type = match[1].toLowerCase()
+        if (calloutType.includes(type)) {
+          isCallout = true
+          title = match[2]?.trim()
+          content = match.input.replace(match[0], '').trim()
+          console.log(content)
+        }
+      }
+    }
+
+    if (isCallout) {
+      return (
+        <Callout type={type} title={title}>
+          {content}
+        </Callout>
+      )
+    }
+
+    return (
+      <Box
+        as="blockquote"
+        pl={4}
+        borderLeft="4px solid"
+        borderColor="gray.300"
+        color="gray.600"
+        mb={4}
+        {...props}
+      />
+    )
+  },
 
   // 테이블
   table: (props) => (
@@ -315,7 +351,7 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 수평선
-  thematicBreak: (props) => <Divider my={4} {...props} />,
+  hr: (props) => <Divider my="16px" borderColor="gray.300" borderWidth="2px" {...props} />,
 
   // 목록
   ul: ({ className, ...props }) => {
@@ -325,12 +361,12 @@ const ChakraMarkdownGithubLight = {
         styleType={isChecklist ? 'none' : 'disc'}
         sx={{
           '& ul': {
+            ml: 6,
             listStyleType: isChecklist ? 'none !important' : 'circle !important',
-            ml: isChecklist ? 0 : 6,
           },
           '& ul ul': {
+            ml: 6,
             listStyleType: isChecklist ? 'none !important' : 'square !important',
-            ml: isChecklist ? 0 : 6,
           },
         }}
         ml={isChecklist ? 0 : 6}
@@ -362,7 +398,7 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 목록 아이템
-  li: (props) => <ListItem mb={2} {...props} />,
+  li: (props) => <ListItem my={2} {...props} />,
 
   // 각주
   section: (props) => {

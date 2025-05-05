@@ -361,12 +361,12 @@ const ChakraMarkdownGithubLight = {
         styleType={isChecklist ? 'none' : 'disc'}
         sx={{
           '& ul': {
+            ml: 6,
             listStyleType: isChecklist ? 'none !important' : 'circle !important',
-            ml: isChecklist ? 0 : 6,
           },
           '& ul ul': {
+            ml: 6,
             listStyleType: isChecklist ? 'none !important' : 'square !important',
-            ml: isChecklist ? 0 : 6,
           },
         }}
         ml={isChecklist ? 0 : 6}

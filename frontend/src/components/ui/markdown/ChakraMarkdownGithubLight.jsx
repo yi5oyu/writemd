@@ -398,7 +398,7 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 목록 아이템
-  li: (props) => <ListItem mb={2} {...props} />,
+  li: (props) => <ListItem my={2} {...props} />,
 
   // 각주
   section: (props) => {

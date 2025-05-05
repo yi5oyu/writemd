@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Accordion,
   AccordionItem,
@@ -10,20 +10,15 @@ import {
   Flex,
   Box,
   Text,
-  Icon,
   Button,
-  CloseButton,
-  Card,
-  CardBody,
-  CardHeader,
   useDisclosure,
 } from '@chakra-ui/react'
-import { CreatableSelect } from 'chakra-react-select'
-import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
-import { FaTrash, FaEraser } from 'react-icons/fa'
+import { FiEdit, FiCheck } from 'react-icons/fi'
+import { FaTrash } from 'react-icons/fa'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import SearchBar from '../../components/ui/search/SearchBar'
 import CreateCard from '../../components/ui/card/CreateCard'
+import SearchFlex from '../../components/ui/search/SearchFlex'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -46,6 +41,7 @@ const TemplateList = ({
   const [deleteFolder, setDeleteFolder] = useState(null)
   const [edit, setEdit] = useState('')
   const [editedTitles, setEditedTitles] = useState([])
+  const [baseTemplates, setBaseTemplates] = useState([])
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -53,6 +49,12 @@ const TemplateList = ({
   useEffect(() => {
     selectedTemplate && setName(selectedTemplate.title)
   }, [selectedTemplate])
+
+  // 템플릿 배열 통합
+  useEffect(() => {
+    setBaseTemplates(templates.map((t) => t.template).flat())
+    console.log(baseTemplates.length)
+  }, [templates])
 
   // 템플릿 저장
   const saveTemplateClick = () => {
@@ -90,16 +92,24 @@ const TemplateList = ({
     setOpenAccordions(results)
   }, [searchQuery])
 
-  // 검색 결과 필터링
+  // 검색 결과 개별 필터링
   const filterItems = (templates) => {
     if (!searchQuery.trim()) return templates
 
     return templates.filter(
-      (template) =>
-        template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (template) => template.title.toLowerCase().includes(searchQuery.toLowerCase())
+      // || template.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }
+
+  // 검색 결과 전체 필터링
+  const filteredTemplates = useMemo(() => {
+    const trimmedQuery = searchQuery ? searchQuery.toLowerCase().trim() : ''
+
+    return baseTemplates.filter(
+      (template) => template.title && template.title.toLowerCase().includes(trimmedQuery)
+    )
+  }, [templates, searchQuery])
 
   // 템플릿 선택
   const handleTemplateSelect = (folder, template) => {
@@ -195,11 +205,13 @@ const TemplateList = ({
       )}
 
       {/* 검색 */}
-      <SearchBar
-        placeholder="템플릿 검색..."
-        query={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onClick={() => setSearchQuery('')}
+      <SearchFlex
+        contents={baseTemplates}
+        filteredAndSortedContents={filteredTemplates}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        name="템플릿"
+        isSetting={false}
       />
 
       {/* 목록 */}

@@ -674,10 +674,21 @@ const NoteScreen = ({
 
   // apikey 저장
   const handleSaveAPI = async (aiModel, apiKey) => {
-    if (apiKey.trim()) {
-      await saveApiKey(user.userId, aiModel, apiKey)
-      await fetchApiKeys(user.userId)
+    if (!apiKey.trim()) return
+
+    if (apiKeys.length >= 10) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message="API는 최대 10개까지 등록 가능합니다" />
+        ),
+      })
+      return
     }
+
+    await saveApiKey(user.userId, aiModel, apiKey)
+    await fetchApiKeys(user.userId)
   }
 
   // api 삭제

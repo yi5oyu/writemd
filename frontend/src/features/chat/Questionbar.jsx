@@ -115,7 +115,7 @@ const Questionbar = ({
   return (
     <Box
       mx="auto"
-      zIndex="9999"
+      zIndex="1000"
       bg="white"
       boxShadow="md"
       p="4"

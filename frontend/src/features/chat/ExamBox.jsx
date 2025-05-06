@@ -42,4 +42,19 @@ const ExamBox = ({
   )
 }
 
+{
+  /* <ExamBox
+  noteId={noteId}
+  handleCreateSession={handleCreateSession}
+  questionText={questionText}
+  setQuestionText={setQuestionText}
+  handleSendChatMessage={handleSendChatMessage}
+  isSessionCreating={isSessionCreating}
+  setIsSessionCreating={setIsSessionCreating}
+  isSendMessaging={isSendMessaging}
+  active={isChatError || isChatLoading ? true : false}
+  text={'마크다운(Markdown) 문법 설명'}
+/> */
+}
+
 export default ExamBox

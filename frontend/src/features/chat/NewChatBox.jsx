@@ -70,32 +70,6 @@ const NewChatBox = ({
             model={model}
             setModel={setModel}
           />
-          <Flex mt="4" gap="5">
-            <ExamBox
-              noteId={noteId}
-              handleCreateSession={handleCreateSession}
-              questionText={questionText}
-              setQuestionText={setQuestionText}
-              handleSendChatMessage={handleSendChatMessage}
-              isSessionCreating={isSessionCreating}
-              setIsSessionCreating={setIsSessionCreating}
-              isSendMessaging={isSendMessaging}
-              active={isChatError || isChatLoading ? true : false}
-              text={'마크다운(Markdown) 문법 설명'}
-            />
-            <ExamBox
-              noteId={noteId}
-              handleCreateSession={handleCreateSession}
-              questionText={questionText}
-              setQuestionText={setQuestionText}
-              handleSendChatMessage={handleSendChatMessage}
-              isSessionCreating={isSessionCreating}
-              setIsSessionCreating={setIsSessionCreating}
-              isSendMessaging={isSendMessaging}
-              active={isChatError || isChatLoading ? true : false}
-              text={'Markdown과 GFM 차이'}
-            />
-          </Flex>
         </Flex>
       </Flex>
 

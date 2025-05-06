@@ -229,6 +229,14 @@ const TemplateList = ({
             : 'calc(100vh - 255px)'
         }
       >
+        {/* 검색 결과가 없을 때 메시지 */}
+        {searchQuery.trim() !== '' &&
+          !templates.some((folder) => filterItems(folder.template).length > 0) && (
+            <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
+              "{searchQuery}"에 대한 검색 결과가 없습니다.
+            </Box>
+          )}
+
         <Accordion
           index={openAccordions}
           allowMultiple
@@ -428,13 +436,6 @@ const TemplateList = ({
             })}
         </Accordion>
       </Box>
-      {/* 검색 결과가 없을 때 메시지 */}
-      {searchQuery.trim() !== '' &&
-        !templates.some((folder) => filterItems(folder.template).length > 0) && (
-          <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
-            '{searchQuery}'에 대한 검색 결과가 없습니다.
-          </Box>
-        )}
 
       <DeleteBox
         isOpen={isOpen}

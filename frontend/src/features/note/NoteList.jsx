@@ -266,7 +266,7 @@ const NoteList = ({
 
           {searchQuery.trim() !== '' && filteredAndSortedNotes.length === 0 && (
             <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
-              '{searchQuery}'에 대한 검색 결과가 없습니다.
+              "{searchQuery}"에 대한 검색 결과가 없습니다.
             </Box>
           )}
         </Grid>

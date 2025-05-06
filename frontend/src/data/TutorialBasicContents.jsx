@@ -167,7 +167,7 @@ h2
 
 \`백틱 세개 사용\` 
     
-\`\`\`python
+\`\`\`
 # Hello World 출력
 print("Hello, Python!")
 \`\`\`
@@ -176,7 +176,114 @@ print("Hello, Python!")
 
     # Hello World 출력
     print("Hello, Python!")
-    `,
+    
+\`Syntax-highlighting(구문 강조)\`    
+
+- java, sql, javascript, typescript, markdown, sql, json, python, docker, bash, xml에 대한 구문 강조를 지원합니다. 
+
+\`\`\`java
+// Java 예시
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java!");
+    }
+}
+\`\`\`
+
+\`\`\`sql
+-- SQL 예시
+SELECT id, name, email
+FROM users
+WHERE active = 1
+ORDER BY created_at DESC;
+\`\`\`
+
+\`\`\`javascript
+// JavaScript 예시
+function hello(name) {
+  console.log('Hello, ' + name);
+}
+hello('JavaScript');
+\`\`\`
+
+\`\`\`typescript
+// TypeScript 예시
+function greet(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+console.log(greet('TypeScript'));
+\`\`\`
+
+\`\`\`markdown
+# Markdown 예시
+
+- 리스트 1
+- 리스트 2
+
+**굵은 글씨**와 *기울임 글씨*
+[링크](https://www.example.com)
+\`\`\`
+
+\`\`\`sql
+-- SQL 예시
+SELECT id, name, email
+FROM users
+WHERE active = 1
+ORDER BY created_at DESC;
+\`\`\`
+
+\`\`\`json
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.0.0"
+  }
+}
+\`\`\`
+
+\`\`\`python
+# Python 코드 블록
+def fibonacci(n):
+    a, b = 0, 1
+    while a < n:
+        print(a, end=' ')
+        a, b = b, a+b
+    print()
+
+fibonacci(100)
+\`\`\`
+
+\`\`\`docker
+# Dockerfile 예시
+FROM node:18-alpine
+WORKDIR /app
+COPY . .
+RUN npm install
+CMD ["npm", "start"]
+\`\`\`
+
+\`\`\`bash
+# Bash 예시
+echo "Hello, world!"
+ls -alh
+\`\`\`
+
+\`\`\`xml
+<!-- XML 예시 -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Page</title>
+</head>
+<body>
+  <h1>Hello World</h1>
+  <p>This is a paragraph.</p>
+</body>
+</html>
+\`\`\`
+
+`,
   },
   {
     title: '인용문/수평선',

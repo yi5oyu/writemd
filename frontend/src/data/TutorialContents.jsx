@@ -280,4 +280,258 @@ timeline
 > [!CAUTION]
 > 주의 사항을 여기에 작성합니다.`,
   },
+  {
+    title: 'GFM 랜더링',
+    subTitle: '(GitHub Flavored Markdown Rendering)',
+    description: (
+      <Box h="100px">
+        <Text mb={2}>
+          GFM(GitHub Flavored Markdown)은 표, 체크박스, 코드 블록 등 다양한 마크다운 확장 기능을
+          지원하여 문서를 더욱 풍부하고 읽기 쉽게 만들어줍니다.
+        </Text>
+        <Text mb={2}>
+          GFM은 GitHub의 이슈, PR, 위키, 문서 등 다양한 곳에서 일관되게 적용되며, 개발자와 사용자
+          모두에게 가독성 높고 표현력 있는 문서 작성을 가능하게 해줍니다
+        </Text>
+      </Box>
+    ),
+    markdownContents: `---
+
+## 1. 제목 (Headings)
+
+# H1 제목
+## H2 제목
+### H3 제목
+#### H4 제목
+##### H5 제목
+###### H6 제목
+
+---
+
+## 2. 텍스트 스타일 (Text Styles)
+
+*이탤릭체 텍스트* (Asterisks 사용)
+_이탤릭체 텍스트_ (Underscores 사용)
+
+**볼드체 텍스트** (Asterisks 사용)
+__볼드체 텍스트__ (Underscores 사용)
+
+***볼드 이탤릭체 텍스트*** (Asterisks 사용)
+___볼드 이탤릭체 텍스트___ (Underscores 사용)
+
+~~취소선 텍스트~~
+
+\`인라인 코드\`는 이렇게 표시됩니다.
+
+문단 내부에 줄바꿈을 하고 싶으면<br>HTML \`<br>\` 태그를 사용하거나, 문장 끝에 스페이스 두 개를 입력하고 엔터를 칩니다.  
+(이 줄은 스페이스 두 개로 줄바꿈 되었습니다.)
+
+---
+
+## 3. 인용문 (Blockquotes)
+
+> 이것은 인용문입니다.
+> 여러 줄로 작성할 수 있습니다.
+
+> 바깥 인용문
+>> 중첩된 인용문
+>>> 더 깊게 중첩된 인용문
+>
+> 다시 바깥 인용문입니다.
+
+---
+
+## 4. 목록 (Lists)
+
+### 4.1. 순서 없는 목록 (Unordered Lists)
+
+* 별표(*) 사용 항목 1
+* 별표(*) 사용 항목 2
+    * 중첩 항목 (들여쓰기 4칸 또는 탭)
+    * 중첩 항목
+* 별표(*) 사용 항목 3
+
+-   마이너스(-) 사용 항목 1
+-   마이너스(-) 사용 항목 2
+    -   중첩 항목
+-   마이너스(-) 사용 항목 3
+
++   플러스(+) 사용 항목 1
++   플러스(+) 사용 항목 2
++   플러스(+) 사용 항목 3
+
+### 4.2. 순서 있는 목록 (Ordered Lists)
+
+1.  첫 번째 항목
+2.  두 번째 항목
+    1.  중첩된 순서 있는 목록 (숫자는 1부터 시작)
+    2.  중첩된 항목
+3.  세 번째 항목 (숫자를 1. 1. 1. 로 써도 자동으로 증가)
+1.  네 번째 항목 (숫자를 1로 시작해도 자동으로 4가 됨)
+
+### 4.3. 할 일 목록 (Task Lists)
+
+- [x] 완료된 할 일
+- [ ] 완료되지 않은 할 일
+- [ ] 중첩된 할 일 목록
+    - [x] 중첩되고 완료된 할 일
+    - [ ] 중첩되고 완료되지 않은 할 일
+
+---
+
+## 5. 코드 블록 (Code Blocks)
+
+### 5.1. 들여쓰기 코드 블록
+
+    // 이 코드는 4칸 들여쓰기로 만들어졌습니다.
+    function greet(name) {
+      console.log("Hello, " + name + "!");
+    }
+
+### 5.2. 펜스 코드 블록 (Fenced Code Blocks)
+
+\`\`\`
+이것은 언어 지정이 없는 펜스 코드 블록입니다.
+텍스트 그대로 표시됩니다.
+\`\`\`
+
+\`\`\`javascript
+// JavaScript 코드 블록 (Syntax Highlighting 테스트)
+function factorial(n) {
+  if (n === 0 || n === 1) {
+    return 1;
+  } else {
+    return n * factorial(n - 1);
+  }
+}
+console.log(factorial(5));
+\`\`\`
+
+\`\`\`python
+# Python 코드 블록
+def fibonacci(n):
+    a, b = 0, 1
+    while a < n:
+        print(a, end=' ')
+        a, b = b, a+b
+    print()
+
+fibonacci(100)
+\`\`\`
+
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <p>This is a paragraph.</p>
+</body>
+</html>
+\`\`\`
+
+---
+
+## 6. 수평선 (Horizontal Rules)
+
+세 개의 다른 스타일:
+
+---
+
+***
+
+___
+
+---
+
+## 7. 링크 (Links)
+
+### 7.1. 인라인 링크
+
+[GitHub](https://github.com) 사이트로 이동합니다.
+[링크에 마우스를 올리면 타이틀이 보입니다](https://www.google.com "Google 검색")
+
+### 7.2. 참조 링크
+
+이것은 [참조 스타일 링크][ref1]입니다. 문장 중간에 [다른 참조][ref2]를 넣을 수도 있습니다.
+
+[ref1]: https://www.mozilla.org "Mozilla 홈페이지"
+[ref2]: https://developer.mozilla.org/ko/docs/Web/Markdown
+
+숫자를 참조로 사용할 수도 있습니다: [Google][1], [Naver][2].
+
+[1]: https://google.com
+[2]: https://naver.com
+
+### 7.3. 자동 링크 (Autolinks)
+
+URL: https://www.example.com
+이메일: fake.email@example.com
+
+---
+
+## 8. 이미지 (Images)
+
+인라인 스타일 이미지:
+![대체 텍스트: GitHub 로고](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png "GitHub 로고 아이콘")
+
+참조 스타일 이미지:
+![대체 텍스트: 사각형][img-ref]
+
+[img-ref]: https://via.placeholder.com/150/0000FF/FFFFFF?text=Placeholder "파란색 플레이스홀더"
+
+---
+
+## 9. 테이블 (Tables)
+
+| 헤더 1 | 헤더 2 (가운데 정렬) | 헤더 3 (오른쪽 정렬) |
+| :----- | :----------------: | -----------------: |
+| 셀 1-1 |      셀 1-2      |             셀 1-3 |
+| 셀 2-1 |      셀 2-2      |             셀 2-3 |
+| 셀 3-1 (내용이 김) |       셀 3-2       |             셀 3-3 |
+
+---
+
+## 10. 인라인 HTML (Inline HTML)
+
+마크다운은 일부 기본적인 HTML 태그를 지원합니다.
+
+<details>
+  <summary>여기를 클릭하여 상세 내용 보기</summary>
+  이것은 접혀있는 상세 내용입니다. 마크다운 **볼드체**나 \`인라인 코드\`도 포함될 수 있습니다.
+</details>
+
+H<sub>2</sub>O (아래 첨자) 와 X<sup>2</sup> (위 첨자) 테스트.
+
+키보드 입력: <kbd>Ctrl</kbd> + <kbd>C</kbd>
+
+---
+
+## 11. 이모지 (Emoji)
+
+GFM은 이모지 코드를 지원합니다: 😄 :smile: 🚀 :rocket: 🇰🇷 :kr: 👍 :+1:
+
+---
+
+## 12. 각주 (Footnotes)
+
+여기에 각주가 필요합니다.[^1] 이것은 또 다른 각주입니다.[^longnote]
+
+[^1]: 이것은 첫 번째 각주 내용입니다.
+[^longnote]: 이것은 좀 더 긴 내용의 각주입니다. 여러 문장으로 구성될 수도 있습니다.
+
+---
+
+## 13. 마크다운 문자 이스케이프 (Escaping Markdown Characters)
+
+마크다운 문자를 그대로 표시하려면 백슬래시(\`\\\`)를 사용합니다:
+\*별표 아님\*
+\_언더스코어 아님\_
+\`백틱 아님\`
+
+---
+`,
+  },
 ]

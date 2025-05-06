@@ -27,7 +27,6 @@ import useNote from '../../hooks/note/useNote'
 import useChat from '../../hooks/chat/useChat'
 import useSendChatMessage from '../../hooks/chat/useSendChatMessage'
 import useSaveSession from '../../hooks/chat/useSaveSession'
-import useChatConnection from '../../hooks/chat/useChatConnection'
 import useDeleteSession from '../../hooks/chat/useDeleteSession'
 // template
 import useSaveTemplate from '../../hooks/template/useSaveTemplate'
@@ -77,9 +76,7 @@ const NoteScreen = ({
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
-  const [isConnected, setIsConnected] = useState(true)
   const [sessionId, setSessionId] = useState('')
-  const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [selectedScreen, setSelectedScreen] = useState('markdown')
   const [model, setModel] = useState('')
@@ -843,7 +840,6 @@ const NoteScreen = ({
                 screen={screen}
                 onScreen={() => setScreen(!screen)}
                 onExport={exportMarkdown}
-                isConnected={isConnected}
                 tool={tool}
                 setTool={setTool}
                 memo={memo}
@@ -910,9 +906,7 @@ const NoteScreen = ({
             {screen && (
               <UtilityBox
                 setBoxForm={setBoxForm}
-                // handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
-                isConnected={isConnected}
                 handleGitLoad={handleGitLoad}
                 handleGetTemplates={handleGetTemplates}
                 setSelectedScreen={setSelectedScreen}

@@ -15,7 +15,6 @@ const ToolBox = ({
   onScreen,
   screen,
   onExport,
-  isConnected,
   tool,
   setTool,
   memo,
@@ -35,12 +34,7 @@ const ToolBox = ({
     <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
       <Flex alignItems="center">
         <UtilityBtn icon={RiToolsFill} label="도구상자 토글" onClick={onScreen} />
-        <UtilityBtn
-          icon={MdSpellcheck}
-          label="맞춤법 검사"
-          disabled={isConnected}
-          onClick={() => {}}
-        />
+        <UtilityBtn icon={MdSpellcheck} label="맞춤법 검사" disabled={false} onClick={() => {}} />
         <UtilityBtn
           icon={BsEmojiSmile}
           label="이모지/뱃지"

@@ -20,6 +20,7 @@ const ToolBox = ({
   memo,
   setMemo,
   setIsFold,
+  handleSendDirectChatMessage,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -34,7 +35,14 @@ const ToolBox = ({
     <Flex py="2" justifyContent="space-between" alignItems="center" zIndex="9999">
       <Flex alignItems="center">
         <UtilityBtn icon={RiToolsFill} label="도구상자 토글" onClick={onScreen} />
-        <UtilityBtn icon={MdSpellcheck} label="맞춤법 검사" disabled={false} onClick={() => {}} />
+        <UtilityBtn
+          icon={MdSpellcheck}
+          label="맞춤법 검사"
+          // disabled={false}
+          onClick={() =>
+            handleSendDirectChatMessage("mcpAiWord를 사용해서 'sbxa' 문자를 해석해주세요.")
+          }
+        />
         <UtilityBtn
           icon={BsEmojiSmile}
           label="이모지/뱃지"

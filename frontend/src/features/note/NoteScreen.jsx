@@ -51,6 +51,7 @@ import useApiKey from '../../hooks/chat/useApiKey'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 import useSseConnection from '../../hooks/chat/useSseConnection'
 import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
+import useDirectChat from '../../hooks/chat/useDirectChat'
 
 const NoteScreen = ({
   user,
@@ -90,6 +91,8 @@ const NoteScreen = ({
   const { note, loading, error } = useNote(noteId)
 
   // 채팅
+  const { sendDirectChat, loading: sendDirectLoading, error: sendDirectError } = useDirectChat()
+
   const { saveApiKey, loading: saveAPILoading, error: saveAPIError } = useSaveApiKey()
   const { fetchApiKeys, apiKeys, loading: getAPILoading, error: getAPIError } = useApiKey()
   const { deleteApiKey, loading: delAPILoading, error: delAPIError } = useDeleteApiKey()
@@ -407,6 +410,17 @@ const NoteScreen = ({
       setMessages([userMessage, { role: 'assistant', content: '메시지 보내기 실패' }])
       setIsWaitingForStream(false)
     }
+  }
+
+  //
+  const handleSendDirectChatMessage = async (content) => {
+    const response = await sendDirectChat({
+      userId: user.userId,
+      apiId: selectedAI,
+      model: model,
+      content: content,
+    })
+    console.log(response)
   }
 
   // loading 초기화
@@ -857,6 +871,7 @@ const NoteScreen = ({
                 setMemo={setMemo}
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
+                handleSendDirectChatMessage={handleSendDirectChatMessage}
               />
             )}
             <MarkdownInputBox

@@ -6,9 +6,13 @@ import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.model.function.FunctionCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +31,7 @@ public class ChatController {
     private final UserService userService;
     private final ChatService chatService;
     private final SseEmitterManager sseEmitterManager;
+    private final ToolCallbackProvider toolCallbackProvider;
 
     // 채팅 시작
     @PostMapping("/{userId}/{sessionId}/{apiId}")
@@ -40,12 +45,58 @@ public class ChatController {
         }
 
         try {
-            chatService.chat(sessionId, userId, apiId, model, content);
+            chatService.chat(sessionId, userId, apiId, model, content, false);
             return ResponseEntity.accepted().body("채팅 시작. SSE 연결 중...");
         }  catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("채팅 시작 실패: " + e.getMessage());
         }
+    }
+
+    // 채팅
+    @PostMapping("/direct/{userId}/{apiId}")
+    public CompletableFuture<ResponseEntity<String>> directChat(
+        @PathVariable Long userId,
+        @PathVariable Long apiId,
+        @RequestBody Map<String, Object> requestPayload) {
+
+        String content = (String) requestPayload.get("content");
+        String model = (String) requestPayload.get("model");
+        if (content == null || content.isBlank()) {
+            return CompletableFuture.completedFuture(
+                ResponseEntity.badRequest().body("내용이 비어있습니다")
+            );
+        }
+
+        log.info("Simple Chat 요청: userId={}, apiId={}, model={}, enableTools={}",
+            userId, apiId, model, true);
+
+        return chatService.directChat(userId, apiId, model, content, true)
+            .thenApply(response -> {
+                log.info("Simple Chat 응답 완료: userId={}", userId);
+                return ResponseEntity.ok(response);
+            })
+            .exceptionally(ex -> {
+                log.error("Simple Chat 처리 중 오류 발생: {}", ex.getMessage(), ex);
+                Throwable cause = ex;
+
+                if (ex instanceof ExecutionException && ex.getCause() != null) {
+                    cause = ex.getCause();
+                }
+
+                String errorMessage = "처리 중 오류가 발생했습니다: " + cause.getMessage();
+
+                // API 키 오류나 인증 오류 확인
+                if (cause.getMessage() != null &&
+                    (cause.getMessage().contains("invalid_api_key") ||
+                        cause.getMessage().contains("401"))) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("잘못된 API 키가 제공되었습니다");
+                }
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(errorMessage);
+            });
     }
 
     // SSE 채팅
@@ -130,6 +181,21 @@ public class ChatController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/tool-callbacks")
+    public ResponseEntity<String> getToolCallbacks() {
+        FunctionCallback[] callbacks = toolCallbackProvider.getToolCallbacks();
 
+        StringBuilder sb = new StringBuilder();
+        sb.append("등록된 도구 콜백 수: ").append(callbacks.length).append("\n");
+
+        for (int i = 0; i < callbacks.length; i++) {
+            FunctionCallback callback = callbacks[i];
+            sb.append(i + 1).append(". 도구명: ").append(callback.getName()).append("\n");
+            sb.append("   설명: ").append(callback.getDescription()).append("\n");
+            sb.append("   입력 스키마: ").append(callback.getInputTypeSchema()).append("\n\n");
+        }
+
+        return ResponseEntity.ok(sb.toString());
+    }
 
 }

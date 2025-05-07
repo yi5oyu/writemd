@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.NonTransientAiException;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
@@ -50,6 +52,7 @@ public class ChatService {
     private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private final RestTemplate restTemplate;
+    private final ToolCallbackProvider toolCallbackProvider;
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
     private final ChatRepository chatRepository;
@@ -62,16 +65,21 @@ public class ChatService {
 
 
     // openai(chatgpt) 설정
-    private ChatClient openai(String apikey, String model, Double temperature){
+    private ChatClient openai(String apikey, String model, Double temperature, Boolean tool){
         OpenAiApi openAiApi = OpenAiApi.builder()
             .apiKey(() -> apikey)
             .build();
 
-        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
-            .model(model) // "gpt-4o"
-            .temperature(temperature) // 0~1.0
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
+            .model(model)
 //            .maxTokens()
-            .build();
+            .temperature(temperature);
+
+        if(tool) {
+            optionsBuilder.toolCallbacks(toolCallbackProvider.getToolCallbacks());
+        }
+
+        OpenAiChatOptions openAiChatOptions = optionsBuilder.build();
 
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
             .openAiApi(openAiApi)
@@ -82,14 +90,20 @@ public class ChatService {
     }
 
     // anthropic(claude) 설정
-    private ChatClient claude(String apikey, String model, Double temperature){
+    private ChatClient claude(String apikey, String model, Double temperature, Boolean tool){
+        System.out.println(toolCallbackProvider.getToolCallbacks());
         AnthropicApi anthropicApi = new AnthropicApi(apikey);
 
-        AnthropicChatOptions anthropicChatOptions = AnthropicChatOptions.builder()
+        AnthropicChatOptions.Builder optionsBuilder = AnthropicChatOptions.builder()
             .model(model)
             .temperature(temperature)
-            .maxTokens(1000)
-            .build();
+            .maxTokens(1000);
+
+        if(tool) {
+            optionsBuilder.toolCallbacks(toolCallbackProvider.getToolCallbacks());
+        }
+
+        AnthropicChatOptions anthropicChatOptions = optionsBuilder.build();
 
         AnthropicChatModel anthropicChatModel = AnthropicChatModel.builder()
             .anthropicApi(anthropicApi)
@@ -174,88 +188,135 @@ public class ChatService {
     }
 
     @Async
-    public void chat(Long sessionId, Long userId, Long apiId, String model, String content){
+    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, boolean enableTools) {
+        log.info("STEP 1: 채팅 처리 시작 (sessionId: {}, userId: {}, apiId: {}, model: {})", sessionId, userId, apiId, model);
+
         Disposable disposable = null;
         try {
+            // API 키 조회
+            log.info("STEP 2: API 키 조회 시작 (userId: {}, apiId: {})", userId, apiId);
             APIDTO api = getApiKey(userId, apiId);
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
+            log.info("STEP 2: API 키 조회 완료 (aiModel: {})", aiModel);
 
+            // ChatClient 생성
+            log.info("STEP 3: ChatClient 생성 시작 (aiModel: {}, model: {})", aiModel, model);
             ChatClient chatClient = null;
-
-            if(aiModel.equals("openai")){
-                chatClient = openai(apiKey, model, 0.7); // "gpt-4o"
-            } else if (aiModel.equals("anthropic")){
-                chatClient = claude(apiKey, model, 0.7); // "claude-3-5-sonnet-20240620"
+            if (aiModel.equals("openai")) {
+                chatClient = openai(apiKey, model, 0.7, enableTools);
+                log.info("STEP 3: OpenAI ChatClient 생성 완료");
+            } else if (aiModel.equals("anthropic")) {
+                chatClient = claude(apiKey, model, 0.7, enableTools);
+                log.info("STEP 3: Anthropic ChatClient 생성 완료");
             }
 
+            // 채팅 내역 조회
+            log.info("STEP 4: 채팅 내역 조회 시작 (sessionId: {})", sessionId);
             List<Message> messages = chatHistory(sessionId, content);
+            log.info("STEP 4: 채팅 내역 조회 완료 (메시지 수: {})", messages.size());
 
+            // 일반 호출 시도 (문제점 파악용)
+//            log.info("STEP 5: 일반 호출 시도 시작");
+//            try {
+//                chatClient.prompt(new Prompt(messages))
+//                    .call()
+//                    .content();
+//                log.info("STEP 5: 일반 호출 성공 (이 로그가 보이면 일반 호출은 문제 없음)");
+//            } catch (Exception e) {
+//                log.error("STEP 5: 일반 호출 실패: {}", e.getMessage(), e);
+//            }
+
+            // 스트림 설정
+            log.info("STEP 6: 스트림 설정 시작");
             Flux<ChatResponse> responseStream = chatClient.prompt(new Prompt(messages))
                 .stream()
-                .chatResponse();
+                .chatResponse()
+                .onErrorResume(error -> {
+                    log.error("STEP 6-ERROR: 스트림 오류 발생: {}", error.getMessage());
+                    if (error.getMessage() != null && error.getMessage().contains("message endpoint")) {
+                        log.error("STEP 6-ERROR: 도구 실행 오류 감지 (sessionId: {}): {}", sessionId, error.getMessage());
+                        sseEmitterManager.sendToSession(sessionId, "error", "AI 도구 실행 오류: " + error.getMessage());
+                        return Flux.empty();
+                    }
+                    return Flux.error(error);
+                });
+            log.info("STEP 6: 스트림 설정 완료");
 
             StringBuilder fullResponse = new StringBuilder();
+            log.info("STEP 7: 응답 처리 시작");
 
+            // 응답 처리 구독
             disposable = responseStream
                 // 각 chunk 처리
                 .doOnNext(chatResponse -> {
+                    log.debug("STEP 7-CHUNK: 응답 청크 수신");
                     if (activeStreams.get(sessionId) == null || activeStreams.get(sessionId).isDisposed()) {
-                        log.warn("스트림 처리 중 중단 감지 (sessionId: {}), 추가 처리 중단.", sessionId);
+                        log.warn("STEP 7-WARN: 스트림 처리 중 중단 감지 (sessionId: {}), 추가 처리 중단.", sessionId);
                     }
 
                     String chunk = chatResponse.getResult() != null && chatResponse.getResult().getOutput() != null
                         ? chatResponse.getResult().getOutput().getText()
                         : "";
                     if (chunk != null && !chunk.isEmpty()) {
+                        log.debug("STEP 7-CHUNK: 청크 내용: {} (길이: {})",
+                            chunk.length() > 20 ? chunk.substring(0, 20) + "..." : chunk,
+                            chunk.length());
                         fullResponse.append(chunk);
                         sseEmitterManager.sendToSession(sessionId, "message", chunk);
                     } else {
-                        log.debug("빈 응답 청크 수신 (sessionId: {})", sessionId);
+                        log.debug("STEP 7-CHUNK: 빈 응답 청크 수신 (sessionId: {})", sessionId);
                     }
                 })
                 // 스트림 처리 중 에러
                 .doOnError(error -> {
-                    log.error("AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(), error);
+                    log.error("STEP 7-ERROR: AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(), error);
                     String errorMessage = "AI 서비스 응답 스트림 처리 중 오류 발생";
-                    if (error instanceof NonTransientAiException) {
+
+                    if (error.getMessage() != null && error.getMessage().contains("message endpoint")) {
+                        log.error("STEP 7-ERROR: 도구 실행 관련 오류 발생");
+                        errorMessage = "AI 도구 실행 중 오류 발생: " + error.getMessage();
+                    } else if (error instanceof NonTransientAiException) {
+                        log.error("STEP 7-ERROR: NonTransientAiException 발생");
                         errorMessage = "AI 서비스 오류: " + error.getMessage();
                     } else {
+                        log.error("STEP 7-ERROR: 기타 내부 오류 발생");
                         errorMessage = "스트림 처리 중 내부 오류: " + error.getMessage();
                     }
+
                     sseEmitterManager.sendToSession(sessionId, "error", errorMessage);
                 })
                 // 스트림 정상 완료
                 .doOnComplete(() -> {
-                    log.info("AI 스트리밍 완료 (sessionId: {})", sessionId);
+                    log.info("STEP 8: AI 스트리밍 완료 (sessionId: {}, 총 응답 길이: {})", sessionId, fullResponse.length());
                     sseEmitterManager.sendToSession(sessionId, "complete", "[DONE]");
                     // DB 저장
                     try {
+                        log.info("STEP 9: DB 저장 시작");
                         saveChat(sessionId, "user", content);
                         saveChat(sessionId, "assistant", fullResponse.toString());
-                        log.info("채팅 기록 저장 완료 (assistant) (sessionId: {})", sessionId);
+                        log.info("STEP 9: 채팅 기록 저장 완료 (assistant) (sessionId: {})", sessionId);
                     } catch (Exception e) {
-                        log.error("최종 응답 DB 저장 실패 (sessionId: {}): {}", sessionId, e.getMessage(), e);
+                        log.error("STEP 9-ERROR: 최종 응답 DB 저장 실패 (sessionId: {}): {}", sessionId, e.getMessage(), e);
                         sseEmitterManager.sendToSession(sessionId, "error", "최종 응답 저장 중 오류 발생");
                     }
                 })
                 .doFinally(signalType -> {
-                    log.debug("스트림 종료됨 (Signal: {}), activeStreams에서 제거 시도 (sessionId: {})", signalType, sessionId);
+                    log.info("STEP 10: 스트림 종료됨 (Signal: {}, sessionId: {})", signalType, sessionId);
                     activeStreams.remove(sessionId);
-                    // 여기서 SseEmitter를 명시적으로 complete 할 수도 있으나,
-                    // SseEmitterManager의 콜백에 맡기는 것이 일반적
+                    log.info("STEP 10: activeStreams에서 제거 완료 (sessionId: {})", sessionId);
                 })
                 .subscribe();
 
             if (disposable != null && !disposable.isDisposed()) {
                 activeStreams.put(sessionId, disposable);
-                log.info("새 스트림 구독 시작 및 activeStreams에 추가됨 (sessionId: {})", sessionId);
+                log.info("STEP 11: 새 스트림 구독 시작 및 activeStreams에 추가됨 (sessionId: {})", sessionId);
             } else {
-                log.warn("스트림 구독 후 Disposable 객체가 null이거나 이미 취소됨 (sessionId: {}). activeStreams에 추가하지 않음.", sessionId);
+                log.warn("STEP 11-WARN: 스트림 구독 후 Disposable 객체가 null이거나 이미 취소됨 (sessionId: {})", sessionId);
             }
 
         } catch (Exception e) {
-            log.error("채팅 처리 중 예외 발생 (sessionId: {}): {}", sessionId, e.getMessage(), e);
+            log.error("STEP ERROR: 채팅 처리 중 예외 발생 (sessionId: {}): {}", sessionId, e.getMessage(), e);
 
             String errorMessage;
             String errorType = "GENERAL_ERROR";
@@ -265,6 +326,7 @@ public class ChatService {
             while (cause != null) {
                 if (cause instanceof NonTransientAiException) {
                     nte = (NonTransientAiException) cause;
+                    log.error("STEP ERROR: NonTransientAiException 발견: {}", nte.getMessage());
                     break;
                 }
                 cause = cause.getCause();
@@ -272,23 +334,63 @@ public class ChatService {
 
             if (nte != null) {
                 String message = nte.getMessage() != null ? nte.getMessage().toLowerCase() : "";
+                log.error("STEP ERROR: 상세 오류 메시지: {}", message);
+
                 if (message.contains("invalid_api_key") || message.contains("authentication_error") || message.contains("401")) {
                     errorMessage = "잘못된 API 키 또는 인증 오류입니다.";
                     errorType = "INVALID_API_KEY";
+                    log.error("STEP ERROR: API 키 또는 인증 오류 감지");
                 } else if (message.contains("rate_limit_error") || message.contains("429")) {
                     errorMessage = "API 사용량 제한을 초과했습니다.";
                     errorType = "RATE_LIMIT_EXCEEDED";
-                }
-                else {
+                    log.error("STEP ERROR: 사용량 제한 초과 오류 감지");
+                } else {
                     errorMessage = "AI 서비스 설정 또는 통신 오류: " + nte.getMessage();
                     errorType = "AI_CONFIG_ERROR";
+                    log.error("STEP ERROR: AI 서비스 설정 또는 통신 오류 감지");
                 }
             } else {
                 errorMessage = "채팅 처리 준비 중 오류 발생: " + e.getMessage();
                 errorType = "INTERNAL_SETUP_ERROR";
+                log.error("STEP ERROR: 일반 내부 오류 감지");
             }
 
+            log.info("STEP ERROR: 사용자에게 오류 전송 (type: {}, message: {})", errorType, errorMessage);
             sseEmitterManager.sendToSession(sessionId, "error", errorType + "::" + errorMessage);
+        }
+
+        log.info("STEP FINAL: 채팅 메소드 종료 (sessionId: {})", sessionId);
+    }
+
+    //
+    @Async
+    public CompletableFuture<String> directChat(Long userId, Long apiId, String model, String content, boolean enableTools) {
+        APIDTO api = getApiKey(userId, apiId);
+        String aiModel = api.getAiModel();
+        String apiKey = api.getApiKey();
+
+        ChatClient chatClient = null;
+
+        if(aiModel.equals("openai")) {
+            chatClient = openai(apiKey, model, 0.7, enableTools);
+        } else if (aiModel.equals("anthropic")) {
+            chatClient = claude(apiKey, model, 0.7, enableTools);
+        }
+
+        List<Message> messages = new ArrayList<>();
+        messages.add(new UserMessage(content));
+
+        try {
+            return CompletableFuture.completedFuture(
+                chatClient.prompt()
+                    .messages(messages)
+                    .call()
+                    .content()
+            );
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(
+                new RuntimeException("채팅 실패: " + e.getMessage(), e)
+            );
         }
     }
 

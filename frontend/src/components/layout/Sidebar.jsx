@@ -13,7 +13,6 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  PopoverArrow,
   PopoverBody,
   Portal,
 } from '@chakra-ui/react'
@@ -34,7 +33,6 @@ import ErrorToast from '../ui/toast/ErrorToast'
 import HelperBox from '../../features/auth/HelperBox'
 
 const MotionBox = motion(Box)
-const MotionFlex = motion(Flex)
 
 const Sidebar = ({
   notes,

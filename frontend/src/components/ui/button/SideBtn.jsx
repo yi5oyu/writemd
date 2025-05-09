@@ -14,7 +14,7 @@ const SideBtn = ({ icon, hoverIcon, onClick, mode, color }) => {
       onMouseLeave={() => hoverIcon && setIsHovered(false)}
       borderRadius="md"
       _hover={{
-        bg: 'white',
+        bg: 'transparent',
       }}
     >
       <Icon

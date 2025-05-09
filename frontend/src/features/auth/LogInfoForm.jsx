@@ -26,11 +26,17 @@ import {
   InputLeftAddon,
   InputRightElement,
   Tooltip,
+  useToast,
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
+
 import { useLogout } from '../../hooks/auth/useLogout'
+import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
+import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
+import useDeleteUser from '../../hooks/auth/useDeleteUser'
+import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const LogInfoForm = ({ isOpen, onClose, user }) => {
   const [confirm, setConfirm] = useState('')
@@ -39,12 +45,84 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
   const { isOpen: isDelChatOpen, onOpen: onDelChatOpen, onClose: onDelChatClose } = useDisclosure()
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
+  const toast = useToast({
+    position: 'top',
+    duration: 3000,
+    isClosable: true,
+  })
 
   const { logout, isLoading, error } = useLogout()
+  const {
+    deleteAllUserSessions,
+    loading: deletingChats,
+    error: deleteChatsError,
+  } = useDeleteAllUserSessions()
+  const { deleteUserData, loading: deletingData, error: deleteDataError } = useDeleteUserData()
+  const { deleteUser, loading: deletingUser, error: deleteUserError } = useDeleteUser()
 
-  const confirmDeleteAuth = () => {
-    // handleDeleteNote(noteId)
-    onDeleteClose()
+  const isLoadingSpin = isLoading || deletingChats || deletingData || deletingUser
+
+  const confirmDeleteAuth = async () => {
+    try {
+      await deleteUser(user.userId)
+      toast({
+        title: '계정 삭제 완료',
+        description: '계정이 성공적으로 삭제되었습니다.',
+        status: 'success',
+      })
+      onDeleteClose()
+      logout()
+    } catch (err) {
+      toast({
+        title: '계정 삭제 실패',
+        description: '계정 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+      })
+      console.error('계정 삭제 중 오류 발생:', err)
+      onDeleteClose()
+    }
+  }
+
+  const confirmDeleteData = async () => {
+    try {
+      await deleteUserData(user.userId)
+      toast({
+        title: '데이터 삭제 완료',
+        description: '모든 데이터가 성공적으로 삭제되었습니다.',
+        status: 'success',
+      })
+      onDelDataClose()
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1000)
+    } catch (err) {
+      toast({
+        title: '데이터 삭제 실패',
+        description: '데이터 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+      })
+      console.error('데이터 삭제 중 오류 발생:', err)
+      onDelDataClose()
+    }
+  }
+
+  const confirmDeleteChat = async () => {
+    try {
+      await deleteAllUserSessions(user.userId)
+      toast({
+        title: '채팅 삭제 완료',
+        description: '모든 채팅 내역이 삭제되었습니다.',
+        status: 'success',
+      })
+    } catch (err) {
+      toast({
+        title: '채팅 삭제 실패',
+        description: '채팅 내역 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+      })
+    } finally {
+      onDelChatClose()
+    }
   }
 
   const confirmDeleteAPI = () => {
@@ -52,27 +130,25 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
     onDelAPIClose()
   }
 
-  const confirmDeleteData = () => {
-    // handleDeleteNote(noteId)
-    onDelDataClose()
-  }
-
-  const confirmDeleteChat = () => {
-    // handleDeleteNote(noteId)
-    onDelChatClose()
-  }
-
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
-        <ModalContent borderRadius="lg" px="6" pt="6" pb="8" maxW="2xl" bg="gray.50">
-          <ModalCloseButton />
+        <ModalContent
+          borderRadius="lg"
+          px="6"
+          pt="6"
+          pb="8"
+          maxW="2xl"
+          bg="gray.50"
+          filter={isLoadingSpin ? 'blur(4px)' : 'none'}
+        >
+          <ModalCloseButton zIndex={9999} />
 
           <Tabs position="relative" variant="unstyled">
             <TabList>
-              <Tab>내 계정</Tab>
-              <Tab>API</Tab>
+              <Tab isDisabled={isLoadingSpin}>내 계정</Tab>
+              <Tab isDisabled={isLoadingSpin}>API</Tab>
             </TabList>
             <TabIndicator mt="-1.5px" height="2px" bg="blue.500" borderRadius="1px" />
             <TabPanels mt="15px" bg="white" borderRadius="md" h="calc(50vh - 100px)">
@@ -117,6 +193,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         color: 'black',
                       }}
                       onClick={() => logout()}
+                      isDisabled={isLoadingSpin}
                     >
                       로그아웃
                     </Button>
@@ -142,6 +219,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         setConfirm('chat')
                         onDelChatOpen()
                       }}
+                      isDisabled={isLoadingSpin}
                     >
                       채팅 삭제
                     </Button>
@@ -167,6 +245,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         setConfirm('data')
                         onDelDataOpen()
                       }}
+                      isDisabled={isLoadingSpin}
                     >
                       데이터 삭제
                     </Button>
@@ -192,6 +271,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         setConfirm('auth')
                         onDeleteOpen()
                       }}
+                      isDisabled={isLoadingSpin}
                     >
                       계정 삭제
                     </Button>
@@ -221,6 +301,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                         setConfirm('api')
                         onDelAPIOpen()
                       }}
+                      opacity={isLoadingSpin ? 0.5 : 1}
                     />
                   </Tooltip>
                 </Flex>
@@ -240,6 +321,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                           color="gray.500"
                           cursor="pointer"
                           _hover={{ color: 'blue.500' }}
+                          opacity={isLoadingSpin ? 0.5 : 1}
                         />
                       </InputRightElement>
                     </Tooltip>
@@ -290,7 +372,12 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                   <Input placeholder="모델 이름을 입력해주세요" pr="25px" />
                   <Tooltip label="API 등록" placement="top" hasArrow>
                     <InputRightElement>
-                      <CheckIcon color="gray.500" cursor="pointer" _hover={{ color: 'blue.500' }} />
+                      <CheckIcon
+                        color="gray.500"
+                        cursor="pointer"
+                        _hover={{ color: 'blue.500' }}
+                        opacity={isLoadingSpin ? 0.5 : 1}
+                      />
                     </InputRightElement>
                   </Tooltip>
                 </InputGroup>
@@ -344,7 +431,10 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
             ? '데이터'
             : null
         }
+        isDisabled={isLoadingSpin}
       />
+
+      {isLoadingSpin && <LoadingSpinner />}
     </>
   )
 }

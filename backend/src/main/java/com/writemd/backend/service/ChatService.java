@@ -232,6 +232,18 @@ public class ChatService {
         sessionRepository.deleteById(sessionId);
     }
 
+    // 모든 채팅 내역 삭제
+    @Transactional
+    public void deleteAllSessions(Long userId) {
+        List<Notes> userNotes = noteRepository.findByUsers_Id(userId);
+
+        for (Notes note : userNotes) {
+            List<Sessions> sessions = sessionRepository.findByNotes_id(note.getId());
+
+            sessionRepository.deleteAll(sessions);
+        }
+    }
+
     // assistant 메세지 추출
     private String extractResponseBody(String responseBody){
         try {

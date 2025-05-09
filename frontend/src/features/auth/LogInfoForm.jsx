@@ -26,11 +26,14 @@ import {
   InputLeftAddon,
   InputRightElement,
   Tooltip,
+  useToast,
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
+
 import { useLogout } from '../../hooks/auth/useLogout'
+import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
 
 const LogInfoForm = ({ isOpen, onClose, user }) => {
   const [confirm, setConfirm] = useState('')
@@ -39,8 +42,14 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
   const { isOpen: isDelChatOpen, onOpen: onDelChatOpen, onClose: onDelChatClose } = useDisclosure()
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
+  const toast = useToast()
 
   const { logout, isLoading, error } = useLogout()
+  const {
+    deleteAllUserSessions,
+    loading: deletingChats,
+    error: deleteChatsError,
+  } = useDeleteAllUserSessions()
 
   const confirmDeleteAuth = () => {
     // handleDeleteNote(noteId)
@@ -57,9 +66,28 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
     onDelDataClose()
   }
 
-  const confirmDeleteChat = () => {
-    // handleDeleteNote(noteId)
-    onDelChatClose()
+  const confirmDeleteChat = async () => {
+    try {
+      await deleteAllUserSessions(user.userId)
+      toast({
+        title: '채팅 삭제 완료',
+        description: '모든 채팅 내역이 삭제되었습니다.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
+    } catch (err) {
+      toast({
+        title: '채팅 삭제 실패',
+        description: '채팅 내역 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+      console.error('채팅 삭제 중 오류 발생:', err)
+    } finally {
+      onDelChatClose()
+    }
   }
 
   return (

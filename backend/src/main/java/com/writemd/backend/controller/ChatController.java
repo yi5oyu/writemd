@@ -114,4 +114,12 @@ public class ChatController {
         // 204
         return ResponseEntity.noContent().build();
     }
+
+    // 유저의 모든 세션 삭제
+    @DeleteMapping("/sessions/user/{userId}")
+    public ResponseEntity<Void> deleteAllUserSessions(@PathVariable Long userId) {
+        chatService.deleteAllSessions(userId);
+        // 204
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -14,7 +14,6 @@ const useAuth = () => {
     if (location.pathname === '/login-success') {
       fetchUserInfo()
         .then(() => {
-          console.log('성공')
           navigate('/', { replace: true })
         })
         .catch((error) => {

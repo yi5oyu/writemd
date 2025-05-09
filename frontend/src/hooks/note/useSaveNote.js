@@ -1,9 +1,11 @@
-import { useState, useCallback } from 'react' // useCallback import 추가
+import { useState, useCallback } from 'react'
+import { useToast } from '@chakra-ui/react'
 import axios from 'axios'
 
 const useSaveNote = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const toast = useToast()
 
   const saveNote = useCallback(async (user, noteName) => {
     if (!user || !user.githubId) {
@@ -34,8 +36,27 @@ const useSaveNote = () => {
 
       return response.data
     } catch (err) {
-      console.error('노트 생성 실패:', err)
-      setError(err)
+      if (
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('Network Error') ||
+        err.message?.includes('net::ERR_FAILED')
+        // || err.message?.includes('302')
+      ) {
+        toast({
+          position: 'top',
+          title: '세션 만료',
+          description: `세션이 만료되었습니다.\n${err.toString()}`,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
+        sessionStorage.removeItem('user')
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 1000)
+      } else {
+        setError(err)
+      }
       throw err
     } finally {
       setLoading(false)

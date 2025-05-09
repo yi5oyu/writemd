@@ -68,6 +68,7 @@ public class UserController {
         // }
     }
 
+    // API 키 저장
     @PostMapping("/key/{userId}")
     public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @RequestBody APIDTO apidto){
         try {
@@ -78,11 +79,13 @@ public class UserController {
         }
     }
 
+    // API 키 조회
     @GetMapping("/key/{userId}")
     public List<APIDTO> getAPIKeys(@PathVariable Long userId){
         return apiService.getAPIKeys(userId);
     }
 
+    // API 키 삭제
     @DeleteMapping("/key/{apiId}")
     public ResponseEntity<Void> deleteApiKey(@PathVariable Long apiId) {
         try {
@@ -90,6 +93,29 @@ public class UserController {
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 유저 모든 데이터 삭제
+    @DeleteMapping("/{userId}/data")
+    public ResponseEntity<Void> deleteUserData(@PathVariable Long userId) {
+        try {
+            userService.deleteUserData(userId);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    
+    // 유저 삭제
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
+        try {
+            userService.deleteUser(userId);
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

@@ -34,6 +34,8 @@ import AiModel from '../../data/model.json'
 
 import { useLogout } from '../../hooks/auth/useLogout'
 import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
+import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
+import useDeleteUser from '../../hooks/auth/useDeleteUser'
 
 const LogInfoForm = ({ isOpen, onClose, user }) => {
   const [confirm, setConfirm] = useState('')
@@ -42,7 +44,11 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
   const { isOpen: isDelChatOpen, onOpen: onDelChatOpen, onClose: onDelChatClose } = useDisclosure()
   const { isOpen: isDelAPIOpen, onOpen: onDelAPIOpen, onClose: onDelAPIClose } = useDisclosure()
-  const toast = useToast()
+  const toast = useToast({
+    position: 'top',
+    duration: 3000,
+    isClosable: true,
+  })
 
   const { logout, isLoading, error } = useLogout()
   const {
@@ -50,10 +56,28 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
     loading: deletingChats,
     error: deleteChatsError,
   } = useDeleteAllUserSessions()
+  const { deleteUserData, loading: deletingData, error: deleteDataError } = useDeleteUserData()
+  const { deleteUser, loading: deletingUser, error: deleteUserError } = useDeleteUser()
 
-  const confirmDeleteAuth = () => {
-    // handleDeleteNote(noteId)
-    onDeleteClose()
+  const confirmDeleteAuth = async () => {
+    try {
+      await deleteUser(user.userId)
+      toast({
+        title: '계정 삭제 완료',
+        description: '계정이 성공적으로 삭제되었습니다.',
+        status: 'success',
+      })
+      onDeleteClose()
+      logout()
+    } catch (err) {
+      toast({
+        title: '계정 삭제 실패',
+        description: '계정 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+      })
+      console.error('계정 삭제 중 오류 발생:', err)
+      onDeleteClose()
+    }
   }
 
   const confirmDeleteAPI = () => {
@@ -61,9 +85,27 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
     onDelAPIClose()
   }
 
-  const confirmDeleteData = () => {
-    // handleDeleteNote(noteId)
-    onDelDataClose()
+  const confirmDeleteData = async () => {
+    try {
+      await deleteUserData(user.userId)
+      toast({
+        title: '데이터 삭제 완료',
+        description: '모든 데이터가 성공적으로 삭제되었습니다.',
+        status: 'success',
+      })
+      onDelDataClose()
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1000)
+    } catch (err) {
+      toast({
+        title: '데이터 삭제 실패',
+        description: '데이터 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+      })
+      console.error('데이터 삭제 중 오류 발생:', err)
+      onDelDataClose()
+    }
   }
 
   const confirmDeleteChat = async () => {
@@ -73,18 +115,13 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
         title: '채팅 삭제 완료',
         description: '모든 채팅 내역이 삭제되었습니다.',
         status: 'success',
-        duration: 3000,
-        isClosable: true,
       })
     } catch (err) {
       toast({
         title: '채팅 삭제 실패',
         description: '채팅 내역 삭제 중 오류가 발생했습니다.',
         status: 'error',
-        duration: 3000,
-        isClosable: true,
       })
-      console.error('채팅 삭제 중 오류 발생:', err)
     } finally {
       onDelChatClose()
     }
@@ -95,7 +132,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
         <ModalContent borderRadius="lg" px="6" pt="6" pb="8" maxW="2xl" bg="gray.50">
-          <ModalCloseButton />
+          <ModalCloseButton zIndex={9999} />
 
           <Tabs position="relative" variant="unstyled">
             <TabList>

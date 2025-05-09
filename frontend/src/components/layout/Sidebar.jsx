@@ -495,13 +495,13 @@ const Sidebar = ({
                       }}
                       alignItems="center"
                     >
-                      <Box ml="10px" mt="13px">
+                      <Box ml="10px" display="flex" alignItems="center">
                         <Icon as={BsQuestionCircle} w="20px" h="20px" color="gray.500" />
                       </Box>
                       <Text ml="10px" lineHeight="45px">
                         도움말/가이드
                       </Text>
-                      <Box ml="auto" mr="10px" mt="13px">
+                      <Box ml="auto" mr="10px" display="flex" alignItems="center">
                         <Icon as={BsChevronRight} w="20px" h="20px" color="gray.500" />
                       </Box>
                     </Flex>

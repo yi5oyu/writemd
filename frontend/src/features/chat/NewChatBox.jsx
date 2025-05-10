@@ -23,6 +23,7 @@ const NewChatBox = ({
   messageError,
   model,
   setModel,
+  availableModels,
 }) => {
   const [isSessionCreating, setIsSessionCreating] = useState(false)
 
@@ -69,6 +70,7 @@ const NewChatBox = ({
             setSelectedAI={setSelectedAI}
             model={model}
             setModel={setModel}
+            availableModels={availableModels}
           />
         </Flex>
       </Flex>

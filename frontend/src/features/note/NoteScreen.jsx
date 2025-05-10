@@ -53,6 +53,8 @@ import useSseConnection from '../../hooks/chat/useSseConnection'
 import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
 import useDirectChat from '../../hooks/chat/useDirectChat'
 
+import modelData from '../../data/model.json'
+
 const NoteScreen = ({
   user,
   noteId,
@@ -81,6 +83,7 @@ const NoteScreen = ({
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [selectedScreen, setSelectedScreen] = useState('markdown')
   const [model, setModel] = useState('')
+  const [availableModels, setAvailableModels] = useState([])
   const [isWaitingForStream, setIsWaitingForStream] = useState(false)
 
   const [item, setItem] = useState('')
@@ -701,18 +704,63 @@ const NoteScreen = ({
       return
     }
 
-    await saveApiKey(user.userId, aiModel, apiKey)
-    await fetchApiKeys(user.userId)
+    try {
+      const savedKey = await saveApiKey(user.userId, aiModel, apiKey)
+
+      await fetchApiKeys(user.userId)
+
+      if (savedKey && savedKey.apiId) {
+        setSelectedAI(savedKey.apiId)
+
+        toast({
+          position: 'top',
+          title: 'API 키 저장 성공',
+          description: `새 API 키(${aiModel})가 저장되었습니다.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        })
+      }
+    } catch (error) {
+      console.error('API 키 저장 오류:', error)
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={`API 키 저장 오류: ${error.message}`} />
+        ),
+      })
+    }
   }
 
   // api 삭제
   const handleDeleteAPI = async (apiId) => {
-    await deleteApiKey(apiId)
-    await fetchApiKeys(user.userId)
-    if (apiKeys && apiKeys.length > 0) {
-      setSelectedAI(apiKeys[0].apiId)
-    } else {
-      setSelectedAI(null)
+    const isCurrentlySelected = selectedAI === apiId
+
+    try {
+      await deleteApiKey(apiId)
+      await fetchApiKeys(user.userId)
+
+      if (isCurrentlySelected) {
+        if (apiKeys && apiKeys.length > 0) {
+          const remainingKeys = apiKeys.filter((key) => String(key.apiId) !== String(apiId))
+          if (remainingKeys.length > 0) {
+            setSelectedAI(remainingKeys[0].apiId)
+          } else {
+            setSelectedAI(null)
+          }
+        } else {
+          setSelectedAI(null)
+        }
+      }
+    } catch (error) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={`API 키 삭제 오류: ${error.message}`} />
+        ),
+      })
     }
   }
 
@@ -729,6 +777,45 @@ const NoteScreen = ({
       fetchApiKeys(user.userId)
     }
   }, [user])
+
+  // API 키 변경 시 모델 목록 업데이트/선택
+  useEffect(() => {
+    if (selectedAI !== undefined && selectedAI !== null && apiKeys && apiKeys.length > 0) {
+      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+
+      if (selectedApiKey) {
+        const currentAiModelType = selectedApiKey.aiModel
+        const models = modelData[currentAiModelType]?.model || []
+
+        setAvailableModels(models)
+
+        if (models.length > 0 && (!model || !models.includes(model))) {
+          setModel(models[0])
+        }
+      } else {
+        setAvailableModels([])
+        setModel('')
+      }
+    } else {
+      setAvailableModels([])
+      setModel('')
+    }
+  }, [selectedAI, apiKeys, model])
+
+  // 모델 저장
+  useEffect(() => {
+    if (model) {
+      localStorage.setItem('selectedModel', model)
+    }
+  }, [model])
+
+  // 모델 로드
+  useEffect(() => {
+    const savedModel = localStorage.getItem('selectedModel')
+    if (savedModel) {
+      setModel(savedModel)
+    }
+  }, [])
 
   // SSE 완료
   useEffect(() => {
@@ -975,6 +1062,7 @@ const NoteScreen = ({
                 screen={screen}
                 model={model}
                 setModel={setModel}
+                availableModels={availableModels}
               />
             )}
 
@@ -998,6 +1086,7 @@ const NoteScreen = ({
                 messageError={messageError}
                 model={model}
                 setModel={setModel}
+                availableModels={availableModels}
               />
             )}
 
@@ -1037,6 +1126,7 @@ const NoteScreen = ({
                       isStreamingActive={isWaitingForStream}
                       handleStopStreaming={handleTriggerStop}
                       isStoppingSse={isStopping}
+                      availableModels={availableModels}
                     />
                   </Box>
                 </Flex>

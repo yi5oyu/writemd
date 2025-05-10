@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Box, Textarea, Icon, Flex, Select, Spacer } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 import { BsStopCircleFill } from 'react-icons/bs'
-import modelData from '../../data/model.json'
 import AiQusetionSelect from '../../components/ui/select/AiQusetionSelect'
 
 const Questionbar = ({
@@ -25,6 +24,7 @@ const Questionbar = ({
   isStreamingActive,
   handleStopStreaming,
   isStoppingSse,
+  availableModels,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -33,7 +33,6 @@ const Questionbar = ({
   const [isTextFlow, setIsTextFlow] = useState(false)
   const [scrollFlow, setScrollFlow] = useState('hidden')
   const [isSelectActive, setIsSelectActive] = useState(false)
-  const [availableModels, setAvailableModels] = useState([])
 
   const textareaRef = useRef(null)
 
@@ -91,26 +90,6 @@ const Questionbar = ({
       textareaRef.current.focus()
     }
   }
-
-  // 모델 리스트 초기화
-  useEffect(() => {
-    if (selectedAI !== undefined && selectedAI !== null && apiKeys) {
-      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
-
-      if (selectedApiKey) {
-        const currentAiModelType = selectedApiKey.aiModel
-        const models = modelData[currentAiModelType]?.model || []
-        setAvailableModels(models)
-      }
-    } else {
-      setAvailableModels([])
-    }
-  }, [selectedAI, apiKeys])
-
-  // 모델 초기화
-  useEffect(() => {
-    availableModels && availableModels.length > 0 && setModel(availableModels[0])
-  }, [availableModels])
 
   return (
     <Box

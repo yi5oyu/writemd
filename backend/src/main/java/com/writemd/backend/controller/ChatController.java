@@ -5,6 +5,7 @@ import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -103,7 +104,7 @@ public class ChatController {
 
     // 레포지토리 구조
     @PostMapping("/structure/{userId}/{apiId}")
-    public CompletableFuture<ResponseEntity<String>> getRepoStructure(
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> getRepoStructure(
         @AuthenticationPrincipal(expression = "name") String principalName,
         @PathVariable Long userId,
         @PathVariable Long apiId,
@@ -116,14 +117,18 @@ public class ChatController {
         Integer maxDepth = (Integer) requestPayload.get("maxDepth");
 
         if (repo == null || repo.trim().isEmpty()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "repo는 필수 값입니다.");
             return CompletableFuture.completedFuture(
-                ResponseEntity.badRequest().body("repo는 필수 값입니다.")
+                ResponseEntity.badRequest().body(errorResponse)
             );
         }
 
         if (model == null || model.trim().isEmpty()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "model은 필수 값입니다.");
             return CompletableFuture.completedFuture(
-                ResponseEntity.badRequest().body("model은 필수 값입니다.")
+                ResponseEntity.badRequest().body(errorResponse)
             );
         }
 
@@ -136,14 +141,17 @@ public class ChatController {
                 log.error("GitHub 레포지토리 구조 조회 중 오류: {}", ex.getMessage(), ex);
 
                 // 오류 응답 처리
+                Map<String, Object> errorResponse = new HashMap<>();
+
                 if (ex.getCause() instanceof IllegalArgumentException) {
-                    return ResponseEntity.badRequest().body(ex.getMessage());
+                    errorResponse.put("error", ex.getMessage());
+                    return ResponseEntity.badRequest().body(errorResponse);
                 } else if (ex.getMessage() != null && ex.getMessage().contains("로그인")) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+                    errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
                 } else {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("GitHub 레포지토리 구조 조회 중 오류가 발생했습니다: " + ex.getMessage());
+                    errorResponse.put("error", "GitHub 레포지토리 구조 조회 중 오류가 발생했습니다: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
                 }
             });
     }

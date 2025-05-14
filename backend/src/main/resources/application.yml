@@ -1,6 +1,9 @@
 spring:
   application:
     name: backend
+  mvc:
+    async:
+      request-timeout: 300000
   # devtools 설정
   devtools:
     livereload:
@@ -76,7 +79,11 @@ management:
 
 server:
   port: 8888
-
+  tomcat:
+    connection-timeout: 300000  # 5분
+  servlet:
+    session:
+      timeout: 30m
 logging:
   level:
     org.springframework.ai: INFO

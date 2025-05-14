@@ -28,6 +28,8 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -449,7 +451,7 @@ public class ChatService {
     }
 
     @Async
-    public CompletableFuture<String> githubRepoStructure(String principalName, Long userId, Long apiId, String model,
+    public CompletableFuture<Map<String, Object>> githubRepoStructure(String principalName, Long userId, Long apiId, String model,
         String repo, String githubId, String branch, Integer maxDepth) {
         try {
             // GitHub 접근 토큰 가져오기
@@ -480,13 +482,22 @@ public class ChatService {
 
             // GitHub 레포지토리 구조 분석을 위한 프롬프트 작성
             String prompt = String.format(
-                "GitHub 레포지토리의 폴더 구조를 분석해주세요. " +
+                "GitHub 레포지토리의 폴더 구조를 분석해주세요. githubRepoStructure 도구를 사용해 다음 정보를 분석하세요:\n\n" +
                     "파일과 디렉토리의 계층 구조를 트리 형태로 보여주세요. " +
                     "파일 내용은 분석하지 말고 구조만 보여주세요.\n\n" +
                     "<owner>%s</owner>\n" +
                     "<repository>%s</repository>\n" +
                     "<branch>%s</branch>\n" +
-                    "<github_token>%s</github_token>",
+                    "<github_token>%s</github_token>\n\n"+
+                    "매우 중요한 지침:\n" +
+                    "1. 전체 폴더 구조를 도구로 가져와 프로젝트의 핵심만 담은 간략한 구조로 변환.\n" +
+                    "2. 루트 디렉토리와 루트 디렉토리 내의 모든 폴더/파일은 필수로 포함.\n" +
+                    "3. 다음 파일들은 생략:\n" +
+                    "   - 설정 파일(*.xml, *.json, *.gradle, *.bat, *.properties, *.iml, *.lock 등)\n" +
+                    "   - 빌드 스크립트(gradlew, eslint.config.js 등)\n" +
+                    "   - 숨김 파일(.gitignore, .gitattributes 등)\n" +
+                    "3. 트리 구조는 최대 40줄 이내로 제한하되, 너무 많은 항목이 있을 경우 중요도에 따라 선택.\n" +
+                    "4. 어떤 설명, 소개, 결론도 추가없이 오직 구조만 보여주고, 다음 형식으로 응답:\\n\\n```\\n[폴더 구조]\\n```..",
                 githubId,
                 repo,
                 branch,
@@ -496,12 +507,83 @@ public class ChatService {
             List<Message> messages = new ArrayList<>();
             messages.add(new UserMessage(prompt));
 
-            return CompletableFuture.completedFuture(
-                chatClient.prompt()
-                    .messages(messages)
-                    .call()
-                    .content()
-            );
+            ChatResponse chatResponse = chatClient.prompt()
+                .messages(messages)
+                .call()
+                .chatResponse();
+
+            // 응답 콘텐츠 추출
+            String content = chatResponse.getResult().getOutput().getText();
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("content", content);
+
+            // ChatResponseMetadata에서 정보 추출
+            ChatResponseMetadata metadata = chatResponse.getMetadata();
+
+            if (metadata != null) {
+                log.info("API 응답 메타데이터: {}", metadata);
+
+                // 모델 정보 추가
+                if (metadata.getModel() != null) {
+                    result.put("model", metadata.getModel());
+                }
+
+                // 사용량 정보 추가
+                Usage usageInfo = metadata.getUsage();
+                if (usageInfo != null) {
+                    log.info("토큰 사용량 정보: {}", usageInfo);
+
+                    // Usage 객체의 getter 메소드를 사용하여 토큰 정보 추출
+                    Map<String, Object> usageMap = new HashMap<>();
+
+                    Integer promptTokens = usageInfo.getPromptTokens();
+                    Integer completionTokens = usageInfo.getCompletionTokens();
+                    Integer totalTokens = usageInfo.getTotalTokens();
+
+                    if (promptTokens != null) {
+                        usageMap.put("prompt_tokens", promptTokens);
+                        result.put("promptTokens", promptTokens);
+                    }
+
+                    if (completionTokens != null) {
+                        usageMap.put("completion_tokens", completionTokens);
+                        result.put("completionTokens", completionTokens);
+                    }
+
+                    if (totalTokens != null) {
+                        usageMap.put("total_tokens", totalTokens);
+                        result.put("totalTokens", totalTokens);
+                    }
+
+                    // 원본 사용량 데이터도 포함
+                    Object nativeUsage = usageInfo.getNativeUsage();
+                    if (nativeUsage != null) {
+                        result.put("nativeUsage", nativeUsage);
+                    }
+
+                    result.put("tokenUsage", usageMap);
+                }
+
+                // 기타 유용한 메타데이터 추가
+                if (metadata.containsKey("finishReason")) {
+                    result.put("finishReason", metadata.get("finishReason"));
+                }
+
+                if (metadata.getId() != null) {
+                    result.put("id", metadata.getId());
+                }
+
+                // 모델별 특정 메타데이터 추출
+                if (aiModel.equals("openai") && metadata.containsKey("systemFingerprint")) {
+                    result.put("systemFingerprint", metadata.get("systemFingerprint"));
+                }
+                else if (aiModel.equals("anthropic") && metadata.containsKey("stopReason")) {
+                    result.put("stopReason", metadata.get("stopReason"));
+                }
+            }
+
+            return CompletableFuture.completedFuture(result);
         } catch (Exception e) {
             log.error("GitHub 레포지토리 구조 분석 실패: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(

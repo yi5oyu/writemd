@@ -21,6 +21,7 @@ const ToolBox = ({
   setMemo,
   setIsFold,
   handleSendDirectChatMessage,
+  handleStructureSubmit,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -64,6 +65,12 @@ const ToolBox = ({
           icon={FaStickyNote}
           label="메모"
           onClick={() => setMemo(!memo)}
+          setColor={memo ? true : false}
+        />
+        <UtilityBtn
+          icon={FaFileExport}
+          label="ㅁ"
+          onClick={() => handleStructureSubmit()}
           setColor={memo ? true : false}
         />
       </Flex>

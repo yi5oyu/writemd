@@ -38,6 +38,8 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -60,6 +62,7 @@ public class ChatService {
     private final NoteRepository noteRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final SseEmitterManager sseEmitterManager;
+    private final OAuth2AuthorizedClientService authorizedClientService;
 
     private final Map<Long, Disposable> activeStreams = new ConcurrentHashMap<>();
 
@@ -390,6 +393,119 @@ public class ChatService {
         } catch (Exception e) {
             return CompletableFuture.failedFuture(
                 new RuntimeException("채팅 실패: " + e.getMessage(), e)
+            );
+        }
+    }
+
+    @Async
+    public CompletableFuture<String> githubMarkdownSummary(String principalName, Long userId, Long apiId, String model, String repo, String path) {
+        try {
+            // GitHub 접근 토큰 가져오기
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+            if (client == null) {
+                return CompletableFuture.failedFuture(
+                    new RuntimeException("GitHub OAuth2 로그인이 되어 있지 않습니다.")
+                );
+            }
+            String accessToken = client.getAccessToken().getTokenValue();
+
+            // API 키 조회
+            APIDTO api = getApiKey(userId, apiId);
+            String aiModel = api.getAiModel();
+            String apiKey = api.getApiKey();
+
+            ChatClient chatClient = null;
+
+            if(aiModel.equals("openai")) {
+                chatClient = openai(apiKey, model, 0.7, true);
+            } else if (aiModel.equals("anthropic")) {
+                chatClient = claude(apiKey, model, 0.7, true);
+            }
+
+            // GitHub 파일 분석을 위한 프롬프트 작성 (토큰 포함)
+            String prompt = String.format(
+                "GitHub 레포지토리 '%s'의 '%s' 파일을 분석하고 마크다운 형식으로 요약해주세요. " +
+                    "파일의 주요 기능, 구조, 중요 코드를 설명하고, 이해하기 쉽게 요약해주세요. " +
+                    "코드의 목적과 핵심 로직을 명확하게 설명해주세요.\n\n" +
+                    "<github_token>%s</github_token>",
+                repo, path, accessToken
+            );
+
+            List<Message> messages = new ArrayList<>();
+            messages.add(new UserMessage(prompt));
+
+            return CompletableFuture.completedFuture(
+                chatClient.prompt()
+                    .messages(messages)
+                    .call()
+                    .content()
+            );
+        } catch (Exception e) {
+            log.error("GitHub 파일 요약 실패: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(
+                new RuntimeException("GitHub 파일 요약 실패: " + e.getMessage(), e)
+            );
+        }
+    }
+
+    @Async
+    public CompletableFuture<String> githubRepoStructure(String principalName, Long userId, Long apiId, String model,
+        String repo, String githubId, String branch, Integer maxDepth) {
+        try {
+            // GitHub 접근 토큰 가져오기
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+            if (client == null) {
+                return CompletableFuture.failedFuture(
+                    new RuntimeException("GitHub OAuth2 로그인이 되어 있지 않습니다.")
+                );
+            }
+            String accessToken = client.getAccessToken().getTokenValue();
+
+            // API 키 조회
+            APIDTO api = getApiKey(userId, apiId);
+            String aiModel = api.getAiModel();
+            String apiKey = api.getApiKey();
+
+            ChatClient chatClient = null;
+
+            if(aiModel.equals("openai")) {
+                chatClient = openai(apiKey, model, 0.7, true);
+            } else if (aiModel.equals("anthropic")) {
+                chatClient = claude(apiKey, model, 0.7, true);
+            } else {
+                return CompletableFuture.failedFuture(
+                    new RuntimeException("지원하지 않는 AI 모델: " + aiModel)
+                );
+            }
+
+            // GitHub 레포지토리 구조 분석을 위한 프롬프트 작성
+            String prompt = String.format(
+                "GitHub 레포지토리의 폴더 구조를 분석해주세요. " +
+                    "파일과 디렉토리의 계층 구조를 트리 형태로 보여주세요. " +
+                    "파일 내용은 분석하지 말고 구조만 보여주세요.\n\n" +
+                    "<owner>%s</owner>\n" +
+                    "<repository>%s</repository>\n" +
+                    "<branch>%s</branch>\n" +
+                    "<github_token>%s</github_token>",
+                githubId,
+                repo,
+                branch,
+                accessToken
+            );
+
+            List<Message> messages = new ArrayList<>();
+            messages.add(new UserMessage(prompt));
+
+            return CompletableFuture.completedFuture(
+                chatClient.prompt()
+                    .messages(messages)
+                    .call()
+                    .content()
+            );
+        } catch (Exception e) {
+            log.error("GitHub 레포지토리 구조 분석 실패: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(
+                new RuntimeException("GitHub 레포지토리 구조 분석 실패: " + e.getMessage(), e)
             );
         }
     }

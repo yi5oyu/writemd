@@ -16,6 +16,7 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -62,6 +63,7 @@ public class ChatController {
 
         String content = (String) requestPayload.get("content");
         String model = (String) requestPayload.get("model");
+
         if (content == null || content.isBlank()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.badRequest().body("내용이 비어있습니다")
@@ -96,6 +98,53 @@ public class ChatController {
 
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(errorMessage);
+            });
+    }
+
+    // 레포지토리 구조
+    @PostMapping("/structure/{userId}/{apiId}")
+    public CompletableFuture<ResponseEntity<String>> getRepoStructure(
+        @AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable Long userId,
+        @PathVariable Long apiId,
+        @RequestBody Map<String, Object> requestPayload) {
+
+        String repo = (String) requestPayload.get("repo");
+        String model = (String) requestPayload.get("model");
+        String branch = (String) requestPayload.get("branch");
+        String githubId = (String) requestPayload.get("githubId");
+        Integer maxDepth = (Integer) requestPayload.get("maxDepth");
+
+        if (repo == null || repo.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(
+                ResponseEntity.badRequest().body("repo는 필수 값입니다.")
+            );
+        }
+
+        if (model == null || model.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(
+                ResponseEntity.badRequest().body("model은 필수 값입니다.")
+            );
+        }
+
+        return chatService.githubRepoStructure(principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
+            .thenApply(response -> {
+                log.info("GitHub 레포지토리 구조 응답 완료: repo={}", repo);
+                return ResponseEntity.ok(response);
+            })
+            .exceptionally(ex -> {
+                log.error("GitHub 레포지토리 구조 조회 중 오류: {}", ex.getMessage(), ex);
+
+                // 오류 응답 처리
+                if (ex.getCause() instanceof IllegalArgumentException) {
+                    return ResponseEntity.badRequest().body(ex.getMessage());
+                } else if (ex.getMessage() != null && ex.getMessage().contains("로그인")) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+                } else {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("GitHub 레포지토리 구조 조회 중 오류가 발생했습니다: " + ex.getMessage());
+                }
             });
     }
 

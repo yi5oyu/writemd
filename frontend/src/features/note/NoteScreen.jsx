@@ -54,6 +54,7 @@ import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
 import useDirectChat from '../../hooks/chat/useDirectChat'
 
 import modelData from '../../data/model.json'
+import useGithubStructure from '../../hooks/tool/useGithubStructure'
 
 const NoteScreen = ({
   user,
@@ -92,6 +93,13 @@ const NoteScreen = ({
   const [text, setText] = useState([])
 
   const { note, loading, error } = useNote(noteId)
+
+  // Tool
+  const {
+    getRepoStructure,
+    loading: structureLoading,
+    error: structureError,
+  } = useGithubStructure()
 
   // 채팅
   const { sendDirectChat, loading: sendDirectLoading, error: sendDirectError } = useDirectChat()
@@ -881,6 +889,18 @@ const NoteScreen = ({
     }
   }, [sessionId, stopStreaming, isStopping, setMessages, setIsWaitingForStream])
 
+  // Tool structure
+  const handleStructureSubmit = async () => {
+    console.log('structure')
+    await getRepoStructure({
+      userId: user.userId,
+      apiId: selectedAI,
+      model: model,
+      repo: 'writemd',
+      githubId: user.githubId,
+    })
+  }
+
   return (
     <Box
       direction="column"
@@ -959,6 +979,7 @@ const NoteScreen = ({
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
                 handleSendDirectChatMessage={handleSendDirectChatMessage}
+                handleStructureSubmit={handleStructureSubmit}
               />
             )}
             <MarkdownInputBox

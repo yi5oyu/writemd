@@ -67,6 +67,7 @@ spring:
             py-mcp-server:
               url: http://localhost:9889
 
+
 management:
   endpoints:
     web:
@@ -84,6 +85,7 @@ server:
   servlet:
     session:
       timeout: 30m
+
 logging:
   level:
     org.springframework.ai: INFO

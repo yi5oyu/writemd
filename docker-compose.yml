@@ -26,6 +26,18 @@ services:
     networks:
       - app-network
 
+  # playwright-mcp:
+  #   image: mcr.microsoft.com/playwright/mcp
+  #   container_name: playwright-mcp
+  #   ports:
+  #     - '8931:8931'
+  #   stdin_open: true
+  #   init: true
+  #   entrypoint:
+  #     ['node', 'cli.js', '--headless', '--browser', 'chromium', '--no-sandbox', '--port', '8931']
+  #   networks:
+  #     - app-network
+
 volumes:
   mysql_md_data:
   redis_md_data:

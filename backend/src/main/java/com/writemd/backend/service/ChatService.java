@@ -482,9 +482,8 @@ public class ChatService {
 
             // GitHub 레포지토리 구조 분석을 위한 프롬프트 작성
             String prompt = String.format(
-                "GitHub 레포지토리의 폴더 구조를 분석해주세요. githubRepoStructure 도구를 사용해 다음 정보를 분석하세요:\n\n" +
-                    "파일과 디렉토리의 계층 구조를 트리 형태로 보여주세요. " +
-                    "파일 내용은 분석하지 말고 구조만 보여주세요.\n\n" +
+                "GitHub 레포지토리의 폴더 구조 분석\n" +
+                    "파일 내용은 분석하지 말고 파일과 디렉토리의 계층 구조를 트리 형태로 보여줘.\n\n" +
                     "<owner>%s</owner>\n" +
                     "<repository>%s</repository>\n" +
                     "<branch>%s</branch>\n" +
@@ -493,9 +492,8 @@ public class ChatService {
                     "1. 전체 폴더 구조를 도구로 가져와 프로젝트의 핵심만 담은 간략한 구조로 변환.\n" +
                     "2. 루트 디렉토리와 루트 디렉토리 내의 모든 폴더/파일은 필수로 포함.\n" +
                     "3. 다음 파일들은 생략:\n" +
-                    "   - 설정 파일(*.xml, *.json, *.gradle, *.bat, *.properties, *.iml, *.lock 등)\n" +
-                    "   - 빌드 스크립트(gradlew, eslint.config.js 등)\n" +
-                    "   - 숨김 파일(.gitignore, .gitattributes 등)\n" +
+                    "   - 중요하지 않은 설정 파일\n" +
+                    "   - 숨김 파일\n" +
                     "3. 트리 구조는 최대 40줄 이내로 제한하되, 너무 많은 항목이 있을 경우 중요도에 따라 선택.\n" +
                     "4. 어떤 설명, 소개, 결론도 추가없이 오직 구조만 보여주고, 다음 형식으로 응답:\\n\\n```\\n[폴더 구조]\\n```..",
                 githubId,

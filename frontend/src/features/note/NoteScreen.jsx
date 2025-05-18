@@ -55,6 +55,7 @@ import useDirectChat from '../../hooks/chat/useDirectChat'
 
 import modelData from '../../data/model.json'
 import useGithubStructure from '../../hooks/tool/useGithubStructure'
+import useGithubAnalysis from '../../hooks/tool/useGithubAnalysis'
 
 const NoteScreen = ({
   user,
@@ -100,6 +101,7 @@ const NoteScreen = ({
     loading: structureLoading,
     error: structureError,
   } = useGithubStructure()
+  const { analyzeRepository, loading: analyzeLoading, error: analyzeError } = useGithubAnalysis()
 
   // 채팅
   const { sendDirectChat, loading: sendDirectLoading, error: sendDirectError } = useDirectChat()
@@ -891,8 +893,18 @@ const NoteScreen = ({
 
   // Tool structure
   const handleStructureSubmit = async () => {
-    console.log('structure')
     await getRepoStructure({
+      userId: user.userId,
+      apiId: selectedAI,
+      model: model,
+      repo: 'writemd',
+      githubId: user.githubId,
+    })
+  }
+
+  // Tool repo 분석
+  const handleRepoAnalysisSubmit = async () => {
+    await analyzeRepository({
       userId: user.userId,
       apiId: selectedAI,
       model: model,
@@ -979,7 +991,7 @@ const NoteScreen = ({
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
                 handleSendDirectChatMessage={handleSendDirectChatMessage}
-                handleStructureSubmit={handleStructureSubmit}
+                handleStructureSubmit={handleRepoAnalysisSubmit}
               />
             )}
             <MarkdownInputBox

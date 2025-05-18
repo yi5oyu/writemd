@@ -438,6 +438,34 @@ public class ChatService {
         }
     }
 
+    // 깃허브 구조 정리
+    @Async
+    public CompletableFuture<Map<String, Object>> githubRepoAnalysis(String principalName, Long userId, Long apiId, String model,
+        String repo, String githubId, String branch, Integer maxDepth) {
+        try {
+            // GitHub 접근 토큰
+            String accessToken = getGithubAccessToken(principalName);
+
+            // API 키/ChatClient 초기화
+            APIDTO api = getApiKey(userId, apiId);
+            String aiModel = api.getAiModel();
+            String apiKey = api.getApiKey();
+
+            ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
+
+            // 프롬프트 생성
+            String prompt = gitHubPrompts.createRepoAnalysisPrompt(githubId, repo, branch, accessToken);
+
+            // 응답 요청 및 처리
+            return processAiResponse(chatClient, prompt, aiModel);
+        } catch (Exception e) {
+            log.error("GitHub 레포지토리 분석 실패: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(
+                new RuntimeException("GitHub 레포지토리 분석 실패: " + e.getMessage(), e)
+            );
+        }
+    }
+
     // GitHub 토큰
     private String getGithubAccessToken(String principalName) {
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);

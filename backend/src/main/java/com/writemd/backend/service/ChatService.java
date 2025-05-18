@@ -9,6 +9,7 @@ import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
+import com.writemd.backend.prompt.GitHubPrompts;
 import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
@@ -65,6 +66,7 @@ public class ChatService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final SseEmitterManager sseEmitterManager;
     private final OAuth2AuthorizedClientService authorizedClientService;
+    private final GitHubPrompts gitHubPrompts;
 
     private final Map<Long, Disposable> activeStreams = new ConcurrentHashMap<>();
 
@@ -206,15 +208,7 @@ public class ChatService {
             log.info("STEP 2: API 키 조회 완료 (aiModel: {})", aiModel);
 
             // ChatClient 생성
-            log.info("STEP 3: ChatClient 생성 시작 (aiModel: {}, model: {})", aiModel, model);
-            ChatClient chatClient = null;
-            if (aiModel.equals("openai")) {
-                chatClient = openai(apiKey, model, 0.7, enableTools);
-                log.info("STEP 3: OpenAI ChatClient 생성 완료");
-            } else if (aiModel.equals("anthropic")) {
-                chatClient = claude(apiKey, model, 0.7, enableTools);
-                log.info("STEP 3: Anthropic ChatClient 생성 완료");
-            }
+            ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
             // 채팅 내역 조회
             log.info("STEP 4: 채팅 내역 조회 시작 (sessionId: {})", sessionId);
@@ -374,13 +368,7 @@ public class ChatService {
         String aiModel = api.getAiModel();
         String apiKey = api.getApiKey();
 
-        ChatClient chatClient = null;
-
-        if(aiModel.equals("openai")) {
-            chatClient = openai(apiKey, model, 0.7, enableTools);
-        } else if (aiModel.equals("anthropic")) {
-            chatClient = claude(apiKey, model, 0.7, enableTools);
-        }
+        ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
         List<Message> messages = new ArrayList<>();
         messages.add(new UserMessage(content));
@@ -399,200 +387,158 @@ public class ChatService {
         }
     }
 
+    // 단일 파일 분석
     @Async
-    public CompletableFuture<String> githubMarkdownSummary(String principalName, Long userId, Long apiId, String model, String repo, String path) {
+    public CompletableFuture<Map<String, Object>> generateDocumentAnalysis(Long userId, Long apiId, String model, String content) {
         try {
-            // GitHub 접근 토큰 가져오기
-            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
-            if (client == null) {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException("GitHub OAuth2 로그인이 되어 있지 않습니다.")
-                );
-            }
-            String accessToken = client.getAccessToken().getTokenValue();
-
             // API 키 조회
             APIDTO api = getApiKey(userId, apiId);
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
 
-            ChatClient chatClient = null;
+            ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
-            if(aiModel.equals("openai")) {
-                chatClient = openai(apiKey, model, 0.7, true);
-            } else if (aiModel.equals("anthropic")) {
-                chatClient = claude(apiKey, model, 0.7, true);
-            }
+            // 프롬프트 생성
+            String prompt = gitHubPrompts.createDocumentAnalysisPrompt(content);
 
-            // GitHub 파일 분석을 위한 프롬프트 작성 (토큰 포함)
-            String prompt = String.format(
-                "GitHub 레포지토리 '%s'의 '%s' 파일을 분석하고 마크다운 형식으로 요약해주세요. " +
-                    "파일의 주요 기능, 구조, 중요 코드를 설명하고, 이해하기 쉽게 요약해주세요. " +
-                    "코드의 목적과 핵심 로직을 명확하게 설명해주세요.\n\n" +
-                    "<github_token>%s</github_token>",
-                repo, path, accessToken
-            );
-
-            List<Message> messages = new ArrayList<>();
-            messages.add(new UserMessage(prompt));
-
-            return CompletableFuture.completedFuture(
-                chatClient.prompt()
-                    .messages(messages)
-                    .call()
-                    .content()
-            );
+            return processAiResponse(chatClient, prompt, aiModel);
         } catch (Exception e) {
-            log.error("GitHub 파일 요약 실패: {}", e.getMessage(), e);
+            log.error("문서 분석 실패: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(
-                new RuntimeException("GitHub 파일 요약 실패: " + e.getMessage(), e)
+                new RuntimeException("문서 분석 실패: " + e.getMessage(), e)
             );
         }
     }
 
+    // 깃허브 구조 정리
     @Async
     public CompletableFuture<Map<String, Object>> githubRepoStructure(String principalName, Long userId, Long apiId, String model,
         String repo, String githubId, String branch, Integer maxDepth) {
         try {
-            // GitHub 접근 토큰 가져오기
-            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
-            if (client == null) {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException("GitHub OAuth2 로그인이 되어 있지 않습니다.")
-                );
-            }
-            String accessToken = client.getAccessToken().getTokenValue();
+            // GitHub 접근 토큰
+            String accessToken = getGithubAccessToken(principalName);
 
-            // API 키 조회
+            // API 키/ChatClient 초기화
             APIDTO api = getApiKey(userId, apiId);
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
 
-            ChatClient chatClient = null;
+            ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
-            if(aiModel.equals("openai")) {
-                chatClient = openai(apiKey, model, 0.7, true);
-            } else if (aiModel.equals("anthropic")) {
-                chatClient = claude(apiKey, model, 0.7, true);
-            } else {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException("지원하지 않는 AI 모델: " + aiModel)
-                );
-            }
+            // 프롬프트 생성
+            String prompt = gitHubPrompts.createRepoStructurePrompt(githubId, repo, branch, accessToken);
 
-            // GitHub 레포지토리 구조 분석을 위한 프롬프트 작성
-            String prompt = String.format(
-                "GitHub 레포지토리의 폴더 구조 분석\n" +
-                    "파일 내용은 분석하지 말고 파일과 디렉토리의 계층 구조를 트리 형태로 보여줘.\n\n" +
-                    "<owner>%s</owner>\n" +
-                    "<repository>%s</repository>\n" +
-                    "<branch>%s</branch>\n" +
-                    "<github_token>%s</github_token>\n\n"+
-                    "매우 중요한 지침:\n" +
-                    "1. 전체 폴더 구조를 도구로 가져와 프로젝트의 핵심만 담은 간략한 구조로 변환.\n" +
-                    "2. 루트 디렉토리와 루트 디렉토리 내의 모든 폴더/파일은 필수로 포함.\n" +
-                    "3. 다음 파일들은 생략:\n" +
-                    "   - 중요하지 않은 설정 파일\n" +
-                    "   - 숨김 파일\n" +
-                    "4. 트리 구조는 최대 40줄 이내로 제한, 너무 많은 항목이 있을 경우 중요도에 따라 선택.\n" +
-                    "5. 구조 표시 규칙:\n" +
-                    "   - 모든 디렉토리는 항상 파일보다 먼저 나열\n" +
-                    "   - 같은 디렉토리 내에서 모든 하위 디렉토리를 먼저 표시한 후 파일을 표시\n" +
-                    "   - 디렉토리 이름 뒤에는 반드시 '/' 표시를 붙일 것\n" +
-                    "   - 디렉토리끼리, 파일끼리 알파벳 순으로 정렬\n" +
-                    "6. 어떤 설명, 소개, 결론도 추가없이 오직 구조만 보여주고, 다음 형식으로 응답:\\n\\n```\\n[폴더 구조]\\n```..",
-                githubId,
-                repo,
-                branch,
-                accessToken
-            );
-
-            List<Message> messages = new ArrayList<>();
-            messages.add(new UserMessage(prompt));
-
-            ChatResponse chatResponse = chatClient.prompt()
-                .messages(messages)
-                .call()
-                .chatResponse();
-
-            // 응답 콘텐츠 추출
-            String content = chatResponse.getResult().getOutput().getText();
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("content", content);
-
-            // ChatResponseMetadata에서 정보 추출
-            ChatResponseMetadata metadata = chatResponse.getMetadata();
-
-            if (metadata != null) {
-                log.info("API 응답 메타데이터: {}", metadata);
-
-                // 모델 정보 추가
-                if (metadata.getModel() != null) {
-                    result.put("model", metadata.getModel());
-                }
-
-                // 사용량 정보 추가
-                Usage usageInfo = metadata.getUsage();
-                if (usageInfo != null) {
-                    log.info("토큰 사용량 정보: {}", usageInfo);
-
-                    // Usage 객체의 getter 메소드를 사용하여 토큰 정보 추출
-                    Map<String, Object> usageMap = new HashMap<>();
-
-                    Integer promptTokens = usageInfo.getPromptTokens();
-                    Integer completionTokens = usageInfo.getCompletionTokens();
-                    Integer totalTokens = usageInfo.getTotalTokens();
-
-                    if (promptTokens != null) {
-                        usageMap.put("prompt_tokens", promptTokens);
-                        result.put("promptTokens", promptTokens);
-                    }
-
-                    if (completionTokens != null) {
-                        usageMap.put("completion_tokens", completionTokens);
-                        result.put("completionTokens", completionTokens);
-                    }
-
-                    if (totalTokens != null) {
-                        usageMap.put("total_tokens", totalTokens);
-                        result.put("totalTokens", totalTokens);
-                    }
-
-                    // 원본 사용량 데이터도 포함
-                    Object nativeUsage = usageInfo.getNativeUsage();
-                    if (nativeUsage != null) {
-                        result.put("nativeUsage", nativeUsage);
-                    }
-
-                    result.put("tokenUsage", usageMap);
-                }
-
-                // 기타 유용한 메타데이터 추가
-                if (metadata.containsKey("finishReason")) {
-                    result.put("finishReason", metadata.get("finishReason"));
-                }
-
-                if (metadata.getId() != null) {
-                    result.put("id", metadata.getId());
-                }
-
-                // 모델별 특정 메타데이터 추출
-                if (aiModel.equals("openai") && metadata.containsKey("systemFingerprint")) {
-                    result.put("systemFingerprint", metadata.get("systemFingerprint"));
-                }
-                else if (aiModel.equals("anthropic") && metadata.containsKey("stopReason")) {
-                    result.put("stopReason", metadata.get("stopReason"));
-                }
-            }
-
-            return CompletableFuture.completedFuture(result);
+            // 응답 요청 및 처리
+            return processAiResponse(chatClient, prompt, aiModel);
         } catch (Exception e) {
             log.error("GitHub 레포지토리 구조 분석 실패: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(
                 new RuntimeException("GitHub 레포지토리 구조 분석 실패: " + e.getMessage(), e)
             );
         }
+    }
+
+    // GitHub 토큰
+    private String getGithubAccessToken(String principalName) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
+        if (client == null) {
+            throw new RuntimeException("GitHub OAuth2 로그인이 되어 있지 않습니다.");
+        }
+        return client.getAccessToken().getTokenValue();
+    }
+
+    // ChatClient 초기화
+    private ChatClient initializeChatClient(String aiModel, String apiKey, String model) {
+        if(aiModel.equals("openai")) {
+            return openai(apiKey, model, 0.7, true);
+        } else if (aiModel.equals("anthropic")) {
+            return claude(apiKey, model, 0.7, true);
+        } else {
+            throw new RuntimeException("지원하지 않는 AI 모델: " + aiModel);
+        }
+    }
+
+    // 응답 처리
+    private CompletableFuture<Map<String, Object>> processAiResponse(ChatClient chatClient, String prompt, String aiModel) {
+        List<Message> messages = new ArrayList<>();
+        messages.add(new UserMessage(prompt));
+
+        ChatResponse chatResponse = chatClient.prompt()
+            .messages(messages)
+            .call()
+            .chatResponse();
+
+        // 응답 콘텐츠 추출
+        String content = chatResponse.getResult().getOutput().getText();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", content);
+
+        // ChatResponseMetadata에서 정보 추출
+        ChatResponseMetadata metadata = chatResponse.getMetadata();
+
+        if (metadata != null) {
+            log.info("API 응답 메타데이터: {}", metadata);
+
+            // 모델 정보 추가
+            if (metadata.getModel() != null) {
+                result.put("model", metadata.getModel());
+            }
+
+            // 사용량 정보 추가
+            Usage usageInfo = metadata.getUsage();
+            if (usageInfo != null) {
+                log.info("토큰 사용량 정보: {}", usageInfo);
+
+                Map<String, Object> usageMap = new HashMap<>();
+
+                Integer promptTokens = usageInfo.getPromptTokens();
+                Integer completionTokens = usageInfo.getCompletionTokens();
+                Integer totalTokens = usageInfo.getTotalTokens();
+
+                if (promptTokens != null) {
+                    usageMap.put("prompt_tokens", promptTokens);
+                    result.put("promptTokens", promptTokens);
+                }
+
+                if (completionTokens != null) {
+                    usageMap.put("completion_tokens", completionTokens);
+                    result.put("completionTokens", completionTokens);
+                }
+
+                if (totalTokens != null) {
+                    usageMap.put("total_tokens", totalTokens);
+                    result.put("totalTokens", totalTokens);
+                }
+
+                // 원본 사용량 데이터도 포함
+                Object nativeUsage = usageInfo.getNativeUsage();
+                if (nativeUsage != null) {
+                    result.put("nativeUsage", nativeUsage);
+                }
+
+                result.put("tokenUsage", usageMap);
+            }
+
+            // 기타 유용한 메타데이터 추가
+            if (metadata.containsKey("finishReason")) {
+                result.put("finishReason", metadata.get("finishReason"));
+            }
+
+            if (metadata.getId() != null) {
+                result.put("id", metadata.getId());
+            }
+
+            // 모델별 메타데이터 추출
+            if (aiModel.equals("openai") && metadata.containsKey("systemFingerprint")) {
+                result.put("systemFingerprint", metadata.get("systemFingerprint"));
+            }
+            else if (aiModel.equals("anthropic") && metadata.containsKey("stopReason")) {
+                result.put("stopReason", metadata.get("stopReason"));
+            }
+        }
+
+        return CompletableFuture.completedFuture(result);
     }
 
     // 연결 확인

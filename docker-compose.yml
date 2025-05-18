@@ -14,6 +14,8 @@ services:
     volumes:
       - mysql_md_data:/var/lib/mysql
     # restart: always
+    networks:
+      - app-network
 
   redis:
     image: redis:latest
@@ -26,15 +28,15 @@ services:
     networks:
       - app-network
 
-  # playwright-mcp:
-  #   image: mcr.microsoft.com/playwright/mcp
-  #   container_name: playwright-mcp
+  # supergateway-webresearch:
+  #   image: node:23
+  #   command: >
+  #     sh -c "npm install -g @mzxrai/mcp-webresearch@latest && npx playwright install-deps && npx -y supergateway --stdio 'npx -y @mzxrai/mcp-webresearch@latest' --port 8000 --baseUrl http://0.0.0.0:8000 --cors"
   #   ports:
-  #     - '8931:8931'
-  #   stdin_open: true
-  #   init: true
-  #   entrypoint:
-  #     ['node', 'cli.js', '--headless', '--browser', 'chromium', '--no-sandbox', '--port', '8931']
+  #     - '8101:8000'
+  #   restart: unless-stopped
+  #   environment:
+  #     - NODE_ENV=production
   #   networks:
   #     - app-network
 

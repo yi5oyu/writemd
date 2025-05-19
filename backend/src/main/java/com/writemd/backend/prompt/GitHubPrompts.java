@@ -32,85 +32,99 @@ public class GitHubPrompts {
     }
 
     // 레포지토리 전체 분석 프롬프트 생성
-    public String createRepoAnalysisPrompt(String owner, String repo, String branch, String token) {
+    public String createRepoBasicInfoPrompt(String owner, String repo, String branch, String token) {
         return String.format(
-            "GitHub 레포지토리 '%s/%s' 전체 심층 분석 요청입니다. 아래 항목별로 상세한 분석을 마크다운 형식으로 제공해주세요.\n\n" +
-                "## 1. 분석 요약\n" +
-                "- 레포지토리 개요 및 목적\n" +
-                "- 사용된 프로그래밍 언어 및 분포\n" +
-                "- 코드 라인 수와 전반적인 규모\n" +
-                "- 최근 활동 및 유지보수 상태\n\n" +
-
-                "## 2. 주요 특징 및 기능\n" +
-                "- 제공하는 핵심 기능 설명\n" +
-                "- 주요 사용자 시나리오\n" +
-                "- 차별화된 기능 및 접근 방식\n\n" +
-
-                "## 3. 기술 스택 분석\n" +
-                "- 프레임워크 및 라이브러리\n" +
-                "- 데이터베이스 및 저장소\n" +
-                "- 외부 API 및 서비스 통합\n" +
-                "- 빌드 도구 및 의존성 관리\n\n" +
-
-                "## 4. 아키텍처 및 패턴\n" +
-                "- 전체 아키텍처 구조\n" +
-                "- 사용된 디자인 패턴\n" +
-                "- 모듈화 및 계층화 접근 방식\n" +
-                "- 코드 구성 및 구조적 특징\n\n" +
-
-                "## 5. 파일/폴더 구조 시각화\n" +
-                "- 주요 디렉토리 구조 트리 형식으로 표현\n" +
-                "- 핵심 파일 및 디렉토리 용도 설명\n" +
-                "- 구조적 특징 및 패턴 식별\n\n" +
-
-                "## 6. 핵심 코드 분석\n" +
-                "- 중요 알고리즘 및 로직 설명\n" +
-                "- 주요 클래스 및 함수 역할 분석\n" +
-                "- 코드 흐름 및 실행 경로 설명\n" +
-                "- 병목 가능성이나 최적화 포인트 식별\n\n" +
-
-                "## 7. 설정 및 환경\n" +
-                "- 설정 파일 분석\n" +
-                "- 환경 변수 및 배포 설정\n" +
-                "- 개발, 테스트, 프로덕션 환경 차이\n\n" +
-
-                "## 8. 코드 품질 및 테스트\n" +
-                "- 코드 스타일 및 일관성\n" +
-                "- 테스트 접근 방식 및 커버리지\n" +
-                "- 오류 처리 및 로깅 전략\n\n" +
-
-                "## 9. 보안 및 성능\n" +
-                "- 보안 관련 구현 분석\n" +
-                "- 성능 최적화 기법\n" +
-                "- 잠재적 취약점 및 보안 위험\n" +
-                "- 확장성 및 부하 처리 접근 방식\n\n" +
-
-                "## 10. 개발 및 배포 워크플로우\n" +
-                "- CI/CD 설정 및 자동화\n" +
-                "- 브랜치 전략 및 릴리스 프로세스\n" +
-                "- 문서화 수준 및 접근 방식\n\n" +
-
-                "## 11. 결론 및 개선점\n" +
-                "- 전반적인 코드 품질 평가\n" +
-                "- 강점 및 장점 요약\n" +
-                "- 잠재적 개선 영역 제안\n" +
-                "- 확장 가능성 및 향후 발전 방향\n\n" +
-
+            "GitHub 레포지토리 '%s/%s' 기본 정보 및 주요 특징 간략 분석:\n" +
+                "- 레포지토리 목적\n" +
+                "- 주요 프로그래밍 언어\n" +
+                "- 핵심 기능\n" +
+                "- 주요 특징\n\n" +
                 "<owner>%s</owner>\n" +
                 "<repository>%s</repository>\n" +
                 "<branch>%s</branch>\n" +
                 "<github_token>%s</github_token>\n\n" +
-
-                "분석 시 다음 지침을 따라주세요:\n" +
-                "1. 각 섹션을 철저히 분석하고 구체적인 내용과 예시를 포함해주세요.\n" +
-                "2. 가능한 한 코드베이스의 모든 중요한 측면을 다루되, 불필요한 세부 사항은 제외하세요.\n" +
-                "3. 섹션마다 코드 예시가 있으면 이해하기 쉽게 포함해주세요.\n" +
-                "4. 시각적 요소(트리 구조, 표 등)를 활용해 정보를 명확하게 제시해주세요.\n" +
-                "5. 긍정적 측면과 개선 가능한 영역을 균형 있게 다루세요.",
+                "중요: 간결하게 분석하고 토큰 사용량을 최소화할 것.",
             owner, repo, owner, repo, branch, token
         );
     }
 
+    public String createRepoTechStackPrompt(String owner, String repo, String branch, String token) {
+        return String.format(
+            "GitHub 레포지토리 '%s/%s' 기술 스택 간략 분석:\n" +
+                "- 주요 프레임워크/라이브러리\n" +
+                "- 데이터베이스 시스템\n" +
+                "- 빌드 도구\n" +
+                "- 전체 아키텍처 패턴\n\n" +
+                "<owner>%s</owner>\n" +
+                "<repository>%s</repository>\n" +
+                "<branch>%s</branch>\n" +
+                "<github_token>%s</github_token>\n\n" +
+                "중요: package.json/pom.xml/requirements.txt 등의 파일만 집중적으로 확인하고 간결하게 요약할 것.",
+            owner, repo, owner, repo, branch, token
+        );
+    }
+
+    public String createRepoCodeStructurePrompt(String owner, String repo, String branch, String token) {
+        return String.format(
+            "GitHub 레포지토리 '%s/%s' 코드 구조 간략 분석:\n" +
+                "- 주요 디렉토리 구조 (3단계 깊이까지만)\n" +
+                "- 핵심 파일 3-5개 및 용도\n" +
+                "- 주요 코드 흐름\n\n" +
+                "<owner>%s</owner>\n" +
+                "<repository>%s</repository>\n" +
+                "<branch>%s</branch>\n" +
+                "<github_token>%s</github_token>\n\n" +
+                "중요: 최소한의 필수 정보만 포함하고 코드 인용은 피할 것.",
+            owner, repo, owner, repo, branch, token
+        );
+    }
+
+    public String createRepoConfigQualityPrompt(String owner, String repo, String branch, String token) {
+        return String.format(
+            "GitHub 레포지토리 '%s/%s' 설정 및 품질 간략 분석:\n" +
+                "- 주요 설정 파일\n" +
+                "- 환경 설정 방식\n" +
+                "- 테스트 접근법\n" +
+                "- 코드 스타일\n\n" +
+                "<owner>%s</owner>\n" +
+                "<repository>%s</repository>\n" +
+                "<branch>%s</branch>\n" +
+                "<github_token>%s</github_token>\n\n" +
+                "중요: .env, Dockerfile, docker-compose.yml, tests/ 폴더 등 핵심 파일만 확인할 것.",
+            owner, repo, owner, repo, branch, token
+        );
+    }
+
+    public String createRepoSecurityWorkflowPrompt(String owner, String repo, String branch, String token) {
+        return String.format(
+            "GitHub 레포지토리 '%s/%s' 보안 및 워크플로우 간략 분석:\n" +
+                "- 보안 관련 구현\n" +
+                "- CI/CD 설정\n" +
+                "- 배포 워크플로우\n" +
+                "- 확장성 접근법\n\n" +
+                "<owner>%s</owner>\n" +
+                "<repository>%s</repository>\n" +
+                "<branch>%s</branch>\n" +
+                "<github_token>%s</github_token>\n\n" +
+                "중요: .github/ 폴더, CI 설정 파일 및 배포 스크립트만 집중 분석할 것.",
+            owner, repo, owner, repo, branch, token
+        );
+    }
+
+    public String createRepoConclusionPrompt(String owner, String repo, String branch, String token) {
+        return String.format(
+            "GitHub 레포지토리 '%s/%s' 결론 요약:\n" +
+                "- 주요 강점 2-3개\n" +
+                "- 개선 가능 영역 2-3개\n" +
+                "- 전체 품질 평가\n\n" +
+                "<owner>%s</owner>\n" +
+                "<repository>%s</repository>\n" +
+                "<branch>%s</branch>\n" +
+                "<github_token>%s</github_token>\n\n" +
+                "중요: 매우 간결하게 종합하고, 핵심 인사이트만 포함할 것.",
+            owner, repo, owner, repo, branch, token
+        );
+    }
 
     // 단일 파일 분석 프롬프트 생성
     public String createDocumentAnalysisPrompt(String content) {

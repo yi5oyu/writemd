@@ -34,8 +34,12 @@ const useGithubAnalysis = () => {
 
           let errorMessage = '알 수 없는 오류가 발생했습니다.'
 
-          const getErrorMessage = (data, defaultMsg) =>
-            typeof data === 'string' && data ? data : defaultMsg
+          const getErrorMessage = (data, defaultMsg) => {
+            if (typeof data === 'object' && data && data.error) {
+              return data.error
+            }
+            return typeof data === 'string' && data ? data : defaultMsg
+          }
 
           if (status === 401) {
             errorMessage = getErrorMessage(
@@ -46,6 +50,16 @@ const useGithubAnalysis = () => {
             errorMessage = getErrorMessage(
               responseData,
               '잘못된 요청입니다. 필수 입력 값을 확인해주세요.'
+            )
+          } else if (status === 408) {
+            errorMessage = getErrorMessage(
+              responseData,
+              '분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.'
+            )
+          } else if (status === 429) {
+            errorMessage = getErrorMessage(
+              responseData,
+              'API 사용량 제한을 초과했습니다. 잠시 후 다시 시도해주세요.'
             )
           } else if (status >= 500) {
             errorMessage = getErrorMessage(
@@ -67,6 +81,8 @@ const useGithubAnalysis = () => {
     },
     []
   )
+
   return { analyzeRepository, loading, error }
 }
+
 export default useGithubAnalysis

@@ -5,14 +5,17 @@ import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
+import io.netty.handler.timeout.TimeoutException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.model.function.FunctionCallback;
+import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -163,12 +166,14 @@ public class ChatController {
         @PathVariable Long apiId,
         @RequestBody Map<String, Object> requestPayload) {
 
+        // 요청 파라미터 추출
         String repo = (String) requestPayload.get("repo");
         String model = (String) requestPayload.get("model");
         String branch = (String) requestPayload.get("branch");
         String githubId = (String) requestPayload.get("githubId");
         Integer maxDepth = (Integer) requestPayload.get("maxDepth");
 
+        // 필수 파라미터 검증
         if (repo == null || repo.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "repo는 필수 값입니다.");
@@ -185,32 +190,63 @@ public class ChatController {
             );
         }
 
-        log.info("GitHub 레포지토리 분석 요청: repo={}, model={}", repo, model);
+        log.info("GitHub 레포지토리 단계별 분석 요청: userId={}, repo={}, model={}, branch={}",
+            userId, repo, model, branch);
 
-        return chatService.githubRepoAnalysis(principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
+        // 단계별 분석 서비스 호출 (noteId 파라미터 제거)
+        return chatService.githubRepoStageAnalysis(
+                principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
             .thenApply(response -> {
-                log.info("GitHub 레포지토리 분석 응답 완료: repo={}", repo);
+                log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자",
+                    repo,
+                    response.containsKey("content") ? ((String) response.get("content")).length() : 0);
+
+                // 토큰 사용량 로깅 (있는 경우)
+                if (response.containsKey("tokenUsage")) {
+                    log.info("토큰 사용량: {}", response.get("tokenUsage"));
+                }
+
                 return ResponseEntity.ok(response);
             })
             .exceptionally(ex -> {
-                log.error("GitHub 레포지토리 분석 중 오류: {}", ex.getMessage(), ex);
+                // 원인 추출
+                Throwable cause = ex;
+                if (ex instanceof CompletionException && ex.getCause() != null) {
+                    cause = ex.getCause();
+                }
+
+                log.error("GitHub 레포지토리 단계별 분석 중 오류: {}", cause.getMessage(), cause);
 
                 // 오류 응답 처리
                 Map<String, Object> errorResponse = new HashMap<>();
 
-                if (ex.getCause() instanceof IllegalArgumentException) {
-                    errorResponse.put("error", ex.getMessage());
+                if (cause instanceof IllegalArgumentException) {
+                    // 잘못된 인자 오류
+                    errorResponse.put("error", cause.getMessage());
                     return ResponseEntity.badRequest().body(errorResponse);
-                } else if (ex.getMessage() != null && ex.getMessage().contains("로그인")) {
+                } else if (cause instanceof TimeoutException) {
+                    // 시간 초과 오류
+                    errorResponse.put("error", "분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
+                    errorResponse.put("errorType", "TIMEOUT");
+                    return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(errorResponse);
+                } else if (cause.getMessage() != null && cause.getMessage().contains("로그인")) {
+                    // GitHub 인증 오류
                     errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                } else if (cause instanceof NonTransientAiException &&
+                    cause.getMessage() != null &&
+                    cause.getMessage().toLowerCase().contains("rate_limit")) {
+                    // API 사용량 제한 오류
+                    errorResponse.put("error", "API 사용량 제한을 초과했습니다. 잠시 후 다시 시도해주세요.");
+                    errorResponse.put("errorType", "RATE_LIMIT_EXCEEDED");
+                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
                 } else {
-                    errorResponse.put("error", "GitHub 레포지토리 분석 중 오류가 발생했습니다: " + ex.getMessage());
+                    // 기타 오류
+                    errorResponse.put("error", "GitHub 레포지토리 단계별 분석 중 오류가 발생했습니다: " + cause.getMessage());
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
                 }
             });
     }
-
 
     // SSE 채팅
     @GetMapping(value = "/stream/{sessionId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

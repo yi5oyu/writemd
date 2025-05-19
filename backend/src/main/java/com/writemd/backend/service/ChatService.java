@@ -19,6 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -438,31 +443,275 @@ public class ChatService {
         }
     }
 
-    // 깃허브 구조 정리
     @Async
-    public CompletableFuture<Map<String, Object>> githubRepoAnalysis(String principalName, Long userId, Long apiId, String model,
+    public CompletableFuture<Map<String, Object>> githubRepoStageAnalysis(
+        String principalName, Long userId, Long apiId, String model,
         String repo, String githubId, String branch, Integer maxDepth) {
+
+        log.info("GitHub 레포지토리 단계별 분석 시작 준비: {}/{}", githubId, repo);
+
+        // 분석 시작 시간 기록
+        long startTime = System.currentTimeMillis();
+
         try {
-            // GitHub 접근 토큰
+            APIDTO api = getApiKey(userId, apiId);
+            if (api == null) {
+                throw new IllegalArgumentException("API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
+            }
+
+            // GitHub 접근 토큰 획득
             String accessToken = getGithubAccessToken(principalName);
 
-            // API 키/ChatClient 초기화
-            APIDTO api = getApiKey(userId, apiId);
-            String aiModel = api.getAiModel();
-            String apiKey = api.getApiKey();
+            // 분석 결과를 저장할 맵
+            Map<String, String> stageResults = new ConcurrentHashMap<>();
 
-            ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
+            // 토큰 사용량을 추적할 맵
+            Map<String, Integer> tokenUsage = new ConcurrentHashMap<>();
+            tokenUsage.put("totalTokens", 0);
+            tokenUsage.put("promptTokens", 0);
+            tokenUsage.put("completionTokens", 0);
 
-            // 프롬프트 생성
-            String prompt = gitHubPrompts.createRepoAnalysisPrompt(githubId, repo, branch, accessToken);
+            // 결과 및 메타데이터를 담을 최종 맵
+            Map<String, Object> finalResult = new HashMap<>();
 
-            // 응답 요청 및 처리
-            return processAiResponse(chatClient, prompt, aiModel);
+            // 단계 1: 기본 정보 및 주요 특징 분석
+            return processStage(
+                null, model, githubId, repo, branch, accessToken,
+                gitHubPrompts.createRepoBasicInfoPrompt(githubId, repo, branch, accessToken),
+                "basicInfo", 1, 6, stageResults, api, tokenUsage)  // tokenUsage 전달
+
+                // 단계 2: 기술 스택 및 아키텍처 분석
+                .thenCompose(v -> processStage(
+                    null, model, githubId, repo, branch, accessToken,
+                    gitHubPrompts.createRepoTechStackPrompt(githubId, repo, branch, accessToken),
+                    "techStack", 2, 6, stageResults, api, tokenUsage))
+
+                // 단계 3: 코드 구조 및 핵심 코드 분석
+                .thenCompose(v -> processStage(
+                    null, model, githubId, repo, branch, accessToken,
+                    gitHubPrompts.createRepoCodeStructurePrompt(githubId, repo, branch, accessToken),
+                    "codeStructure", 3, 6, stageResults, api, tokenUsage))
+
+                // 단계 4: 설정, 환경 및 코드 품질 분석
+                .thenCompose(v -> processStage(
+                    null, model, githubId, repo, branch, accessToken,
+                    gitHubPrompts.createRepoConfigQualityPrompt(githubId, repo, branch, accessToken),
+                    "configQuality", 4, 6, stageResults, api, tokenUsage))
+
+                // 단계 5: 보안, 성능 및 워크플로우 분석
+                .thenCompose(v -> processStage(
+                    null, model, githubId, repo, branch, accessToken,
+                    gitHubPrompts.createRepoSecurityWorkflowPrompt(githubId, repo, branch, accessToken),
+                    "securityWorkflow", 5, 6, stageResults, api, tokenUsage))
+
+                // 단계 6: 결론 및 개선점 분석
+                .thenCompose(v -> processStage(
+                    null, model, githubId, repo, branch, accessToken,
+                    gitHubPrompts.createRepoConclusionPrompt(githubId, repo, branch, accessToken),
+                    "conclusion", 6, 6, stageResults, api, tokenUsage))
+
+                // 모든 단계 완료 후 결과 통합
+                .thenApply(v -> {
+                    log.info("GitHub 레포지토리 단계별 분석 완료: {}/{}", githubId, repo);
+
+                    // 분석 종료 시간 계산
+                    long endTime = System.currentTimeMillis();
+                    long duration = endTime - startTime;
+
+                    // 전체 분석 결과 통합 (시간과 토큰 정보 포함)
+                    String combinedAnalysis = combineAnalysisResults(
+                        stageResults, githubId, repo, duration, tokenUsage);
+
+                    // 최종 결과 맵 구성
+                    finalResult.put("content", combinedAnalysis);
+                    finalResult.put("sections", new HashMap<>(stageResults));
+                    finalResult.put("analysisTime", duration);
+                    finalResult.put("tokenUsage", tokenUsage);
+
+                    return finalResult;
+                })
+                .exceptionally(ex -> {
+                    log.error("GitHub 레포지토리 단계별 분석 실패: {}/{}, 오류: {}",
+                        githubId, repo, ex.getMessage(), ex);
+
+                    // 오류 정보 저장
+                    finalResult.put("error", true);
+                    finalResult.put("message", "분석 과정에서 오류가 발생했습니다: " + ex.getMessage());
+
+                    // 분석 종료 시간 계산 (오류 발생 시에도)
+                    long endTime = System.currentTimeMillis();
+                    long duration = endTime - startTime;
+                    finalResult.put("analysisTime", duration);
+                    finalResult.put("tokenUsage", tokenUsage);
+
+                    // 일부라도 결과가 있으면 포함
+                    if (!stageResults.isEmpty()) {
+                        String partialAnalysis = combineAnalysisResults(
+                            stageResults, githubId, repo, duration, tokenUsage);
+                        finalResult.put("content", partialAnalysis);
+                        finalResult.put("sections", new HashMap<>(stageResults));
+                        finalResult.put("partial", true);
+                    }
+
+                    return finalResult;
+                });
         } catch (Exception e) {
-            log.error("GitHub 레포지토리 분석 실패: {}", e.getMessage(), e);
-            return CompletableFuture.failedFuture(
-                new RuntimeException("GitHub 레포지토리 분석 실패: " + e.getMessage(), e)
-            );
+            log.error("GitHub 레포지토리 단계별 분석 초기화 실패: {}/{}, 오류: {}",
+                githubId, repo, e.getMessage(), e);
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", true);
+            errorResult.put("message", "분석 초기화 중 오류가 발생했습니다: " + e.getMessage());
+
+            // 분석 시간(짧음)도 기록
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+            errorResult.put("analysisTime", duration);
+            errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
+
+            return CompletableFuture.completedFuture(errorResult);
+        }
+    }
+
+    private CompletableFuture<Void> processStage(
+        Long sessionId, String model, String githubId, String repo, String branch, String accessToken,
+        String prompt, String stageKey, int currentStage, int totalStages,
+        Map<String, String> stageResults, APIDTO api, Map<String, Integer> tokenUsage) {
+
+        log.info("분석 단계 {}/{} 시작: {} - {}/{}",
+            currentStage, totalStages, stageKey, githubId, repo);
+
+        // API 키 조회 단계 제거 (이미 전달받은 api 객체 사용)
+        String aiModel = api.getAiModel();
+        String apiKey = api.getApiKey();
+
+        // CompletableFuture 생성
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        // 타임아웃 설정 (3분)
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
+            if (!future.isDone()) {
+                future.completeExceptionally(
+                    new TimeoutException("단계 " + stageKey + " 처리 시간이 초과되었습니다.")
+                );
+            }
+        }, 3, TimeUnit.MINUTES);
+
+        // 비동기 실행
+        CompletableFuture.runAsync(() -> {
+            try {
+                // ChatClient 초기화
+                ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
+
+                // 요청 메시지 구성
+                List<Message> messages = new ArrayList<>();
+                messages.add(new UserMessage(prompt));
+
+                // 동기식 API 호출
+                ChatResponse response = chatClient.prompt()
+                    .messages(messages)
+                    .call()
+                    .chatResponse();
+
+                // 응답 처리
+                String content = response.getResult().getOutput().getText();
+                stageResults.put(stageKey, content);
+
+                log.info("분석 단계 {}/{} 완료: {} - 응답 길이: {}자",
+                    currentStage, totalStages, stageKey, content.length());
+
+                // 토큰 사용량 로깅 및 합산 (있는 경우)
+                Usage usageInfo = response.getMetadata().getUsage();
+                if (usageInfo != null) {
+                    Integer promptTokens = usageInfo.getPromptTokens() != null ? usageInfo.getPromptTokens() : 0;
+                    Integer completionTokens = usageInfo.getCompletionTokens() != null ? usageInfo.getCompletionTokens() : 0;
+                    Integer totalTokens = usageInfo.getTotalTokens() != null ? usageInfo.getTotalTokens() : 0;
+
+                    // 토큰 사용량 누적 업데이트 (스레드 안전하게)
+                    synchronized (tokenUsage) {
+                        tokenUsage.put("promptTokens", tokenUsage.getOrDefault("promptTokens", 0) + promptTokens);
+                        tokenUsage.put("completionTokens", tokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
+                        tokenUsage.put("totalTokens", tokenUsage.getOrDefault("totalTokens", 0) + totalTokens);
+                    }
+
+                    log.info("단계 {} 토큰 사용량 - 프롬프트: {}, 응답: {}, 총: {}",
+                        stageKey, promptTokens, completionTokens, totalTokens);
+                }
+
+                // 완료 처리
+                timeoutTask.cancel(false);
+                future.complete(null);
+            }
+            catch (Exception e) {
+                // 예외 처리 로직...
+            }
+            finally {
+                // 실행 완료 후 스케줄러 종료
+                scheduler.shutdown();
+            }
+        });
+
+        return future;
+    }
+
+
+    private String getStageLabel(String stageKey) {
+        switch (stageKey) {
+            case "basicInfo": return "기본 정보 및 주요 특징 분석";
+            case "techStack": return "기술 스택 및 아키텍처 분석";
+            case "codeStructure": return "코드 구조 및 핵심 코드 분석";
+            case "configQuality": return "설정 및 코드 품질 분석";
+            case "securityWorkflow": return "보안 및 워크플로우 분석";
+            case "conclusion": return "결론 및 개선점 분석";
+            default: return "분석 진행 중";
+        }
+    }
+
+    private String combineAnalysisResults(
+        Map<String, String> stageResults, String githubId, String repo,
+        long duration, Map<String, Integer> tokenUsage) {
+
+        StringBuilder fullReport = new StringBuilder();
+
+        // 보고서 제목
+        fullReport.append("# GitHub 레포지토리 분석 보고서: ").append(githubId).append("/").append(repo).append("\n\n");
+
+        // 각 단계 결과 통합 (순서대로)
+        appendSectionIfAvailable(fullReport, stageResults, "basicInfo");
+        appendSectionIfAvailable(fullReport, stageResults, "techStack");
+        appendSectionIfAvailable(fullReport, stageResults, "codeStructure");
+        appendSectionIfAvailable(fullReport, stageResults, "configQuality");
+        appendSectionIfAvailable(fullReport, stageResults, "securityWorkflow");
+        appendSectionIfAvailable(fullReport, stageResults, "conclusion");
+
+        // 분석 정보 (시간 및 토큰 사용량)
+        fullReport.append("\n\n---\n");
+
+        // 분석 시간 (분:초 형식으로 변환)
+        long minutes = duration / (1000 * 60);
+        long seconds = (duration / 1000) % 60;
+        fullReport.append("**분석 소요 시간**: ")
+            .append(minutes).append("분 ")
+            .append(seconds).append("초\n");
+
+        // 토큰 사용량
+        fullReport.append("**총 토큰 사용량**: ")
+            .append(tokenUsage.getOrDefault("totalTokens", 0)).append(" 토큰");
+
+        // 세부 토큰 사용량 (옵션)
+        fullReport.append(" (프롬프트: ")
+            .append(tokenUsage.getOrDefault("promptTokens", 0))
+            .append(", 응답: ")
+            .append(tokenUsage.getOrDefault("completionTokens", 0))
+            .append(")\n");
+
+        return fullReport.toString();
+    }
+
+    private void appendSectionIfAvailable(StringBuilder report, Map<String, String> results, String key) {
+        if (results.containsKey(key) && !results.get(key).isEmpty()) {
+            report.append(results.get(key)).append("\n\n");
         }
     }
 

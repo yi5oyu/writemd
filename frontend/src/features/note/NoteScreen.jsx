@@ -908,8 +908,8 @@ const NoteScreen = ({
       userId: user.userId,
       apiId: selectedAI,
       model: model,
-      repo: 'writemd',
-      githubId: user.githubId,
+      repo: 'PocketFlow-Tutorial-Codebase-Knowledge', // 'writemd',
+      githubId: 'The-Pocket', //user.githubId,
     })
   }
 

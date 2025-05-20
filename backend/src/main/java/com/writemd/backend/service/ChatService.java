@@ -518,15 +518,24 @@ public class ChatService {
                     long endTime = System.currentTimeMillis();
                     long duration = endTime - startTime;
 
-                    // 전체 분석 결과 통합 (시간과 토큰 정보 포함)
-                    String combinedAnalysis = combineAnalysisResults(
-                        stageResults, githubId, repo, duration, tokenUsage);
+                    // 분석 시간 (분:초 형식으로 변환)
+                    long minutes = duration / (1000 * 60);
+                    long seconds = (duration / 1000) % 60;
+                    String formattedDuration = minutes + "분 " + seconds + "초";
 
-                    // 최종 결과 맵 구성
+                    // 전체 분석 결과 통합 (메타데이터 제외)
+                    String combinedAnalysis = combineAnalysisResults(stageResults, githubId, repo);
+
+                    // 최종 결과 맵 구성 - 내용과 메타데이터 분리
                     finalResult.put("content", combinedAnalysis);
                     finalResult.put("sections", new HashMap<>(stageResults));
-                    finalResult.put("analysisTime", duration);
-                    finalResult.put("tokenUsage", tokenUsage);
+
+                    // 메타데이터는 별도 필드로 제공
+                    Map<String, Object> metadata = new HashMap<>();
+                    metadata.put("analysisTime", duration);
+                    metadata.put("formattedAnalysisTime", formattedDuration);
+                    metadata.put("tokenUsage", tokenUsage);
+                    finalResult.put("metadata", metadata);
 
                     return finalResult;
                 })
@@ -541,13 +550,16 @@ public class ChatService {
                     // 분석 종료 시간 계산 (오류 발생 시에도)
                     long endTime = System.currentTimeMillis();
                     long duration = endTime - startTime;
-                    finalResult.put("analysisTime", duration);
-                    finalResult.put("tokenUsage", tokenUsage);
+
+                    // 메타데이터는 별도 필드로 제공
+                    Map<String, Object> metadata = new HashMap<>();
+                    metadata.put("analysisTime", duration);
+                    metadata.put("tokenUsage", tokenUsage);
+                    finalResult.put("metadata", metadata);
 
                     // 일부라도 결과가 있으면 포함
                     if (!stageResults.isEmpty()) {
-                        String partialAnalysis = combineAnalysisResults(
-                            stageResults, githubId, repo, duration, tokenUsage);
+                        String partialAnalysis = combineAnalysisResults(stageResults, githubId, repo);
                         finalResult.put("content", partialAnalysis);
                         finalResult.put("sections", new HashMap<>(stageResults));
                         finalResult.put("partial", true);
@@ -655,23 +667,7 @@ public class ChatService {
         return future;
     }
 
-
-    private String getStageLabel(String stageKey) {
-        switch (stageKey) {
-            case "basicInfo": return "기본 정보 및 주요 특징 분석";
-            case "techStack": return "기술 스택 및 아키텍처 분석";
-            case "codeStructure": return "코드 구조 및 핵심 코드 분석";
-            case "configQuality": return "설정 및 코드 품질 분석";
-            case "securityWorkflow": return "보안 및 워크플로우 분석";
-            case "conclusion": return "결론 및 개선점 분석";
-            default: return "분석 진행 중";
-        }
-    }
-
-    private String combineAnalysisResults(
-        Map<String, String> stageResults, String githubId, String repo,
-        long duration, Map<String, Integer> tokenUsage) {
-
+    private String combineAnalysisResults(Map<String, String> stageResults, String githubId, String repo) {
         StringBuilder fullReport = new StringBuilder();
 
         // 보고서 제목
@@ -684,27 +680,6 @@ public class ChatService {
         appendSectionIfAvailable(fullReport, stageResults, "configQuality");
         appendSectionIfAvailable(fullReport, stageResults, "securityWorkflow");
         appendSectionIfAvailable(fullReport, stageResults, "conclusion");
-
-        // 분석 정보 (시간 및 토큰 사용량)
-        fullReport.append("\n\n---\n");
-
-        // 분석 시간 (분:초 형식으로 변환)
-        long minutes = duration / (1000 * 60);
-        long seconds = (duration / 1000) % 60;
-        fullReport.append("**분석 소요 시간**: ")
-            .append(minutes).append("분 ")
-            .append(seconds).append("초\n");
-
-        // 토큰 사용량
-        fullReport.append("**총 토큰 사용량**: ")
-            .append(tokenUsage.getOrDefault("totalTokens", 0)).append(" 토큰");
-
-        // 세부 토큰 사용량 (옵션)
-        fullReport.append(" (프롬프트: ")
-            .append(tokenUsage.getOrDefault("promptTokens", 0))
-            .append(", 응답: ")
-            .append(tokenUsage.getOrDefault("completionTokens", 0))
-            .append(")\n");
 
         return fullReport.toString();
     }

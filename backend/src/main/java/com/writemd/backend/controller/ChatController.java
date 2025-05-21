@@ -6,6 +6,7 @@ import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import io.netty.handler.timeout.TimeoutException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -160,7 +161,7 @@ public class ChatController {
     }
 
     @PostMapping("/analysis/{userId}/{apiId}")
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> analyzeRepository(
+    public Object analyzeRepository(
         @AuthenticationPrincipal(expression = "name") String principalName,
         @PathVariable Long userId,
         @PathVariable Long apiId,
@@ -171,81 +172,190 @@ public class ChatController {
         String model = (String) requestPayload.get("model");
         String branch = (String) requestPayload.get("branch");
         String githubId = (String) requestPayload.get("githubId");
+        Boolean stream = (Boolean) requestPayload.get("stream");
         Integer maxDepth = (Integer) requestPayload.get("maxDepth");
 
         // 필수 파라미터 검증
         if (repo == null || repo.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "repo는 필수 값입니다.");
-            return CompletableFuture.completedFuture(
-                ResponseEntity.badRequest().body(errorResponse)
-            );
+            return ResponseEntity.badRequest().body(errorResponse);
         }
 
         if (model == null || model.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "model은 필수 값입니다.");
-            return CompletableFuture.completedFuture(
-                ResponseEntity.badRequest().body(errorResponse)
-            );
+            return ResponseEntity.badRequest().body(errorResponse);
         }
 
         log.info("GitHub 레포지토리 단계별 분석 요청: userId={}, repo={}, model={}, branch={}",
             userId, repo, model, branch);
 
-        // 단계별 분석 서비스 호출 (noteId 파라미터 제거)
-        return chatService.githubRepoStageAnalysis(
-                principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
-            .thenApply(response -> {
-                log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자",
-                    repo,
-                    response.containsKey("content") ? ((String) response.get("content")).length() : 0);
+        // 고유 이미터 ID 생성
+        String emitterId = "a" + userId;
 
-                // 토큰 사용량 로깅 (있는 경우)
-                if (response.containsKey("tokenUsage")) {
-                    log.info("토큰 사용량: {}", response.get("tokenUsage"));
-                }
+        if (stream) {
+            // 이미 활성화된 emitter가 있는지 확인
+            SseEmitter existingEmitter = sseEmitterManager.getNamedEmitter(emitterId);
 
-                return ResponseEntity.ok(response);
-            })
-            .exceptionally(ex -> {
-                // 원인 추출
-                Throwable cause = ex;
-                if (ex instanceof CompletionException && ex.getCause() != null) {
-                    cause = ex.getCause();
-                }
+            if (existingEmitter != null) {
+                log.info("분석 시작: 기존 emitter 사용: {}", emitterId);
 
-                log.error("GitHub 레포지토리 단계별 분석 중 오류: {}", cause.getMessage(), cause);
+                try {
+                    // 분석 시작 이벤트 전송
+                    existingEmitter.send(SseEmitter.event()
+                        .name("analysisStarted")
+                        .data(Map.of(
+                            "repo", repo,
+                            "branch", branch != null ? branch : "main",
+                            "model", model,
+                            "message", "분석 작업이 시작되었습니다."
+                        ))
+                    );
 
-                // 오류 응답 처리
-                Map<String, Object> errorResponse = new HashMap<>();
+                    // 비동기 분석 시작
+                    chatService.githubRepoStageAnalysis(
+                        principalName, userId, apiId, model, repo, githubId,
+                        branch != null ? branch : "main",
+                        maxDepth != null ? maxDepth : 3);
 
-                if (cause instanceof IllegalArgumentException) {
-                    // 잘못된 인자 오류
-                    errorResponse.put("error", cause.getMessage());
-                    return ResponseEntity.badRequest().body(errorResponse);
-                } else if (cause instanceof TimeoutException) {
-                    // 시간 초과 오류
-                    errorResponse.put("error", "분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
-                    errorResponse.put("errorType", "TIMEOUT");
-                    return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(errorResponse);
-                } else if (cause.getMessage() != null && cause.getMessage().contains("로그인")) {
-                    // GitHub 인증 오류
-                    errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-                } else if (cause instanceof NonTransientAiException &&
-                    cause.getMessage() != null &&
-                    cause.getMessage().toLowerCase().contains("rate_limit")) {
-                    // API 사용량 제한 오류
-                    errorResponse.put("error", "API 사용량 제한을 초과했습니다. 잠시 후 다시 시도해주세요.");
-                    errorResponse.put("errorType", "RATE_LIMIT_EXCEEDED");
-                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
-                } else {
-                    // 기타 오류
-                    errorResponse.put("error", "GitHub 레포지토리 단계별 분석 중 오류가 발생했습니다: " + cause.getMessage());
+                    return ResponseEntity.ok(Map.of("status", "started", "emitterId", emitterId));
+                } catch (IOException e) {
+                    log.error("기존 emitter에 시작 이벤트 전송 실패: {}, {}", emitterId, e.getMessage());
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("error", "SSE 연결에 문제가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
                 }
-            });
+            } else {
+                log.warn("분석 시작: SSE 연결이 아직 설정되지 않음. 연결을 먼저 설정해주세요: {}", emitterId);
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "SSE 연결이 먼저 설정되어야 합니다. 페이지를 새로고침 후 다시 시도해주세요.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+        } else {
+            // 스트리밍 없이 동기 방식으로 처리 (기존 코드와 동일)
+            return chatService.githubRepoStageAnalysis(
+                    principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
+                .thenApply(response -> {
+                    log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자",
+                        repo,
+                        response.containsKey("content") ? ((String) response.get(
+                            "content")).length() : 0);
+
+                    // 토큰 사용량 로깅 (있는 경우)
+                    if (response.containsKey("tokenUsage")) {
+                        log.info("토큰 사용량: {}", response.get("tokenUsage"));
+                    }
+
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(ex -> {
+                    // 원인 추출
+                    Throwable cause = ex;
+                    if (ex instanceof CompletionException && ex.getCause() != null) {
+                        cause = ex.getCause();
+                    }
+
+                    log.error("GitHub 레포지토리 단계별 분석 중 오류: {}", cause.getMessage(), cause);
+
+                    // 오류 응답 처리
+                    Map<String, Object> errorResponse = new HashMap<>();
+
+                    if (cause instanceof IllegalArgumentException) {
+                        // 잘못된 인자 오류
+                        errorResponse.put("error", cause.getMessage());
+                        return ResponseEntity.badRequest().body(errorResponse);
+                    } else if (cause instanceof TimeoutException) {
+                        // 시간 초과 오류
+                        errorResponse.put("error", "분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
+                        errorResponse.put("errorType", "TIMEOUT");
+                        return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+                            .body(errorResponse);
+                    } else if (cause.getMessage() != null && cause.getMessage().contains("로그인")) {
+                        // GitHub 인증 오류
+                        errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                    } else if (cause instanceof NonTransientAiException &&
+                        cause.getMessage() != null &&
+                        cause.getMessage().toLowerCase().contains("rate_limit")) {
+                        // API 사용량 제한 오류
+                        errorResponse.put("error", "API 사용량 제한을 초과했습니다. 잠시 후 다시 시도해주세요.");
+                        errorResponse.put("errorType", "RATE_LIMIT_EXCEEDED");
+                        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                            .body(errorResponse);
+                    } else {
+                        // 기타 오류
+                        errorResponse.put("error",
+                            "GitHub 레포지토리 단계별 분석 중 오류가 발생했습니다: " + cause.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(errorResponse);
+                    }
+                });
+        }
+    }
+
+    // 스트리밍 연결용 GET 엔드포인트 (개선)
+    @GetMapping(value = "/analysis/{userId}/{apiId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamAnalysis(@PathVariable Long userId, @PathVariable Long apiId) {
+        log.info("SSE 연결 요청 수신: /analysis/{}/{}", userId, apiId);
+
+        // 고유 이미터 ID 생성
+        String emitterId = "a" + userId;
+
+        // 기존 emitter 확인 및 필요시 제거
+        SseEmitter existingEmitter = sseEmitterManager.getNamedEmitter(emitterId);
+        if (existingEmitter != null) {
+            log.info("기존 emitter 발견, 연결 상태 확인: {}", emitterId);
+
+            try {
+                // 연결 상태 확인 (핑 메시지 전송)
+                existingEmitter.send(SseEmitter.event().name("ping").data("ping"));
+                log.info("기존 emitter 활성 상태, 계속 사용: {}", emitterId);
+
+                // 연결 확인 메시지 전송
+                existingEmitter.send(SseEmitter.event().name("connect").data("기존 SSE 연결에 접속됨: " + emitterId));
+                log.info("기존 emitter에 연결 메시지 전송 성공: {}", emitterId);
+
+                return existingEmitter;
+            } catch (IOException e) {
+                log.warn("기존 emitter에 접근 불가 (타임아웃 또는 닫힘), 새로 생성: {}, {}", emitterId, e.getMessage());
+                sseEmitterManager.removeNamedEmitter(emitterId);
+            }
+        }
+
+        // 새 emitter 생성
+        log.info("새 emitter 생성: {}", emitterId);
+        SseEmitter emitter = new SseEmitter(300000L); // 5분
+
+        // 완료, 타임아웃, 오류 콜백 설정
+        emitter.onCompletion(() -> {
+            log.info("SSE 연결 완료: {}", emitterId);
+            sseEmitterManager.removeNamedEmitter(emitterId);
+        });
+
+        emitter.onTimeout(() -> {
+            log.info("SSE 연결 타임아웃: {}", emitterId);
+            sseEmitterManager.removeNamedEmitter(emitterId);
+        });
+
+        emitter.onError((ex) -> {
+            log.error("SSE 연결 오류: {}, 오류: {}", emitterId, ex.getMessage());
+            sseEmitterManager.removeNamedEmitter(emitterId);
+        });
+
+        // SseEmitterManager에 emitter 등록
+        sseEmitterManager.addNamedEmitter(emitterId, emitter);
+
+        // 연결 확인 메시지 전송
+        try {
+            emitter.send(SseEmitter.event().name("connect").data("새 SSE 연결 설정됨: " + emitterId));
+            log.info("새 emitter 연결 메시지 전송 성공: {}", emitterId);
+        } catch (IOException e) {
+            log.error("새 emitter 초기화 오류: {}, {}", emitterId, e.getMessage());
+            emitter.completeWithError(e);
+        }
+
+        return emitter;
     }
 
     // SSE 채팅

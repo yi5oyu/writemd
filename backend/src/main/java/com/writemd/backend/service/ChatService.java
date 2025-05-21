@@ -24,6 +24,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -453,6 +456,8 @@ public class ChatService {
         // 분석 시작 시간 기록
         long startTime = System.currentTimeMillis();
 
+        String emitterId = "a" + userId;
+
         try {
             APIDTO api = getApiKey(userId, apiId);
             if (api == null) {
@@ -474,41 +479,88 @@ public class ChatService {
             // 결과 및 메타데이터를 담을 최종 맵
             Map<String, Object> finalResult = new HashMap<>();
 
+            Map<String, Object> startInfo = new HashMap<>();
+            startInfo.put("status", "started");
+            startInfo.put("totalStages", 6);
+            startInfo.put("repo", githubId + "/" + repo);
+            startInfo.put("branch", branch);
+            sseEmitterManager.sendToNamedSession(emitterId, "analysisStarted", startInfo);
+
+            Function<String, CompletableFuture<Void>> sendStageResult = (stageName) -> {
+                try {
+                    // 현재 단계 번호 계산
+                    int currentStage = 0;
+                    switch (stageName) {
+                        case "basicInfo": currentStage = 1; break;
+                        case "techStack": currentStage = 2; break;
+                        case "codeStructure": currentStage = 3; break;
+                        case "configQuality": currentStage = 4; break;
+                        case "securityWorkflow": currentStage = 5; break;
+                        case "conclusion": currentStage = 6; break;
+                    }
+
+                    Map<String, Object> stageUpdate = new HashMap<>();
+                    stageUpdate.put("stage", stageName);
+                    stageUpdate.put("stageNumber", currentStage);
+                    stageUpdate.put("totalStages", 6);
+                    stageUpdate.put("result", stageResults.get(stageName));
+                    stageUpdate.put("completed", true);
+
+                    // 현재까지의 토큰 사용량 포함
+                    stageUpdate.put("tokenUsage", new HashMap<>(tokenUsage));
+
+                    // SseEmitterManager를 통해 프론트엔드로 전송 (문자열 식별자 사용)
+                    sseEmitterManager.sendToNamedSession(emitterId, "stageComplete", stageUpdate);
+
+                    return CompletableFuture.completedFuture(null);
+                } catch (Exception e) {
+                    log.error("단계 결과 전송 실패: {}, 이미터ID: {}, 오류: {}",
+                        stageName, emitterId, e.getMessage());
+                    return CompletableFuture.failedFuture(e);
+                }
+            };
+
             // 단계 1: 기본 정보 및 주요 특징 분석
             return processStage(
-                null, model, githubId, repo, branch, accessToken,
+                emitterId, model, githubId, repo, branch, accessToken,
                 gitHubPrompts.createRepoBasicInfoPrompt(githubId, repo, branch, accessToken),
-                "basicInfo", 1, 6, stageResults, api, tokenUsage)  // tokenUsage 전달
+                "basicInfo", 1, 6, stageResults, api, tokenUsage)
+                .thenCompose(v -> sendStageResult.apply("basicInfo"))
 
                 // 단계 2: 기술 스택 및 아키텍처 분석
                 .thenCompose(v -> processStage(
-                    null, model, githubId, repo, branch, accessToken,
+                    emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoTechStackPrompt(githubId, repo, branch, accessToken),
                     "techStack", 2, 6, stageResults, api, tokenUsage))
+                .thenCompose(v -> sendStageResult.apply("techStack"))
 
                 // 단계 3: 코드 구조 및 핵심 코드 분석
                 .thenCompose(v -> processStage(
-                    null, model, githubId, repo, branch, accessToken,
+                    emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoCodeStructurePrompt(githubId, repo, branch, accessToken),
                     "codeStructure", 3, 6, stageResults, api, tokenUsage))
+                .thenCompose(v -> sendStageResult.apply("codeStructure"))
 
                 // 단계 4: 설정, 환경 및 코드 품질 분석
                 .thenCompose(v -> processStage(
-                    null, model, githubId, repo, branch, accessToken,
+                    emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoConfigQualityPrompt(githubId, repo, branch, accessToken),
                     "configQuality", 4, 6, stageResults, api, tokenUsage))
+                .thenCompose(v -> sendStageResult.apply("configQuality"))
 
                 // 단계 5: 보안, 성능 및 워크플로우 분석
                 .thenCompose(v -> processStage(
-                    null, model, githubId, repo, branch, accessToken,
+                    emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoSecurityWorkflowPrompt(githubId, repo, branch, accessToken),
                     "securityWorkflow", 5, 6, stageResults, api, tokenUsage))
+                .thenCompose(v -> sendStageResult.apply("securityWorkflow"))
 
                 // 단계 6: 결론 및 개선점 분석
                 .thenCompose(v -> processStage(
-                    null, model, githubId, repo, branch, accessToken,
+                    emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoConclusionPrompt(githubId, repo, branch, accessToken),
                     "conclusion", 6, 6, stageResults, api, tokenUsage))
+                .thenCompose(v -> sendStageResult.apply("conclusion"))
 
                 // 모든 단계 완료 후 결과 통합
                 .thenApply(v -> {
@@ -536,6 +588,12 @@ public class ChatService {
                     metadata.put("formattedAnalysisTime", formattedDuration);
                     metadata.put("tokenUsage", tokenUsage);
                     finalResult.put("metadata", metadata);
+
+                    // 최종 결과 전송
+                    sseEmitterManager.sendToNamedSession(emitterId, "analysisComplete", finalResult);
+
+                    // 모든 처리가 끝났으므로 SSE 연결 완료
+                    sseEmitterManager.completeNamedSession(emitterId);
 
                     return finalResult;
                 })
@@ -565,6 +623,12 @@ public class ChatService {
                         finalResult.put("partial", true);
                     }
 
+                    // 초기화 오류 전송
+                    sseEmitterManager.sendToNamedSession(emitterId, "analysisError", finalResult);
+
+                    // 오류가 발생했으므로 SSE 연결 완료
+                    sseEmitterManager.completeNamedSession(emitterId);
+
                     return finalResult;
                 });
         } catch (Exception e) {
@@ -581,12 +645,18 @@ public class ChatService {
             errorResult.put("analysisTime", duration);
             errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
 
+            // 초기화 오류 전송
+            sseEmitterManager.sendToNamedSession(emitterId, "initError", errorResult);
+
+            // 초기화 오류이므로 SSE 연결 완료
+            sseEmitterManager.completeNamedSession(emitterId);
+
             return CompletableFuture.completedFuture(errorResult);
         }
     }
 
     private CompletableFuture<Void> processStage(
-        Long sessionId, String model, String githubId, String repo, String branch, String accessToken,
+        String emitterId, String model, String githubId, String repo, String branch, String accessToken,
         String prompt, String stageKey, int currentStage, int totalStages,
         Map<String, String> stageResults, APIDTO api, Map<String, Integer> tokenUsage) {
 
@@ -613,6 +683,44 @@ public class ChatService {
         // 비동기 실행
         CompletableFuture.runAsync(() -> {
             try {
+                // 현재 총 토큰 사용량 확인
+                int currentTotalTokens = tokenUsage.getOrDefault("totalTokens", 0);
+
+                // 토큰 임계값 (설정 가능)
+                final int TOKEN_THRESHOLD = 20000;
+
+                // 토큰 사용량이 임계값을 초과했는지 확인
+                if (currentTotalTokens >= TOKEN_THRESHOLD) {
+                    // emitterId를 직접 사용하여 메시지 전송
+                    Map<String, Object> waitInfo = new HashMap<>();
+                    waitInfo.put("stage", stageKey);
+                    waitInfo.put("stageNumber", currentStage);
+                    waitInfo.put("totalStages", totalStages);
+                    waitInfo.put("waitingForTokens", true);
+                    waitInfo.put("tokenUsage", new HashMap<>(tokenUsage));
+                    waitInfo.put("message", "토큰 사용량 제한에 도달했습니다. 분석이 일시 중지되었습니다. 잠시 후 자동으로 재개됩니다.");
+
+                    sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", waitInfo);
+
+                    log.info("토큰 사용량({}개)이 임계값({}개)을 초과하여 60초 대기 시작: 단계 {}",
+                        currentTotalTokens, TOKEN_THRESHOLD, stageKey);
+
+                    // 60초 대기 (TPM 제한 리셋 시간)
+                    Thread.sleep(60000);
+
+                    // 대기 종료 알림
+                    Map<String, Object> resumeInfo = new HashMap<>();
+                    resumeInfo.put("stage", stageKey);
+                    resumeInfo.put("stageNumber", currentStage);
+                    resumeInfo.put("totalStages", totalStages);
+                    resumeInfo.put("resuming", true);
+                    resumeInfo.put("message", "토큰 사용량 제한 대기가 완료되었습니다. 분석을 재개합니다.");
+
+                    sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", resumeInfo);
+
+                    log.info("토큰 대기 시간 종료, 분석 재개: 단계 {}", stageKey);
+                }
+
                 // ChatClient 초기화
                 ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
@@ -620,11 +728,82 @@ public class ChatService {
                 List<Message> messages = new ArrayList<>();
                 messages.add(new UserMessage(prompt));
 
-                // 동기식 API 호출
-                ChatResponse response = chatClient.prompt()
-                    .messages(messages)
-                    .call()
-                    .chatResponse();
+                // API 호출 시도 (rate limit 오류 처리 포함)
+                ChatResponse response = null;
+                int maxRetries = 3;
+                int retryCount = 0;
+
+                while (retryCount <= maxRetries) {
+                    try {
+                        // 동기식 API 호출
+                        response = chatClient.prompt()
+                            .messages(messages)
+                            .call()
+                            .chatResponse();
+                        // 성공하면 루프 종료
+                        break;
+                    } catch (Exception e) {
+                        // rate_limit_exceeded 오류 확인
+                        if (e.getMessage() != null &&
+                            e.getMessage().toLowerCase().contains("rate_limit_exceeded")) {
+
+                            retryCount++;
+                            if (retryCount > maxRetries) {
+                                throw e; // 최대 재시도 횟수 초과
+                            }
+
+                            // 오류 메시지에서 대기 시간 추출 (정규식 패턴)
+                            String waitTimeStr = null;
+                            Pattern pattern = Pattern.compile("Please try again in (\\d+)ms");
+                            Matcher matcher = pattern.matcher(e.getMessage());
+                            if (matcher.find()) {
+                                waitTimeStr = matcher.group(1);
+                            }
+
+                            // 대기 시간 계산 (최소 1초, 없으면 기본 5초)
+                            long waitTime = 5000;
+                            if (waitTimeStr != null) {
+                                waitTime = Long.parseLong(waitTimeStr) + 500; // 약간의 버퍼 추가
+                            }
+
+                            // 기다려야 한다는 메시지 전송
+                            Map<String, Object> rateLimitInfo = new HashMap<>();
+                            rateLimitInfo.put("stage", stageKey);
+                            rateLimitInfo.put("stageNumber", currentStage);
+                            rateLimitInfo.put("totalStages", totalStages);
+                            rateLimitInfo.put("rateLimitWaiting", true);
+                            rateLimitInfo.put("waitTime", waitTime);
+                            rateLimitInfo.put("retryCount", retryCount);
+                            rateLimitInfo.put("message", String.format(
+                                "API 요청 제한에 도달했습니다. %d밀리초 후 자동으로 재시도합니다. (시도 %d/%d)",
+                                waitTime, retryCount, maxRetries));
+
+                            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", rateLimitInfo);
+
+                            log.warn("Rate limit 도달 (단계: {}). {}ms 후 재시도 ({}/{})",
+                                stageKey, waitTime, retryCount, maxRetries);
+
+                            // 권장된 시간만큼 대기
+                            Thread.sleep(waitTime);
+
+                            // 재시도 알림
+                            Map<String, Object> retryInfo = new HashMap<>();
+                            retryInfo.put("stage", stageKey);
+                            retryInfo.put("stageNumber", currentStage);
+                            retryInfo.put("totalStages", totalStages);
+                            retryInfo.put("retrying", true);
+                            retryInfo.put("retryCount", retryCount);
+                            retryInfo.put("message", String.format(
+                                "API 요청을 재시도합니다. (시도 %d/%d)",
+                                retryCount, maxRetries));
+
+                            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", retryInfo);
+                        } else {
+                            // rate_limit_exceeded가 아닌 다른 오류는 바로 예외 발생
+                            throw e;
+                        }
+                    }
+                }
 
                 // 응답 처리
                 String content = response.getResult().getOutput().getText();
@@ -633,7 +812,7 @@ public class ChatService {
                 log.info("분석 단계 {}/{} 완료: {} - 응답 길이: {}자",
                     currentStage, totalStages, stageKey, content.length());
 
-                // 토큰 사용량 로깅 및 합산 (있는 경우)
+                // 토큰 사용량 로깅 및 합산
                 Usage usageInfo = response.getMetadata().getUsage();
                 if (usageInfo != null) {
                     Integer promptTokens = usageInfo.getPromptTokens() != null ? usageInfo.getPromptTokens() : 0;
@@ -656,7 +835,9 @@ public class ChatService {
                 future.complete(null);
             }
             catch (Exception e) {
-                // 예외 처리 로직...
+                log.error("단계 {} 처리 중 오류 발생: {}", stageKey, e.getMessage(), e);
+                timeoutTask.cancel(false);
+                future.completeExceptionally(e);
             }
             finally {
                 // 실행 완료 후 스케줄러 종료

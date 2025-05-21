@@ -101,7 +101,15 @@ const NoteScreen = ({
     loading: structureLoading,
     error: structureError,
   } = useGithubStructure()
-  const { analyzeRepository, loading: analyzeLoading, error: analyzeError } = useGithubAnalysis()
+  const {
+    analyzeRepository,
+    cancelAnalysis,
+    loading: analysisLoading,
+    error: analysisError,
+    streamData,
+    progressSteps,
+    tokenUsage,
+  } = useGithubAnalysis()
 
   // 채팅
   const { sendDirectChat, loading: sendDirectLoading, error: sendDirectError } = useDirectChat()
@@ -901,16 +909,71 @@ const NoteScreen = ({
       githubId: user.githubId,
     })
   }
-
+  const [analysisResults, setAnalysisResults] = useState(null)
+  const [stages, setStages] = useState({})
   // Tool repo 분석
   const handleRepoAnalysisSubmit = async () => {
-    await analyzeRepository({
-      userId: user.userId,
-      apiId: selectedAI,
-      model: model,
-      repo: 'PocketFlow-Tutorial-Codebase-Knowledge', // 'writemd',
-      githubId: 'The-Pocket', //user.githubId,
-    })
+    // 진행 상황 및 결과 저장용 상태
+
+    try {
+      const result = await analyzeRepository({
+        userId: user.userId,
+        apiId: selectedAI,
+        model: model,
+        repo: 'supergateway',
+        githubId: 'supercorp-ai',
+        stream: true,
+        onStreamData: (data) => {
+          console.log('스트리밍 데이터 수신:', data)
+
+          // 이벤트 유형별 처리
+          if (data.stage && data.result) {
+            // 단계 결과 업데이트
+            setStages((prev) => ({
+              ...prev,
+              [data.stage]: data.result,
+            }))
+          }
+
+          // 토큰 대기 상태 처리
+          if (data.waitingForTokens) {
+            toast({
+              title: '토큰 사용량 제한',
+              description: '토큰 사용량 제한에 도달했습니다. 잠시 후 자동으로 계속됩니다.',
+              status: 'info',
+              duration: 10000,
+              isClosable: true,
+            })
+          }
+
+          // 재시도 상태 처리
+          if (data.retrying) {
+            console.log(`API 요청 재시도 중... (${data.retryCount}/${data.maxRetries})`)
+          }
+        },
+      })
+
+      setAnalysisResults(result)
+      console.log('분석 완료:', result)
+
+      toast({
+        title: '분석 완료',
+        description: `GitHub 저장소 분석이 완료되었습니다.`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (err) {
+      console.error('분석 오류:', err)
+
+      toast({
+        title: '분석 오류',
+        description: `오류: ${err.message}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
   }
 
   return (

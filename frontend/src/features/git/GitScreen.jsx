@@ -1,5 +1,16 @@
 import React, { useState, useEffect, memo, useCallback } from 'react'
-import { Flex, Box, Text, useToast } from '@chakra-ui/react'
+import {
+  Flex,
+  Box,
+  Text,
+  useToast,
+  Tab,
+  TabList,
+  TabPanels,
+  TabPanel,
+  Tabs,
+  TabIndicator,
+} from '@chakra-ui/react'
 import RepoBox from './RepoBox'
 import RepoList from './RepoList'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
@@ -31,6 +42,7 @@ const GitScreen = ({
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [selectedItem, setSelectedItem] = useState('폴더/파일을 선택해주세요.')
   const [repoBranches, setRepoBranches] = useState([])
+  const [tabIndex, setTabIndex] = useState(0)
 
   const toast = useToast()
 
@@ -194,110 +206,156 @@ const GitScreen = ({
   }, [selectedFile, name])
 
   return (
-    <>
-      <Flex
-        h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="md"
-        filter={isLoading ? 'blur(4px)' : 'none'}
-        bg="gray.200"
-        boxShadow="md"
+    <Flex
+      h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
+      w="100%"
+      filter={isLoading ? 'blur(4px)' : 'none'}
+      bg="white"
+      boxShadow="md"
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="md"
+      direction="column"
+    >
+      <Tabs
+        isFitted
+        variant="unstyled"
+        index={tabIndex}
+        onChange={(index) => setTabIndex(index)}
+        h="100%"
+        display="flex"
+        flexDirection="column"
+        position="relative"
       >
-        <Box flex="1" maxW="100%" overflow="hidden">
-          <Box
-            border="1px solid"
-            borderRadius="md"
-            borderColor="gray.100"
-            m="10px 0 10px 10px"
-            bg="white"
-            boxShadow="md"
-          >
-            <Text
-              textAlign="center"
-              borderRadius="md"
-              h="35px"
-              m="10px"
-              py="5px"
-              title={selectedFile && `https://github.com/${githubId}/${selectedItem}`}
-              fontWeight="bold"
-              isTruncated
-              whiteSpace="nowrap"
-            >
-              {selectedItem}
-            </Text>
-            <CommitBox
-              handleCommitClick={handleCommitClick}
-              setSelectedFile={setSelectedFile}
-              display={commit ? 'block' : 'none'}
-              isDisabled={isLoading || !selectedFile}
-              setGithubText={setGithubText}
-              setName={setName}
-            />
-          </Box>
-          {repoBranches.length > 0 && (
-            <Box borderRadius="md" borderColor="gray.100" m="15px 0 10px 10px" boxShadow="md">
-              <GitInfoBox
-                isDisabled={isLoading || !selectedFile}
-                selectedFile={selectedFile}
-                repoBranches={repoBranches}
-                githubId={githubId}
-              />
-            </Box>
-          )}
-        </Box>
-        <Box flex="1" maxW="100%" overflow="hidden" overflowY="auto" m="10px">
-          <Box bg="white" p="10px 10px 10px 0" borderRadius="md" boxShadow="md">
-            {data &&
-              [...data]
-                .sort((a, b) => a.repo.localeCompare(b.repo))
-                .map((repoItem) => {
-                  const branch =
-                    repoItem.branches.find((branch) => branch.branch === 'main') ||
-                    repoItem.branches.find((branch) => branch.branch === 'master')
+        <TabList mb="1em">
+          <Tab>내 깃허브</Tab>
+          <Tab>Repository 분석</Tab>
+        </TabList>
 
-                  const isActive = active === repoItem.repoId
-                  return (
-                    branch && (
-                      <Box key={repoItem.repoId} mx="10px" mb="10px">
-                        <RepoBox
-                          title={repoItem.repo}
-                          onClick={() => {
-                            handleRepoClick(repoItem.repoId, repoItem.repo, branch)
-                            setRepoBranches(
-                              data.find((repo) => repo.repoId === repoItem.repoId).branches
-                            )
-                          }}
-                          handleFileClick={handleFileClick}
-                          isDisabled={isLoading}
-                          selectedFile={selectedFile}
-                        />
-                        {isActive && (
-                          <RepoList
-                            repo={repoItem.repo}
-                            contents={branch.contents}
-                            gitFolderData={gitFolderData}
-                            handleFileClick={handleFileClick}
-                            handleFolderClick={handleFolderClick}
-                            handleBlobFileClick={handleBlobFileClick}
-                            selectedFile={selectedFile}
-                            selectedFolder={selectedFolder}
-                            setSelectedFolder={setSelectedFolder}
-                            isDisabled={isLoading}
-                            isConnected={false}
-                            currentPath=""
-                          />
-                        )}
-                      </Box>
-                    )
-                  )
-                })}
-          </Box>
-        </Box>
-      </Flex>
+        <TabIndicator
+          height="2px"
+          bg="blue.500"
+          borderRadius="1px"
+          position="absolute"
+          top="42px"
+          zIndex="0"
+        />
+
+        <TabPanels flex="1" overflow="hidden">
+          <TabPanel p="0" h="100%" display="flex" flexDirection="column" bg="gray.100">
+            <Flex height="100%" flex="1" overflow="hidden">
+              <Box flex="1" maxW="100%" display="flex" flexDirection="column" overflow="hidden">
+                <Box
+                  border="1px solid"
+                  borderRadius="md"
+                  borderColor="gray.100"
+                  m="10px 0 10px 10px"
+                  bg="white"
+                  boxShadow="md"
+                >
+                  <Text
+                    textAlign="center"
+                    borderRadius="md"
+                    h="35px"
+                    m="10px"
+                    py="5px"
+                    title={selectedFile && `https://github.com/${githubId}/${selectedItem}`}
+                    fontWeight="bold"
+                    isTruncated
+                    whiteSpace="nowrap"
+                  >
+                    {selectedItem}
+                  </Text>
+                  <CommitBox
+                    handleCommitClick={handleCommitClick}
+                    setSelectedFile={setSelectedFile}
+                    display={commit ? 'block' : 'none'}
+                    isDisabled={isLoading || !selectedFile}
+                    setGithubText={setGithubText}
+                    setName={setName}
+                  />
+                </Box>
+                {repoBranches.length > 0 && (
+                  <Box borderRadius="md" borderColor="gray.100" m="15px 0 10px 10px" boxShadow="md">
+                    <GitInfoBox
+                      isDisabled={isLoading || !selectedFile}
+                      selectedFile={selectedFile}
+                      repoBranches={repoBranches}
+                      githubId={githubId}
+                    />
+                  </Box>
+                )}
+              </Box>
+              <Box
+                flex="1"
+                maxW="100%"
+                m="10px"
+                display="flex"
+                flexDirection="column"
+                overflow="hidden"
+              >
+                <Box
+                  bg="white"
+                  p="10px 10px 0 0"
+                  borderRadius="md"
+                  boxShadow="md"
+                  overflowY="auto"
+                  flex="1"
+                >
+                  {data &&
+                    [...data]
+                      .sort((a, b) => a.repo.localeCompare(b.repo))
+                      .map((repoItem) => {
+                        const branch =
+                          repoItem.branches.find((branch) => branch.branch === 'main') ||
+                          repoItem.branches.find((branch) => branch.branch === 'master')
+
+                        const isActive = active === repoItem.repoId
+                        return (
+                          branch && (
+                            <Box key={repoItem.repoId} mx="10px" mb="10px">
+                              <RepoBox
+                                title={repoItem.repo}
+                                onClick={() => {
+                                  handleRepoClick(repoItem.repoId, repoItem.repo, branch)
+                                  setRepoBranches(
+                                    data.find((repo) => repo.repoId === repoItem.repoId).branches
+                                  )
+                                }}
+                                handleFileClick={handleFileClick}
+                                isDisabled={isLoading}
+                                selectedFile={selectedFile}
+                              />
+                              {isActive && (
+                                <RepoList
+                                  repo={repoItem.repo}
+                                  contents={branch.contents}
+                                  gitFolderData={gitFolderData}
+                                  handleFileClick={handleFileClick}
+                                  handleFolderClick={handleFolderClick}
+                                  handleBlobFileClick={handleBlobFileClick}
+                                  selectedFile={selectedFile}
+                                  selectedFolder={selectedFolder}
+                                  setSelectedFolder={setSelectedFolder}
+                                  isDisabled={isLoading}
+                                  isConnected={false}
+                                  currentPath=""
+                                />
+                              )}
+                            </Box>
+                          )
+                        )
+                      })}
+                </Box>
+              </Box>
+            </Flex>
+          </TabPanel>
+          <TabPanel p="0" h="100%" display="flex" flexDirection="column" bg="gray.100"></TabPanel>
+        </TabPanels>
+      </Tabs>
 
       {isLoading && <LoadingSpinner />}
-    </>
+    </Flex>
   )
 }
 

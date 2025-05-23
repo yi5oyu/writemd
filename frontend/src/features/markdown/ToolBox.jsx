@@ -20,8 +20,6 @@ const ToolBox = ({
   memo,
   setMemo,
   setIsFold,
-  handleSendDirectChatMessage,
-  handleStructureSubmit,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -40,9 +38,7 @@ const ToolBox = ({
           icon={MdSpellcheck}
           label="맞춤법 검사"
           // disabled={false}
-          onClick={() =>
-            handleSendDirectChatMessage("mcpAiWord를 사용해서 'sbxa' 문자를 해석해주세요.")
-          }
+          onClick={() => {}}
         />
         <UtilityBtn
           icon={BsEmojiSmile}
@@ -65,12 +61,6 @@ const ToolBox = ({
           icon={FaStickyNote}
           label="메모"
           onClick={() => setMemo(!memo)}
-          setColor={memo ? true : false}
-        />
-        <UtilityBtn
-          icon={FaFileExport}
-          label="ㅁ"
-          onClick={() => handleStructureSubmit()}
           setColor={memo ? true : false}
         />
       </Flex>

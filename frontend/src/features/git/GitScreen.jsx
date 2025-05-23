@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useCallback } from 'react'
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react'
 import {
   Flex,
   Box,
@@ -10,6 +10,19 @@ import {
   TabPanel,
   Tabs,
   TabIndicator,
+  InputGroup,
+  InputLeftAddon,
+  Input,
+  Button,
+  VStack,
+  HStack,
+  Spinner,
+  Icon,
+  AccordionItem,
+  Accordion,
+  AccordionIcon,
+  AccordionButton,
+  AccordionPanel,
 } from '@chakra-ui/react'
 import RepoBox from './RepoBox'
 import RepoList from './RepoList'
@@ -17,6 +30,10 @@ import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import CommitBox from './CommitBox'
 import GitInfoBox from './GitInfoBox'
+import AiSelect from '../../components/ui/select/AiSelect'
+import { CheckCircleIcon, CopyIcon, WarningIcon } from '@chakra-ui/icons'
+import AnalysisStepsList from './AnalysisStepsList'
+import PreviewBox from '../markdown/PreviewBox'
 
 const GitScreen = ({
   name,
@@ -25,6 +42,12 @@ const GitScreen = ({
   data,
   screen,
   githubId,
+  apiKeys,
+  availableModels,
+  setSelectedAI,
+  setModel,
+  selectedAI,
+  model,
   handleGetClick,
   handleNewFileClick,
   handleGetFolderClick,
@@ -35,6 +58,12 @@ const GitScreen = ({
   isLoading,
   isError,
   errorMessage,
+  handleRepoAnalysisSubmit,
+  analysisLoading,
+  analysisResults,
+  progressSteps,
+  tokenUsage,
+  stages,
 }) => {
   const [active, setActive] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -43,7 +72,9 @@ const GitScreen = ({
   const [selectedItem, setSelectedItem] = useState('폴더/파일을 선택해주세요.')
   const [repoBranches, setRepoBranches] = useState([])
   const [tabIndex, setTabIndex] = useState(0)
+  const [githubRepo, setGithubRepo] = useState('')
 
+  const scrollContainerRef = useRef(null)
   const toast = useToast()
 
   // 리스트 토글, 폴더 선택/토글
@@ -133,8 +164,6 @@ const GitScreen = ({
     }
   }
 
-  // TODO: 파일 검색 구현
-
   // 파일 업데이트, 초기화
   useEffect(() => {
     if (gitUpdatedData) {
@@ -204,6 +233,19 @@ const GitScreen = ({
         : defaultText
     )
   }, [selectedFile, name])
+
+  // progressSteps가 변경될 때마다 맨 아래로 스크롤
+  useEffect(() => {
+    if (scrollContainerRef.current && progressSteps.length > 0) {
+      setTimeout(() => {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+      }, 100)
+    }
+  }, [progressSteps])
+
+  useEffect(() => {
+    console.log(analysisResults)
+  }, [analysisResults])
 
   return (
     <Flex
@@ -350,7 +392,160 @@ const GitScreen = ({
               </Box>
             </Flex>
           </TabPanel>
-          <TabPanel p="0" h="100%" display="flex" flexDirection="column" bg="gray.100"></TabPanel>
+          <TabPanel p="0" h="100%" display="flex" flexDirection="column" bg="gray.100">
+            <Flex
+              flexDirection="column"
+              gap="10px"
+              bg="white"
+              m="10px"
+              p="10px"
+              borderRadius="md"
+              boxShadow="md"
+            >
+              <InputGroup size="sm">
+                <InputLeftAddon>https://github.com/</InputLeftAddon>
+                <Input
+                  placeholder="github_ID/Repository_name"
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                />
+              </InputGroup>
+              <Flex justifyContent="space-between">
+                <AiSelect
+                  apiKeys={apiKeys}
+                  availableModels={availableModels}
+                  apiChange={(e) => setSelectedAI(e.target.value)}
+                  modelChange={(e) => setModel(e.target.value)}
+                  onClick={() => {}}
+                  selectedAI={selectedAI}
+                  model={model}
+                  icon={null}
+                />
+                <Button
+                  h="32px"
+                  colorScheme="blue"
+                  onClick={() => handleRepoAnalysisSubmit({ githubRepo })}
+                  isDisabled={
+                    !githubRepo ||
+                    !githubRepo.includes('/') ||
+                    githubRepo.split('/').length !== 2 ||
+                    analysisLoading
+                  }
+                >
+                  분석
+                </Button>
+              </Flex>
+            </Flex>
+            <Flex
+              flexDirection="column"
+              gap="10px"
+              bg="white"
+              m="0 10px 10px 10px"
+              p="10px"
+              borderRadius="md"
+              boxShadow="md"
+              flexGrow="1"
+              flexShrink="1"
+              flexBasis="0"
+              overflowY="auto"
+              ref={scrollContainerRef}
+            >
+              {progressSteps.length > 0 ? (
+                progressSteps[progressSteps.length - 1]?.status === 'finish' ? (
+                  <Flex flexDirection="column" position="relative">
+                    <Accordion defaultIndex={[]} allowToggle>
+                      <AccordionItem
+                        borderWidth="1px"
+                        borderRadius="md"
+                        borderColor="gray.200"
+                        mb={4}
+                      >
+                        <h2>
+                          <AccordionButton
+                            bg="blue.50"
+                            _hover={{ bg: 'blue.100' }}
+                            _expanded={{ bg: 'blue.100' }}
+                          >
+                            <Box flex="1" textAlign="left">
+                              <Flex align="center">
+                                <Icon as={CheckCircleIcon} color="green.500" mr={2} />
+                                <Text fontWeight="medium">분석 과정</Text>
+                              </Flex>
+                            </Box>
+                            <AccordionIcon />
+                          </AccordionButton>
+                        </h2>
+                        <AccordionPanel p={3} bg="gray.50">
+                          <AnalysisStepsList
+                            steps={progressSteps}
+                            analysisLoading={analysisLoading}
+                          />
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                    {analysisResults?.content && (
+                      <Box position="relative">
+                        <Button
+                          position="absolute"
+                          top="10px"
+                          right="5px"
+                          size="sm"
+                          leftIcon={<CopyIcon />}
+                          colorScheme="blue"
+                          variant="solid"
+                          zIndex={10}
+                          opacity={0.3}
+                          _hover={{
+                            opacity: 1,
+                            transform: 'scale(1.05)',
+                          }}
+                          transition="all 0.2s ease"
+                          onClick={() => {
+                            navigator.clipboard
+                              .writeText(analysisResults.content)
+                              .then(() => {
+                                toast({
+                                  title: '복사 완료',
+                                  description: '분석 결과가 클립보드에 복사되었습니다.',
+                                  status: 'success',
+                                  duration: 2000,
+                                  isClosable: true,
+                                  position: 'top',
+                                })
+                              })
+                              .catch(() => {
+                                toast({
+                                  title: '복사 실패',
+                                  description: '복사 중 오류가 발생했습니다.',
+                                  status: 'error',
+                                  duration: 2000,
+                                  isClosable: true,
+                                  position: 'top',
+                                })
+                              })
+                          }}
+                        >
+                          복사
+                        </Button>
+                        <PreviewBox
+                          markdownText={analysisResults.content}
+                          mode={true}
+                          screen={false}
+                          chat={false}
+                        />
+                      </Box>
+                    )}
+                  </Flex>
+                ) : (
+                  <AnalysisStepsList steps={progressSteps} analysisLoading={analysisLoading} />
+                )
+              ) : (
+                <Box textAlign="center" py="20px" color="gray.500">
+                  <Text>Repository를 입력하고 분석 버튼을 클릭해주세요.</Text>
+                </Box>
+              )}
+            </Flex>
+          </TabPanel>
         </TabPanels>
       </Tabs>
 

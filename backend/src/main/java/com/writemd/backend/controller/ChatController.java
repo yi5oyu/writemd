@@ -325,7 +325,7 @@ public class ChatController {
 
         // 새 emitter 생성
         log.info("새 emitter 생성: {}", emitterId);
-        SseEmitter emitter = new SseEmitter(300000L); // 5분
+        SseEmitter emitter = new SseEmitter(600000L); // 5분
 
         // 완료, 타임아웃, 오류 콜백 설정
         emitter.onCompletion(() -> {

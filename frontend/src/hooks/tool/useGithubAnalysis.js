@@ -37,33 +37,24 @@ const useGithubAnalysis = () => {
       setLoading(true)
       setError(null)
       setStreamData(null)
-      setProgressSteps([])
       setTokenUsage({ totalTokens: 0, promptTokens: 0, completionTokens: 0 })
 
       // 기존 이벤트 소스 연결 종료
       closeEventSource()
 
       try {
-        // 먼저 SSE 연결을 설정 (분석 요청 전에)
+        // SSE 연결
         const eventSource = new EventSource(
           `http://localhost:8888/api/chat/analysis/${userId}/${apiId}`,
           { withCredentials: true }
         )
         eventSourceRef.current = eventSource
-        console.log('EventSource 연결 설정됨')
 
-        // 이벤트 리스너와 Promise를 설정
+        // 분석 시작 이벤트
         const analysisPromise = new Promise((resolve, reject) => {
-          // 분석 시작 이벤트
           eventSource.addEventListener('analysisStarted', (event) => {
             try {
               const data = JSON.parse(event.data)
-              console.log('analysisStarted 이벤트:', data)
-
-              setProgressSteps((prev) => [
-                ...prev,
-                `분석이 시작되었습니다. 저장소: ${data.repo}, 브랜치: ${data.branch}`,
-              ])
 
               // 콜백으로 데이터 전달
               if (onStreamData) onStreamData(data)
@@ -72,11 +63,43 @@ const useGithubAnalysis = () => {
             }
           })
 
+          // 단계 시작 이벤트
+          eventSource.addEventListener('stageStarted', (event) => {
+            try {
+              const data = JSON.parse(event.data)
+
+              // 단계 시작 메시지 추가
+              setProgressSteps((prev) => {
+                const newStep = {
+                  id: `step-${Date.now()}-${prev.length}`,
+                  text: `단계 ${data.stageNumber}/${data.totalStages} (${data.stage}) 시작`,
+                  timestamp: data.timestamp || new Date().toLocaleTimeString(),
+                  isLatest: true,
+                  status: 'info',
+                  isStartMessage: true,
+                  stageKey: data.stage,
+                }
+
+                // 기존 단계들의 isLatest를 false로 설정
+                const updatedPrev = prev.map((step) => ({
+                  ...step,
+                  isLatest: false,
+                }))
+
+                return [...updatedPrev, newStep]
+              })
+
+              // 콜백으로 데이터 전달
+              if (onStreamData) onStreamData(data)
+            } catch (err) {
+              console.error('stageStarted 이벤트 처리 오류:', err)
+            }
+          })
+
           // 단계 완료 이벤트
           eventSource.addEventListener('stageComplete', (event) => {
             try {
               const data = JSON.parse(event.data)
-              console.log('stageComplete 이벤트:', data)
 
               // 단계별 결과 및 토큰 사용량 업데이트
               setStreamData((current) => ({
@@ -88,10 +111,42 @@ const useGithubAnalysis = () => {
                 setTokenUsage(data.tokenUsage)
               }
 
-              setProgressSteps((prev) => [
-                ...prev,
-                `단계 ${data.stageNumber}/${data.totalStages} (${data.stage}) 완료`,
-              ])
+              setProgressSteps((prev) => {
+                const stageNumber = data.stageNumber
+                const stageName = data.stage
+
+                // 시작 메시지 필터링(제거)
+                const filteredSteps = prev.filter(
+                  (step) => !(step.isStartMessage && step.stageKey === data.stage)
+                )
+
+                // 토큰 정보 구성
+                const tokenInfo = data.tokenUsage
+                  ? {
+                      promptTokens: data.tokenUsage.promptTokens || 0,
+                      completionTokens: data.tokenUsage.completionTokens || 0,
+                      totalTokens: data.tokenUsage.totalTokens || 0,
+                    }
+                  : null
+
+                // 완료 메시지 추가
+                const newStep = {
+                  id: `step-${Date.now()}-${filteredSteps.length}`,
+                  text: `단계 ${stageNumber}/${data.totalStages} (${stageName}) 완료`,
+                  timestamp: data.timestamp || new Date().toLocaleTimeString(),
+                  isLatest: true,
+                  status: 'success',
+                  tokenInfo: tokenInfo,
+                }
+
+                // 기존 단계들의 isLatest를 false로 설정
+                const updatedSteps = filteredSteps.map((step) => ({
+                  ...step,
+                  isLatest: false,
+                }))
+
+                return [...updatedSteps, newStep]
+              })
 
               // 콜백으로 데이터 전달
               if (onStreamData) onStreamData(data)
@@ -104,16 +159,38 @@ const useGithubAnalysis = () => {
           eventSource.addEventListener('stageUpdate', (event) => {
             try {
               const data = JSON.parse(event.data)
-              console.log('stageUpdate 이벤트:', data)
 
               // 토큰 사용량 업데이트
               if (data.tokenUsage) {
                 setTokenUsage(data.tokenUsage)
               }
 
-              // 메시지가 있으면 진행 상황에 추가
+              // 메시지 추가
               if (data.message) {
-                setProgressSteps((prev) => [...prev, data.message])
+                setProgressSteps((prev) => {
+                  const newStep = {
+                    id: `step-${Date.now()}-${prev.length}`,
+                    text: data.message,
+                    timestamp: data.timestamp || new Date().toLocaleTimeString(),
+                    isLatest: true,
+                    // 상태 스타일
+                    status: data.waitingForTokens
+                      ? 'warning'
+                      : data.resuming
+                      ? 'info'
+                      : data.retrying
+                      ? 'warning'
+                      : 'info',
+                  }
+
+                  // 기존 단계들의 isLatest를 false로 설정
+                  const updatedPrev = prev.map((step) => ({
+                    ...step,
+                    isLatest: false,
+                  }))
+
+                  return [...updatedPrev, newStep]
+                })
               }
 
               // 콜백으로 데이터 전달
@@ -127,7 +204,6 @@ const useGithubAnalysis = () => {
           eventSource.addEventListener('analysisComplete', (event) => {
             try {
               const data = JSON.parse(event.data)
-              console.log('analysisComplete 이벤트:', data)
 
               // 최종 결과 설정
               setStreamData(data)
@@ -137,7 +213,31 @@ const useGithubAnalysis = () => {
                 setTokenUsage(data.metadata.tokenUsage)
               }
 
-              setProgressSteps((prev) => [...prev, '분석이 완료되었습니다.'])
+              setProgressSteps((prev) => {
+                const finalTokenUsage = data.metadata?.tokenUsage || tokenUsage
+                const tokenInfo = {
+                  promptTokens: finalTokenUsage.promptTokens || 0,
+                  completionTokens: finalTokenUsage.completionTokens || 0,
+                  totalTokens: finalTokenUsage.totalTokens || 0,
+                }
+
+                const newStep = {
+                  id: `step-${Date.now()}-${prev.length}`,
+                  text: '분석이 완료되었습니다.',
+                  timestamp: new Date().toLocaleTimeString(),
+                  isLatest: true,
+                  status: 'finish',
+                  tokenInfo: tokenInfo,
+                }
+
+                // 기존 단계들의 isLatest를 false로 설정
+                const updatedPrev = prev.map((step) => ({
+                  ...step,
+                  isLatest: false,
+                }))
+
+                return [...updatedPrev, newStep]
+              })
 
               closeEventSource()
               setLoading(false)
@@ -157,14 +257,29 @@ const useGithubAnalysis = () => {
           eventSource.addEventListener('analysisError', (event) => {
             try {
               const data = JSON.parse(event.data)
-              console.log('analysisError 이벤트:', data)
 
               if (data.content) {
                 setStreamData(data)
               }
 
               setError(data.message || '분석 중 오류가 발생했습니다.')
-              setProgressSteps((prev) => [...prev, `오류: ${data.message}`])
+              setProgressSteps((prev) => {
+                const newStep = {
+                  id: `step-${Date.now()}-${prev.length}`,
+                  text: `오류: ${data.message || '분석 중 오류가 발생했습니다.'}`,
+                  timestamp: new Date().toLocaleTimeString(),
+                  isLatest: true,
+                  status: 'error',
+                }
+
+                // 기존 단계들의 isLatest를 false로 설정
+                const updatedPrev = prev.map((step) => ({
+                  ...step,
+                  isLatest: false,
+                }))
+
+                return [...updatedPrev, newStep]
+              })
 
               closeEventSource()
               setLoading(false)
@@ -184,10 +299,25 @@ const useGithubAnalysis = () => {
           eventSource.addEventListener('initError', (event) => {
             try {
               const data = JSON.parse(event.data)
-              console.log('initError 이벤트:', data)
 
               setError(data.message || '분석 초기화 중 오류가 발생했습니다.')
-              setProgressSteps((prev) => [...prev, `초기화 오류: ${data.message}`])
+              setProgressSteps((prev) => {
+                const newStep = {
+                  id: `step-${Date.now()}-${prev.length}`,
+                  text: `초기화 오류: ${data.message || '분석 초기화 중 오류가 발생했습니다.'}`,
+                  timestamp: new Date().toLocaleTimeString(),
+                  isLatest: true,
+                  status: 'error',
+                }
+
+                // 기존 단계들의 isLatest를 false로 설정
+                const updatedPrev = prev.map((step) => ({
+                  ...step,
+                  isLatest: false,
+                }))
+
+                return [...updatedPrev, newStep]
+              })
 
               closeEventSource()
               setLoading(false)
@@ -206,7 +336,6 @@ const useGithubAnalysis = () => {
           // 일반 메시지 이벤트 (EventSource의 기본 메시지 이벤트)
           eventSource.onmessage = (event) => {
             try {
-              console.log('일반 메시지 이벤트:', event.data)
               const data = JSON.parse(event.data)
 
               // 일반 메시지도 콜백으로 전달
@@ -221,13 +350,31 @@ const useGithubAnalysis = () => {
             console.error('EventSource 오류:', err)
             closeEventSource()
             setError('스트리밍 연결이 종료되었습니다.')
+
+            setProgressSteps((prev) => {
+              const newStep = {
+                id: `step-${Date.now()}-${prev.length}`,
+                text: '스트리밍 연결이 종료되었습니다.',
+                timestamp: new Date().toLocaleTimeString(),
+                isLatest: true,
+                status: 'error',
+              }
+
+              // 기존 단계들의 isLatest를 false로 설정
+              const updatedPrev = prev.map((step) => ({
+                ...step,
+                isLatest: false,
+              }))
+
+              return [...updatedPrev, newStep]
+            })
+
             setLoading(false)
             reject(err)
           }
         })
 
         // SSE 연결이 설정된 후에 분석 요청 시작
-        // 지연을 주어 이벤트 소스가 확실히 연결되도록 함
         setTimeout(async () => {
           try {
             await axios.post(
@@ -247,7 +394,6 @@ const useGithubAnalysis = () => {
                 withCredentials: true,
               }
             )
-            console.log('분석 요청 성공적으로 전송됨')
           } catch (err) {
             console.error('분석 요청 전송 오류:', err)
             closeEventSource()
@@ -255,7 +401,7 @@ const useGithubAnalysis = () => {
             handleRequestError(err)
             throw err
           }
-        }, 100) // 100ms 지연으로 이벤트 소스 연결이 준비되도록 함
+        }, 100)
 
         return analysisPromise
       } catch (err) {
@@ -268,7 +414,7 @@ const useGithubAnalysis = () => {
     []
   )
 
-  // 요청 오류 처리 함수
+  // 요청 오류 처리
   const handleRequestError = (err) => {
     const status = err.response?.status
     const responseData = err.response?.data
@@ -315,11 +461,47 @@ const useGithubAnalysis = () => {
     }
 
     setError(errorMessage)
+
+    setProgressSteps((prev) => {
+      const newStep = {
+        id: `step-${Date.now()}-${prev.length}`,
+        text: `오류: ${errorMessage}`,
+        timestamp: new Date().toLocaleTimeString(),
+        isLatest: true,
+        status: 'error',
+      }
+
+      // 기존 단계들의 isLatest를 false로 설정
+      const updatedPrev = prev.map((step) => ({
+        ...step,
+        isLatest: false,
+      }))
+
+      return [...updatedPrev, newStep]
+    })
   }
 
   const cancelAnalysis = useCallback(() => {
     closeEventSource()
     setLoading(false)
+
+    setProgressSteps((prev) => {
+      const newStep = {
+        id: `step-${Date.now()}-${prev.length}`,
+        text: '사용자가 분석을 취소했습니다.',
+        timestamp: new Date().toLocaleTimeString(),
+        isLatest: true,
+        status: 'warning',
+      }
+
+      // 기존 단계들의 isLatest를 false로 설정
+      const updatedPrev = prev.map((step) => ({
+        ...step,
+        isLatest: false,
+      }))
+
+      return [...updatedPrev, newStep]
+    })
   }, [])
 
   return {
@@ -330,6 +512,7 @@ const useGithubAnalysis = () => {
     streamData,
     progressSteps,
     tokenUsage,
+    setProgressSteps,
   }
 }
 

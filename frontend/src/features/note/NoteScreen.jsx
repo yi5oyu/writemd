@@ -87,6 +87,8 @@ const NoteScreen = ({
   const [model, setModel] = useState('')
   const [availableModels, setAvailableModels] = useState([])
   const [isWaitingForStream, setIsWaitingForStream] = useState(false)
+  const [analysisResults, setAnalysisResults] = useState(null)
+  const [stages, setStages] = useState({})
 
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
@@ -107,6 +109,7 @@ const NoteScreen = ({
     loading: analysisLoading,
     error: analysisError,
     streamData,
+    setProgressSteps,
     progressSteps,
     tokenUsage,
   } = useGithubAnalysis()
@@ -909,19 +912,100 @@ const NoteScreen = ({
       githubId: user.githubId,
     })
   }
-  const [analysisResults, setAnalysisResults] = useState(null)
-  const [stages, setStages] = useState({})
+
   // Tool repo 분석
-  const handleRepoAnalysisSubmit = async () => {
-    // 진행 상황 및 결과 저장용 상태
+  const handleRepoAnalysisSubmit = async ({ githubRepo }) => {
+    setProgressSteps([])
+
+    if (!githubRepo || githubRepo.trim() === '') {
+      toast({
+        position: 'top',
+        title: '입력 오류',
+        description: 'GitHub 저장소를 입력해주세요.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      return
+    }
+
+    const parts = githubRepo.split('/')
+    if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
+      toast({
+        position: 'top',
+        title: '입력 오류',
+        description: 'GitHub ID와 Repository 이름을 올바르게 입력해주세요.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      return
+    }
+
+    const [githubId, repo] = githubRepo.split('/')
 
     try {
+      setProgressSteps([
+        {
+          id: `step-${Date.now()}-0`,
+          text: `GitHub Repository 확인 중. 저장소: ${githubId}/${repo}`,
+          timestamp: new Date().toLocaleTimeString(),
+          isLatest: true,
+          status: 'info',
+        },
+      ])
+
+      const repoResponse = await fetch(`https://api.github.com/repos/${githubId}/${repo}`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+        },
+      })
+
+      if (!repoResponse.ok) {
+        toast({
+          position: 'top',
+          title: '저장소 확인 실패',
+          description: `저장소 확인 중 오류가 발생했습니다. (상태 코드: ${repoResponse.status})`,
+          status: 'error',
+          duration: 7000,
+          isClosable: true,
+        })
+        setProgressSteps((prev) => {
+          const newStep = {
+            id: `step-${Date.now()}-${prev.length}`,
+            text: `저장소 확인 실패: ${githubId}/${repo} (상태 코드: ${repoResponse.status})`,
+            timestamp: new Date().toLocaleTimeString(),
+            isLatest: true,
+            status: 'error',
+          }
+
+          const updatedPrev = prev.map((step) => ({
+            ...step,
+            isLatest: false,
+          }))
+
+          return [...updatedPrev, newStep]
+        })
+        return
+      }
+
+      setProgressSteps([
+        {
+          id: `step-${Date.now()}-1`,
+          text: `${githubId}/${repo} 저장소를 확인했습니다. 분석을 시작합니다.`,
+          timestamp: new Date().toLocaleTimeString(),
+          isLatest: true,
+          status: 'info',
+        },
+      ])
+
       const result = await analyzeRepository({
         userId: user.userId,
         apiId: selectedAI,
         model: model,
-        repo: 'supergateway',
-        githubId: 'supercorp-ai',
+        repo: repo,
+        githubId: githubId,
         stream: true,
         onStreamData: (data) => {
           console.log('스트리밍 데이터 수신:', data)
@@ -938,6 +1022,7 @@ const NoteScreen = ({
           // 토큰 대기 상태 처리
           if (data.waitingForTokens) {
             toast({
+              position: 'top',
               title: '토큰 사용량 제한',
               description: '토큰 사용량 제한에 도달했습니다. 잠시 후 자동으로 계속됩니다.',
               status: 'info',
@@ -957,6 +1042,7 @@ const NoteScreen = ({
       console.log('분석 완료:', result)
 
       toast({
+        position: 'top',
         title: '분석 완료',
         description: `GitHub 저장소 분석이 완료되었습니다.`,
         status: 'success',
@@ -964,17 +1050,23 @@ const NoteScreen = ({
         isClosable: true,
       })
     } catch (err) {
-      console.error('분석 오류:', err)
+      console.error('분석 오류')
+    }
+  }
 
+  // 분석 오류 메세지
+  useEffect(() => {
+    if (analysisError) {
       toast({
+        position: 'top',
         title: '분석 오류',
-        description: `오류: ${err.message}`,
+        description: analysisError,
         status: 'error',
-        duration: 5000,
+        duration: 7000,
         isClosable: true,
       })
     }
-  }
+  }, [analysisError, toast])
 
   return (
     <Box
@@ -1053,8 +1145,6 @@ const NoteScreen = ({
                 setMemo={setMemo}
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
-                handleSendDirectChatMessage={handleSendDirectChatMessage}
-                handleStructureSubmit={handleRepoAnalysisSubmit}
               />
             )}
             <MarkdownInputBox
@@ -1252,6 +1342,18 @@ const NoteScreen = ({
                 setGithubText={setGithubText}
                 data={gitRepoData}
                 githubId={user.githubId}
+                apiKeys={apiKeys}
+                availableModels={availableModels}
+                setSelectedAI={setSelectedAI}
+                setModel={setModel}
+                selectedAI={selectedAI}
+                model={model}
+                analysisLoading={analysisLoading}
+                analysisResults={analysisResults}
+                progressSteps={progressSteps}
+                tokenUsage={tokenUsage}
+                stages={stages}
+                handleRepoAnalysisSubmit={handleRepoAnalysisSubmit}
                 screen={screen}
                 handleGetClick={handleGetClick}
                 handleNewFileClick={handleNewFileClick}

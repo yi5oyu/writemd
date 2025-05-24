@@ -56,6 +56,7 @@ import useDirectChat from '../../hooks/chat/useDirectChat'
 import modelData from '../../data/model.json'
 import useGithubStructure from '../../hooks/tool/useGithubStructure'
 import useGithubAnalysis from '../../hooks/tool/useGithubAnalysis'
+import useDocumentAnalysis from '../../hooks/tool/useDocumentAnalysis'
 
 const NoteScreen = ({
   user,
@@ -73,10 +74,12 @@ const NoteScreen = ({
   const [githubName, setGithubName] = useState('')
   const [templateName, setTemplateName] = useState('')
   const [memoName, setMemoName] = useState('')
+  const [reportName, setReportName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
   const [githubText, setGithubText] = useState('')
   const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
+  const [reportText, setReportText] = useState('<!-- 보고서 -->')
 
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
@@ -113,6 +116,12 @@ const NoteScreen = ({
     progressSteps,
     tokenUsage,
   } = useGithubAnalysis()
+  const {
+    analyzeDocument,
+    loading: docLoading,
+    error: docError,
+    clearError,
+  } = useDocumentAnalysis()
 
   // 채팅
   const { sendDirectChat, loading: sendDirectLoading, error: sendDirectError } = useDirectChat()
@@ -480,8 +489,23 @@ const NoteScreen = ({
         ? templateText
         : selectedScreen === 'memo'
         ? memoText
-        : selectedScreen === 'git' && githubText
+        : selectedScreen === 'git'
+        ? githubText
+        : selectedScreen === 'report' && reportText
     )
+  }
+
+  // 텍스트 지우기
+  const handleClearMarkdown = () => {
+    selectedScreen === 'markdown'
+      ? setMarkdownText('')
+      : selectedScreen === 'template'
+      ? setTemplateText('')
+      : selectedScreen === 'memo'
+      ? setMemoText('')
+      : selectedScreen === 'git'
+      ? setGithubText('')
+      : selectedScreen === 'report' && setReportText('')
   }
 
   // 파일 추출
@@ -494,7 +518,9 @@ const NoteScreen = ({
           ? templateText
           : selectedScreen === 'memo'
           ? memoText
-          : selectedScreen === 'git' && githubText,
+          : selectedScreen === 'git'
+          ? githubText
+          : selectedScreen === 'report' && reportText,
       ],
       { type: 'text/markdown;charset=utf-8' }
     )
@@ -656,7 +682,9 @@ const NoteScreen = ({
           ? templateText
           : selectedScreen === 'memo'
           ? memoText
-          : selectedScreen === 'git' && githubText,
+          : selectedScreen === 'git'
+          ? githubText
+          : selectedScreen === 'report' && reportText,
         memoId
       )
       if (memoId) {
@@ -1068,6 +1096,48 @@ const NoteScreen = ({
     }
   }, [analysisError, toast])
 
+  // 문서 분석
+  const handleDocAnalyze = async () => {
+    const contentText =
+      selectedScreen === 'markdown'
+        ? markdownText
+        : selectedScreen === 'template'
+        ? templateText
+        : selectedScreen === 'memo'
+        ? memoText
+        : selectedScreen === 'git'
+        ? githubText
+        : selectedScreen === 'report' && reportText
+
+    if (!contentText.trim()) return
+    setSelectedScreen('report')
+
+    let result = '<!-- 보고서 작성 중 입니다... -->'
+    setReportText(result)
+
+    try {
+      clearError()
+
+      result = await analyzeDocument({
+        userId: user.userId,
+        apiId: selectedAI,
+        model: model,
+        content: contentText,
+      })
+
+      setReportText(
+        `<!-- 분석 시간: ${result.analysisTime}, 사용된 토큰 수: ${result.analysisTime} -->\n ${result.content}`
+      )
+    } catch (err) {
+      console.log('분석 실패:', err)
+    }
+  }
+
+  // 분석 오류 메세지
+  useEffect(() => {
+    setReportText(`<!-- ${docError} -->`)
+  }, [docError])
+
   return (
     <Box
       direction="column"
@@ -1104,7 +1174,9 @@ const NoteScreen = ({
                 ? templateName
                 : selectedScreen === 'memo'
                 ? memoName
-                : selectedScreen === 'git' && githubName
+                : selectedScreen === 'git'
+                ? githubName
+                : selectedScreen === 'report' && reportName
             }
             fontSize="20px"
             pl="5px"
@@ -1118,7 +1190,9 @@ const NoteScreen = ({
                 ? '템플릿 이름을 입력해주세요.'
                 : selectedScreen === 'memo'
                 ? '메모 이름을 입력해주세요'
-                : selectedScreen === 'git' && '제목을 입력해주세요.'
+                : selectedScreen === 'git'
+                ? '제목을 입력해주세요.'
+                : selectedScreen === 'report' && '보고서'
             }
           />
           <Icon
@@ -1134,7 +1208,7 @@ const NoteScreen = ({
           <Box flex="1" position="relative" w="50%">
             {screen && (
               <ToolBox
-                onClearText={() => setMarkdownText('')}
+                onClearText={handleClearMarkdown}
                 onCopyText={handleCopyMarkdown}
                 screen={screen}
                 onScreen={() => setScreen(!screen)}
@@ -1145,6 +1219,7 @@ const NoteScreen = ({
                 setMemo={setMemo}
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
+                handleDocAnalyze={handleDocAnalyze}
               />
             )}
             <MarkdownInputBox
@@ -1155,7 +1230,9 @@ const NoteScreen = ({
                   ? templateText
                   : selectedScreen === 'memo'
                   ? memoText
-                  : selectedScreen === 'git' && githubText
+                  : selectedScreen === 'git'
+                  ? githubText
+                  : selectedScreen === 'report' && reportText
               }
               setMarkdownText={
                 selectedScreen === 'markdown'
@@ -1164,7 +1241,9 @@ const NoteScreen = ({
                   ? setTemplateText
                   : selectedScreen === 'memo'
                   ? setMemoText
-                  : selectedScreen === 'git' && setGithubText
+                  : selectedScreen === 'git'
+                  ? setGithubText
+                  : selectedScreen === 'report' && setReportText
               }
               selectedScreen={selectedScreen}
               item={item}
@@ -1187,7 +1266,9 @@ const NoteScreen = ({
                     ? templateText
                     : selectedScreen === 'memo'
                     ? memoText
-                    : selectedScreen === 'git' && githubText
+                    : selectedScreen === 'git'
+                    ? githubText
+                    : selectedScreen === 'report' && reportText
                 }
                 selectedScreen={selectedScreen}
                 setSelectedScreen={setSelectedScreen}
@@ -1224,7 +1305,9 @@ const NoteScreen = ({
                     ? templateText
                     : selectedScreen === 'memo'
                     ? memoText
-                    : selectedScreen === 'git' && githubText
+                    : selectedScreen === 'git'
+                    ? githubText
+                    : selectedScreen === 'report' && reportText
                 }
                 screen={screen}
               />

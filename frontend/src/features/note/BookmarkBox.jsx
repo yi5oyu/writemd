@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { Box, Button, Flex, Text, Input, Textarea } from '@chakra-ui/react'
+import { Flex } from '@chakra-ui/react'
 import BookmarkBtn from '../../components/ui/button/BookmarkBtn'
 
 const BookmarkBox = ({ screen, selectedScreen, setSelectedScreen }) => {
@@ -28,6 +27,12 @@ const BookmarkBox = ({ screen, selectedScreen, setSelectedScreen }) => {
         opacity={selectedScreen === 'git' ? 1 : 0.2}
         onClick={() => setSelectedScreen('git')}
         state={selectedScreen === 'git'}
+      />
+      <BookmarkBtn
+        color="red"
+        opacity={selectedScreen === 'report' ? 1 : 0.2}
+        onClick={() => setSelectedScreen('report')}
+        state={selectedScreen === 'report'}
       />
     </Flex>
   )

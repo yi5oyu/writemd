@@ -401,23 +401,72 @@ public class ChatService {
     // 단일 파일 분석
     @Async
     public CompletableFuture<Map<String, Object>> generateDocumentAnalysis(Long userId, Long apiId, String model, String content) {
+        log.info("문서 분석 시작 - userId: {}, apiId: {}, model: {}", userId, apiId, model);
+
+        long startTime = System.currentTimeMillis();
+
         try {
             // API 키 조회
             APIDTO api = getApiKey(userId, apiId);
+            if (api == null) {
+                throw new IllegalArgumentException("API 키 정보를 찾을 수 없습니다.");
+            }
+
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
 
+            // ChatClient 초기화
             ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
             // 프롬프트 생성
             String prompt = gitHubPrompts.createDocumentAnalysisPrompt(content);
 
-            return processAiResponse(chatClient, prompt, aiModel);
+            // AI 응답 처리
+            return processAiResponse(chatClient, prompt, aiModel)
+                .thenApply(result -> {
+                    long endTime = System.currentTimeMillis();
+                    long analysisTime = endTime - startTime;
+
+                    Map<String, Object> finalResult = new HashMap<>();
+                    finalResult.put("content", result.get("content"));
+                    finalResult.put("analysisTime", analysisTime);
+
+                    // 토큰 사용량 정보 추가
+                    if (result.containsKey("tokenUsage")) {
+                        finalResult.put("tokenUsage", result.get("tokenUsage"));
+                    }
+
+                    log.info("문서 분석 완료 - 소요시간: {}ms", analysisTime);
+                    return finalResult;
+                })
+                .exceptionally(ex -> {
+                    long endTime = System.currentTimeMillis();
+                    long analysisTime = endTime - startTime;
+
+                    log.error("문서 분석 실패: {}", ex.getMessage(), ex);
+
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("error", true);
+                    errorResult.put("message", getErrorMessage(ex));
+                    errorResult.put("analysisTime", analysisTime);
+                    errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
+
+                    return errorResult;
+                });
+
         } catch (Exception e) {
-            log.error("문서 분석 실패: {}", e.getMessage(), e);
-            return CompletableFuture.failedFuture(
-                new RuntimeException("문서 분석 실패: " + e.getMessage(), e)
-            );
+            long endTime = System.currentTimeMillis();
+            long analysisTime = endTime - startTime;
+
+            log.error("문서 분석 초기화 실패: {}", e.getMessage(), e);
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("error", true);
+            errorResult.put("message", getErrorMessage(e));
+            errorResult.put("analysisTime", analysisTime);
+            errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
+
+            return CompletableFuture.completedFuture(errorResult);
         }
     }
 
@@ -630,41 +679,7 @@ public class ChatService {
                     log.error("GitHub 레포지토리 단계별 분석 실패: {}/{}, 오류: {}",
                         githubId, repo, ex.getMessage(), ex);
 
-                    String errorMessage;
-                    String message = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
-
-                    if (message.contains("401")) {
-                        errorMessage = "API 키가 올바르지 않습니다. API 키를 확인해주세요.";
-                        log.error("분석 오류: API 키 또는 인증 오류");
-                    }
-                    else if (message.contains("403")) {
-                        errorMessage = "API 접근 권한이 없습니다. API 키 권한을 확인해주세요.";
-                        log.error("분석 오류: 접근 권한 오류");
-                    }
-                    else if (message.contains("404")) {
-                        errorMessage = "선택한 AI 모델을 찾을 수 없습니다. 모델 설정을 확인해주세요.";
-                        log.error("분석 오류: 모델 찾을 수 없음 오류");
-                    }
-                    else if (message.contains("429")) {
-                        errorMessage = "API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.";
-                        log.error("분석 오류: 사용량 제한 초과 오류");
-                    }
-                    else if (message.contains("413")) {
-                        errorMessage = "분석할 내용이 너무 큽니다. 더 작은 저장소로 시도해주세요.";
-                        log.error("분석 오류: 컨텍스트 길이 초과 오류");
-                    }
-                    else if (message.contains("500") ||
-                        message.contains("502") ||
-                        message.contains("503") ||
-                        message.contains("504")) {
-
-                        errorMessage = "AI 서비스 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-                        log.error("분석 오류: AI 서버 오류");
-                    }
-                    else {
-                        errorMessage = "분석 중 오류가 발생했습니다: " + ex.getMessage();
-                        log.error("분석 오류: 미분류 오류");
-                    }
+                    String errorMessage = getErrorMessage(ex);
 
                     // 오류 정보 저장
                     finalResult.put("error", true);
@@ -975,6 +990,29 @@ public class ChatService {
         return fullReport.toString();
     }
 
+    // 오류 메시지 생성
+    private String getErrorMessage(Throwable ex) {
+        String message = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+
+        if (message.contains("invalid_api_key") || message.contains("401")) {
+            return "API 키가 올바르지 않습니다.";
+        } else if (message.contains("rate_limit_error") || message.contains("429")) {
+            return "API 사용량 제한을 초과했습니다.";
+        } else if (message.contains("403")) {
+            return "API 접근 권한이 없습니다.";
+        } else if (message.contains("404")) {
+            return "선택한 AI 모델을 찾을 수 없습니다.";
+        } else if (message.contains("413")) {
+            return "분석할 문서가 너무 큽니다.";
+        } else if (message.contains("500") || message.contains("502") ||
+            message.contains("503") || message.contains("504")) {
+            return "AI 서비스 서버 오류가 발생했습니다.";
+        } else {
+            return "문서 분석 중 오류가 발생했습니다.";
+        }
+    }
+
+    // 단계별 통합
     private void appendSectionIfAvailable(StringBuilder report, Map<String, String> results, String key) {
         if (results.containsKey(key) && !results.get(key).isEmpty()) {
             report.append(results.get(key)).append("\n\n");

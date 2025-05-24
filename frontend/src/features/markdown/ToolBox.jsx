@@ -20,6 +20,7 @@ const ToolBox = ({
   memo,
   setMemo,
   setIsFold,
+  handleDocAnalyze,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -38,7 +39,7 @@ const ToolBox = ({
           icon={MdSpellcheck}
           label="맞춤법 검사"
           // disabled={false}
-          onClick={() => {}}
+          onClick={handleDocAnalyze}
         />
         <UtilityBtn
           icon={BsEmojiSmile}

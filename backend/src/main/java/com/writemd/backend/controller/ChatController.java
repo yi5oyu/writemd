@@ -160,6 +160,46 @@ public class ChatController {
             });
     }
 
+    // 문서 분석
+    @PostMapping("/document/{userId}/{apiId}")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> analyzeDocument(
+        @PathVariable Long userId,
+        @PathVariable Long apiId,
+        @RequestBody Map<String, Object> requestPayload) {
+
+        String content = (String) requestPayload.get("content");
+        String model = (String) requestPayload.get("model");
+
+        // 필수 파라미터 검증
+        if (content == null || content.trim().isEmpty()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "repo는 필수 값입니다.");
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
+        }
+
+        if (model == null || model.trim().isEmpty()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "model은 필수 값입니다.");
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
+        }
+
+        log.info("문서 분석 요청: userId={}, apiId={}, model={}, 내용 길이={}자",
+            userId, apiId, model, content.length());
+
+        // Service 메소드 호출 후 그대로 반환
+        return chatService.generateDocumentAnalysis(userId, apiId, model, content)
+            .thenApply(response -> {
+                if (Boolean.TRUE.equals(response.get("error"))) {
+                    log.error("문서 분석 실패: userId={}, 오류={}", userId, response.get("message"));
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                } else {
+                    log.info("문서 분석 완료: userId={}, 소요시간={}ms",
+                        userId, response.get("analysisTime"));
+                    return ResponseEntity.ok(response);
+                }
+            });
+    }
+
     @PostMapping("/analysis/{userId}/{apiId}")
     public Object analyzeRepository(
         @AuthenticationPrincipal(expression = "name") String principalName,

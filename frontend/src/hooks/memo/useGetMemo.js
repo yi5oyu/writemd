@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useToast } from '@chakra-ui/react'
 
 const useGetMemo = (userId) => {
   const [memo, setMemo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const toast = useToast()
 
   useEffect(() => {
     setLoading(true)
@@ -21,8 +23,28 @@ const useGetMemo = (userId) => {
         setMemo(data)
       })
       .catch((err) => {
-        setError(err)
-        setMemo(null)
+        if (
+          err.message?.includes('Failed to fetch') ||
+          err.message?.includes('Network Error') ||
+          err.message?.includes('net::ERR_FAILED')
+          // || err.message?.includes('302')
+        ) {
+          toast({
+            position: 'top',
+            title: '세션 만료',
+            description: `세션이 만료되었습니다.\n${err.toString()}`,
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+          })
+          sessionStorage.removeItem('user')
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 1000)
+        } else {
+          setError(err)
+          setMemo(null)
+        }
       })
       .finally(() => {
         setLoading(false)

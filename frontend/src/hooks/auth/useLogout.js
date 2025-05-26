@@ -21,6 +21,7 @@ const useLogout = () => {
         return response.json()
       })
       .then((data) => {
+        sessionStorage.removeItem('user')
         window.location.href = '/'
         return data
       })

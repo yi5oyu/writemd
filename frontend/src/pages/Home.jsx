@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react'
+import { Flex } from '@chakra-ui/react'
 import Screen from '../components/layout/Screen'
 import Sidebar from '../components/layout/Sidebar'
-import { Flex } from '@chakra-ui/react'
-import useAuth from '../hooks/auth/useAuth'
 
-const Home = () => {
-  const user = useAuth()
-
+const Home = ({ user }) => {
   const [currentScreen, setCurrentScreen] = useState('home')
   const [notes, setNotes] = useState([])
   const [isFold, setIsFold] = useState(true)
   const [screen, setScreen] = useState(true)
   const [selectedAI, setSelectedAI] = useState(``)
 
+  // 노트 초기화
   useEffect(() => {
     if (user && user.notes) {
       setNotes(user.notes)

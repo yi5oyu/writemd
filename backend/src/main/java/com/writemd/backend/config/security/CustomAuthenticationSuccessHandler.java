@@ -1,10 +1,13 @@
 package com.writemd.backend.config.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.service.GithubService;
+import com.writemd.backend.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -14,12 +17,13 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-    @Autowired
-    private GithubService githubService;
-    @Autowired
-    private OAuth2AuthorizedClientService authorizedClientService;
 
+//    private final GithubService githubService;
+//    private final  OAuth2AuthorizedClientService authorizedClientService;
+    private final UserService userService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -39,7 +43,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 //            System.out.println("OAuth2AuthorizedClient 값 없음 : " + principalName);
 //        }
 
-        response.sendRedirect("http://localhost:5173");
+        response.sendRedirect("http://localhost:5173/login-success");
     }
 
 }

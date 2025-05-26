@@ -9,7 +9,7 @@ const TemplateBody = ({
   isDisabled,
 }) => {
   return (
-    <Flex alignItems="flex-start">
+    <Flex alignItems="flex-start" pb="20px">
       <Icon as={FiFile} w="24px" h="24px" mr={3} color="blue.500" />
       <Box flex="1">
         <Input

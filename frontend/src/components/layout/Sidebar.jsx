@@ -34,7 +34,6 @@ import ErrorToast from '../ui/toast/ErrorToast'
 import HelperBox from '../../features/auth/HelperBox'
 
 const MotionBox = motion(Box)
-const MotionFlex = motion(Flex)
 
 const Sidebar = ({
   notes,
@@ -248,11 +247,11 @@ const Sidebar = ({
                             cursor="pointer"
                             borderRadius="md"
                             alignItems="center"
-                            color={currentScreen === 'newnote' ? 'blue.500' : 'gray.600'}
+                            color="gray.600"
                             _hover={{
                               bg: 'white',
                               boxShadow: 'md',
-                              color: currentScreen === 'newnote' ? 'blue.500' : 'black',
+                              color: 'black',
                             }}
                             onClick={(e) => {
                               e.stopPropagation()

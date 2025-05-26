@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react'
+import { useToast } from '@chakra-ui/react'
 import axios from 'axios'
 
 const useSendChatMessage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const toast = useToast()
 
   const sendChatMessage = useCallback(
     async ({ userId, sessionId, apiId, aiModel, questionText }) => {
@@ -32,39 +34,48 @@ const useSendChatMessage = () => {
           }
         })
         .catch((err) => {
-          const status = err.response.status
-          const responseData = err.response.data
-
-          let errorMessage = '알 수 없는 오류가 발생했습니다.'
-
-          const getErrorMessage = (data, defaultMsg) =>
-            typeof data === 'string' && data ? data : defaultMsg
-
-          if (status === 400) {
-            errorMessage = getErrorMessage(
-              responseData,
-              '잘못된 요청입니다. 입력값을 확인해주세요.'
-            )
-          } else if (status === 401) {
-            errorMessage = getErrorMessage(
-              responseData,
-              '인증되지 않은 요청입니다. 로그인이 필요할 수 있습니다.'
-            )
-          } else if (status === 403) {
-            errorMessage = getErrorMessage(responseData, '이 작업에 대한 권한이 없습니다.')
-          } else if (status === 404) {
-            errorMessage = getErrorMessage(responseData, '요청한 API 주소를 찾을 수 없습니다.')
-          } else if (status >= 500) {
-            errorMessage = getErrorMessage(
-              responseData,
-              `서버 내부 오류가 발생했습니다 (${status}). 잠시 후 다시 시도해주세요.`
-            )
-          } else if (err.request) {
-            errorMessage = '서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.'
+          if (
+            err.message?.includes('Failed to fetch') ||
+            err.message?.includes('Network Error') ||
+            err.message?.includes('net::ERR_FAILED')
+            // || err.message?.includes('302')
+          ) {
+            toast({
+              position: 'top',
+              title: '세션 만료',
+              description: `세션이 만료되었습니다.\n${err.toString()}`,
+              status: 'error',
+              duration: 5000,
+              isClosable: true,
+            })
+            sessionStorage.removeItem('user')
+            setTimeout(() => {
+              window.location.href = '/'
+            }, 1000)
           } else {
-            errorMessage = err.message || '요청 중 알 수 없는 오류가 발생했습니다.'
+            const status = err.response.status
+            const responseData = err.response.data
+
+            let errorMessage = '알 수 없는 오류가 발생했습니다.'
+
+            if (status === 401) {
+              errorMessage =
+                typeof responseData === 'string' && responseData
+                  ? responseData
+                  : 'API 키가 잘못되었거나 유효하지 않습니다. 키를 확인해주세요.'
+            } else if (status >= 500) {
+              errorMessage =
+                typeof responseData === 'string' && responseData
+                  ? responseData
+                  : `서버 내부 오류가 발생했습니다 (상태 코드: ${status}). 잠시 후 다시 시도해주세요.`
+            } else {
+              errorMessage =
+                typeof responseData === 'string' && responseData
+                  ? responseData
+                  : `클라이언트 오류가 발생했습니다 (상태 코드: ${status}).`
+            }
+            setError(errorMessage)
           }
-          setError(errorMessage)
           throw err
         })
         .finally(() => {

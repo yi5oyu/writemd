@@ -118,69 +118,101 @@ const SessionList = ({
 
   return (
     <>
-      <Flex
-        position="relative"
-        flexDirection="column"
-        filter={isChatLoading ? 'blur(4px)' : 'none'}
-        boxShadow="md"
-        borderRadius="sm"
-        bg="white"
-        overflowY="auto"
-      >
-        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
-          {/* 설정값 바뀌게 */}
-          <AiSelect
-            apiKeys={apiKeys}
-            availableModels={availableModels}
-            apiChange={(e) => setSelectedAI(e.target.value)}
-            modelChange={(e) => setModel(e.target.value)}
-            onClick={() => setIsSetting(!isSetting)}
-            selectedAI={selectedAI}
-            model={model}
-            icon="setting"
-          />
-        </Flex>
+      {!sessions || sessions.length === 0 ? (
         <Box
-          bg="white"
           boxShadow="md"
-          borderRadius="md"
-          w="100%"
+          borderRadius="sm"
+          bg="white"
+          p="4"
+          // isSetting
           h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         >
-          <SearchFlex
-            contents={sessions}
-            filteredAndSortedContents={filteredAndSortedSessions}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            isSetting={isSetting}
-            select={select}
-            name="채팅"
-          />
-
-          <Grid
-            templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
-            gap="3"
-            w="100%"
-            maxH="calc(100vh - 200px)"
-            overflowY="auto"
-            p="10px"
-          >
-            {filteredAndSortedSessions.map((session) => (
-              <SessionBox
-                key={session.sessionId}
-                sessionId={session.sessionId}
-                title={session.title}
-                handleChatLoad={handleChatLoad}
-                handleSessionId={handleSessionId}
-                handleDeleteSession={handleDelete}
-                error={isChatError}
-                loading={isChatLoading}
-                time={formatDate(session.updatedAt)}
-              />
-            ))}
-          </Grid>
+          현재 활성화된 세션이 없습니다.
         </Box>
-      </Flex>
+      ) : (
+        <Flex
+          position="relative"
+          flexDirection="column"
+          filter={isChatLoading ? 'blur(4px)' : 'none'}
+          boxShadow="md"
+          borderRadius="sm"
+          bg="white"
+          overflowY="hidden"
+        >
+          <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+            {/* 설정값 바뀌게 */}
+            <Select
+              size="sm"
+              mr="10px"
+              spacing={3}
+              onChange={(event) => setSelectedAI(event.target.value)}
+              value={selectedAI || ''}
+            >
+              {apiKeys && apiKeys.length > 0 ? (
+                apiKeys.map((apiKeyData) => (
+                  <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                    {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                  </option>
+                ))
+              ) : (
+                <option disabled>사용 가능한 API 키 없음</option>
+              )}
+            </Select>
+            <IconButton
+              bg="transparent"
+              aria-label="설정"
+              icon={<SettingsIcon />}
+              _hover={{ bg: 'transparent', color: 'blue.500' }}
+              onClick={() => setIsSetting(!isSetting)}
+            />
+          </Flex>
+          <Box
+            bg="white"
+            boxShadow="md"
+            borderRadius="md"
+            w="100%"
+            h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
+          >
+            <SearchFlex
+              contents={sessions}
+              filteredAndSortedContents={filteredAndSortedSessions}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              isSetting={isSetting}
+              select={select}
+              name="채팅"
+            />
+
+            <Grid
+              templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
+              gap="3"
+              w="100%"
+              maxH="calc(100vh - 200px)"
+              overflowY="auto"
+              p="10px"
+            >
+              {filteredAndSortedSessions.map((session) => (
+                <SessionBox
+                  key={session.sessionId}
+                  sessionId={session.sessionId}
+                  title={session.title}
+                  handleChatLoad={handleChatLoad}
+                  handleSessionId={handleSessionId}
+                  handleDeleteSession={handleDelete}
+                  error={isChatError}
+                  loading={isChatLoading}
+                  time={formatDate(session.updatedAt)}
+                />
+              ))}
+            </Grid>
+            {searchQuery.trim() !== '' && filteredAndSortedSessions.length === 0 && (
+              <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
+                "{searchQuery}"에 대한 검색 결과가 없습니다.
+              </Box>
+            )}
+          </Box>
+        </Flex>
+      )}
 
       <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={sessionTitle} />
 

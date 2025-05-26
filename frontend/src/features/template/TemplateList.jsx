@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Accordion,
   AccordionItem,
@@ -10,20 +10,15 @@ import {
   Flex,
   Box,
   Text,
-  Icon,
   Button,
-  CloseButton,
-  Card,
-  CardBody,
-  CardHeader,
   useDisclosure,
+  IconButton,
 } from '@chakra-ui/react'
-import { CreatableSelect } from 'chakra-react-select'
-import { FiFile, FiSave, FiEdit, FiCheck } from 'react-icons/fi'
-import { FaTrash, FaEraser } from 'react-icons/fa'
+import { FiEdit, FiCheck } from 'react-icons/fi'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
-import SearchBar from '../../components/ui/search/SearchBar'
 import CreateCard from '../../components/ui/card/CreateCard'
+import SearchFlex from '../../components/ui/search/SearchFlex'
+import { AddIcon, DeleteIcon } from '@chakra-ui/icons'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -46,6 +41,7 @@ const TemplateList = ({
   const [deleteFolder, setDeleteFolder] = useState(null)
   const [edit, setEdit] = useState('')
   const [editedTitles, setEditedTitles] = useState([])
+  const [baseTemplates, setBaseTemplates] = useState([])
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -53,6 +49,12 @@ const TemplateList = ({
   useEffect(() => {
     selectedTemplate && setName(selectedTemplate.title)
   }, [selectedTemplate])
+
+  // 템플릿 배열 통합
+  useEffect(() => {
+    setBaseTemplates(templates.map((t) => t.template).flat())
+    console.log(baseTemplates.length)
+  }, [templates])
 
   // 템플릿 저장
   const saveTemplateClick = () => {
@@ -90,16 +92,24 @@ const TemplateList = ({
     setOpenAccordions(results)
   }, [searchQuery])
 
-  // 검색 결과 필터링
+  // 검색 결과 개별 필터링
   const filterItems = (templates) => {
     if (!searchQuery.trim()) return templates
 
     return templates.filter(
-      (template) =>
-        template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (template) => template.title.toLowerCase().includes(searchQuery.toLowerCase())
+      // || template.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }
+
+  // 검색 결과 전체 필터링
+  const filteredTemplates = useMemo(() => {
+    const trimmedQuery = searchQuery ? searchQuery.toLowerCase().trim() : ''
+
+    return baseTemplates.filter(
+      (template) => template.title && template.title.toLowerCase().includes(trimmedQuery)
+    )
+  }, [templates, searchQuery])
 
   // 템플릿 선택
   const handleTemplateSelect = (folder, template) => {
@@ -170,40 +180,63 @@ const TemplateList = ({
   }
 
   return (
-    <Box>
+    <Box position="relative">
+      {/* 검색 */}
+      <SearchFlex
+        contents={baseTemplates}
+        filteredAndSortedContents={filteredTemplates}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        name="템플릿"
+        isSetting={false}
+      />
+
+      {/* 새 템플릿 */}
       {!isReadOnly && (isNewTemplate || selectedTemplate) && <CreateCard select={select} />}
 
       {!isReadOnly && !(isNewTemplate || selectedTemplate) && (
-        <Button
-          m="10px"
-          _hover={{ color: 'blue.500' }}
-          onClick={() => {
-            setIsNewTemplate(true)
-            setSelectedTemplate({
-              templateId: null,
-              title: '',
-              description: '',
-              folderName: '',
-              folderId: null,
-            })
-            setTemplateText('')
-          }}
-          title="새 템플릿 생성"
-        >
-          새 템플릿 생성
-        </Button>
+        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+          <IconButton
+            bg="transparent"
+            aria-label="새 템플릿 생성"
+            icon={<AddIcon />}
+            _hover={{ bg: 'transparent', color: 'blue.500' }}
+            onClick={() => {
+              setIsNewTemplate(true)
+              setSelectedTemplate({
+                templateId: null,
+                title: '',
+                description: '',
+                folderName: '',
+                folderId: null,
+              })
+              setTemplateText('')
+            }}
+          />
+        </Flex>
       )}
 
-      {/* 검색 */}
-      <SearchBar
-        placeholder="템플릿 검색..."
-        query={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onClick={() => setSearchQuery('')}
-      />
-
       {/* 목록 */}
-      <Box overflowY="auto" maxH={screen ? 'calc(100vh - 410px)' : 'calc(100vh - 350px)'}>
+      <Box
+        overflowY="auto"
+        h={
+          screen
+            ? !isReadOnly && (isNewTemplate || selectedTemplate)
+              ? 'calc(100vh - 480px)'
+              : 'calc(100vh - 300px)'
+            : !isReadOnly && (isNewTemplate || selectedTemplate)
+            ? 'calc(100vh - 435px)'
+            : 'calc(100vh - 255px)'
+        }
+      >
+        {/* 검색 결과가 없을 때 메시지 */}
+        {searchQuery.trim() !== '' &&
+          !templates.some((folder) => filterItems(folder.template).length > 0) && (
+            <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
+              "{searchQuery}"에 대한 검색 결과가 없습니다.
+            </Box>
+          )}
+
         <Accordion
           index={openAccordions}
           allowMultiple
@@ -303,12 +336,11 @@ const TemplateList = ({
                           title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
                           isDisabled={isDisabled}
                         />
-                        <Button
-                          p="2px"
-                          size="xs"
+                        <DeleteIcon
+                          boxSize="20px"
                           mx="10px"
+                          my="2px"
                           bg="transparent"
-                          as={FaTrash}
                           color="gray.500"
                           _hover={{ color: 'red.500' }}
                           onClick={(e) => {
@@ -370,15 +402,13 @@ const TemplateList = ({
                                 {template.description}
                               </Text>
                             </Box>
-                            <Button
+                            <DeleteIcon
                               position="absolute"
                               top="0"
                               right="0"
-                              p="2px"
-                              m="5px"
-                              size="xs"
+                              m="10px"
+                              boxSize="18px"
                               bg="transparent"
-                              as={FaTrash}
                               opacity={0}
                               color="gray.500"
                               _groupHover={{ opacity: 1 }}
@@ -406,13 +436,6 @@ const TemplateList = ({
             })}
         </Accordion>
       </Box>
-      {/* 검색 결과가 없을 때 메시지 */}
-      {searchQuery.trim() !== '' &&
-        !templates.some((folder) => filterItems(folder.template).length > 0) && (
-          <Box textAlign="center" mt={4} p={4} bg="gray.50" borderRadius="md" color="gray.500">
-            '{searchQuery}'에 대한 검색 결과가 없습니다.
-          </Box>
-        )}
 
       <DeleteBox
         isOpen={isOpen}

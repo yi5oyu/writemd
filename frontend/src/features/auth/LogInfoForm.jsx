@@ -32,7 +32,6 @@ import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
-import { useLogout } from '../../hooks/auth/useLogout'
 import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
 import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
 import useDeleteUser from '../../hooks/auth/useDeleteUser'

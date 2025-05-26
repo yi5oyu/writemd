@@ -24,11 +24,15 @@ const SearchFlex = ({
         borderColor="gray.200"
       >
         <Text ml="5px">내 {name}</Text>
-        {contents.length > 0 && (
+        {contents.length > 0 ? (
           <Text ml="5px" fontSize="14px" color="gray.500" pt="5px">
             {searchQuery
               ? `(검색된 ${name} ${filteredAndSortedContents.length}개)`
               : `(${name} ${contents.length}개)`}
+          </Text>
+        ) : (
+          <Text ml="5px" fontSize="14px" color="gray.500" pt="5px">
+            ({name} 0개)
           </Text>
         )}
       </Flex>

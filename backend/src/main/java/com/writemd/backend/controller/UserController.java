@@ -70,10 +70,11 @@ public class UserController {
 
     // API 키 저장
     @PostMapping("/key/{userId}")
-    public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @RequestBody APIDTO apidto){
+    public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @RequestBody APIDTO apidto) {
         try {
-            apiService.saveAPIKey(userId, apidto.getAiModel(), apidto.getApiKey());
-            return ResponseEntity.status(HttpStatus.CREATED).body("apikey 저장 성공");
+            APIDTO savedApiDTO = apiService.saveAPIKey(userId, apidto.getAiModel(), apidto.getApiKey());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedApiDTO);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 키 저장 중 오류가 발생했습니다.");
         }

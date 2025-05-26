@@ -2,41 +2,19 @@ import { useState } from 'react'
 import {
   Flex,
   Box,
-  Text,
   Slider,
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
   SliderMark,
   Input,
-  Select,
 } from '@chakra-ui/react'
-import { FiSave } from 'react-icons/fi'
 
-const APISettingBody = ({ apiKeys, setSettingId }) => {
+const AiSettingBody = () => {
   const [sliderValue, setSliderValue] = useState(50)
-
   return (
-    <Flex direction="column">
-      <Flex>
-        <Select
-          size="sm"
-          w="auto"
-          spacing={3}
-          mb="10px"
-          onChange={(event) => setSettingId(event.target.value)}
-        >
-          {apiKeys &&
-            apiKeys.length > 0 &&
-            apiKeys.map((apiKeyData) => (
-              <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-              </option>
-            ))}
-        </Select>
-      </Flex>
-      {/* 
-      <Flex>
+    <>
+      <Flex alignItems="center">
         <Box w="90px" fontWeight={600}>
           최대 토큰
         </Box>
@@ -71,9 +49,8 @@ const APISettingBody = ({ apiKeys, setSettingId }) => {
           <SliderThumb boxSize={6} />
         </Slider>
       </Flex>
-       */}
-    </Flex>
+    </>
   )
 }
 
-export default APISettingBody
+export default AiSettingBody

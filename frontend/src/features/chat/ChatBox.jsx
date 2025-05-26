@@ -8,6 +8,8 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const ChatBox = ({
   messages,
+  streamingContent,
+  chatHistory,
   messageLoading,
   screen,
   isChatLoading,
@@ -29,13 +31,16 @@ const ChatBox = ({
     }
   }, [isChatError, toast])
 
-  // 맨아래
+  // 렌더링할 전체 메시지 목록 생성 (과거 내역 + 현재 상호작용)
+  const combinedMessages = [...chatHistory, ...messages]
+
+  // 맨아래 스크롤
   useLayoutEffect(() => {
     if (scrollRef.current) {
       const scrollElement = scrollRef.current
       scrollElement.scrollTop = scrollElement.scrollHeight
     }
-  }, [messages])
+  }, [messages, streamingContent, chatHistory])
 
   return (
     <Flex
@@ -82,18 +87,42 @@ const ChatBox = ({
       pl="15px"
       pb="100px"
     >
-      {messages.length > 0 &&
-        messages.map((m, index) =>
-          m.role === 'user' ? (
-            <UserChatMessage key={index} content={m.content} lines={3} />
+      {chatHistory.length > 0 &&
+        chatHistory.map((m, index) => {
+          // key prop: 메시지에 고유 ID가 있다면 그것을 사용 (m.id), 없다면 임시방편으로 index 사용
+          const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}` // 더 나은 임시 key
+          return m.role === 'user' ? (
+            <UserChatMessage key={key} content={m.content} lines={3} />
           ) : (
-            <PreviewBox markdownText={m.content} chat={true} />
+            <PreviewBox
+              key={key}
+              // 스트리밍 여부는 currentMessages에만 해당될 수 있음
+              // m.streaming은 currentMessages 에서 온 경우에만 true일 것임
+              markdownText={m.content}
+              chat={true}
+            />
           )
-        )}
+        })}
 
-      {messageLoading && <ContentsSpinner />}
+      {messages.length > 0 &&
+        messages.map((m, index) => {
+          // key prop: 메시지에 고유 ID가 있다면 그것을 사용 (m.id), 없다면 임시방편으로 index 사용
+          const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}` // 더 나은 임시 key
+          return m.role === 'user' ? (
+            <UserChatMessage key={key} content={m.content} lines={3} />
+          ) : (
+            <PreviewBox
+              key={key}
+              // 스트리밍 여부는 currentMessages에만 해당될 수 있음
+              // m.streaming은 currentMessages 에서 온 경우에만 true일 것임
+              markdownText={m.streaming ? streamingContent : m.content}
+              chat={true}
+            />
+          )
+        })}
+      {/* {messageLoading && <ContentsSpinner />}
 
-      {isChatLoading && <LoadingSpinner />}
+      {isChatLoading && <LoadingSpinner />} */}
     </Flex>
   )
 }

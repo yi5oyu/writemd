@@ -21,6 +21,8 @@ const Screen = ({
   setIsFold,
   screen,
   setScreen,
+  selectedAI,
+  setSelectedAI,
 }) => {
   const { saveNote, loading: saveLoading, error: saveError } = useSaveNote()
   const {
@@ -134,6 +136,8 @@ const Screen = ({
           user={user}
           screen={screen}
           setScreen={setScreen}
+          selectedAI={selectedAI}
+          setSelectedAI={setSelectedAI}
         />
       )}
     </>

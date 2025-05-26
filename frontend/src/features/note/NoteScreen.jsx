@@ -27,7 +27,6 @@ import useNote from '../../hooks/note/useNote'
 import useChat from '../../hooks/chat/useChat'
 import useSendChatMessage from '../../hooks/chat/useSendChatMessage'
 import useSaveSession from '../../hooks/chat/useSaveSession'
-import useChatConnection from '../../hooks/chat/useChatConnection'
 import useDeleteSession from '../../hooks/chat/useDeleteSession'
 // template
 import useSaveTemplate from '../../hooks/template/useSaveTemplate'
@@ -50,6 +49,14 @@ import useSession from '../../hooks/chat/useSession'
 import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
 import useApiKey from '../../hooks/chat/useApiKey'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
+import useSseConnection from '../../hooks/chat/useSseConnection'
+import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
+import useDirectChat from '../../hooks/chat/useDirectChat'
+
+import modelData from '../../data/model.json'
+import useGithubStructure from '../../hooks/tool/useGithubStructure'
+import useGithubAnalysis from '../../hooks/tool/useGithubAnalysis'
+import useDocumentAnalysis from '../../hooks/tool/useDocumentAnalysis'
 
 const NoteScreen = ({
   user,
@@ -60,24 +67,31 @@ const NoteScreen = ({
   setIsFold,
   screen,
   setScreen,
+  selectedAI,
+  setSelectedAI,
 }) => {
   const [name, setName] = useState('')
   const [githubName, setGithubName] = useState('')
   const [templateName, setTemplateName] = useState('')
   const [memoName, setMemoName] = useState('')
+  const [reportName, setReportName] = useState('')
   const [markdownText, setMarkdownText] = useState('')
   const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
   const [githubText, setGithubText] = useState('')
   const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
+  const [reportText, setReportText] = useState('<!-- 보고서 -->')
 
   const [questionText, setQuestionText] = useState('')
   const [messages, setMessages] = useState([])
   const [boxForm, setBoxForm] = useState('preview')
-  const [isConnected, setIsConnected] = useState(true)
   const [sessionId, setSessionId] = useState('')
-  const [newChatLoading, setNewChatLoading] = useState(null)
   const [isSendMessaging, setIsSendMessaging] = useState(false)
   const [selectedScreen, setSelectedScreen] = useState('markdown')
+  const [model, setModel] = useState('')
+  const [availableModels, setAvailableModels] = useState([])
+  const [isWaitingForStream, setIsWaitingForStream] = useState(false)
+  const [analysisResults, setAnalysisResults] = useState(null)
+  const [stages, setStages] = useState({})
 
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
@@ -86,7 +100,32 @@ const NoteScreen = ({
 
   const { note, loading, error } = useNote(noteId)
 
+  // Tool
+  const {
+    getRepoStructure,
+    loading: structureLoading,
+    error: structureError,
+  } = useGithubStructure()
+  const {
+    analyzeRepository,
+    cancelAnalysis,
+    loading: analysisLoading,
+    error: analysisError,
+    streamData,
+    setProgressSteps,
+    progressSteps,
+    tokenUsage,
+  } = useGithubAnalysis()
+  const {
+    analyzeDocument,
+    loading: docLoading,
+    error: docError,
+    clearError,
+  } = useDocumentAnalysis()
+
   // 채팅
+  const { sendDirectChat, loading: sendDirectLoading, error: sendDirectError } = useDirectChat()
+
   const { saveApiKey, loading: saveAPILoading, error: saveAPIError } = useSaveApiKey()
   const { fetchApiKeys, apiKeys, loading: getAPILoading, error: getAPIError } = useApiKey()
   const { deleteApiKey, loading: delAPILoading, error: delAPIError } = useDeleteApiKey()
@@ -100,8 +139,21 @@ const NoteScreen = ({
   } = useSession({ noteId })
   const { saveSession, loading: saveSessionLoading, error: saveSessionError } = useSaveSession()
   const { deleteSession, loading: delSessionLoading, error: delSessionError } = useDeleteSession()
-  const { chat, loading: chatLoading, error: chatError, refetch } = useChat({ sessionId })
+  const {
+    chat: chatHistory,
+    loading: chatLoading,
+    error: chatError,
+    refetch,
+  } = useChat({ sessionId })
   const { sendChatMessage, loading: messageLoading, error: messageError } = useSendChatMessage()
+  const {
+    streamingContent,
+    status: sseStatus,
+    error: sseError,
+    isComplete: sseIsComplete,
+  } = useSseConnection(sessionId, isWaitingForStream)
+  const { stopStreaming, isStopping, stopError } = useSseStopConnection(sessionId)
+
   // const { chatConnection, loading: connectLoading, error: connectError } = useChatConnection()
   const isChatLoading = sessionLoading || saveSessionLoading || delSessionLoading || chatLoading // || connectLoading
   const isChatError = sessionError || saveSessionError || delSessionError || chatError // || connectError
@@ -116,8 +168,6 @@ const NoteScreen = ({
     chatError
     ? chatError.message
     : null
-
-  const [selectedAI, setSelectedAI] = useState(``)
 
   //
   const {
@@ -215,7 +265,7 @@ const NoteScreen = ({
     ? updateFolderError.message
     : null
 
-  const aiModel = 'exaone-3.5-7.8b-instruct'
+  // const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
 
   const toast = useToast()
@@ -300,33 +350,41 @@ const NoteScreen = ({
   const handleCreateSession = async (noteId, questionText) => {
     const content = questionText
     setQuestionText('')
-    // if (connectError || questionText === '' || sessionError || messageError) return
-
     let session = null
+    const tempAiMessageId = `ai-${Date.now()}`
+
+    setMessages((m) => [
+      ...m,
+      { role: 'user', content: content },
+      { role: 'assistant', content: '', streaming: true, id: tempAiMessageId },
+    ])
+    setBoxForm('chatBox')
+    setIsWaitingForStream(true)
 
     try {
-      setNewChatLoading(true)
       const maxLen = 30
       const title = content.length > maxLen ? content.slice(0, maxLen) : content
-
       session = await saveSession(noteId, title)
-
       setSessions((s) => [...s, session])
-      setMessages((m) => [...m, { role: 'user', content: content }])
       setSessionId(session.sessionId)
-      setBoxForm('chatBox')
 
       const response = await sendChatMessage({
         userId: user.userId,
         sessionId: session.sessionId,
         apiId: selectedAI,
-        aiModel: aiModel,
+        aiModel: model,
         questionText: content,
       })
-      // response.data.choices[0]?.message?.content (LMstuio)
-      let aiResponse = response.data || 'AI 응답없음'
-      setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
+
+      if (!response) {
+        setIsWaitingForStream(false)
+        setMessages((m) => m.filter((msg) => msg.id !== tempAiMessageId && msg.role !== 'user'))
+        setSessionId('')
+        setBoxForm('newChat')
+        throw new Error('메시지 전송 요청 실패 (서버 응답 확인 필요)')
+      }
     } catch (error) {
+      console.error('세션 생성 또는 메시지 전송 실패:', error)
       if (session && session.sessionId) {
         try {
           await deleteSession(session.sessionId)
@@ -335,10 +393,10 @@ const NoteScreen = ({
           console.error(`세션 삭제 중 추가 오류 발생 (ID: ${session.sessionId}):`, deleteError)
         }
       }
+      setMessages((m) => m.filter((msg) => msg.id !== tempAiMessageId && msg.role !== 'user'))
       setSessionId('')
       setBoxForm('newChat')
-    } finally {
-      setNewChatLoading(null)
+      setIsWaitingForStream(false)
     }
   }
 
@@ -348,37 +406,54 @@ const NoteScreen = ({
     setBoxForm('chatBox')
   }
 
-  // 채팅 내역 조회
-  useEffect(() => {
-    if (chatError) return
-
-    if (boxForm === 'chatBox' && Array.isArray(chat)) {
-      setMessages(chat)
-    }
-  }, [chat, boxForm])
-
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
     const content = questionText
     setQuestionText('')
 
-    setMessages((m) => [...m, { role: 'user', content: content }])
+    const userMessage = { role: 'user', content: content, id: `user-${Date.now()}` }
+    const aiPlaceholder = {
+      role: 'assistant',
+      content: '',
+      streaming: true,
+      id: `ai-${Date.now()}`,
+    }
+
+    setMessages([userMessage, aiPlaceholder])
+    setIsWaitingForStream(true)
+
     try {
       const response = await sendChatMessage({
         userId: user.userId,
         sessionId: sessionId,
         apiId: selectedAI,
-        aiModel: aiModel,
+        aiModel: model,
         questionText: content,
       })
-      // response.data.choices[0]?.message?.content
-      let aiResponse = response.data || 'AI 응답없음'
-      setMessages((m) => [...m, { role: 'assistant', content: aiResponse }])
-      refetch()
+      if (!response) {
+        setIsWaitingForStream(false)
+        setMessages([
+          userMessage,
+          { role: 'assistant', content: '메시지 전송 요청 실패 (서버 오류)' },
+        ])
+        throw new Error('메시지 전송 요청 실패 (서버 응답 확인 필요)')
+      }
     } catch (error) {
       console.log('메시지 보내기 실패: ' + error)
-      setMessages((m) => [...m, { role: 'assistant', content: '에러' }])
+      setMessages([userMessage, { role: 'assistant', content: '메시지 보내기 실패' }])
+      setIsWaitingForStream(false)
     }
+  }
+
+  //
+  const handleSendDirectChatMessage = async (content) => {
+    const response = await sendDirectChat({
+      userId: user.userId,
+      apiId: selectedAI,
+      model: model,
+      content: content,
+    })
+    console.log(response)
   }
 
   // loading 초기화
@@ -414,8 +489,23 @@ const NoteScreen = ({
         ? templateText
         : selectedScreen === 'memo'
         ? memoText
-        : selectedScreen === 'git' && githubText
+        : selectedScreen === 'git'
+        ? githubText
+        : selectedScreen === 'report' && reportText
     )
+  }
+
+  // 텍스트 지우기
+  const handleClearMarkdown = () => {
+    selectedScreen === 'markdown'
+      ? setMarkdownText('')
+      : selectedScreen === 'template'
+      ? setTemplateText('')
+      : selectedScreen === 'memo'
+      ? setMemoText('')
+      : selectedScreen === 'git'
+      ? setGithubText('')
+      : selectedScreen === 'report' && setReportText('')
   }
 
   // 파일 추출
@@ -428,7 +518,9 @@ const NoteScreen = ({
           ? templateText
           : selectedScreen === 'memo'
           ? memoText
-          : selectedScreen === 'git' && githubText,
+          : selectedScreen === 'git'
+          ? githubText
+          : selectedScreen === 'report' && reportText,
       ],
       { type: 'text/markdown;charset=utf-8' }
     )
@@ -590,7 +682,9 @@ const NoteScreen = ({
           ? templateText
           : selectedScreen === 'memo'
           ? memoText
-          : selectedScreen === 'git' && githubText,
+          : selectedScreen === 'git'
+          ? githubText
+          : selectedScreen === 'report' && reportText,
         memoId
       )
       if (memoId) {
@@ -646,16 +740,77 @@ const NoteScreen = ({
 
   // apikey 저장
   const handleSaveAPI = async (aiModel, apiKey) => {
-    if (apiKey.trim()) {
-      await saveApiKey(user.userId, aiModel, apiKey)
+    if (!apiKey.trim()) return
+
+    if (apiKeys.length >= 10) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message="API는 최대 10개까지 등록 가능합니다" />
+        ),
+      })
+      return
+    }
+
+    try {
+      const savedKey = await saveApiKey(user.userId, aiModel, apiKey)
+
       await fetchApiKeys(user.userId)
+
+      if (savedKey && savedKey.apiId) {
+        setSelectedAI(savedKey.apiId)
+
+        toast({
+          position: 'top',
+          title: 'API 키 저장 성공',
+          description: `새 API 키(${aiModel})가 저장되었습니다.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        })
+      }
+    } catch (error) {
+      console.error('API 키 저장 오류:', error)
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={`API 키 저장 오류: ${error.message}`} />
+        ),
+      })
     }
   }
 
   // api 삭제
   const handleDeleteAPI = async (apiId) => {
-    await deleteApiKey(apiId)
-    await fetchApiKeys(user.userId)
+    const isCurrentlySelected = selectedAI === apiId
+
+    try {
+      await deleteApiKey(apiId)
+      await fetchApiKeys(user.userId)
+
+      if (isCurrentlySelected) {
+        if (apiKeys && apiKeys.length > 0) {
+          const remainingKeys = apiKeys.filter((key) => String(key.apiId) !== String(apiId))
+          if (remainingKeys.length > 0) {
+            setSelectedAI(remainingKeys[0].apiId)
+          } else {
+            setSelectedAI(null)
+          }
+        } else {
+          setSelectedAI(null)
+        }
+      }
+    } catch (error) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={`API 키 삭제 오류: ${error.message}`} />
+        ),
+      })
+    }
   }
 
   // apiId(selectedAI) 초기화
@@ -671,6 +826,317 @@ const NoteScreen = ({
       fetchApiKeys(user.userId)
     }
   }, [user])
+
+  // API 키 변경 시 모델 목록 업데이트/선택
+  useEffect(() => {
+    if (selectedAI !== undefined && selectedAI !== null && apiKeys && apiKeys.length > 0) {
+      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+
+      if (selectedApiKey) {
+        const currentAiModelType = selectedApiKey.aiModel
+        const models = modelData[currentAiModelType]?.model || []
+
+        setAvailableModels(models)
+
+        if (models.length > 0 && (!model || !models.includes(model))) {
+          setModel(models[0])
+        }
+      } else {
+        setAvailableModels([])
+        setModel('')
+      }
+    } else {
+      setAvailableModels([])
+      setModel('')
+    }
+  }, [selectedAI, apiKeys, model])
+
+  // 모델 저장
+  useEffect(() => {
+    if (model) {
+      localStorage.setItem('selectedModel', model)
+    }
+  }, [model])
+
+  // 모델 로드
+  useEffect(() => {
+    const savedModel = localStorage.getItem('selectedModel')
+    if (savedModel) {
+      setModel(savedModel)
+    }
+  }, [])
+
+  // SSE 완료
+  useEffect(() => {
+    if (sseIsComplete) {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) => {
+          if (msg.streaming === true && msg.role === 'assistant') {
+            return { ...msg, content: streamingContent, streaming: false }
+          }
+          return msg
+        })
+      )
+      setIsWaitingForStream(false)
+      refetch()
+    }
+  }, [sseIsComplete, streamingContent])
+
+  // SSE 에러 처리
+  useEffect(() => {
+    if (sseError) {
+      setMessages((prevMessages) => {
+        const lastMsg = prevMessages[prevMessages.length - 1]
+        if (lastMsg?.role === 'assistant' && lastMsg?.streaming) {
+          return prevMessages.slice(0, -1)
+        }
+        return prevMessages
+      })
+      setIsWaitingForStream(false)
+      toast({
+        duration: 7000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={`[${sseError.type}] ${sseError.message}`} />
+        ),
+      })
+    }
+  }, [sseError, toast])
+
+  // SSE 중지
+  const handleTriggerStop = useCallback(async () => {
+    if (!sessionId || isStopping) return
+
+    try {
+      await stopStreaming()
+      setMessages((prevMessages) => {
+        const updatedMessages = prevMessages.map((msg) =>
+          msg.role === 'assistant' && msg.streaming ? { ...msg, streaming: false } : msg
+        )
+
+        const stopNotification = {
+          role: 'assistant',
+          content: '대답이 중지되었습니다.',
+          id: `assistant-stop-${Date.now()}`,
+        }
+
+        return [...updatedMessages, stopNotification]
+      })
+
+      setIsWaitingForStream(false)
+    } catch (error) {
+      console.error('SSE 중지 오류:', error)
+      setIsWaitingForStream(false)
+    }
+  }, [sessionId, stopStreaming, isStopping, setMessages, setIsWaitingForStream])
+
+  // Tool structure
+  const handleStructureSubmit = async () => {
+    await getRepoStructure({
+      userId: user.userId,
+      apiId: selectedAI,
+      model: model,
+      repo: 'writemd',
+      githubId: user.githubId,
+    })
+  }
+
+  // Tool repo 분석
+  const handleRepoAnalysisSubmit = async ({ githubRepo }) => {
+    setProgressSteps([])
+
+    if (!githubRepo || githubRepo.trim() === '') {
+      toast({
+        position: 'top',
+        title: '입력 오류',
+        description: 'GitHub 저장소를 입력해주세요.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      return
+    }
+
+    const parts = githubRepo.split('/')
+    if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
+      toast({
+        position: 'top',
+        title: '입력 오류',
+        description: 'GitHub ID와 Repository 이름을 올바르게 입력해주세요.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      return
+    }
+
+    const [githubId, repo] = githubRepo.split('/')
+
+    try {
+      setProgressSteps([
+        {
+          id: `step-${Date.now()}-0`,
+          text: `GitHub Repository 확인 중. 저장소: ${githubId}/${repo}`,
+          timestamp: new Date().toLocaleTimeString(),
+          isLatest: true,
+          status: 'info',
+        },
+      ])
+
+      const repoResponse = await fetch(`https://api.github.com/repos/${githubId}/${repo}`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+        },
+      })
+
+      if (!repoResponse.ok) {
+        toast({
+          position: 'top',
+          title: '저장소 확인 실패',
+          description: `저장소 확인 중 오류가 발생했습니다. (상태 코드: ${repoResponse.status})`,
+          status: 'error',
+          duration: 7000,
+          isClosable: true,
+        })
+        setProgressSteps((prev) => {
+          const newStep = {
+            id: `step-${Date.now()}-${prev.length}`,
+            text: `저장소 확인 실패: ${githubId}/${repo} (상태 코드: ${repoResponse.status})`,
+            timestamp: new Date().toLocaleTimeString(),
+            isLatest: true,
+            status: 'error',
+          }
+
+          const updatedPrev = prev.map((step) => ({
+            ...step,
+            isLatest: false,
+          }))
+
+          return [...updatedPrev, newStep]
+        })
+        return
+      }
+
+      setProgressSteps([
+        {
+          id: `step-${Date.now()}-1`,
+          text: `${githubId}/${repo} 저장소를 확인했습니다. 분석을 시작합니다.`,
+          timestamp: new Date().toLocaleTimeString(),
+          isLatest: true,
+          status: 'info',
+        },
+      ])
+
+      const result = await analyzeRepository({
+        userId: user.userId,
+        apiId: selectedAI,
+        model: model,
+        repo: repo,
+        githubId: githubId,
+        stream: true,
+        onStreamData: (data) => {
+          console.log('스트리밍 데이터 수신:', data)
+
+          // 이벤트 유형별 처리
+          if (data.stage && data.result) {
+            // 단계 결과 업데이트
+            setStages((prev) => ({
+              ...prev,
+              [data.stage]: data.result,
+            }))
+          }
+
+          // 토큰 대기 상태 처리
+          if (data.waitingForTokens) {
+            toast({
+              position: 'top',
+              title: '토큰 사용량 제한',
+              description: '토큰 사용량 제한에 도달했습니다. 잠시 후 자동으로 계속됩니다.',
+              status: 'info',
+              duration: 10000,
+              isClosable: true,
+            })
+          }
+
+          // 재시도 상태 처리
+          if (data.retrying) {
+            console.log(`API 요청 재시도 중... (${data.retryCount}/${data.maxRetries})`)
+          }
+        },
+      })
+
+      setAnalysisResults(result)
+      console.log('분석 완료:', result)
+
+      toast({
+        position: 'top',
+        title: '분석 완료',
+        description: `GitHub 저장소 분석이 완료되었습니다.`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (err) {
+      console.error('분석 오류')
+    }
+  }
+
+  // 분석 오류 메세지
+  useEffect(() => {
+    if (analysisError) {
+      toast({
+        position: 'top',
+        title: '분석 오류',
+        description: analysisError,
+        status: 'error',
+        duration: 7000,
+        isClosable: true,
+      })
+    }
+  }, [analysisError, toast])
+
+  // 문서 분석
+  const handleDocAnalyze = async () => {
+    const contentText =
+      selectedScreen === 'markdown'
+        ? markdownText
+        : selectedScreen === 'template'
+        ? templateText
+        : selectedScreen === 'memo'
+        ? memoText
+        : selectedScreen === 'git'
+        ? githubText
+        : selectedScreen === 'report' && reportText
+
+    if (!contentText.trim()) return
+    setSelectedScreen('report')
+
+    let result = '<!-- 보고서 작성 중 입니다... -->'
+    setReportText(result)
+
+    try {
+      clearError()
+
+      result = await analyzeDocument({
+        userId: user.userId,
+        apiId: selectedAI,
+        model: model,
+        content: contentText,
+      })
+
+      setReportText(
+        `<!-- 분석 시간: ${result.analysisTime}, 사용된 토큰 수: ${result.analysisTime} -->\n ${result.content}`
+      )
+    } catch (err) {
+      console.log('분석 실패:', err)
+    }
+  }
+
+  // 분석 오류 메세지
+  useEffect(() => {
+    setReportText(`<!-- ${docError} -->`)
+  }, [docError])
 
   return (
     <Box
@@ -708,7 +1174,9 @@ const NoteScreen = ({
                 ? templateName
                 : selectedScreen === 'memo'
                 ? memoName
-                : selectedScreen === 'git' && githubName
+                : selectedScreen === 'git'
+                ? githubName
+                : selectedScreen === 'report' && reportName
             }
             fontSize="20px"
             pl="5px"
@@ -722,7 +1190,9 @@ const NoteScreen = ({
                 ? '템플릿 이름을 입력해주세요.'
                 : selectedScreen === 'memo'
                 ? '메모 이름을 입력해주세요'
-                : selectedScreen === 'git' && '제목을 입력해주세요.'
+                : selectedScreen === 'git'
+                ? '제목을 입력해주세요.'
+                : selectedScreen === 'report' && '보고서'
             }
           />
           <Icon
@@ -738,18 +1208,18 @@ const NoteScreen = ({
           <Box flex="1" position="relative" w="50%">
             {screen && (
               <ToolBox
-                onClearText={() => setMarkdownText('')}
+                onClearText={handleClearMarkdown}
                 onCopyText={handleCopyMarkdown}
                 screen={screen}
                 onScreen={() => setScreen(!screen)}
                 onExport={exportMarkdown}
-                isConnected={isConnected}
                 tool={tool}
                 setTool={setTool}
                 memo={memo}
                 setMemo={setMemo}
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
+                handleDocAnalyze={handleDocAnalyze}
               />
             )}
             <MarkdownInputBox
@@ -760,7 +1230,9 @@ const NoteScreen = ({
                   ? templateText
                   : selectedScreen === 'memo'
                   ? memoText
-                  : selectedScreen === 'git' && githubText
+                  : selectedScreen === 'git'
+                  ? githubText
+                  : selectedScreen === 'report' && reportText
               }
               setMarkdownText={
                 selectedScreen === 'markdown'
@@ -769,7 +1241,9 @@ const NoteScreen = ({
                   ? setTemplateText
                   : selectedScreen === 'memo'
                   ? setMemoText
-                  : selectedScreen === 'git' && setGithubText
+                  : selectedScreen === 'git'
+                  ? setGithubText
+                  : selectedScreen === 'report' && setReportText
               }
               selectedScreen={selectedScreen}
               item={item}
@@ -792,7 +1266,9 @@ const NoteScreen = ({
                     ? templateText
                     : selectedScreen === 'memo'
                     ? memoText
-                    : selectedScreen === 'git' && githubText
+                    : selectedScreen === 'git'
+                    ? githubText
+                    : selectedScreen === 'report' && reportText
                 }
                 selectedScreen={selectedScreen}
                 setSelectedScreen={setSelectedScreen}
@@ -810,9 +1286,7 @@ const NoteScreen = ({
             {screen && (
               <UtilityBox
                 setBoxForm={setBoxForm}
-                // handleCheckConnection={handleCheckConnection}
                 boxForm={boxForm}
-                isConnected={isConnected}
                 handleGitLoad={handleGitLoad}
                 handleGetTemplates={handleGetTemplates}
                 setSelectedScreen={setSelectedScreen}
@@ -831,7 +1305,9 @@ const NoteScreen = ({
                     ? templateText
                     : selectedScreen === 'memo'
                     ? memoText
-                    : selectedScreen === 'git' && githubText
+                    : selectedScreen === 'git'
+                    ? githubText
+                    : selectedScreen === 'report' && reportText
                 }
                 screen={screen}
               />
@@ -853,6 +1329,9 @@ const NoteScreen = ({
                 setSelectedAI={setSelectedAI}
                 selectedAI={selectedAI}
                 screen={screen}
+                model={model}
+                setModel={setModel}
+                availableModels={availableModels}
               />
             )}
 
@@ -874,6 +1353,9 @@ const NoteScreen = ({
                 selectedAI={selectedAI}
                 setSelectedAI={setSelectedAI}
                 messageError={messageError}
+                model={model}
+                setModel={setModel}
+                availableModels={availableModels}
               />
             )}
 
@@ -881,6 +1363,8 @@ const NoteScreen = ({
               <>
                 <ChatBox
                   messages={messages}
+                  chatHistory={chatHistory || []}
+                  streamingContent={streamingContent}
                   messageLoading={messageLoading}
                   isChatLoading={isChatLoading}
                   isChatError={isChatError}
@@ -906,6 +1390,12 @@ const NoteScreen = ({
                       apiKeys={apiKeys}
                       selectedAI={selectedAI}
                       setSelectedAI={setSelectedAI}
+                      model={model}
+                      setModel={setModel}
+                      isStreamingActive={isWaitingForStream}
+                      handleStopStreaming={handleTriggerStop}
+                      isStoppingSse={isStopping}
+                      availableModels={availableModels}
                     />
                   </Box>
                 </Flex>
@@ -935,6 +1425,18 @@ const NoteScreen = ({
                 setGithubText={setGithubText}
                 data={gitRepoData}
                 githubId={user.githubId}
+                apiKeys={apiKeys}
+                availableModels={availableModels}
+                setSelectedAI={setSelectedAI}
+                setModel={setModel}
+                selectedAI={selectedAI}
+                model={model}
+                analysisLoading={analysisLoading}
+                analysisResults={analysisResults}
+                progressSteps={progressSteps}
+                tokenUsage={tokenUsage}
+                stages={stages}
+                handleRepoAnalysisSubmit={handleRepoAnalysisSubmit}
                 screen={screen}
                 handleGetClick={handleGetClick}
                 handleNewFileClick={handleNewFileClick}

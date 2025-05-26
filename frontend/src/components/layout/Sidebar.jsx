@@ -13,7 +13,6 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  PopoverArrow,
   PopoverBody,
   Portal,
 } from '@chakra-ui/react'
@@ -24,6 +23,7 @@ import { TbBookOff, TbBook } from 'react-icons/tb'
 import { IoMdClose, IoMdCreate } from 'react-icons/io'
 import { PiNoteLight } from 'react-icons/pi'
 import { RiToolsFill } from 'react-icons/ri'
+
 import SideMenuIcon from '../ui/icon/SideMenuIcon'
 import SideBtn from '../ui/button/SideBtn'
 import LoginForm from '../../features/auth/LoginForm'
@@ -46,12 +46,15 @@ const Sidebar = ({
   setIsFold,
   screen,
   setScreen,
+  selectedAI,
+  setSelectedAI,
 }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
   const [showNotes, setShowNotes] = useState(false)
 
   const { deleteNote, loading, error } = useDeleteNote()
+
   const { isOpen: isOpenLogin, onOpen: onOpenLogin, onClose: onCloseLogin } = useDisclosure()
   const { isOpen: isOpenLogInfo, onOpen: onOpenLogInfo, onClose: onCloseLogInfo } = useDisclosure()
   const { isOpen: isHelpOpen, onOpen: onHelpOpen, onClose: onHelpClose } = useDisclosure()
@@ -123,7 +126,13 @@ const Sidebar = ({
     <>
       {/* 로그인 Form */}
       {user ? (
-        <LogInfoForm isOpen={isOpenLogInfo} onClose={onCloseLogInfo} user={user} />
+        <LogInfoForm
+          isOpen={isOpenLogInfo}
+          onClose={onCloseLogInfo}
+          user={user}
+          selectedAI={selectedAI}
+          setSelectedAI={setSelectedAI}
+        />
       ) : (
         <LoginForm isOpen={isOpenLogin} onClose={onCloseLogin} />
       )}

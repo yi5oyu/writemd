@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Button,
   Box,
@@ -29,17 +29,25 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
+
 import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
-
 import { useLogout } from '../../hooks/auth/useLogout'
 import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
 import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
 import useDeleteUser from '../../hooks/auth/useDeleteUser'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import useLogout from '../../hooks/auth/useLogout'
+import useApiKey from '../../hooks/chat/useApiKey'
+import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
+import APIInputGroup from '../../components/ui/input/APIInputGroup'
+import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 
-const LogInfoForm = ({ isOpen, onClose, user }) => {
+const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const [confirm, setConfirm] = useState('')
+  const [api, setApi] = useState('')
+  const [aiModel, setAiModel] = useState('openai')
+  const [apiKey, setApiKey] = useState('')
 
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
@@ -51,6 +59,9 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
     isClosable: true,
   })
 
+  const { fetchApiKeys, apiKeys, loading: apiLoading, error: apiError } = useApiKey()
+  const { saveApiKey, loading: saveApiLoading, error: saveApiError } = useSaveApiKey()
+  const { deleteApiKey, loading: delApiLoading, error: delApiError } = useDeleteApiKey()
   const { logout, isLoading, error } = useLogout()
   const {
     deleteAllUserSessions,
@@ -126,8 +137,46 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
   }
 
   const confirmDeleteAPI = () => {
-    // handleDeleteNote(noteId)
     onDelAPIClose()
+    handleDeleteAPI(selectedAI)
+  }
+
+  // apiKeys 초기화
+  useEffect(() => {
+    if (isOpen && user && user.userId) {
+      fetchApiKeys(user.userId)
+    }
+  }, [isOpen, user, fetchApiKeys])
+
+  // apiId(selectedAI) 초기화
+  useEffect(() => {
+    if (apiKeys && apiKeys.length > 0 && !selectedAI) {
+      setSelectedAI(apiKeys[0].apiId)
+      setApi(`${apiKeys[0].aiModel}(${apiKeys[0].apiKey})`)
+    }
+  }, [apiKeys])
+
+  // api 초기화
+  useEffect(() => {
+    if (selectedAI && apiKeys && apiKeys.length > 0) {
+      const selectedApiKeyData = apiKeys.find((keyData) => keyData.apiId.toString() === selectedAI)
+      selectedApiKeyData && setApi(`${selectedApiKeyData.aiModel}(${selectedApiKeyData.apiKey})`)
+    }
+  }, [selectedAI, apiKeys])
+
+  // apikey 저장
+  const handleSaveAPI = async (aiModel, apiKey) => {
+    if (apiKey.trim()) {
+      await saveApiKey(user.userId, aiModel, apiKey)
+      await fetchApiKeys(user.userId)
+    }
+  }
+
+  // api 삭제
+  const handleDeleteAPI = async (apiId) => {
+    await deleteApiKey(apiId)
+    await fetchApiKeys(user.userId)
+    setSelectedAI('')
   }
 
   return (
@@ -285,7 +334,7 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                   </Heading>
                   <Box ml="10px">
                     <Badge mb="5px" variant="outline" colorScheme="green">
-                      Openai(sk-sd*******asdasd)
+                      {api ? api : '선택된 AI 없음'}
                     </Badge>
                   </Box>
                   <Tooltip label="API 삭제" placement="top" hasArrow>
@@ -307,25 +356,35 @@ const LogInfoForm = ({ isOpen, onClose, user }) => {
                 </Flex>
 
                 <Flex direction="column">
-                  <Select w="fit-content" variant="filled" size="sm" mb="10px">
-                    <option value="option1">Openai(sk-sd*******asdasd)</option>
-                    <option value="option2">Option 2</option>
-                    <option value="option3">Option 3</option>
+                  <Select
+                    w="fit-content"
+                    variant="filled"
+                    size="sm"
+                    mb="10px"
+                    spacing={3}
+                    onChange={(event) => setSelectedAI(event.target.value)}
+                    value={selectedAI || ''}
+                  >
+                    {apiKeys && apiKeys.length > 0 ? (
+                      apiKeys.map((apiKeyData) => (
+                        <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                          {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>사용 가능한 API 키 없음</option>
+                    )}
                   </Select>
-                  <InputGroup size="sm">
-                    <InputLeftAddon>API 등록</InputLeftAddon>
-                    <Input placeholder="API를 입력해주세요" pr="25px" />
-                    <Tooltip label="API 등록" placement="top" hasArrow>
-                      <InputRightElement>
-                        <CheckIcon
-                          color="gray.500"
-                          cursor="pointer"
-                          _hover={{ color: 'blue.500' }}
-                          opacity={isLoadingSpin ? 0.5 : 1}
-                        />
-                      </InputRightElement>
-                    </Tooltip>
-                  </InputGroup>
+
+                  <APIInputGroup
+                    onChangeSelect={(event) => setAiModel(event.target.value)}
+                    onChangeInput={(event) => setApiKey(event.target.value)}
+                    onClick={() => {
+                      handleSaveAPI(aiModel, apiKey)
+                      setApiKey('')
+                    }}
+                    apiKey={apiKey}
+                  />
                 </Flex>
 
                 <Divider borderWidth="2px" my="15px" />

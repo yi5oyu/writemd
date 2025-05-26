@@ -31,7 +31,7 @@ public class APIService {
 
     // API 키 저장
     @Transactional
-    public APIs saveAPIKey(Long userId, String aiModel ,String apikey) {
+    public APIDTO saveAPIKey(Long userId, String aiModel, String apikey) {
         Users users = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User 찾을 수 없음"));
 
@@ -46,6 +46,14 @@ public class APIService {
         String hashKey = getUserHashKey(userId);
         String fieldKey = "key:" + api.getId();
 
+        String maskedApiKey = maskApiKey(apikey);
+        APIDTO apiDTO = APIDTO.builder()
+            .apiId(api.getId())
+            .aiModel(aiModel)
+            .apiKey(maskedApiKey)
+            .build();
+
+        // Redis 저장
         redisTemplate.opsForHash().put(hashKey, fieldKey,
             APIDTO.builder()
                 .apiId(api.getId())
@@ -53,10 +61,9 @@ public class APIService {
                 .apiKey(apikey)
                 .build()
         );
-
         redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
 
-        return api;
+        return apiDTO;
     }
 
     // API 키 조회

@@ -32,7 +32,14 @@ const GitInfoBox = ({ isDisabled, selectedFile, repoBranches, githubId }) => {
         <CardHeader pb="0">
           <Flex direction="column">
             <Heading size="md" mb="5px">
-              <Link variant="underline" color="blue.500" href={repoUrl}>
+              <Link
+                variant="underline"
+                color="blue.500"
+                href={repoUrl}
+                isExternal={true}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {selectedFile?.repo}
               </Link>
             </Heading>

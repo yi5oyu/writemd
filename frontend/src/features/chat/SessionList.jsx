@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Flex, Grid, IconButton, Select, useDisclosure, useToast } from '@chakra-ui/react'
+import { Box, Flex, Grid, useDisclosure, useToast } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { SettingsIcon } from '@chakra-ui/icons'
 import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
 import DeleteBox from '../../components/ui/modal/DeleteBox'
+import modelData from '../../data/model.json'
+import AiSelect from '../../components/ui/select/AiSelect'
 
 const SessionList = ({
   sessions,
@@ -23,6 +24,9 @@ const SessionList = ({
   setSelectedAI,
   selectedAI,
   apiKeys,
+  model,
+  setModel,
+  availableModels,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionTitle, setSessionTitle] = useState('')
@@ -104,100 +108,79 @@ const SessionList = ({
     handleSaveAPI: handleSaveAPI,
     handleDeleteAPI: handleDeleteAPI,
     apiKeys: apiKeys,
+    setModel: setModel,
+    availableModels: availableModels,
+    model: model,
+    selectedAI: selectedAI,
+    setSelectedAI: setSelectedAI,
+    modelData: modelData,
   }
 
   return (
     <>
-      {!sessions || sessions.length === 0 ? (
+      <Flex
+        position="relative"
+        flexDirection="column"
+        filter={isChatLoading ? 'blur(4px)' : 'none'}
+        boxShadow="md"
+        borderRadius="sm"
+        bg="white"
+        overflowY="auto"
+      >
+        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+          {/* 설정값 바뀌게 */}
+          <AiSelect
+            apiKeys={apiKeys}
+            availableModels={availableModels}
+            apiChange={(e) => setSelectedAI(e.target.value)}
+            modelChange={(e) => setModel(e.target.value)}
+            onClick={() => setIsSetting(!isSetting)}
+            selectedAI={selectedAI}
+            model={model}
+            icon="setting"
+          />
+        </Flex>
         <Box
-          boxShadow="md"
-          borderRadius="sm"
           bg="white"
-          p="4"
-          // isSetting
+          boxShadow="md"
+          borderRadius="md"
+          w="100%"
           h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         >
-          현재 활성화된 세션이 없습니다.
-        </Box>
-      ) : (
-        <Flex
-          position="relative"
-          flexDirection="column"
-          filter={isChatLoading ? 'blur(4px)' : 'none'}
-          boxShadow="md"
-          borderRadius="sm"
-          bg="white"
-          overflowY="auto"
-        >
-          <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
-            {/* 설정값 바뀌게 */}
-            <Select
-              size="sm"
-              mr="10px"
-              spacing={3}
-              onChange={(event) => setSelectedAI(event.target.value)}
-              value={selectedAI || ''}
-            >
-              {apiKeys && apiKeys.length > 0 ? (
-                apiKeys.map((apiKeyData) => (
-                  <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                    {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-                  </option>
-                ))
-              ) : (
-                <option disabled>사용 가능한 API 키 없음</option>
-              )}
-            </Select>
-            <IconButton
-              bg="transparent"
-              aria-label="설정"
-              icon={<SettingsIcon />}
-              _hover={{ bg: 'transparent', color: 'blue.500' }}
-              onClick={() => setIsSetting(!isSetting)}
-            />
-          </Flex>
-          <Box
-            bg="white"
-            boxShadow="md"
-            borderRadius="md"
-            w="100%"
-            h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
-          >
-            <SearchFlex
-              contents={sessions}
-              filteredAndSortedContents={filteredAndSortedSessions}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              isSetting={isSetting}
-              select={select}
-              name="채팅"
-            />
+          <SearchFlex
+            contents={sessions}
+            filteredAndSortedContents={filteredAndSortedSessions}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            isSetting={isSetting}
+            select={select}
+            name="채팅"
+          />
 
-            <Grid
-              templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
-              gap="3"
-              w="100%"
-              maxH="calc(100vh - 200px)"
-              overflowY="auto"
-              p="10px"
-            >
-              {filteredAndSortedSessions.map((session) => (
-                <SessionBox
-                  key={session.sessionId}
-                  sessionId={session.sessionId}
-                  title={session.title}
-                  handleChatLoad={handleChatLoad}
-                  handleSessionId={handleSessionId}
-                  handleDeleteSession={handleDelete}
-                  error={isChatError}
-                  loading={isChatLoading}
-                  time={formatDate(session.updatedAt)}
-                />
-              ))}
-            </Grid>
-          </Box>
-        </Flex>
-      )}
+          <Grid
+            templateColumns="repeat(auto-fit, minmax(min(200px, 100%), 1fr))"
+            gap="3"
+            w="100%"
+            maxH="calc(100vh - 200px)"
+            overflowY="auto"
+            p="10px"
+          >
+            {filteredAndSortedSessions.map((session) => (
+              <SessionBox
+                key={session.sessionId}
+                sessionId={session.sessionId}
+                title={session.title}
+                handleChatLoad={handleChatLoad}
+                handleSessionId={handleSessionId}
+                handleDeleteSession={handleDelete}
+                error={isChatError}
+                loading={isChatLoading}
+                time={formatDate(session.updatedAt)}
+              />
+            ))}
+          </Grid>
+        </Box>
+      </Flex>
 
       <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={sessionTitle} />
 

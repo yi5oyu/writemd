@@ -6,7 +6,11 @@ import MarkdownInputBox from '../markdown/InputBox'
 import MarkdownPreview from '../markdown/PreviewBox'
 
 const TemplatePage = ({ showMarkdown, showPreview }) => {
-  const [templateText, setTemplateText] = useState('')
+  const content = Contents.find((folder) => folder.folderId === 1)?.template.find(
+    (template) => template.templateId === 1
+  )?.content
+
+  const [templateText, setTemplateText] = useState(content)
   const [name, setName] = useState('')
 
   return (

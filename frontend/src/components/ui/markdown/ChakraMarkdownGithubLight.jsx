@@ -251,7 +251,7 @@ const ChakraMarkdownGithubLight = {
   code: (props) => (
     <Code
       display="inline"
-      fontSize="sm"
+      fontSize="0.875em"
       borderRadius="md"
       p="2.5px 4.5px"
       whiteSpace="pre-wrap"

@@ -14,57 +14,44 @@ const TemplatePage = ({ showMarkdown, showPreview }) => {
   const [name, setName] = useState('')
 
   return (
-    <Flex gap="4" h="full" flex="1">
-      {showMarkdown && showPreview ? (
-        <>
-          <Box
-            w={showMarkdown && showPreview ? '50%' : '100%'}
-            direction="column"
-            display={showMarkdown ? 'block' : 'none'}
-          >
-            <MarkdownInputBox
-              markdownText={templateText}
-              setMarkdownText={setTemplateText}
-              mode={'simple'}
-            />
-          </Box>
-          <Box
-            w={showMarkdown && showPreview ? '50%' : '100%'}
-            direction="column"
-            display={showPreview ? 'block' : 'none'}
-          >
-            <MarkdownPreview markdownText={templateText} mode={'simple'} />
-          </Box>
-        </>
-      ) : (
-        <>
-          {showMarkdown ? (
-            <Box flex="2" bg="white" borderRadius="md">
+    <Flex direction="column" gap="3" h="full">
+      <Box bg="white" borderRadius="md" h="25vh" overflowY="auto">
+        <TemplateList
+          templates={Contents}
+          isReadOnly={true}
+          setTemplateText={setTemplateText}
+          setName={setName}
+        />
+      </Box>
+
+      <Flex gap="4" flex="1" minH="0">
+        {showMarkdown && showPreview ? (
+          <>
+            <Box w="50%" bg="white" borderRadius="md">
               <MarkdownInputBox
                 markdownText={templateText}
                 setMarkdownText={setTemplateText}
                 mode={'simple'}
               />
             </Box>
-          ) : (
-            <Box flex="2" bg="white" borderRadius="md">
-              <MarkdownPreview
-                markdownText={templateText}
-                setMarkdownText={setTemplateText}
-                mode={'simple'}
-              />
+            <Box w="50%" bg="white" borderRadius="md">
+              <MarkdownPreview markdownText={templateText} mode={'simple'} />
             </Box>
-          )}
-          <Box flex="1" bg="white" borderRadius="md">
-            <TemplateList
-              templates={Contents}
-              isReadOnly={true}
-              setTemplateText={setTemplateText}
-              setName={setName}
+          </>
+        ) : showMarkdown ? (
+          <Box w="100%" bg="white" borderRadius="md">
+            <MarkdownInputBox
+              markdownText={templateText}
+              setMarkdownText={setTemplateText}
+              mode={'simple'}
             />
           </Box>
-        </>
-      )}
+        ) : (
+          <Box w="100%" bg="white" borderRadius="md">
+            <MarkdownPreview markdownText={templateText} mode={'simple'} />
+          </Box>
+        )}
+      </Flex>
     </Flex>
   )
 }

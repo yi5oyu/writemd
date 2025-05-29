@@ -283,7 +283,6 @@ const ChakraMarkdownGithubLight = {
           isCallout = true
           title = match[2]?.trim()
           content = match.input.replace(match[0], '').trim()
-          console.log(content)
         }
       }
     }
@@ -424,7 +423,22 @@ const ChakraMarkdownGithubLight = {
   ),
 
   // 이미지 렌더링
-  img: (props) => <Image src={props.src} alt={props.alt} maxW="100%" display="inline" {...props} />,
+  img: (props) => {
+    const handleError = (e) => {
+      e.target.style.display = 'none'
+    }
+
+    return (
+      <Image
+        src={props.src}
+        alt={props.alt}
+        maxW="100%"
+        display="inline"
+        onError={handleError}
+        {...props}
+      />
+    )
+  },
 }
 
 export default ChakraMarkdownGithubLight

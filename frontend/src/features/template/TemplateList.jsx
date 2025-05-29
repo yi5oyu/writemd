@@ -295,63 +295,64 @@ const TemplateList = ({
                         }
                         maxLength={35}
                       />
-
-                      <Box
-                        position="absolute"
-                        top="10px"
-                        right="35px"
-                        mt="3px"
-                        opacity={0}
-                        _groupHover={{ opacity: 1 }}
-                        transition="opacity 0.2s ease-in-out"
-                        display={
-                          (searchQuery.trim() !== '' && !hasResults) || isReadOnly
-                            ? 'none'
-                            : 'inline-block'
-                        }
-                      >
-                        <Button
-                          p="2px"
-                          size="xs"
-                          bg="transparent"
-                          color="gray.500"
-                          as={edit === folder.folderId ? FiCheck : FiEdit}
-                          _hover={{ color: 'blue.500' }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            edit === folder.folderId
-                              ? (handleUpdateFolderName(
-                                  folder.folderId,
-                                  editedTitles[folder.folderId] || folder.title,
-                                  folder.title
-                                ),
-                                setEdit(''))
-                              : (setEdit(folder.folderId),
-                                setEditedTitles((t) => ({
-                                  ...t,
-                                  [folder.folderId]: folder.title,
-                                })))
-                          }}
-                          readOnly={edit !== folder.folderId}
-                          title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
-                          isDisabled={isDisabled}
-                        />
-                        <DeleteIcon
-                          boxSize="20px"
-                          mx="10px"
-                          my="2px"
-                          bg="transparent"
-                          color="gray.500"
-                          _hover={{ color: 'red.500' }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteFolder(folder.folderId)
-                            onOpen()
-                          }}
-                          title="폴더 삭제"
-                          isDisabled={isDisabled}
-                        />
-                      </Box>
+                      {!isReadOnly && (
+                        <Box
+                          position="absolute"
+                          top="10px"
+                          right="35px"
+                          mt="3px"
+                          opacity={0}
+                          _groupHover={{ opacity: 1 }}
+                          transition="opacity 0.2s ease-in-out"
+                          display={
+                            (searchQuery.trim() !== '' && !hasResults) || isReadOnly
+                              ? 'none'
+                              : 'inline-block'
+                          }
+                        >
+                          <Button
+                            p="2px"
+                            size="xs"
+                            bg="transparent"
+                            color="gray.500"
+                            as={edit === folder.folderId ? FiCheck : FiEdit}
+                            _hover={{ color: 'blue.500' }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              edit === folder.folderId
+                                ? (handleUpdateFolderName(
+                                    folder.folderId,
+                                    editedTitles[folder.folderId] || folder.title,
+                                    folder.title
+                                  ),
+                                  setEdit(''))
+                                : (setEdit(folder.folderId),
+                                  setEditedTitles((t) => ({
+                                    ...t,
+                                    [folder.folderId]: folder.title,
+                                  })))
+                            }}
+                            readOnly={edit !== folder.folderId}
+                            title={edit === folder.folderId ? '폴더이름 저장' : '폴더이름 편집'}
+                            isDisabled={isDisabled}
+                          />
+                          <DeleteIcon
+                            boxSize="20px"
+                            mx="10px"
+                            my="2px"
+                            bg="transparent"
+                            color="gray.500"
+                            _hover={{ color: 'red.500' }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteFolder(folder.folderId)
+                              onOpen()
+                            }}
+                            title="폴더 삭제"
+                            isDisabled={isDisabled}
+                          />
+                        </Box>
+                      )}
                       <AccordionIcon />
                     </AccordionButton>
                   </h2>
@@ -402,26 +403,28 @@ const TemplateList = ({
                                 {template.description}
                               </Text>
                             </Box>
-                            <DeleteIcon
-                              position="absolute"
-                              top="0"
-                              right="0"
-                              m="10px"
-                              boxSize="18px"
-                              bg="transparent"
-                              opacity={0}
-                              color="gray.500"
-                              _groupHover={{ opacity: 1 }}
-                              transition="opacity 0.2s ease-in-out"
-                              _hover={{ color: 'red.500', bg: 'gray.100' }}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setDeleteTemplate(template.templateId)
-                                onOpen()
-                              }}
-                              title="템플릿 삭제"
-                              isDisabled={isDisabled}
-                            />
+                            {!isReadOnly && (
+                              <DeleteIcon
+                                position="absolute"
+                                top="0"
+                                right="0"
+                                m="10px"
+                                boxSize="18px"
+                                bg="transparent"
+                                opacity={0}
+                                color="gray.500"
+                                _groupHover={{ opacity: 1 }}
+                                transition="opacity 0.2s ease-in-out"
+                                _hover={{ color: 'red.500', bg: 'gray.100' }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setDeleteTemplate(template.templateId)
+                                  onOpen()
+                                }}
+                                title="템플릿 삭제"
+                                isDisabled={isDisabled}
+                              />
+                            )}
                           </Flex>
                         ))}
                       </Grid>

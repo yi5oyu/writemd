@@ -27,9 +27,29 @@ import MarkdownPreview from '../markdown/PreviewBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 
 const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
+  const newNoteText = `# 문서 제목
+
+> 문서에 대한 간단한 설명이나 인용구
+
+## 목차
+
+- [개요](#개요)
+- [주요 특징](#주요-특징)
+
+## 개요
+
+이 문서는 [문서의 목적과 범위를 간단히 설명]합니다.
+
+### 주요 특징
+
+- 특징 1
+- 특징 2
+- 특징 3
+`
+
   const { getTemplates, loading, error, templates } = useTemplate()
-  const [title, setTitle] = useState('writeMD')
-  const [text, setText] = useState('<!-- 입력해주세요. -->')
+  const [title, setTitle] = useState('새 노트 이름')
+  const [text, setText] = useState(newNoteText)
   const [searchQuery, setSearchQuery] = useState('')
   const [openAccordions, setOpenAccordions] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
@@ -125,7 +145,7 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
         resize="none"
         isDisabled={isLoading || loading}
       />
-      <Flex position="absolute" top="10px" right="15px">
+      <Flex position="absolute" top="5px" right="5px">
         <Button
           isLoading={isLoading || loading}
           variant="outline"
@@ -293,6 +313,7 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
                   )}
               </TabPanel>
 
+              {/* 참고자료 */}
               <TabPanel></TabPanel>
             </TabPanels>
           </Tabs>

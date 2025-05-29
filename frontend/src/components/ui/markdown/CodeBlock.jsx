@@ -74,7 +74,6 @@ const CodeBlock = ({ children, ...props }) => {
   }
 
   useEffect(() => {
-    console.log(language)
     if (language !== 'mermaid') return
 
     const codeStr = String(codeText).trim()

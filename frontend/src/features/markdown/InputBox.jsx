@@ -156,6 +156,8 @@ const InputBox = ({
         return '메모'
       case 'git':
         return '깃허브'
+      case 'report':
+        return '분석'
       default:
         return screen
     }
@@ -182,7 +184,9 @@ const InputBox = ({
             ? 'blue'
             : selectedScreen === 'memo'
             ? 'yellow'
-            : selectedScreen === 'git' && 'gray'
+            : selectedScreen === 'git'
+            ? 'gray'
+            : selectedScreen === 'report' && 'red'
         }
         variant="solid"
         fontSize="xs"

@@ -180,7 +180,9 @@ const MemoBox = ({
                   ? 'blue'
                   : selectedScreen === 'memo'
                   ? 'yellow'
-                  : selectedScreen === 'git' && 'gray'
+                  : selectedScreen === 'git'
+                  ? 'gray'
+                  : selectedScreen === 'report' && 'red'
               }
               variant="solid"
               fontSize="xs"

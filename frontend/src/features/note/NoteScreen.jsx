@@ -1135,7 +1135,7 @@ const NoteScreen = ({
 
   // 분석 오류 메세지
   useEffect(() => {
-    setReportText(`<!-- ${docError} -->`)
+    if (docError) setReportText(`<!-- ${docError} -->`)
   }, [docError])
 
   return (

@@ -89,32 +89,22 @@ const ChatBox = ({
     >
       {chatHistory.length > 0 &&
         chatHistory.map((m, index) => {
-          // key prop: 메시지에 고유 ID가 있다면 그것을 사용 (m.id), 없다면 임시방편으로 index 사용
-          const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}` // 더 나은 임시 key
+          const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}`
           return m.role === 'user' ? (
             <UserChatMessage key={key} content={m.content} lines={3} />
           ) : (
-            <PreviewBox
-              key={key}
-              // 스트리밍 여부는 currentMessages에만 해당될 수 있음
-              // m.streaming은 currentMessages 에서 온 경우에만 true일 것임
-              markdownText={m.content}
-              chat={true}
-            />
+            <PreviewBox key={key} markdownText={m.content} chat={true} />
           )
         })}
 
       {messages.length > 0 &&
         messages.map((m, index) => {
-          // key prop: 메시지에 고유 ID가 있다면 그것을 사용 (m.id), 없다면 임시방편으로 index 사용
-          const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}` // 더 나은 임시 key
+          const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}`
           return m.role === 'user' ? (
             <UserChatMessage key={key} content={m.content} lines={3} />
           ) : (
             <PreviewBox
               key={key}
-              // 스트리밍 여부는 currentMessages에만 해당될 수 있음
-              // m.streaming은 currentMessages 에서 온 경우에만 true일 것임
               markdownText={m.streaming ? streamingContent : m.content}
               chat={true}
             />

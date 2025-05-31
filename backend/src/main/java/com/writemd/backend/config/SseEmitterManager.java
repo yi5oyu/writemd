@@ -92,7 +92,22 @@ public class SseEmitterManager {
         SseEmitter emitter = emitters.get(sessionId);
         if (emitter != null) {
             try {
-                emitter.send(event().name(eventName).data(data));
+                Object processedData = data;
+                if ("message".equals(eventName) && data instanceof String) {
+                    String stringData = (String) data;
+
+                    try {
+                        processedData = java.util.Base64.getEncoder()
+                            .encodeToString(stringData.getBytes("UTF-8"));
+                        log.debug("메시지 Base64 인코딩: 원본 길이 {}, 인코딩 후 길이 {}",
+                            stringData.length(), ((String)processedData).length());
+                    } catch (Exception e) {
+                        log.warn("Base64 인코딩 실패, 원본 데이터 사용: {}", e.getMessage());
+                        processedData = stringData;
+                    }
+                }
+
+                emitter.send(event().name(eventName).data(processedData));
                 log.debug("이벤트 전송 성공 {}, {}", eventName, sessionId);
             } catch (IOException | IllegalStateException e) {
                 log.warn("이벤트 전송 실패 {}, {}, {}. Emitter 제거 시도.",

@@ -353,8 +353,7 @@ const NoteScreen = ({
     let session = null
     const tempAiMessageId = `ai-${Date.now()}`
 
-    setMessages((m) => [
-      ...m,
+    setMessages([
       { role: 'user', content: content },
       { role: 'assistant', content: '', streaming: true, id: tempAiMessageId },
     ])
@@ -402,6 +401,7 @@ const NoteScreen = ({
 
   // 세션ID 변경
   const handleSessionId = (sessionId) => {
+    setMessages([])
     setSessionId(sessionId)
     setBoxForm('chatBox')
   }
@@ -878,7 +878,13 @@ const NoteScreen = ({
         })
       )
       setIsWaitingForStream(false)
-      refetch()
+
+      // setTimeout(() => {
+      //   refetch().then(() => {
+      //     // chatHistory에 저장된 후 임시 messages 제거
+      //     setMessages([])
+      //   })
+      // }, 500)
     }
   }, [sseIsComplete, streamingContent])
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react'
-import { Flex, useToast } from '@chakra-ui/react'
+import { Box, Flex, useToast } from '@chakra-ui/react'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 import PreviewBox from '../markdown/PreviewBox'
@@ -84,6 +84,7 @@ const ChatBox = ({
       }}
       h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
       filter={isChatLoading ? 'blur(4px)' : 'none'}
+      pt="10px"
       pl="15px"
       pb="100px"
     >
@@ -93,7 +94,9 @@ const ChatBox = ({
           return m.role === 'user' ? (
             <UserChatMessage key={key} content={m.content} lines={3} />
           ) : (
-            <PreviewBox key={key} markdownText={m.content} chat={true} />
+            <Box pl="15px">
+              <PreviewBox key={key} markdownText={m.content} chat={true} />
+            </Box>
           )
         })}
 
@@ -103,11 +106,13 @@ const ChatBox = ({
           return m.role === 'user' ? (
             <UserChatMessage key={key} content={m.content} lines={3} />
           ) : (
-            <PreviewBox
-              key={key}
-              markdownText={m.streaming ? streamingContent : m.content}
-              chat={true}
-            />
+            <Box pl="15px">
+              <PreviewBox
+                key={key}
+                markdownText={m.streaming ? streamingContent : m.content}
+                chat={true}
+              />
+            </Box>
           )
         })}
       {/* {messageLoading && <ContentsSpinner />}

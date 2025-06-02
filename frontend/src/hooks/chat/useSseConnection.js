@@ -45,15 +45,15 @@ const useSseConnection = (sessionId, enabled = false) => {
 
       // 메시지 업데이트
       es.addEventListener('message', (event) => {
-        if (receivedData) {
-          let decodedData = receivedData
+        if (event.data) {
+          let decodedData = event.data
 
           try {
-            const decoded = atob(receivedData)
+            const decoded = atob(event.data)
             decodedData = decodeURIComponent(escape(decoded))
           } catch (error) {
             console.warn('Base64 디코딩 실패, 원본 사용:', error)
-            decodedData = receivedData
+            decodedData = event.data
           }
 
           setStreamingContent((prevContent) => prevContent + decodedData)

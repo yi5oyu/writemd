@@ -86,6 +86,7 @@ const ChatBox = ({
       filter={isChatLoading ? 'blur(4px)' : 'none'}
       pt="10px"
       pl="15px"
+      pr="5px"
       pb="100px"
     >
       {chatHistory.length > 0 &&
@@ -115,9 +116,9 @@ const ChatBox = ({
             </Box>
           )
         })}
-      {/* {messageLoading && <ContentsSpinner />}
+      {/* {messageLoading && <ContentsSpinner />} */}
 
-      {isChatLoading && <LoadingSpinner />} */}
+      {isChatLoading && <LoadingSpinner />}
     </Flex>
   )
 }

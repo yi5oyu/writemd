@@ -44,14 +44,19 @@ public class ChatController {
     public ResponseEntity<String> chat(@PathVariable Long userId, @PathVariable Long sessionId,
             @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
         String content = (String) requestPayload.get("content");
+        String processedContent = (String) requestPayload.get("processedContent");
         String model = (String) requestPayload.get("model");
 
         if (content == null || content.isBlank()) {
             return ResponseEntity.badRequest().body("content 없음");
         }
+        // processedContent가 없으면 원본 content 사용
+        if (processedContent == null || processedContent.isBlank()) {
+            processedContent = content;
+        }
 
         try {
-            chatService.chat(sessionId, userId, apiId, model, content, false);
+            chatService.chat(sessionId, userId, apiId, model, content, processedContent, false);
             return ResponseEntity.accepted().body("채팅 시작. SSE 연결 중...");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

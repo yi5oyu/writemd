@@ -152,17 +152,70 @@ public class ChatService {
     private List<Message> chatHistory(Long sessionId, String content) {
         List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
         List<Message> messages = new ArrayList<>();
-        for (Chats chat : chatHistory) {
+
+        // 최근 메시지 개수 제한 및 토큰 관리
+        int maxHistoryCount = 5;
+        int totalTokens = 0;
+        int maxTokens = 3000;
+
+        // 최근 메시지부터 역순으로 처리
+        List<Chats> recentHistory = chatHistory.size() > maxHistoryCount ?
+            chatHistory.subList(chatHistory.size() - maxHistoryCount, chatHistory.size()) :
+            chatHistory;
+
+        for (Chats chat : recentHistory) {
             String role = chat.getRole().toLowerCase();
             String contents = chat.getContent();
-            if ("user".equals(role)) {
-                messages.add(new UserMessage(contents));
-            } else if ("assistant".equals(role) || "ai".equals(role)) {
-                messages.add(new AssistantMessage(contents));
+
+            // 이전 채팅 내용 압축
+            String compressedContents = compressHistoryText(contents);
+
+            // 토큰 수 체크 (대략 4글자 = 1토큰)
+            int estimatedTokens = compressedContents.length() / 4;
+            if (totalTokens + estimatedTokens > maxTokens) {
+                break;
             }
+
+            if ("user".equals(role)) {
+                messages.add(new UserMessage(compressedContents));
+            } else if ("assistant".equals(role) || "ai".equals(role)) {
+                messages.add(new AssistantMessage(compressedContents));
+            }
+
+            totalTokens += estimatedTokens;
         }
+
         messages.add(new UserMessage(content));
+
         return messages;
+    }
+
+    // 채팅 압축
+    private String compressHistoryText(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return text;
+        }
+
+        String compressed = text
+            // 연속 공백을 하나로
+            .replaceAll("[ \\t]+", " ")
+            // 연속 줄바꿈 제한
+            .replaceAll("\\n{3,}", "\\n\\n")
+            // 줄바꿈 앞뒤 공백 제거
+            .replaceAll("[ \\t]*\\n[ \\t]*", "\\n")
+            // 문장부호 앞 공백 제거
+            .replaceAll("\\s+([,.!?;:])", "$1")
+            // 문장부호 뒤 공백 정리
+            .replaceAll("([,.!?;:])\\s+", "$1 ")
+            // 괄호 안쪽 공백 제거
+            .replaceAll("\\(\\s+", "(")
+            .replaceAll("\\s+\\)", ")")
+            // 따옴표 안쪽 공백 정리
+            .replaceAll("\"\\s+", "\"")
+            .replaceAll("\\s+\"", "\"")
+            .trim();
+
+        return compressed;
     }
 
     // 채팅 저장
@@ -206,7 +259,7 @@ public class ChatService {
     }
 
     @Async
-    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, boolean enableTools) {
+    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, String processedContent, boolean enableTools) {
         log.info("STEP 1: 채팅 처리 시작 (sessionId: {}, userId: {}, apiId: {}, model: {})", sessionId, userId, apiId, model);
 
         Disposable disposable = null;
@@ -223,7 +276,7 @@ public class ChatService {
 
             // 채팅 내역 조회
             log.info("STEP 4: 채팅 내역 조회 시작 (sessionId: {})", sessionId);
-            List<Message> messages = chatHistory(sessionId, content);
+            List<Message> messages = chatHistory(sessionId, processedContent);
             log.info("STEP 4: 채팅 내역 조회 완료 (메시지 수: {})", messages.size());
 
             // 일반 호출 시도 (문제점 파악용)

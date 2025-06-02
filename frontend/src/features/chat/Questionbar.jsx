@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { Box, Textarea, Icon, Flex, Select, Spacer } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
 import { BsStopCircleFill } from 'react-icons/bs'
@@ -77,7 +77,11 @@ const Questionbar = ({
           textareaRef.current.style.height = '24px'
         }
 
-        await handleSendChatMessage(textToSend)
+        if (newChat) {
+          await handleCreateSession(noteId, textToSend)
+        } else {
+          await handleSendChatMessage(textToSend)
+        }
       } catch (error) {
         console.error(error)
       }
@@ -145,7 +149,44 @@ const Questionbar = ({
         }}
       />
 
-      {!isTextFlow && !newChat ? (
+      {newChat ? (
+        <Flex justify="space-between" mt="2">
+          <Spacer />
+          <AiQusetionSelect
+            apiChange={(e) => setSelectedAI(e.target.value)}
+            selectedAI={selectedAI}
+            apiKeys={apiKeys}
+            modelChange={(e) => setModel(e.target.value)}
+            model={model}
+            availableModels={availableModels}
+          />
+          <Icon
+            as={ArrowForwardIcon}
+            borderRadius="2xl"
+            bg="gray.100"
+            color="gray.400"
+            boxSize="8"
+            cursor={!active && !isSessionCreating && !isSendMessaging ? 'pointer' : 'default'}
+            onClick={() => {
+              if (!active && !isSessionCreating && !isSendMessaging) {
+                setIsSessionCreating(true)
+                handleCreateSession(noteId, questionText).finally(() => {
+                  setIsSessionCreating(false)
+                })
+              }
+            }}
+            _hover={
+              !active && !isSessionCreating && !isSendMessaging
+                ? {
+                    color: 'blue.400',
+                    bg: 'gray.200',
+                  }
+                : {}
+            }
+          />
+        </Flex>
+      ) : !isTextFlow ? (
+        // 기존 세션 + 짧은 텍스트
         <>
           <Box position="absolute" right="3" top="50%" transform="translateY(-50%)">
             <Icon
@@ -222,7 +263,8 @@ const Questionbar = ({
             </Select>
           </Flex>
         </>
-      ) : isTextFlow ? (
+      ) : (
+        // 기존 세션 + 긴 텍스트
         <Flex justify="space-between" mt="2">
           <Spacer />
           <AiQusetionSelect
@@ -250,42 +292,6 @@ const Questionbar = ({
             }}
             _hover={
               !active && !isSendMessaging
-                ? {
-                    color: 'blue.400',
-                    bg: 'gray.200',
-                  }
-                : {}
-            }
-          />
-        </Flex>
-      ) : (
-        <Flex justify="space-between" mt="2">
-          <Spacer />
-          <AiQusetionSelect
-            apiChange={(e) => setSelectedAI(e.target.value)}
-            selectedAI={selectedAI}
-            apiKeys={apiKeys}
-            modelChange={(e) => setModel(e.target.value)}
-            model={model}
-            availableModels={availableModels}
-          />
-          <Icon
-            as={ArrowForwardIcon}
-            borderRadius="2xl"
-            bg="gray.100"
-            color="gray.400"
-            boxSize="8"
-            cursor={!active && !isSessionCreating && !isSendMessaging ? 'pointer' : 'default'}
-            onClick={() => {
-              if (!active && !isSessionCreating && !isSendMessaging) {
-                setIsSessionCreating(true)
-                handleCreateSession(noteId, questionText).finally(() => {
-                  setIsSessionCreating(false)
-                })
-              }
-            }}
-            _hover={
-              !active && !isSessionCreating && !isSendMessaging
                 ? {
                     color: 'blue.400',
                     bg: 'gray.200',

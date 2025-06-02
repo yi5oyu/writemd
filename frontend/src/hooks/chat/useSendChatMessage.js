@@ -9,7 +9,7 @@ const useSendChatMessage = () => {
   const toast = useToast()
 
   const sendChatMessage = useCallback(
-    ({ userId, sessionId, apiId, aiModel, questionText }) => {
+    ({ userId, sessionId, apiId, aiModel, questionText, processedContent }) => {
       if (!questionText.trim()) return Promise.resolve()
       setLoading(true)
       setError(null)
@@ -19,6 +19,7 @@ const useSendChatMessage = () => {
           {
             model: aiModel,
             content: questionText,
+            processedContent: processedContent,
           },
           {
             headers: { 'Content-Type': 'application/json' },

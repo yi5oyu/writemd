@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
 import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill } from 'react-icons/pi'
+import { safeTextCompression } from '../../utils/textCompression'
 
 // UI
 import MarkdownInputBox from '../markdown/InputBox'
@@ -348,6 +349,7 @@ const NoteScreen = ({
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
+    const processedContent = safeTextCompression(questionText)
     const content = questionText
     setQuestionText('')
     let session = null
@@ -373,6 +375,7 @@ const NoteScreen = ({
         apiId: selectedAI,
         aiModel: model,
         questionText: content,
+        processedContent: processedContent,
       })
 
       if (!response) {
@@ -408,6 +411,7 @@ const NoteScreen = ({
 
   // 새 메시지 보내기
   const handleSendChatMessage = async (questionText) => {
+    const processedContent = safeTextCompression(questionText)
     const content = questionText
     setQuestionText('')
 
@@ -429,6 +433,7 @@ const NoteScreen = ({
         apiId: selectedAI,
         aiModel: model,
         questionText: content,
+        processedContent: processedContent,
       })
       if (!response) {
         setIsWaitingForStream(false)

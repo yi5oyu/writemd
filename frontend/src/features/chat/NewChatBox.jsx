@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Flex, useToast } from '@chakra-ui/react'
+import { Box, Flex, Text, useToast } from '@chakra-ui/react'
 import Questionbar from './Questionbar'
 import ExamBox from './ExamBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
@@ -46,13 +46,42 @@ const NewChatBox = ({
     <>
       <Flex
         flexDirection="column"
-        bg="white"
+        bg="transparent"
+        bgGradient="linear(135deg, blue.50 0%, purple.50 25%, pink.50 50%, orange.50 75%, yellow.50 100%)"
         boxShadow="md"
         borderRadius="sm"
         h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
         filter={isChatLoading || isSendMessaging ? 'blur(4px)' : 'none'}
+        position="relative"
       >
-        <Flex flex="1" alignItems="center" justifyContent="center" flexDirection="column" mx="auto">
+        {/* 웰컴 텍스트 - Questionbar 위에 위치 */}
+        <Box
+          position="absolute"
+          top="50%"
+          left="50%"
+          transform="translate(-50%, -200px)" // 더 위로 올림 (120px -> 200px)
+          textAlign="center"
+          zIndex="1"
+        >
+          <Text fontSize="2xl" fontWeight="bold" color="gray.700" mb="2">
+            ✨ AI 채팅
+          </Text>
+          <Text fontSize="md" color="gray.600" lineHeight="1.6">
+            API 키를 등록하여 AI와 대화를 시작하세요
+          </Text>
+        </Box>
+
+        {/* 질문창을 정중앙에 고정 */}
+        <Flex
+          position="absolute"
+          top="50%"
+          left="50%"
+          transform="translate(-50%, -50%)"
+          w="100%"
+          maxW="800px"
+          px="4"
+          zIndex="2"
+        >
           <Questionbar
             newChat={true}
             questionText={questionText}

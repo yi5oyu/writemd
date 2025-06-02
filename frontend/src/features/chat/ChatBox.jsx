@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react'
-import { Box, Flex, useToast } from '@chakra-ui/react'
+import { Box, Flex, Icon, Text, useToast } from '@chakra-ui/react'
+import { PiChatCircleFill } from 'react-icons/pi'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
 import PreviewBox from '../markdown/PreviewBox'
@@ -89,6 +90,30 @@ const ChatBox = ({
       pr="5px"
       pb="100px"
     >
+      {chatHistory.length === 0 && messages.length === 0 && !isChatLoading && (
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          h="100%"
+          color="gray.400"
+          textAlign="center"
+          gap="3"
+        >
+          <Icon as={PiChatCircleFill} boxSize="60px" />
+          <Box>
+            <Text fontSize="lg" fontWeight="semibold" mb="1">
+              대화를 시작해보세요
+            </Text>
+            <Text fontSize="sm">
+              아래 입력창에 메시지를 입력하여
+              <br />
+              AI와 대화를 시작할 수 있습니다.
+            </Text>
+          </Box>
+        </Flex>
+      )}
+
       {chatHistory.length > 0 &&
         chatHistory.map((m, index) => {
           const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}`

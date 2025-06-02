@@ -47,7 +47,7 @@ public class MemoController {
     // 메모 삭제
     @DeleteMapping("/{memoId}")
     public ResponseEntity<Void> deleteMemo(@PathVariable Long memoId) {
-         memoService.deleteMemo(memoId);
+        memoService.deleteMemo(memoId);
         return ResponseEntity.noContent().build();
     }
 }

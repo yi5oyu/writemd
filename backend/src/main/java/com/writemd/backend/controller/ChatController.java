@@ -9,6 +9,7 @@ import io.netty.handler.timeout.TimeoutException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -22,8 +23,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
@@ -42,7 +49,7 @@ public class ChatController {
     // 채팅 시작
     @PostMapping("/{userId}/{sessionId}/{apiId}")
     public ResponseEntity<String> chat(@PathVariable Long userId, @PathVariable Long sessionId,
-            @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
+        @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
         String content = (String) requestPayload.get("content");
         String processedContent = (String) requestPayload.get("processedContent");
         String model = (String) requestPayload.get("model");
@@ -59,26 +66,23 @@ public class ChatController {
             chatService.chat(sessionId, userId, apiId, model, content, processedContent, false);
             return ResponseEntity.accepted().body("채팅 시작. SSE 연결 중...");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("채팅 시작 실패: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("채팅 시작 실패: " + e.getMessage());
         }
     }
 
     // 채팅
     @PostMapping("/direct/{userId}/{apiId}")
-    public CompletableFuture<ResponseEntity<String>> directChat(@PathVariable Long userId,
-            @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
+    public CompletableFuture<ResponseEntity<String>> directChat(@PathVariable Long userId, @PathVariable Long apiId,
+        @RequestBody Map<String, Object> requestPayload) {
 
         String content = (String) requestPayload.get("content");
         String model = (String) requestPayload.get("model");
 
         if (content == null || content.isBlank()) {
-            return CompletableFuture
-                    .completedFuture(ResponseEntity.badRequest().body("내용이 비어있습니다"));
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body("내용이 비어있습니다"));
         }
 
-        log.info("Simple Chat 요청: userId={}, apiId={}, model={}, enableTools={}", userId, apiId,
-                model, true);
+        log.info("Simple Chat 요청: userId={}, apiId={}, model={}, enableTools={}", userId, apiId, model, true);
 
         return chatService.directChat(userId, apiId, model, content, true).thenApply(response -> {
             log.info("Simple Chat 응답 완료: userId={}", userId);
@@ -94,8 +98,8 @@ public class ChatController {
             String errorMessage = "처리 중 오류가 발생했습니다: " + cause.getMessage();
 
             // API 키 오류나 인증 오류 확인
-            if (cause.getMessage() != null && (cause.getMessage().contains("invalid_api_key")
-                    || cause.getMessage().contains("401"))) {
+            if (cause.getMessage() != null && (cause.getMessage().contains("invalid_api_key") || cause.getMessage()
+                .contains("401"))) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("잘못된 API 키가 제공되었습니다");
             }
 
@@ -106,9 +110,8 @@ public class ChatController {
     // 레포지토리 구조
     @PostMapping("/structure/{userId}/{apiId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> getRepoStructure(
-            @AuthenticationPrincipal(expression = "name") String principalName,
-            @PathVariable Long userId, @PathVariable Long apiId,
-            @RequestBody Map<String, Object> requestPayload) {
+        @AuthenticationPrincipal(expression = "name") String principalName, @PathVariable Long userId,
+        @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
 
         String repo = (String) requestPayload.get("repo");
         String model = (String) requestPayload.get("model");
@@ -119,47 +122,42 @@ public class ChatController {
         if (repo == null || repo.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "repo는 필수 값입니다.");
-            return CompletableFuture
-                    .completedFuture(ResponseEntity.badRequest().body(errorResponse));
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
         }
 
         if (model == null || model.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "model은 필수 값입니다.");
-            return CompletableFuture
-                    .completedFuture(ResponseEntity.badRequest().body(errorResponse));
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
         }
 
-        return chatService.githubRepoStructure(principalName, userId, apiId, model, repo, githubId,
-                branch, maxDepth).thenApply(response -> {
-                    log.info("GitHub 레포지토리 구조 응답 완료: repo={}", repo);
-                    return ResponseEntity.ok(response);
-                }).exceptionally(ex -> {
-                    log.error("GitHub 레포지토리 구조 조회 중 오류: {}", ex.getMessage(), ex);
+        return chatService.githubRepoStructure(principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
+            .thenApply(response -> {
+                log.info("GitHub 레포지토리 구조 응답 완료: repo={}", repo);
+                return ResponseEntity.ok(response);
+            }).exceptionally(ex -> {
+                log.error("GitHub 레포지토리 구조 조회 중 오류: {}", ex.getMessage(), ex);
 
-                    // 오류 응답 처리
-                    Map<String, Object> errorResponse = new HashMap<>();
+                // 오류 응답 처리
+                Map<String, Object> errorResponse = new HashMap<>();
 
-                    if (ex.getCause() instanceof IllegalArgumentException) {
-                        errorResponse.put("error", ex.getMessage());
-                        return ResponseEntity.badRequest().body(errorResponse);
-                    } else if (ex.getMessage() != null && ex.getMessage().contains("로그인")) {
-                        errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-                    } else {
-                        errorResponse.put("error",
-                                "GitHub 레포지토리 구조 조회 중 오류가 발생했습니다: " + ex.getMessage());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(errorResponse);
-                    }
-                });
+                if (ex.getCause() instanceof IllegalArgumentException) {
+                    errorResponse.put("error", ex.getMessage());
+                    return ResponseEntity.badRequest().body(errorResponse);
+                } else if (ex.getMessage() != null && ex.getMessage().contains("로그인")) {
+                    errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                } else {
+                    errorResponse.put("error", "GitHub 레포지토리 구조 조회 중 오류가 발생했습니다: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+                }
+            });
     }
 
     // 문서 분석
     @PostMapping("/document/{userId}/{apiId}")
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> analyzeDocument(
-            @PathVariable Long userId, @PathVariable Long apiId,
-            @RequestBody Map<String, Object> requestPayload) {
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> analyzeDocument(@PathVariable Long userId,
+        @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
 
         String content = (String) requestPayload.get("content");
         String model = (String) requestPayload.get("model");
@@ -168,40 +166,32 @@ public class ChatController {
         if (content == null || content.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "repo는 필수 값입니다.");
-            return CompletableFuture
-                    .completedFuture(ResponseEntity.badRequest().body(errorResponse));
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
         }
 
         if (model == null || model.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "model은 필수 값입니다.");
-            return CompletableFuture
-                    .completedFuture(ResponseEntity.badRequest().body(errorResponse));
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
         }
 
-        log.info("문서 분석 요청: userId={}, apiId={}, model={}, 내용 길이={}자", userId, apiId, model,
-                content.length());
+        log.info("문서 분석 요청: userId={}, apiId={}, model={}, 내용 길이={}자", userId, apiId, model, content.length());
 
         // Service 메소드 호출 후 그대로 반환
-        return chatService.generateDocumentAnalysis(userId, apiId, model, content)
-                .thenApply(response -> {
-                    if (Boolean.TRUE.equals(response.get("error"))) {
-                        log.error("문서 분석 실패: userId={}, 오류={}", userId, response.get("message"));
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(response);
-                    } else {
-                        log.info("문서 분석 완료: userId={}, 소요시간={}ms", userId,
-                                response.get("analysisTime"));
-                        return ResponseEntity.ok(response);
-                    }
-                });
+        return chatService.generateDocumentAnalysis(userId, apiId, model, content).thenApply(response -> {
+            if (Boolean.TRUE.equals(response.get("error"))) {
+                log.error("문서 분석 실패: userId={}, 오류={}", userId, response.get("message"));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            } else {
+                log.info("문서 분석 완료: userId={}, 소요시간={}ms", userId, response.get("analysisTime"));
+                return ResponseEntity.ok(response);
+            }
+        });
     }
 
     @PostMapping("/analysis/{userId}/{apiId}")
-    public Object analyzeRepository(
-            @AuthenticationPrincipal(expression = "name") String principalName,
-            @PathVariable Long userId, @PathVariable Long apiId,
-            @RequestBody Map<String, Object> requestPayload) {
+    public Object analyzeRepository(@AuthenticationPrincipal(expression = "name") String principalName,
+        @PathVariable Long userId, @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
 
         // 요청 파라미터 추출
         String repo = (String) requestPayload.get("repo");
@@ -224,8 +214,7 @@ public class ChatController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
-        log.info("GitHub 레포지토리 단계별 분석 요청: userId={}, repo={}, model={}, branch={}", userId, repo,
-                model, branch);
+        log.info("GitHub 레포지토리 단계별 분석 요청: userId={}, repo={}, model={}, branch={}", userId, repo, model, branch);
 
         // 고유 이미터 ID 생성
         String emitterId = "a" + userId;
@@ -239,22 +228,20 @@ public class ChatController {
 
                 try {
                     // 분석 시작 이벤트 전송
-                    existingEmitter.send(SseEmitter.event().name("analysisStarted")
-                            .data(Map.of("repo", repo, "branch", branch != null ? branch : "main",
-                                    "model", model, "message", "분석 작업이 시작되었습니다.")));
+                    existingEmitter.send(SseEmitter.event().name("analysisStarted").data(
+                        Map.of("repo", repo, "branch", branch != null ? branch : "main", "model", model, "message",
+                            "분석 작업이 시작되었습니다.")));
 
                     // 비동기 분석 시작
-                    chatService.githubRepoStageAnalysis(principalName, userId, apiId, model, repo,
-                            githubId, branch != null ? branch : "main",
-                            maxDepth != null ? maxDepth : 3);
+                    chatService.githubRepoStageAnalysis(principalName, userId, apiId, model, repo, githubId,
+                        branch != null ? branch : "main", maxDepth != null ? maxDepth : 3);
 
                     return ResponseEntity.ok(Map.of("status", "started", "emitterId", emitterId));
                 } catch (IOException e) {
                     log.error("기존 emitter에 시작 이벤트 전송 실패: {}, {}", emitterId, e.getMessage());
                     Map<String, Object> errorResponse = new HashMap<>();
                     errorResponse.put("error", "SSE 연결에 문제가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.");
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(errorResponse);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
                 }
             } else {
                 log.warn("분석 시작: SSE 연결이 아직 설정되지 않음. 연결을 먼저 설정해주세요: {}", emitterId);
@@ -264,63 +251,54 @@ public class ChatController {
             }
         } else {
             // 스트리밍 없이 동기 방식으로 처리 (기존 코드와 동일)
-            return chatService.githubRepoStageAnalysis(principalName, userId, apiId, model, repo,
-                    githubId, branch, maxDepth).thenApply(response -> {
-                        log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자", repo,
-                                response.containsKey("content")
-                                        ? ((String) response.get("content")).length()
-                                        : 0);
+            return chatService.githubRepoStageAnalysis(principalName, userId, apiId, model, repo, githubId, branch,
+                maxDepth).thenApply(response -> {
+                log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자", repo,
+                    response.containsKey("content") ? ((String) response.get("content")).length() : 0);
 
-                        // 토큰 사용량 로깅 (있는 경우)
-                        if (response.containsKey("tokenUsage")) {
-                            log.info("토큰 사용량: {}", response.get("tokenUsage"));
-                        }
+                // 토큰 사용량 로깅 (있는 경우)
+                if (response.containsKey("tokenUsage")) {
+                    log.info("토큰 사용량: {}", response.get("tokenUsage"));
+                }
 
-                        return ResponseEntity.ok(response);
-                    }).exceptionally(ex -> {
-                        // 원인 추출
-                        Throwable cause = ex;
-                        if (ex instanceof CompletionException && ex.getCause() != null) {
-                            cause = ex.getCause();
-                        }
+                return ResponseEntity.ok(response);
+            }).exceptionally(ex -> {
+                // 원인 추출
+                Throwable cause = ex;
+                if (ex instanceof CompletionException && ex.getCause() != null) {
+                    cause = ex.getCause();
+                }
 
-                        log.error("GitHub 레포지토리 단계별 분석 중 오류: {}", cause.getMessage(), cause);
+                log.error("GitHub 레포지토리 단계별 분석 중 오류: {}", cause.getMessage(), cause);
 
-                        // 오류 응답 처리
-                        Map<String, Object> errorResponse = new HashMap<>();
+                // 오류 응답 처리
+                Map<String, Object> errorResponse = new HashMap<>();
 
-                        if (cause instanceof IllegalArgumentException) {
-                            // 잘못된 인자 오류
-                            errorResponse.put("error", cause.getMessage());
-                            return ResponseEntity.badRequest().body(errorResponse);
-                        } else if (cause instanceof TimeoutException) {
-                            // 시간 초과 오류
-                            errorResponse.put("error", "분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
-                            errorResponse.put("errorType", "TIMEOUT");
-                            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
-                                    .body(errorResponse);
-                        } else if (cause.getMessage() != null
-                                && cause.getMessage().contains("로그인")) {
-                            // GitHub 인증 오류
-                            errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
-                            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                    .body(errorResponse);
-                        } else if (cause instanceof NonTransientAiException
-                                && cause.getMessage() != null
-                                && cause.getMessage().toLowerCase().contains("rate_limit")) {
-                            // API 사용량 제한 오류
-                            errorResponse.put("error", "API 사용량 제한을 초과했습니다. 잠시 후 다시 시도해주세요.");
-                            errorResponse.put("errorType", "RATE_LIMIT_EXCEEDED");
-                            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                                    .body(errorResponse);
-                        } else {
-                            // 기타 오류
-                            errorResponse.put("error",
-                                    "GitHub 레포지토리 단계별 분석 중 오류가 발생했습니다: " + cause.getMessage());
-                            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                    .body(errorResponse);
-                        }
-                    });
+                if (cause instanceof IllegalArgumentException) {
+                    // 잘못된 인자 오류
+                    errorResponse.put("error", cause.getMessage());
+                    return ResponseEntity.badRequest().body(errorResponse);
+                } else if (cause instanceof TimeoutException) {
+                    // 시간 초과 오류
+                    errorResponse.put("error", "분석 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
+                    errorResponse.put("errorType", "TIMEOUT");
+                    return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(errorResponse);
+                } else if (cause.getMessage() != null && cause.getMessage().contains("로그인")) {
+                    // GitHub 인증 오류
+                    errorResponse.put("error", "GitHub 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                } else if (cause instanceof NonTransientAiException && cause.getMessage() != null && cause.getMessage()
+                    .toLowerCase().contains("rate_limit")) {
+                    // API 사용량 제한 오류
+                    errorResponse.put("error", "API 사용량 제한을 초과했습니다. 잠시 후 다시 시도해주세요.");
+                    errorResponse.put("errorType", "RATE_LIMIT_EXCEEDED");
+                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
+                } else {
+                    // 기타 오류
+                    errorResponse.put("error", "GitHub 레포지토리 단계별 분석 중 오류가 발생했습니다: " + cause.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+                }
+            });
         }
     }
 
@@ -343,14 +321,12 @@ public class ChatController {
                 log.info("기존 emitter 활성 상태, 계속 사용: {}", emitterId);
 
                 // 연결 확인 메시지 전송
-                existingEmitter.send(
-                        SseEmitter.event().name("connect").data("기존 SSE 연결에 접속됨: " + emitterId));
+                existingEmitter.send(SseEmitter.event().name("connect").data("기존 SSE 연결에 접속됨: " + emitterId));
                 log.info("기존 emitter에 연결 메시지 전송 성공: {}", emitterId);
 
                 return existingEmitter;
             } catch (IOException e) {
-                log.warn("기존 emitter에 접근 불가 (타임아웃 또는 닫힘), 새로 생성: {}, {}", emitterId,
-                        e.getMessage());
+                log.warn("기존 emitter에 접근 불가 (타임아웃 또는 닫힘), 새로 생성: {}, {}", emitterId, e.getMessage());
                 sseEmitterManager.removeNamedEmitter(emitterId);
             }
         }
@@ -423,7 +399,7 @@ public class ChatController {
         } catch (Exception e) {
             log.error("채팅 스트림 중지 처리 중 오류 발생 {}, {}", sessionId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("채팅 스트림 중지 처리 중 오류가 발생: " + e.getMessage());
+                .body("채팅 스트림 중지 처리 중 오류가 발생: " + e.getMessage());
         }
     }
 

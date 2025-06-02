@@ -2,18 +2,18 @@ package com.writemd.backend.config;
 
 import static org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event;
 
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Component
 public class SseEmitterManager {
+
     private static final Logger log = LoggerFactory.getLogger(SseEmitterManager.class);
     // 동시성 관리를 위해 ConcurrentHashMap 사용
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
@@ -95,12 +95,11 @@ public class SseEmitterManager {
                 Object processedData = data;
                 if ("message".equals(eventName) && data instanceof String) {
                     String stringData = (String) data;
-
                     try {
                         processedData = java.util.Base64.getEncoder()
                             .encodeToString(stringData.getBytes("UTF-8"));
                         log.debug("메시지 Base64 인코딩: 원본 길이 {}, 인코딩 후 길이 {}",
-                            stringData.length(), ((String)processedData).length());
+                            stringData.length(), ((String) processedData).length());
                     } catch (Exception e) {
                         log.warn("Base64 인코딩 실패, 원본 데이터 사용: {}", e.getMessage());
                         processedData = stringData;
@@ -232,7 +231,9 @@ public class SseEmitterManager {
 
     // 하트비트 전송 메서드 (Scheduler에서 주기적으로 호출)
     public void sendHeartbeatToAll() {
-        if (emitters.isEmpty() && namedEmitters.isEmpty()) return;
+        if (emitters.isEmpty() && namedEmitters.isEmpty()) {
+            return;
+        }
 
         int count = 0;
         String heartbeatContent = "heartbeat";

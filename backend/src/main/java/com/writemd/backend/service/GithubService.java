@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
@@ -33,15 +32,15 @@ import reactor.core.scheduler.Schedulers;
 public class GithubService {
 
     private final OAuth2AuthorizedClientService authorizedClientService;
-    private final  WebClient webClient;
-    private final  UserRepository userRepository;
+    private final WebClient webClient;
+    private final UserRepository userRepository;
 
     // 파일 생성/업데이트
     public Mono<Map<String, Object>> createOrUpdateFile(String principalName, String owner,
         String repo, String path, String message, String fileContent, String sha, String newPath) {
 
         boolean isRename = (newPath != null && !newPath.isEmpty() && !newPath.equals(path))
-                                && sha != null && !sha.trim().isEmpty();
+            && sha != null && !sha.trim().isEmpty();
 
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github",
             principalName);
@@ -73,15 +72,18 @@ public class GithubService {
                     createBody.put("message", message + "\n- 새파일 생성: " + newPath);
                     createBody.put("content", encodedContent);
                     return webClient.put()
-                        .uri("https://api.github.com/repos/{owner}/{repo}/contents/{filePath}", owner, repo, newPath) // 'newPath' 사용
+                        .uri("https://api.github.com/repos/{owner}/{repo}/contents/{filePath}", owner, repo,
+                            newPath) // 'newPath' 사용
                         .headers(headers -> headers.setBearerAuth(accessToken))
                         .bodyValue(createBody)
                         .retrieve()
                         .onStatus(status -> status.isError(), clientResponse ->
                             clientResponse.bodyToMono(String.class)
-                                .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error (Rename - Create Step for " + newPath + "): " + errorBody)))
+                                .flatMap(errorBody -> Mono.error(new RuntimeException(
+                                    "GitHub API Error (Rename - Create Step for " + newPath + "): " + errorBody)))
                         )
-                        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {}); // 최종 생성 결과 반환
+                        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                        }); // 최종 생성 결과 반환
                 }));
         } else {
             String encodedContent = Base64.getEncoder()
@@ -104,11 +106,15 @@ public class GithubService {
                 .retrieve()
                 .onStatus(status -> status.isError(), clientResponse ->
                     clientResponse.bodyToMono(String.class)
-                        .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error (Create/Update for " + path + "): " + errorBody)))
+                        .flatMap(errorBody -> Mono.error(
+                            new RuntimeException("GitHub API Error (Create/Update for " + path + "): " + errorBody)))
                 )
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                });
         }
-    };
+    }
+
+    ;
 
 
     // 레포지토리, 하위 폴더/파일 조회
@@ -133,7 +139,8 @@ public class GithubService {
                     .uri("https://api.github.com/users/{githubId}/repos", githubId)
                     .headers(headers -> headers.setBearerAuth(accessToken))
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    })
                     .flatMap(reposList -> {
                         if (reposList == null) {
                             return Mono.just(Collections.<GitRepoDTO>emptyList());
@@ -149,7 +156,8 @@ public class GithubService {
                                     .uri("https://api.github.com/repos/{owner}/{repo}/branches", owner, repoName)
                                     .headers(headers -> headers.setBearerAuth(accessToken))
                                     .retrieve()
-                                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                                    })
                                     .flatMap(branchesList -> {
                                         if (branchesList == null) {
                                             return Mono.just(GitRepoDTO.builder()
@@ -163,7 +171,8 @@ public class GithubService {
                                             .map(branchInfo -> {
                                                 String branchName = (String) branchInfo.get("name");
                                                 if ("main".equals(branchName) || "master".equals(branchName)) {
-                                                    return fetchBranchContents(accessToken, owner, repoName, branchName);
+                                                    return fetchBranchContents(accessToken, owner, repoName,
+                                                        branchName);
                                                 } else {
                                                     return Mono.just(GitBranchDTO.builder()
                                                         .branch(branchName)
@@ -184,7 +193,8 @@ public class GithubService {
                                                 .build());
                                     })
                                     .onErrorResume(e -> {
-                                        System.err.println("브랜치 목록 가져오기 실패 Repo: " + repoName + ", Error: " + e.getMessage());
+                                        System.err.println(
+                                            "브랜치 목록 가져오기 실패 Repo: " + repoName + ", Error: " + e.getMessage());
                                         return Mono.just(GitRepoDTO.builder()
                                             .repoId(repoId)
                                             .repo(repoName)
@@ -210,7 +220,8 @@ public class GithubService {
             .uri("https://api.github.com/repos/{owner}/{repo}/contents?ref={branchName}", owner, repo, branchName)
             .headers(headers -> headers.setBearerAuth(accessToken))
             .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            })
             .map(contents -> {
                 List<GitContentDTO> contentDTOs = Collections.emptyList();
                 if (contents != null) {
@@ -228,7 +239,8 @@ public class GithubService {
                     .build();
             })
             .onErrorResume(e -> {
-                System.err.println("브랜치 콘텐츠 가져오기 실패 Repo: " + repo + ", Branch: " + branchName + ", Error: " + e.getMessage());
+                System.err.println(
+                    "브랜치 콘텐츠 가져오기 실패 Repo: " + repo + ", Branch: " + branchName + ", Error: " + e.getMessage());
                 return Mono.just(GitBranchDTO.builder()
                     .branch(branchName)
                     .contents(Collections.emptyList())
@@ -281,7 +293,8 @@ public class GithubService {
                     .flatMap(errorBody -> Mono.error(
                         new RuntimeException("GitHub API 에러: " + errorBody)))
             )
-            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+            })
             .map(response -> GitContentDTO.builder()
                 .path(path)
                 .type((String) response.get("type"))
@@ -303,7 +316,8 @@ public class GithubService {
             .uri("https://api.github.com/repos/{owner}/{repo}/git/trees/{sha}", owner, repo, sha)
             .headers(headers -> headers.setBearerAuth(accessToken))
             .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+            })
             .map(response -> {
                 List<Map<String, Object>> treeItems = (List<Map<String, Object>>) response.get("tree");
                 return treeItems.stream()
@@ -341,7 +355,8 @@ public class GithubService {
             .uri("https://api.github.com/repos/{owner}/{repo}/git/blobs/{sha}", owner, repo, sha)
             .headers(headers -> headers.setBearerAuth(accessToken))
             .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+            })
             .map(response -> GitContentDTO.builder()
                 .path("")
                 .type("file")
@@ -350,7 +365,6 @@ public class GithubService {
                 .build());
 
     }
-
 
 
 }

@@ -6,7 +6,6 @@ import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Templates;
 import com.writemd.backend.service.TemplateService;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,14 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class TemplateController {
+
     private final TemplateService templateService;
 
     @PostMapping("/{userId}")
     public ResponseEntity<Templates> createOrUpdateTemplate(
         @PathVariable Long userId,
         @RequestBody FolderDTO folderDTO
-        ) {
-
+    ) {
         Long folderId = folderDTO.getFolderId();
         String folderName = folderDTO.getTitle();
 
@@ -70,7 +68,7 @@ public class TemplateController {
     @PutMapping("/folder/{folderId}/{folderName}")
     public ResponseEntity<Folders> updateFolderTitle(
         @PathVariable Long folderId,
-        @PathVariable String folderName ) {
+        @PathVariable String folderName) {
         Folders updatedFolder = templateService.updateFolderTitle(folderId, folderName);
         return ResponseEntity.ok(updatedFolder);
     }

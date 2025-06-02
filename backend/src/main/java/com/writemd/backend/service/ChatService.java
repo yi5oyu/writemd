@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -50,14 +51,17 @@ import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import java.util.Map;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
@@ -83,7 +87,7 @@ public class ChatService {
 
 
     // openai(chatgpt) 설정
-    private ChatClient openai(String apikey, String model, Double temperature, Boolean tool){
+    private ChatClient openai(String apikey, String model, Double temperature, Boolean tool) {
         OpenAiApi openAiApi = OpenAiApi.builder()
             .apiKey(() -> apikey)
             .build();
@@ -93,7 +97,7 @@ public class ChatService {
 //            .maxTokens()
             .temperature(temperature);
 
-        if(tool) {
+        if (tool) {
             optionsBuilder.toolCallbacks(toolCallbackProvider.getToolCallbacks());
         }
 
@@ -108,7 +112,7 @@ public class ChatService {
     }
 
     // anthropic(claude) 설정
-    private ChatClient claude(String apikey, String model, Double temperature, Boolean tool){
+    private ChatClient claude(String apikey, String model, Double temperature, Boolean tool) {
         System.out.println(toolCallbackProvider.getToolCallbacks());
         AnthropicApi anthropicApi = new AnthropicApi(apikey);
 
@@ -117,7 +121,7 @@ public class ChatService {
             .temperature(temperature)
             .maxTokens(1000);
 
-        if(tool) {
+        if (tool) {
             optionsBuilder.toolCallbacks(toolCallbackProvider.getToolCallbacks());
         }
 
@@ -128,11 +132,11 @@ public class ChatService {
             .defaultOptions(anthropicChatOptions)
             .build();
 
-       return ChatClient.create(anthropicChatModel);
+        return ChatClient.create(anthropicChatModel);
     }
 
     // API 조회
-    private APIDTO getApiKey(Long userId, Long apiId){
+    private APIDTO getApiKey(Long userId, Long apiId) {
         Object value = redisTemplate.opsForHash().get("ai:" + userId, "key:" + apiId);
         if (value instanceof APIDTO) {
             return (APIDTO) value;
@@ -259,7 +263,8 @@ public class ChatService {
     }
 
     @Async
-    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, String processedContent, boolean enableTools) {
+    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, String processedContent,
+        boolean enableTools) {
         log.info("STEP 1: 채팅 처리 시작 (sessionId: {}, userId: {}, apiId: {}, model: {})", sessionId, userId, apiId, model);
 
         Disposable disposable = null;
@@ -333,7 +338,8 @@ public class ChatService {
                 })
                 // 스트림 처리 중 에러
                 .doOnError(error -> {
-                    log.error("STEP 7-ERROR: AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(), error);
+                    log.error("STEP 7-ERROR: AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(),
+                        error);
                     String errorMessage = "AI 서비스 응답 스트림 처리 중 오류 발생";
 
                     if (error.getMessage() != null && error.getMessage().contains("message endpoint")) {
@@ -399,7 +405,8 @@ public class ChatService {
                 String message = nte.getMessage() != null ? nte.getMessage().toLowerCase() : "";
                 log.error("STEP ERROR: 상세 오류 메시지: {}", message);
 
-                if (message.contains("invalid_api_key") || message.contains("authentication_error") || message.contains("401")) {
+                if (message.contains("invalid_api_key") || message.contains("authentication_error") || message.contains(
+                    "401")) {
                     errorMessage = "잘못된 API 키 또는 인증 오류입니다.";
                     errorType = "INVALID_API_KEY";
                     log.error("STEP ERROR: API 키 또는 인증 오류 감지");
@@ -427,7 +434,8 @@ public class ChatService {
 
     //
     @Async
-    public CompletableFuture<String> directChat(Long userId, Long apiId, String model, String content, boolean enableTools) {
+    public CompletableFuture<String> directChat(Long userId, Long apiId, String model, String content,
+        boolean enableTools) {
         APIDTO api = getApiKey(userId, apiId);
         String aiModel = api.getAiModel();
         String apiKey = api.getApiKey();
@@ -453,7 +461,8 @@ public class ChatService {
 
     // 단일 파일 분석
     @Async
-    public CompletableFuture<Map<String, Object>> generateDocumentAnalysis(Long userId, Long apiId, String model, String content) {
+    public CompletableFuture<Map<String, Object>> generateDocumentAnalysis(Long userId, Long apiId, String model,
+        String content) {
         log.info("문서 분석 시작 - userId: {}, apiId: {}, model: {}", userId, apiId, model);
 
         long startTime = System.currentTimeMillis();
@@ -525,7 +534,8 @@ public class ChatService {
 
     // 깃허브 구조 정리
     @Async
-    public CompletableFuture<Map<String, Object>> githubRepoStructure(String principalName, Long userId, Long apiId, String model,
+    public CompletableFuture<Map<String, Object>> githubRepoStructure(String principalName, Long userId, Long apiId,
+        String model,
         String repo, String githubId, String branch, Integer maxDepth) {
         try {
             // GitHub 접근 토큰
@@ -791,7 +801,8 @@ public class ChatService {
     private CompletableFuture<Void> processStage(
         String emitterId, String model, String githubId, String repo, String branch, String accessToken,
         String prompt, String stageKey, int currentStage, int totalStages,
-        Map<String, String> stageResults, APIDTO api, Map<String, Integer> tokenUsage, Map<String, Integer> limitCheckTokenUsage) {
+        Map<String, String> stageResults, APIDTO api, Map<String, Integer> tokenUsage,
+        Map<String, Integer> limitCheckTokenUsage) {
 
         log.info("분석 단계 {}/{} 시작: {} - {}/{}",
             currentStage, totalStages, stageKey, githubId, repo);
@@ -856,7 +867,7 @@ public class ChatService {
                 // 토큰 임계값
                 final int TOKEN_THRESHOLD = 20000;
 
-                if (currentLimitCheckTokens  >= TOKEN_THRESHOLD) {
+                if (currentLimitCheckTokens >= TOKEN_THRESHOLD) {
                     Map<String, Object> waitInfo = new HashMap<>();
                     waitInfo.put("stage", stageKey);
                     waitInfo.put("stageNumber", currentStage);
@@ -987,20 +998,25 @@ public class ChatService {
                 Usage usageInfo = response.getMetadata().getUsage();
                 if (usageInfo != null) {
                     Integer promptTokens = usageInfo.getPromptTokens() != null ? usageInfo.getPromptTokens() : 0;
-                    Integer completionTokens = usageInfo.getCompletionTokens() != null ? usageInfo.getCompletionTokens() : 0;
+                    Integer completionTokens =
+                        usageInfo.getCompletionTokens() != null ? usageInfo.getCompletionTokens() : 0;
                     Integer totalTokens = usageInfo.getTotalTokens() != null ? usageInfo.getTotalTokens() : 0;
 
                     // 토큰 사용량 누적 업데이트 (스레드 안전하게)
                     synchronized (tokenUsage) {
                         tokenUsage.put("promptTokens", tokenUsage.getOrDefault("promptTokens", 0) + promptTokens);
-                        tokenUsage.put("completionTokens", tokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
+                        tokenUsage.put("completionTokens",
+                            tokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
                         tokenUsage.put("totalTokens", tokenUsage.getOrDefault("totalTokens", 0) + totalTokens);
                     }
 
                     synchronized (limitCheckTokenUsage) {
-                        limitCheckTokenUsage.put("promptTokens", limitCheckTokenUsage.getOrDefault("promptTokens", 0) + promptTokens);
-                        limitCheckTokenUsage.put("completionTokens", limitCheckTokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
-                        limitCheckTokenUsage.put("totalTokens", limitCheckTokenUsage.getOrDefault("totalTokens", 0) + totalTokens);
+                        limitCheckTokenUsage.put("promptTokens",
+                            limitCheckTokenUsage.getOrDefault("promptTokens", 0) + promptTokens);
+                        limitCheckTokenUsage.put("completionTokens",
+                            limitCheckTokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
+                        limitCheckTokenUsage.put("totalTokens",
+                            limitCheckTokenUsage.getOrDefault("totalTokens", 0) + totalTokens);
                     }
 
                     log.info("단계 {} 토큰 사용량 - 프롬프트: {}, 응답: {}, 총: {} (전체 누적: {}, 제한체크용: {})",
@@ -1011,13 +1027,11 @@ public class ChatService {
                 // 완료 처리
                 timeoutTask.cancel(false);
                 future.complete(null);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.error("단계 {} 처리 중 오류 발생: {}", stageKey, e.getMessage(), e);
                 timeoutTask.cancel(false);
                 future.completeExceptionally(e);
-            }
-            finally {
+            } finally {
                 // 실행 완료 후 스케줄러 종료
                 scheduler.shutdown();
             }
@@ -1083,7 +1097,7 @@ public class ChatService {
 
     // ChatClient 초기화
     private ChatClient initializeChatClient(String aiModel, String apiKey, String model) {
-        if(aiModel.equals("openai")) {
+        if (aiModel.equals("openai")) {
             return openai(apiKey, model, 0.7, true);
         } else if (aiModel.equals("anthropic")) {
             return claude(apiKey, model, 0.7, true);
@@ -1093,7 +1107,8 @@ public class ChatService {
     }
 
     // 응답 처리
-    private CompletableFuture<Map<String, Object>> processAiResponse(ChatClient chatClient, String prompt, String aiModel) {
+    private CompletableFuture<Map<String, Object>> processAiResponse(ChatClient chatClient, String prompt,
+        String aiModel) {
         List<Message> messages = new ArrayList<>();
         messages.add(new UserMessage(prompt));
 
@@ -1166,8 +1181,7 @@ public class ChatService {
             // 모델별 메타데이터 추출
             if (aiModel.equals("openai") && metadata.containsKey("systemFingerprint")) {
                 result.put("systemFingerprint", metadata.get("systemFingerprint"));
-            }
-            else if (aiModel.equals("anthropic") && metadata.containsKey("stopReason")) {
+            } else if (aiModel.equals("anthropic") && metadata.containsKey("stopReason")) {
                 result.put("stopReason", metadata.get("stopReason"));
             }
         }
@@ -1206,7 +1220,7 @@ public class ChatService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
         ResponseEntity<String> response = restTemplate.exchange(
-                LMSTUDIO_BASE_URL + "/chat/completions", HttpMethod.POST, entity, String.class);
+            LMSTUDIO_BASE_URL + "/chat/completions", HttpMethod.POST, entity, String.class);
 
         // LM Studio 응답 저장
         saveChat(sessionId, "assistant", extractResponseBody(response.getBody()));
@@ -1218,21 +1232,21 @@ public class ChatService {
     // 세션 생성
     public SessionDTO createSession(Long noteId, String title) {
         Notes note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
+            .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
 
         Sessions sessions = Sessions.builder()
-                .notes(note)
-                .title(title)
-                .build();
+            .notes(note)
+            .title(title)
+            .build();
 
         Sessions savedSesssions = sessionRepository.save(sessions);
 
         SessionDTO session = SessionDTO.builder()
-                .sessionId(savedSesssions.getId())
-                .title(savedSesssions.getTitle())
-                .createdAt(savedSesssions.getCreatedAt())
-                .updatedAt(savedSesssions.getUpdatedAt())
-                .build();
+            .sessionId(savedSesssions.getId())
+            .title(savedSesssions.getTitle())
+            .createdAt(savedSesssions.getCreatedAt())
+            .updatedAt(savedSesssions.getUpdatedAt())
+            .build();
 
         return session;
     }
@@ -1255,7 +1269,7 @@ public class ChatService {
     }
 
     // assistant 메세지 추출
-    private String extractResponseBody(String responseBody){
+    private String extractResponseBody(String responseBody) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(responseBody);

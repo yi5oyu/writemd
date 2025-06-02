@@ -13,7 +13,7 @@ public class GitHubPrompts {
                 "<owner>%s</owner>\n" +
                 "<repository>%s</repository>\n" +
                 "<branch>%s</branch>\n" +
-                "<github_token>%s</github_token>\n\n"+
+                "<github_token>%s</github_token>\n\n" +
                 "매우 중요한 지침:\n" +
                 "1. 전체 폴더 구조를 도구로 가져와 프로젝트의 핵심만 담은 간략한 구조로 변환.\n" +
                 "2. 루트 디렉토리와 루트 디렉토리 내의 모든 폴더/파일은 필수로 포함.\n" +

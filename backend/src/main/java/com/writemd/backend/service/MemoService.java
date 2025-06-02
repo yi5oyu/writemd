@@ -22,19 +22,19 @@ public class MemoService {
 
     // 메모 저장/업데이트
     @Transactional
-    public Memos saveMemo(Long userId, String text, Long memoId){
+    public Memos saveMemo(Long userId, String text, Long memoId) {
         Users user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         Memos memo;
 
         if (memoId != null) {
-            memo= memoRepository.findById(memoId)
+            memo = memoRepository.findById(memoId)
                 .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음: " + memoId));
 
             memo.setText(text);
 
-        } else{
+        } else {
             memo = Memos.builder()
                 .text(text)
                 .users(user)
@@ -49,7 +49,7 @@ public class MemoService {
 
     // 메모 전체 조회
     @Transactional(readOnly = true)
-    public List<MemoDTO> getMemos(Long userId){
+    public List<MemoDTO> getMemos(Long userId) {
         List<Memos> memos = memoRepository.findByUsers_Id(userId);
 
         return memos.stream()
@@ -63,7 +63,7 @@ public class MemoService {
     }
 
     // 메모 삭제
-    public void deleteMemo(Long memoId){
+    public void deleteMemo(Long memoId) {
         memoRepository.deleteById(memoId);
     }
 }

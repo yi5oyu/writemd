@@ -9,12 +9,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class BackendApplication {
 
-	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure()
-			.systemProperties()
-			.load();
+    public static void main(String[] args) {
+        Dotenv dotenv = Dotenv.configure()
+            .systemProperties()
+            .load();
 
-		SpringApplication.run(BackendApplication.class, args);
-	}
+        SpringApplication.run(BackendApplication.class, args);
+    }
 
 }

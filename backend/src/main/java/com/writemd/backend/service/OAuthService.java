@@ -4,7 +4,6 @@ import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.UserRepository;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -24,17 +23,17 @@ public class OAuthService extends DefaultOAuth2UserService {
 
         String githubId = oauth2User.getAttribute("id").toString();
         userRepository.findByGithubId(githubId)
-                .orElseGet(() -> userRepository.save(
-                        Users.builder()
-                                .githubId(githubId)
-                                .name(oauth2User.getAttribute("name"))
-                                .htmlUrl(oauth2User.getAttribute("html_url"))
-                                .avatarUrl(oauth2User.getAttribute("avatar_url"))
-                                .build()));
+            .orElseGet(() -> userRepository.save(
+                Users.builder()
+                    .githubId(githubId)
+                    .name(oauth2User.getAttribute("name"))
+                    .htmlUrl(oauth2User.getAttribute("html_url"))
+                    .avatarUrl(oauth2User.getAttribute("avatar_url"))
+                    .build()));
 
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                oauth2User.getAttributes(), "id");
+            Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+            oauth2User.getAttributes(), "id");
     }
 
 }

@@ -34,7 +34,7 @@ public class APIService {
     public APIDTO saveAPIKey(Long userId, String aiModel, String apikey) {
         Users users = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User 찾을 수 없음"));
-
+        
         APIs newapi = APIs.builder()
             .aiModel(aiModel)
             .apiKey(apikey)

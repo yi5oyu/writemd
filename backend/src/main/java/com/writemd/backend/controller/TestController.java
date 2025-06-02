@@ -23,7 +23,6 @@ public class TestController {
 //    @Qualifier("anthropicChatClient")
 //    private final ChatClient anthropicChatClient;
 
-
 //
 //    @GetMapping("/{bbaiWord}")
 //    String TransBbaiWord(@PathVariable String bbaiWord) {

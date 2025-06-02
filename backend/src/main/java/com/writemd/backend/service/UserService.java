@@ -78,7 +78,7 @@ public class UserService {
 
         // 새 유저 저장
         Users newUser = Users.builder().githubId(githubId).name(name).htmlUrl(htmlUrl)
-                .avatarUrl(avatarUrl).principalName(principalName).build();
+            .avatarUrl(avatarUrl).principalName(principalName).build();
 
         Folders myFolder = Folders.builder().users(newUser).title("내 템플릿").build();
 
@@ -91,16 +91,17 @@ public class UserService {
         try {
             Resource myResource = new ClassPathResource("data/template.json");
             myTemplates = objectMapper.readValue(myResource.getInputStream(),
-                    new TypeReference<List<Map<String, String>>>() {});
+                new TypeReference<List<Map<String, String>>>() {
+                });
         } catch (IOException e) {
             myTemplates = Collections.emptyList();
         }
-
+        
         for (Map<String, String> templateData : myTemplates) {
             Templates template = Templates.builder().folders(myFolder)
-                    .title(templateData.getOrDefault("title", ""))
-                    .description(templateData.getOrDefault("description", ""))
-                    .content(templateData.getOrDefault("content", "")).build();
+                .title(templateData.getOrDefault("title", ""))
+                .description(templateData.getOrDefault("description", ""))
+                .content(templateData.getOrDefault("content", "")).build();
 
             myFolder.getTemplates().add(template);
         }
@@ -108,16 +109,17 @@ public class UserService {
         try {
             Resource resource = new ClassPathResource("data/git_template.json");
             gitTemplates = objectMapper.readValue(resource.getInputStream(),
-                    new TypeReference<List<Map<String, String>>>() {});
+                new TypeReference<List<Map<String, String>>>() {
+                });
         } catch (IOException e) {
             gitTemplates = Collections.emptyList();
         }
 
         for (Map<String, String> templateData : gitTemplates) {
             Templates template = Templates.builder().folders(gitFolder)
-                    .title(templateData.getOrDefault("title", ""))
-                    .description(templateData.getOrDefault("description", ""))
-                    .content(templateData.getOrDefault("content", "")).build();
+                .title(templateData.getOrDefault("title", ""))
+                .description(templateData.getOrDefault("description", ""))
+                .content(templateData.getOrDefault("content", "")).build();
 
             gitFolder.getTemplates().add(template);
         }
@@ -133,7 +135,7 @@ public class UserService {
     public UserDTO userInfo(String githubId) {
         // user 찾기
         Users user = userRepository.findByGithubId(githubId)
-                .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         List<Notes> notes = noteRepository.findByUsers_Id(user.getId());
 
@@ -141,8 +143,8 @@ public class UserService {
         List<NoteDTO> note = notes.stream().map(this::convertNote).collect(Collectors.toList());
 
         UserDTO userInfo = UserDTO.builder().userId(user.getId()).name(user.getName())
-                .githubId(user.getGithubId()).avatarUrl(user.getAvatarUrl())
-                .htmlUrl(user.getHtmlUrl()).notes(note).build();
+            .githubId(user.getGithubId()).avatarUrl(user.getAvatarUrl())
+            .htmlUrl(user.getHtmlUrl()).notes(note).build();
 
         return userInfo;
     }
@@ -151,24 +153,24 @@ public class UserService {
     @Transactional
     public NoteDTO noteContent(Long noteId) {
         Texts texts = textRepository.findByNotes_id(noteId)
-                .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
+            .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
 
         List<Sessions> sessions = sessionRepository.findByNotes_id(noteId);
 
         List<SessionDTO> sessionInfo =
-                sessions.stream().map(this::convertSession).collect(Collectors.toList());
+            sessions.stream().map(this::convertSession).collect(Collectors.toList());
 
         // 노트 이름 조회
         Notes notes = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없음"));
+            .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없음"));
 
         NoteDTO note = NoteDTO.builder()
-                .noteId(noteId)
-                .noteName(notes.getNoteName())
-                .createdAt(notes.getCreatedAt())
-                .updatedAt(notes.getUpdatedAt())
-                .texts(convertText(texts))
-                .build();
+            .noteId(noteId)
+            .noteName(notes.getNoteName())
+            .createdAt(notes.getCreatedAt())
+            .updatedAt(notes.getUpdatedAt())
+            .texts(convertText(texts))
+            .build();
 
         return note;
     }
@@ -254,14 +256,14 @@ public class UserService {
 
     private TextDTO convertText(Texts texts) {
         TextDTO text = TextDTO.builder().textId(texts.getId()).markdownText(texts.getMarkdownText())
-                .build();
+            .build();
 
         return text;
     }
 
     private ChatDTO convertChat(Chats chats) {
         ChatDTO chat = ChatDTO.builder().chatId(chats.getId()).role(chats.getRole())
-                .content(chats.getContent()).time(chats.getTime()).build();
+            .content(chats.getContent()).time(chats.getTime()).build();
 
         return chat;
     }

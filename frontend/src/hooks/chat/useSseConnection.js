@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useToast } from '@chakra-ui/react'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 
 const useSseConnection = (sessionId, enabled = false) => {
   const [streamingContent, setStreamingContent] = useState('')
@@ -6,9 +8,9 @@ const useSseConnection = (sessionId, enabled = false) => {
   const [error, setError] = useState(null)
   const [isComplete, setIsComplete] = useState(false)
   const eventSourceRef = useRef(null)
+  const toast = useToast()
 
   // 연결 종료
-  // sessionId 변경 시 disconnect 함수 재생성
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
@@ -90,9 +92,15 @@ const useSseConnection = (sessionId, enabled = false) => {
         disconnect()
       })
 
-      // 연결 중 오류 처리
+      // 연결 중 오류 처리 (세션 만료 포함)
       es.onerror = (errorEvent) => {
         console.error('[SSE 훅] EventSource 기본 오류 발생:', errorEvent)
+
+        // SSE 연결 실패를 세션 만료로 간주할 수 있는 상황
+        const sseError = new Error('SSE connection failed')
+        sseError.message = 'Failed to fetch' // 세션 만료 패턴 매칭
+        handleSessionExpiry(toast, sseError)
+
         const currentEs = eventSourceRef.current
         if (currentEs && currentEs.readyState === EventSource.CLOSED) {
           // console.log('EventSource 연결이 종료되었습니다.')
@@ -122,7 +130,7 @@ const useSseConnection = (sessionId, enabled = false) => {
     } else {
       disconnect()
     }
-  }, [sessionId, enabled, disconnect])
+  }, [sessionId, enabled, disconnect, toast])
 
   return { streamingContent, status, error, isComplete }
 }

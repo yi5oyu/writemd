@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 import axios from 'axios'
 
 const useSaveApiKey = () => {
@@ -21,27 +22,17 @@ const useSaveApiKey = () => {
         return response.data
       })
       .catch((err) => {
-        if (
+        handleSessionExpiry(toast, err)
+
+        const isSessionError =
           err.message?.includes('Failed to fetch') ||
           err.message?.includes('Network Error') ||
           err.message?.includes('net::ERR_FAILED')
-          // || err.message?.includes('302')
-        ) {
-          toast({
-            position: 'top',
-            title: '세션 만료',
-            description: `세션이 만료되었습니다.\n${err.toString()}`,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          })
-          sessionStorage.removeItem('user')
-          setTimeout(() => {
-            window.location.href = '/'
-          }, 1000)
-        } else {
+
+        if (!isSessionError) {
           setError(err.response ? err.response.data : err.message)
         }
+
         throw err
       })
       .finally(() => {

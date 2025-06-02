@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 import axios from 'axios'
 
 const useSendChatMessage = () => {
@@ -8,7 +9,7 @@ const useSendChatMessage = () => {
   const toast = useToast()
 
   const sendChatMessage = useCallback(
-    async ({ userId, sessionId, apiId, aiModel, questionText }) => {
+    ({ userId, sessionId, apiId, aiModel, questionText }) => {
       if (!questionText.trim()) return Promise.resolve()
       setLoading(true)
       setError(null)
@@ -26,35 +27,22 @@ const useSendChatMessage = () => {
         )
         .then((response) => {
           if (response.status === 202) {
-            console.log(`채팅 시작 ${sessionId}. SSE 연결 중.`)
             return true
           } else {
-            console.warn(`202 코드 받지 못함: ${response.status} session: ${sessionId}`)
             throw new Error(`서버에서 예기치 않은 성공 응답 코드(${response.status})를 받았습니다.`)
           }
         })
         .catch((err) => {
-          if (
+          handleSessionExpiry(toast, err)
+
+          const isSessionError =
             err.message?.includes('Failed to fetch') ||
             err.message?.includes('Network Error') ||
             err.message?.includes('net::ERR_FAILED')
-            // || err.message?.includes('302')
-          ) {
-            toast({
-              position: 'top',
-              title: '세션 만료',
-              description: `세션이 만료되었습니다.\n${err.toString()}`,
-              status: 'error',
-              duration: 5000,
-              isClosable: true,
-            })
-            sessionStorage.removeItem('user')
-            setTimeout(() => {
-              window.location.href = '/'
-            }, 1000)
-          } else {
-            const status = err.response.status
-            const responseData = err.response.data
+
+          if (!isSessionError) {
+            const status = err.response?.status
+            const responseData = err.response?.data
 
             let errorMessage = '알 수 없는 오류가 발생했습니다.'
 
@@ -76,13 +64,14 @@ const useSendChatMessage = () => {
             }
             setError(errorMessage)
           }
+
           throw err
         })
         .finally(() => {
           setLoading(false)
         })
     },
-    []
+    [toast]
   )
 
   return { sendChatMessage, loading, error }

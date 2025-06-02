@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 import axios from 'axios'
 
 function useGetGithubFile() {
@@ -8,43 +9,36 @@ function useGetGithubFile() {
   const [data, setData] = useState(null)
   const toast = useToast()
 
-  const getFileContent = async ({ owner, repo, path }) => {
+  const getFileContent = ({ owner, repo, path }) => {
     setData(null)
     setLoading(true)
     setError(null)
-    try {
-      const response = await axios.get(
-        `http://localhost:8888/api/github/repo/${owner}/${repo}/contents/${path}`,
-        {
-          withCredentials: true,
+
+    return axios
+      .get(`http://localhost:8888/api/github/repo/${owner}/${repo}/contents/${path}`, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        setData(response.data.content)
+        return response.data.content
+      })
+      .catch((err) => {
+        handleSessionExpiry(toast, err)
+
+        const isSessionError =
+          err.message?.includes('Failed to fetch') ||
+          err.message?.includes('Network Error') ||
+          err.message?.includes('net::ERR_FAILED')
+
+        if (!isSessionError) {
+          setError(err)
         }
-      )
-      setData(response.data.content)
-    } catch (err) {
-      if (
-        err.message?.includes('Failed to fetch') ||
-        err.message?.includes('Network Error') ||
-        err.message?.includes('net::ERR_FAILED')
-        // || err.message?.includes('302')
-      ) {
-        toast({
-          position: 'top',
-          title: '세션 만료',
-          description: `세션이 만료되었습니다.\n${err.toString()}`,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-        sessionStorage.removeItem('user')
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 1000)
-      } else {
-        setError(err)
-      }
-    } finally {
-      setLoading(false)
-    }
+
+        throw err
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   return { getFileContent, loading, error, data }

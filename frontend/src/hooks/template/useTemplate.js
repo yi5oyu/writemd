@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 import axios from 'axios'
 
 function useTemplate() {
@@ -8,39 +9,35 @@ function useTemplate() {
   const [templates, setTemplates] = useState([])
   const toast = useToast()
 
-  const getTemplates = async ({ userId }) => {
+  const getTemplates = ({ userId }) => {
     setLoading(true)
     setError(null)
-    try {
-      const response = await axios.get(`http://localhost:8888/api/template/${userId}`, {
+
+    return axios
+      .get(`http://localhost:8888/api/template/${userId}`, {
         withCredentials: true,
       })
-      setTemplates(response.data)
-    } catch (err) {
-      if (
-        err.message?.includes('Failed to fetch') ||
-        err.message?.includes('Network Error') ||
-        err.message?.includes('net::ERR_FAILED')
-        // || err.message?.includes('302')
-      ) {
-        toast({
-          position: 'top',
-          title: '세션 만료',
-          description: `세션이 만료되었습니다.\n${err.toString()}`,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-        sessionStorage.removeItem('user')
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 1000)
-      } else {
-        setError(err)
-      }
-    } finally {
-      setLoading(false)
-    }
+      .then((response) => {
+        setTemplates(response.data)
+        return response.data
+      })
+      .catch((err) => {
+        handleSessionExpiry(toast, err)
+
+        const isSessionError =
+          err.message?.includes('Failed to fetch') ||
+          err.message?.includes('Network Error') ||
+          err.message?.includes('net::ERR_FAILED')
+
+        if (!isSessionError) {
+          setError(err)
+        }
+
+        throw err
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   return { getTemplates, loading, error, templates }

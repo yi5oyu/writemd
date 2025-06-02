@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 
 const useSession = ({ noteId }) => {
   const [sessions, setSessions] = useState([])
@@ -29,34 +30,24 @@ const useSession = ({ noteId }) => {
       })
       .then((data) => {
         setSessions(data)
-        setLoading(false)
       })
       .catch((err) => {
-        if (
+        handleSessionExpiry(toast, err)
+
+        const isSessionError =
           err.message?.includes('Failed to fetch') ||
           err.message?.includes('Network Error') ||
           err.message?.includes('net::ERR_FAILED')
-          // || err.message?.includes('302')
-        ) {
-          toast({
-            position: 'top',
-            title: '세션 만료',
-            description: `세션이 만료되었습니다.\n${err.toString()}`,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          })
-          sessionStorage.removeItem('user')
-          setTimeout(() => {
-            window.location.href = '/'
-          }, 1000)
-        } else {
+
+        if (!isSessionError) {
           setSessions([])
           setError(err)
-          setLoading(false)
         }
       })
-  }, [noteId])
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [noteId, toast])
 
   useEffect(() => {
     fetchSessions()

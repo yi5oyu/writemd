@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { handleSessionExpiry } from '../../utils/sessionManager'
 
 const useAuth = () => {
   const [user, setUser] = useState(null)
@@ -51,8 +52,18 @@ const useAuth = () => {
         return data
       })
       .catch((error) => {
-        sessionStorage.removeItem('user')
-        setUser(null)
+        handleSessionExpiry(toast, error)
+
+        const isSessionError =
+          error.message?.includes('Failed to fetch') ||
+          error.message?.includes('Network Error') ||
+          error.message?.includes('net::ERR_FAILED')
+
+        if (!isSessionError) {
+          sessionStorage.removeItem('user')
+          setUser(null)
+        }
+
         throw error
       })
       .finally(() => {

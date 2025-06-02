@@ -54,12 +54,12 @@ const NewChatBox = ({
         filter={isChatLoading || isSendMessaging ? 'blur(4px)' : 'none'}
         position="relative"
       >
-        {/* 웰컴 텍스트 - Questionbar 위에 위치 */}
+        {/* 텍스트 */}
         <Box
           position="absolute"
           top="50%"
           left="50%"
-          transform="translate(-50%, -200px)" // 더 위로 올림 (120px -> 200px)
+          transform="translate(-50%, -200px)"
           textAlign="center"
           zIndex="1"
         >
@@ -71,7 +71,7 @@ const NewChatBox = ({
           </Text>
         </Box>
 
-        {/* 질문창을 정중앙에 고정 */}
+        {/* 질문창 */}
         <Flex
           position="absolute"
           top="50%"

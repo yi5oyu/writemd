@@ -3,10 +3,10 @@ import { Grid, Flex, Box, Text, Icon, Button, useDisclosure, useToast } from '@c
 import { DeleteIcon } from '@chakra-ui/icons'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import SearchBar from '../../components/ui/search/SearchBar'
-import DeleteBox from '../../components/ui/modal/DeleteBox'
+
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
+import DeleteBox from '../../components/ui/modal/DeleteBox'
 
 const NoteList = ({
   handleSaveNote,

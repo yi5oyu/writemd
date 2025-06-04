@@ -1,6 +1,5 @@
 package com.writemd.backend;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -10,9 +9,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class BackendApplication {
 
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.configure()
-            .systemProperties()
-            .load();
+//        Dotenv dotenv = Dotenv.configure()
+//            .systemProperties()
+//            .load();
 
         SpringApplication.run(BackendApplication.class, args);
     }

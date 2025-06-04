@@ -38,7 +38,7 @@ import useDeleteUser from '../../hooks/auth/useDeleteUser'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import useLogout from '../../hooks/auth/useLogout'
 import useApiKey from '../../hooks/chat/useApiKey'
-import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
+import useSaveApiKey from '../../hooks/chat/useSaveApiKey'
 import APIInputGroup from '../../components/ui/input/APIInputGroup'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 

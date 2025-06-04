@@ -47,7 +47,7 @@ import useGetGithubFolder from '../../hooks/git/useGetGithubFolder'
 import useGetGithubBlobFile from '../../hooks/git/useGetGithubBlobFile'
 
 import useSession from '../../hooks/chat/useSession'
-import useSaveApiKey from '../../hooks/chat/useSaveAPIKey'
+import useSaveApiKey from '../../hooks/chat/useSaveApiKey'
 import useApiKey from '../../hooks/chat/useApiKey'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 import useSseConnection from '../../hooks/chat/useSseConnection'

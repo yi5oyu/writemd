@@ -1,0 +1,60 @@
+# Git 관련
+.git/
+.gitignore
+
+# Python 가상환경 및 캐시
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+.tox
+*.egg-info/
+
+# uv 관련
+.python-version
+
+# IDE 및 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS 관련
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 개발 도구 및 설정
+README.md
+.env
+.env.*
+
+# Docker 관련 (자기 참조 방지)
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# 로그 및 임시 파일
+*.log
+*.tmp
+*.temp
+.cache/
+
+# 테스트 관련
+tests/
+test_*.py
+*_test.py
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# 문서
+docs/
+*.md
+LICENSE

@@ -8,7 +8,7 @@ from mcp_tools import mcp
 # .venv\Scripts\activate
 # uv run server.py
 
-def start_server(host="127.0.0.1", port=9889):
+def start_server(host="0.0.0.0", port=9889):
     """MCP 서버를 시작합니다."""
     app = Starlette(
         routes=[

@@ -5,7 +5,7 @@ import TemplateSelect from '../select/TemplateSelect'
 import TemplateBody from './TemplateBody'
 import APIInputGroup from '../input/APIInputGroup'
 import AiSelect from '../select/AiSelect'
-import DeleteBox from '../modal/DeleteBox'
+import DeleteModal from '../modals/DeleteModal'
 
 const CreateCard = ({ select }) => {
   const [aiModel, setAiModel] = useState('openai')
@@ -108,7 +108,7 @@ const CreateCard = ({ select }) => {
           </CardBody>
         )}
       </Card>
-      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDeleteAPI} title="API" />
+      <DeleteModal isOpen={isOpen} onClose={onClose} onClick={confirmDeleteAPI} title="API" />
     </>
   )
 }

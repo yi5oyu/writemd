@@ -15,10 +15,11 @@ import {
   IconButton,
 } from '@chakra-ui/react'
 import { FiEdit, FiCheck } from 'react-icons/fi'
-import DeleteBox from '../../components/ui/modal/DeleteBox'
+import { AddIcon, DeleteIcon } from '@chakra-ui/icons'
+
 import CreateCard from '../../components/ui/card/CreateCard'
 import SearchFlex from '../../components/ui/search/SearchFlex'
-import { AddIcon, DeleteIcon } from '@chakra-ui/icons'
+import DeleteModal from '../../components/ui/modals/DeleteModal'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -440,7 +441,7 @@ const TemplateList = ({
         </Accordion>
       </Box>
 
-      <DeleteBox
+      <DeleteModal
         isOpen={isOpen}
         onClose={onClose}
         onClick={confirmDelete}

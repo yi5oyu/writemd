@@ -6,9 +6,9 @@ import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
-import DeleteBox from '../../components/ui/modal/DeleteBox'
 import modelData from '../../data/model.json'
 import AiSelect from '../../components/ui/select/AiSelect'
+import DeleteModal from '../../components/ui/modals/DeleteModal'
 
 const SessionList = ({
   sessions,
@@ -182,7 +182,7 @@ const SessionList = ({
         </Box>
       </Flex>
 
-      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={sessionTitle} />
+      <DeleteModal isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={sessionTitle} />
 
       {isChatLoading && <LoadingSpinner />}
     </>

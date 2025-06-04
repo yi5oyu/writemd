@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Grid, Flex, Box, Text, Icon, Button, useDisclosure, useToast } from '@chakra-ui/react'
+import { Grid, Flex, Box, Text, useDisclosure, useToast } from '@chakra-ui/react'
 import { DeleteIcon } from '@chakra-ui/icons'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
-import DeleteBox from '../../components/ui/modals/DeleteBox'
+import DeleteModal from '../../components/ui/modals/DeleteModal'
 
 const NoteList = ({
   handleSaveNote,
@@ -272,7 +272,7 @@ const NoteList = ({
         </Grid>
       </Box>
 
-      <DeleteBox isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={noteTitle} />
+      <DeleteModal isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={noteTitle} />
 
       {isLoading && <LoadingSpinner />}
     </Flex>

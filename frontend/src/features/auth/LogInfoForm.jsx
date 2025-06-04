@@ -30,7 +30,6 @@ import {
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 
-import DeleteBox from '../../components/ui/modal/DeleteBox'
 import AiModel from '../../data/model.json'
 import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
 import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
@@ -41,6 +40,7 @@ import useApiKey from '../../hooks/chat/useApiKey'
 import useSaveApiKey from '../../hooks/chat/useSaveApiKey'
 import APIInputGroup from '../../components/ui/input/APIInputGroup'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
+import DeleteModal from '../../components/ui/modals/DeleteModal'
 
 const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const [confirm, setConfirm] = useState('')
@@ -444,7 +444,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
           </Tabs>
         </ModalContent>
       </Modal>
-      <DeleteBox
+      <DeleteModal
         isOpen={
           confirm === 'auth'
             ? isDeleteOpen

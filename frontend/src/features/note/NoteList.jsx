@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale'
 
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
-import DeleteBox from '../../components/ui/modal/DeleteBox'
+import DeleteBox from '../../components/ui/modals/DeleteBox'
 
 const NoteList = ({
   handleSaveNote,

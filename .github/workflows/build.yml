@@ -1,0 +1,56 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches: [main, develop/**]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 소스코드 가져오기(Checkout repository)
+        uses: actions/checkout@v4
+
+      - name: GitHub 컨테이너 레지스트리 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: backend(Spring boot 3) 이미지 빌드/푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
+
+      - name: Frontend(React) 이미지 빌드/푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
+
+      - name: MCP server(python) 이미지 빌드/푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: ./py-mcp-server
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-py-mcp-server:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-py-mcp-server:${{ github.sha }}

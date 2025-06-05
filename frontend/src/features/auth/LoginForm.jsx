@@ -15,12 +15,13 @@ import {
   Icon,
   Flex,
 } from '@chakra-ui/react'
+import { API_URL } from '../../config/api'
 import { BsGithub } from 'react-icons/bs'
 import { FiZap, FiEdit3 } from 'react-icons/fi'
 
 const LoginForm = ({ isOpen, onClose }) => {
   const gitOauthClick = () => {
-    window.location.href = 'http://localhost:8888/oauth2/authorization/github'
+    window.location.href = `${API_URL}/oauth2/authorization/github`
   }
 
   return (

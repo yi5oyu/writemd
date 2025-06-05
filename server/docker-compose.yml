@@ -75,6 +75,14 @@ services:
       - app-network
     restart: unless-stopped
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - app-network
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   redis_data:

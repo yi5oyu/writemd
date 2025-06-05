@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useUpdateFolderName = () => {
@@ -12,7 +13,7 @@ const useUpdateFolderName = () => {
     setLoading(true)
     setError(null)
     return axios
-      .put(`http://localhost:8888/api/template/folder/${folderId}/${folderName}`, null, {
+      .put(`${API_URL}/api/template/folder/${folderId}/${folderName}`, null, {
         withCredentials: true,
       })
       .then((response) => {

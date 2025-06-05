@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useDirectChat = () => {
@@ -15,7 +16,7 @@ const useDirectChat = () => {
       setError(null)
       return axios
         .post(
-          `http://localhost:8888/api/chat/direct/${userId}/${apiId}`,
+          `${API_URL}/api/chat/direct/${userId}/${apiId}`,
           {
             model: model,
             content: content,

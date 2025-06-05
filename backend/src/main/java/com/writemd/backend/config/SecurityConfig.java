@@ -5,6 +5,7 @@ import com.writemd.backend.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,10 +32,13 @@ public class SecurityConfig {
     @Autowired
     private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
+    @Value("${app.frontend.url:http://localhost:5173}")  // 추가!
+    private String frontendUrl;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOriginPattern("http://localhost:5173");
+        configuration.addAllowedOriginPattern(frontendUrl);
         configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6277");
         configuration.addAllowedOriginPattern("http://127.0.0.1:5577");
@@ -56,25 +60,30 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http.csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(
                 (requests) -> requests.requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**",
                         "/login/oauth2/**", "/actuator/**",
-                        "/logout", "/v1/**", "/sse").permitAll().requestMatchers("/profile/**", "/api/**", "/h2-console/**")
+                        "/logout", "/v1/**", "/sse").permitAll()
+                    .requestMatchers("/profile/**", "/api/**", "/h2-console/**")
                     .authenticated()
                     .anyRequest().authenticated())
             .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService()))
-                .successHandler(customAuthenticationSuccessHandler)).logout(
-                logout -> logout.logoutUrl("/logout").logoutSuccessUrl("http://localhost:5173")
-                    .logoutSuccessHandler((request, response, authentication) -> {
-                        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-                        response.setHeader("Access-Control-Allow-Credentials", "true");
-                        response.setContentType("application/json");
-                        response.setStatus(HttpServletResponse.SC_OK);
-                        response.getWriter().write("{\"message\": \"로그아웃 성공\"}");
-                        response.getWriter().flush();
-                    }).invalidateHttpSession(true).deleteCookies("JSESSIONID").clearAuthentication(true))
+                .successHandler(customAuthenticationSuccessHandler))
+            .logout(logout -> logout.logoutUrl("/logout")
+                .logoutSuccessUrl(frontendUrl)
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setHeader("Access-Control-Allow-Origin", frontendUrl);
+                    response.setHeader("Access-Control-Allow-Credentials", "true");
+                    response.setContentType("application/json");
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.getWriter().write("{\"message\": \"로그아웃 성공\"}");
+                    response.getWriter().flush();
+                }).invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .clearAuthentication(true))
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();

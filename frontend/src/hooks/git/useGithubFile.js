@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 function useGithubFile() {
@@ -14,7 +15,7 @@ function useGithubFile() {
     setError(null)
 
     return axios
-      .post(`http://localhost:8888/api/github/repo/${owner}/${repo}/file`, content, {
+      .post(`${API_URL}/api/github/repo/${owner}/${repo}/file`, content, {
         params: { path, message, sha, newPath },
         headers: { 'Content-Type': 'text/plain' },
         withCredentials: true,

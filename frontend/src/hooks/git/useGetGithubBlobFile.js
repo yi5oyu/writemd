@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 function useGetGithubBlobFile() {
@@ -15,7 +16,7 @@ function useGetGithubBlobFile() {
     setError(null)
 
     return axios
-      .get(`http://localhost:8888/api/github/repo/${owner}/${repo}/blobs/${sha}`, {
+      .get(`${API_URL}/api/github/repo/${owner}/${repo}/blobs/${sha}`, {
         withCredentials: true,
       })
       .then((response) => {

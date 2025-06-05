@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useSaveMarkdown = () => {
@@ -21,7 +22,7 @@ const useSaveMarkdown = () => {
 
       return axios
         .put(
-          `http://localhost:8888/api/note/${noteId}`,
+          `${API_URL}/api/note/${noteId}`,
           {
             markdownText: markdownText,
           },

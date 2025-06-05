@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { API_URL } from '../../config/api'
 
 const useSseConnection = (sessionId, enabled = false) => {
   const [streamingContent, setStreamingContent] = useState('')
@@ -31,7 +32,7 @@ const useSseConnection = (sessionId, enabled = false) => {
       }
 
       // 연결
-      const es = new EventSource(`http://localhost:8888/api/chat/stream/${sessionId}`, {
+      const es = new EventSource(`${API_URL}/api/chat/stream/${sessionId}`, {
         withCredentials: true,
       })
       eventSourceRef.current = es

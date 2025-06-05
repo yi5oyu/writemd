@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useSaveNote = () => {
@@ -26,7 +27,7 @@ const useSaveNote = () => {
 
       return axios
         .post(
-          `http://localhost:8888/api/note/create/${user.githubId}`,
+          `${API_URL}/api/note/create/${user.githubId}`,
           { noteName: noteName.trim() },
           {
             headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 function useGit() {
@@ -14,7 +15,7 @@ function useGit() {
     setError(null)
 
     return axios
-      .get(`http://localhost:8888/api/github/repo/${userId}`, {
+      .get(`${API_URL}/api/github/repo/${userId}`, {
         withCredentials: true,
       })
       .then((response) => {

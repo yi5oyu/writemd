@@ -36,7 +36,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: 'http://localhost:8888/login/oauth2/code/github'
+            redirect-uri: ${GITHUB_REDIRECT_URI}
             scope: read:user, user:email, repo
 
   ai:
@@ -58,6 +58,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
 
 server:
   port: 8888

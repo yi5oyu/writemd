@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 
 const useAuth = () => {
   const [user, setUser] = useState(null)
@@ -36,7 +37,7 @@ const useAuth = () => {
   const fetchUserInfo = () => {
     setLoading(true)
 
-    return fetch('http://localhost:8888/api/user/info', {
+    return fetch(`${API_URL}/api/user/info`, {
       credentials: 'include',
     })
       .then((response) => {

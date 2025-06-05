@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useApiKey = () => {
@@ -22,7 +23,7 @@ const useApiKey = () => {
       setError(null)
 
       return axios
-        .get(`http://localhost:8888/api/user/key/${userId}`, {
+        .get(`${API_URL}/api/user/key/${userId}`, {
           withCredentials: true,
         })
         .then((response) => {

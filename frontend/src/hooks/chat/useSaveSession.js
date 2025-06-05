@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useSaveSession = () => {
@@ -12,7 +13,7 @@ const useSaveSession = () => {
     setLoading(true)
     setError(null)
     return axios
-      .post(`http://localhost:8888/api/note/${noteId}`, { title }, { withCredentials: true })
+      .post(`${API_URL}/api/note/${noteId}`, { title }, { withCredentials: true })
       .then((response) => response.data)
       .catch((err) => {
         handleSessionExpiry(toast, err)

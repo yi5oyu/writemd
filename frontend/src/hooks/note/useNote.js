@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 
 const useNote = (noteId) => {
   const [note, setNote] = useState(null)
@@ -11,7 +12,7 @@ const useNote = (noteId) => {
   useEffect(() => {
     setLoading(true)
     setError(null)
-    fetch(`http://localhost:8888/api/note/${noteId}`, {
+    fetch(`${API_URL}/api/note/${noteId}`, {
       credentials: 'include',
     })
       .then((res) => {

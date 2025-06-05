@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useSaveTemplate = () => {
@@ -26,7 +27,7 @@ const useSaveTemplate = () => {
     }
 
     return axios
-      .post(`http://localhost:8888/api/template/${userId}`, requestData, {
+      .post(`${API_URL}/api/template/${userId}`, requestData, {
         headers: { 'Content-Type': 'application/json' },
         withCredentials: true,
       })

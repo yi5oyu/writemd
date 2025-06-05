@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useGithubAnalysis = () => {
@@ -47,10 +48,9 @@ const useGithubAnalysis = () => {
 
       return new Promise((resolve, reject) => {
         // SSE 연결
-        const eventSource = new EventSource(
-          `http://localhost:8888/api/chat/analysis/${userId}/${apiId}`,
-          { withCredentials: true }
-        )
+        const eventSource = new EventSource(`${API_URL}/api/chat/analysis/${userId}/${apiId}`, {
+          withCredentials: true,
+        })
         eventSourceRef.current = eventSource
 
         // 분석 시작 이벤트
@@ -358,7 +358,7 @@ const useGithubAnalysis = () => {
         setTimeout(() => {
           axios
             .post(
-              `http://localhost:8888/api/chat/analysis/${userId}/${apiId}`,
+              `${API_URL}/api/chat/analysis/${userId}/${apiId}`,
               {
                 repo,
                 model,

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useDocumentAnalysis = () => {
@@ -17,7 +18,7 @@ const useDocumentAnalysis = () => {
 
       return axios
         .post(
-          `http://localhost:8888/api/chat/document/${userId}/${apiId}`,
+          `${API_URL}/api/chat/document/${userId}/${apiId}`,
           {
             content,
             model,

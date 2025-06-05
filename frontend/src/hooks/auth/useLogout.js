@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { API_URL } from '../../config/api'
 
 const useLogout = () => {
   const [isLoading, setIsLoading] = useState(false)
@@ -8,7 +9,7 @@ const useLogout = () => {
     setIsLoading(true)
     setError(null)
 
-    return fetch('http://localhost:8888/logout', {
+    return fetch(`${API_URL}/logout`, {
       method: 'POST',
       credentials: 'include',
     })

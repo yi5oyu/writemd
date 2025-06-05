@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 
 const useChat = ({ sessionId }) => {
   const [chat, setChat] = useState([])
@@ -13,7 +14,7 @@ const useChat = ({ sessionId }) => {
     setLoading(true)
     setError(null)
 
-    fetch(`http://localhost:8888/api/chat/${sessionId}`, {
+    fetch(`${API_URL}/api/chat/${sessionId}`, {
       credentials: 'include',
     })
       .then((res) => res.json())

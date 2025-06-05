@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useChatConnection = () => {
@@ -12,7 +13,7 @@ const useChatConnection = () => {
     setLoading(true)
     setError(null)
     return axios
-      .get('http://localhost:8888/api/chat/connected', {
+      .get(`${API_URL}/api/chat/connected`, {
         withCredentials: true,
       })
       .then((response) => response)

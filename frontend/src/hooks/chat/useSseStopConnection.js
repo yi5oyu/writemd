@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { API_URL } from '../../config/api'
 
 const useSseStopConnection = (sessionId) => {
   const [isStopping, setIsStopping] = useState(false)
@@ -18,7 +19,7 @@ const useSseStopConnection = (sessionId) => {
     setIsStopping(true)
     setStopError(null)
 
-    return fetch(`http://localhost:8888/api/chat/stop/${sessionId}`, {
+    return fetch(`${API_URL}/api/chat/stop/${sessionId}`, {
       method: 'POST',
       credentials: 'include',
     })

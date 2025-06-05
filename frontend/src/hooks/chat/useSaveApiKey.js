@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
+import { API_URL } from '../../config/api'
 import axios from 'axios'
 
 const useSaveApiKey = () => {
@@ -13,11 +14,7 @@ const useSaveApiKey = () => {
     setError(null)
 
     return axios
-      .post(
-        `http://localhost:8888/api/user/key/${userId}`,
-        { aiModel, apiKey },
-        { withCredentials: true }
-      )
+      .post(`${API_URL}/api/user/key/${userId}`, { aiModel, apiKey }, { withCredentials: true })
       .then((response) => {
         return response.data
       })

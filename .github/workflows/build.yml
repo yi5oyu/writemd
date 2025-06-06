@@ -63,18 +63,18 @@ jobs:
     if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/develop')) && github.event_name == 'push'
 
     steps:
+      - name: GitHub Runner 자동 복구
+        run: |
+          cd /workspace
+          export GITHUB_RUNNER_TOKEN="${{ secrets.GITHUB_RUNNER_TOKEN }}"
+          ./github-runner.sh
+
       - name: 시놀로지에서 직접 배포
         run: |
           cd /workspace
-
           docker-compose down --remove-orphans
-
           docker-compose pull
-
           docker-compose up -d
-
           docker-compose ps
-
           docker image prune -f
-
           echo "배포 완료"

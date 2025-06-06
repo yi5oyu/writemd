@@ -83,20 +83,6 @@ services:
       - app-network
     restart: unless-stopped
 
-  github-runner:
-    image: myoung34/github-runner:latest
-    container_name: github-runner
-    environment:
-      REPO_URL: https://github.com/yi5oyu/writemd
-      RUNNER_TOKEN: ${GITHUB_RUNNER_TOKEN}
-      RUNNER_NAME: synology-runner
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /volume1/docker/writemd:/workspace
-    networks:
-      - app-network
-    restart: unless-stopped
-
 volumes:
   mysql_data:
   redis_data:

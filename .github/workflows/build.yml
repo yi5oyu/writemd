@@ -70,6 +70,8 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          timeout: 300s
+          command_timeout: 600s
           script: |
             echo "배포 시작"
             cd ${{ secrets.DOCKER_COMPOSE_PATH }}

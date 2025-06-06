@@ -1,4 +1,4 @@
-name: Build Docker Images
+name: Build and Deploy Docker Images
 
 on:
   push:
@@ -56,3 +56,55 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-py-mcp-server:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-py-mcp-server:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 시놀로지 NAS 자동 배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "배포 시작"
+            cd ${{ secrets.DOCKER_COMPOSE_PATH }}
+
+            echo "현재 상태 확인"
+            docker-compose ps
+
+            echo "최신 이미지 가져오기"
+            docker-compose pull
+
+            echo "새 이미지 적용"
+            docker-compose up -d --force-recreate --remove-orphans
+
+            echo "최종 상태 확인"
+            docker-compose ps
+
+            echo "이전 이미지 삭제"
+            docker image prune -af
+
+  notify:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 배포 성공 알림
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "WriteeMD 배포가 성공적으로 완료되었습니다!"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "Site: https://www.writemd.space"
+
+      - name: 배포 실패 알림
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "WriteeMD 배포가 실패했습니다!"
+          echo "GitHub Actions 로그를 확인해주세요."

@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  github-runner:
+    image: myoung34/github-runner:latest
+    container_name: github-runner
+    environment:
+      REPO_URL: https://github.com/yi5oyu/writemd
+      RUNNER_TOKEN: ${GITHUB_RUNNER_TOKEN}
+      RUNNER_NAME: synology-runner
+      RUNNER_WORKDIR: /tmp/github-runner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /volume1/docker/writemd:/workspace
+    restart: unless-stopped

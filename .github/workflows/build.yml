@@ -60,7 +60,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/develop')) && github.event_name == 'push'
 
     steps:
       - name: 시놀로지 NAS 자동 배포

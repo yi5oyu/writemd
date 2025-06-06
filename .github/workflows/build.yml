@@ -63,28 +63,115 @@ jobs:
     if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/develop')) && github.event_name == 'push'
 
     steps:
-      - name: 시놀로지 NAS 자동 배포
+      - name: 시놀로지 NAS 자동 배포 (상세 로그)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          timeout: 300s
-          command_timeout: 600s
           script: |
-            echo "배포 시작"
+            echo "========================================"
+            echo "SSH 연결 성공! 배포 시작"
+            echo "========================================"
+
+            echo "=== 1단계: 환경 정보 확인 ==="
+            echo "현재 사용자: $(whoami)"
+            echo "현재 위치: $(pwd)"
+            echo "현재 시간: $(date)"
+            echo "HOME 디렉토리: $HOME"
+
+            echo "=== 2단계: Docker 권한 수정 ==="
+            echo "Docker 소켓 권한 (수정 전):"
+            ls -la /var/run/docker.sock
+
+            echo "권한 수정 실행..."
             sudo chmod 666 /var/run/docker.sock
-            cd ${{ secrets.DOCKER_COMPOSE_PATH }}
+            echo "권한 수정 결과: $?"
 
-            echo "최신 이미지 가져오기"
+            echo "Docker 소켓 권한 (수정 후):"
+            ls -la /var/run/docker.sock
+
+            echo "=== 3단계: 디렉토리 이동 ==="
+            echo "이동할 경로: ${{ secrets.DOCKER_COMPOSE_PATH }}"
+            echo "경로 존재 여부 확인:"
+            ls -la "${{ secrets.DOCKER_COMPOSE_PATH }}" || echo "경로 접근 실패!"
+
+            echo "디렉토리 이동 시도..."
+            cd "${{ secrets.DOCKER_COMPOSE_PATH }}"
+            echo "이동 결과: $?"
+            echo "현재 위치: $(pwd)"
+
+            echo "현재 디렉토리 내용:"
+            ls -la
+
+            echo "=== 4단계: Docker Compose 파일 확인 ==="
+            if [ -f "docker-compose.yml" ]; then
+                echo "✅ docker-compose.yml 파일 존재"
+                echo "파일 크기: $(ls -lh docker-compose.yml)"
+                echo "파일 내용 (처음 20줄):"
+                head -20 docker-compose.yml
+            else
+                echo "❌ docker-compose.yml 파일 없음!"
+                exit 1
+            fi
+
+            echo "=== 5단계: 배포 전 현재 상태 ==="
+            echo "현재 실행 중인 컨테이너:"
+            docker-compose ps || echo "docker-compose ps 실패"
+
+            echo "현재 Docker 이미지 (ghcr.io):"
+            docker images | grep ghcr.io || echo "ghcr.io 이미지 없음"
+
+            echo "=== 6단계: GitHub Container Registry 로그인 ==="
+            echo "레지스트리 로그인 시도..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "로그인 결과: $?"
+
+            echo "=== 7단계: 최신 이미지 가져오기 ==="
+            echo "docker-compose pull 실행..."
             docker-compose pull
+            echo "Pull 결과: $?"
 
-            echo "새 이미지 적용"
+            echo "Pull 후 이미지 상태:"
+            docker images | grep ghcr.io || echo "이미지 확인 실패"
+
+            echo "=== 8단계: 기존 컨테이너 중지 ==="
+            echo "기존 컨테이너 중지..."
+            docker-compose down
+            echo "중지 결과: $?"
+
+            echo "=== 9단계: 새 컨테이너 시작 ==="
+            echo "새 컨테이너 시작..."
             docker-compose up -d --force-recreate --remove-orphans
+            echo "시작 결과: $?"
 
-            echo "이전 이미지 삭제"
+            echo "=== 10단계: 배포 결과 확인 ==="
+            echo "10초 대기 중..."
+            sleep 10
+
+            echo "최종 컨테이너 상태:"
+            docker-compose ps
+
+            echo "컨테이너 상세 정보:"
+            docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+            echo "=== 11단계: 컨테이너 로그 확인 ==="
+            echo "각 서비스 로그 (최근 5줄):"
+            for service in $(docker-compose config --services); do
+                echo "--- $service 로그 ---"
+                docker-compose logs --tail=5 $service || echo "$service 로그 없음"
+            done
+
+            echo "=== 12단계: 이전 이미지 정리 ==="
+            echo "이전 이미지 삭제..."
             docker image prune -af
+            echo "정리 결과: $?"
+
+            echo "========================================"
+            echo "배포 완료!"
+            echo "최종 시간: $(date)"
+            echo "========================================"
 
   notify:
     needs: [build, deploy]

@@ -65,6 +65,18 @@ jobs:
     steps:
       - name: 시놀로지에서 직접 배포
         run: |
+          echo "=== 현재 위치 ==="
+          pwd
+
+          echo "=== 현재 디렉토리 내용 ==="
+          ls -la
+
+          echo "=== 루트 디렉토리 ==="
+          ls -la /
+
+          echo "=== workspace 확인 ==="
+          ls -la /workspace || echo "workspace 없음"
+
           # 작업 디렉토리로 이동
           cd /volume1/docker/writemd
 

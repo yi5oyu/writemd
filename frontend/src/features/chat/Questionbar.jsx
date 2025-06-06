@@ -205,7 +205,6 @@ const Questionbar = ({
                 }
                 if (isStreamingActive) {
                   handleStopStreaming()
-                  console.log('스톱 클릭')
                 }
               }}
               _hover={

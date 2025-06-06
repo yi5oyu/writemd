@@ -444,7 +444,7 @@ const NoteScreen = ({
         throw new Error('메시지 전송 요청 실패 (서버 응답 확인 필요)')
       }
     } catch (error) {
-      console.log('메시지 보내기 실패: ' + error)
+      // console.log('메시지 보내기 실패: ' + error)
       setMessages([userMessage, { role: 'assistant', content: '메시지 보내기 실패' }])
       setIsWaitingForStream(false)
     }
@@ -458,7 +458,7 @@ const NoteScreen = ({
       model: model,
       content: content,
     })
-    console.log(response)
+    // console.log(response)
   }
 
   // loading 초기화
@@ -1047,7 +1047,7 @@ const NoteScreen = ({
         githubId: githubId,
         stream: true,
         onStreamData: (data) => {
-          console.log('스트리밍 데이터 수신:', data)
+          // console.log('스트리밍 데이터 수신:', data)
 
           // 이벤트 유형별 처리
           if (data.stage && data.result) {
@@ -1078,7 +1078,6 @@ const NoteScreen = ({
       })
 
       setAnalysisResults(result)
-      console.log('분석 완료:', result)
 
       toast({
         position: 'top',

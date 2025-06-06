@@ -243,10 +243,6 @@ const GitScreen = ({
     }
   }, [progressSteps])
 
-  useEffect(() => {
-    console.log(analysisResults)
-  }, [analysisResults])
-
   return (
     <Flex
       h={screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}

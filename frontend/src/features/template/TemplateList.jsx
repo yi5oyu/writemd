@@ -54,7 +54,6 @@ const TemplateList = ({
   // 템플릿 배열 통합
   useEffect(() => {
     setBaseTemplates(templates.map((t) => t.template).flat())
-    console.log(baseTemplates.length)
   }, [templates])
 
   // 템플릿 저장

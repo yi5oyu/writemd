@@ -17,7 +17,7 @@ const TutorialPage = ({ showMarkdown, showPreview }) => {
     } else {
       setMd(contents[currentStep - BasicContents.length].markdownContents)
     }
-    console.log(currentStep)
+    // console.log(currentStep)
   }, [currentStep, isBasicMode])
 
   const steps = BasicContents.map((c) => c.title)

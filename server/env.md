@@ -27,6 +27,9 @@ FRONTEND_URL=frontend_url(http://localhost:5173)
 
 # Cloudflare
 CLOUDFLARE_TUNNEL_TOKEN=cloudflare_tunnel_token
+
+# Github Runner
+GITHUB_RUNNER_TOKEN=github_runner_token
 ```
 
 ## Git Actions Secret

@@ -65,39 +65,16 @@ jobs:
     steps:
       - name: 시놀로지에서 직접 배포
         run: |
-          echo "=== 현재 위치 ==="
-          pwd
+          cd /workspace
 
-          echo "=== 현재 디렉토리 내용 ==="
-          ls -la
+          docker-compose down --remove-orphans
 
-          echo "=== 루트 디렉토리 ==="
-          ls -la /
-
-          echo "=== workspace 확인 ==="
-          ls -la /workspace || echo "workspace 없음"
-
-          # 작업 디렉토리로 이동
-          cd /volume1/docker/writemd
-
-          # 배포 시작 알림
-          echo "🚀 배포 시작..."
-          docker-compose ps
-
-          # 최신 이미지 다운로드
-          echo "📥 최신 이미지 다운로드 중..."
           docker-compose pull
 
-          # 서비스 재시작 (다운타임 최소화)
-          echo "🔄 서비스 업데이트 중..."
-          docker-compose up -d --remove-orphans
+          docker-compose up -d
 
-          # 배포 완료 확인
-          echo "✅ 배포 완료! 현재 상태:"
           docker-compose ps
 
-          # 사용하지 않는 이미지 정리
-          echo "🧹 미사용 이미지 정리..."
           docker image prune -f
 
-          echo "🎉 배포가 성공적으로 완료되었습니다!"
+          echo "배포 완료"

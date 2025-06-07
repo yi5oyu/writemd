@@ -1,5 +1,4 @@
 version: '3.8'
-name: writemd
 
 services:
   db:
@@ -19,12 +18,6 @@ services:
       - app-network
     command: --default-authentication-plugin=mysql_native_password
     restart: unless-stopped
-    # DSM 호환 라벨 추가
-    labels:
-      - 'com.synology.docker=true'
-      - 'com.docker.compose.project=writemd'
-      - 'com.docker.compose.service=db'
-      - 'service.type=database'
 
   redis:
     image: redis:latest
@@ -37,11 +30,6 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    labels:
-      - 'com.synology.docker=true'
-      - 'com.docker.compose.project=writemd'
-      - 'com.docker.compose.service=redis'
-      - 'service.type=cache'
 
   py-mcp-server:
     image: ghcr.io/yi5oyu/writemd-py-mcp-server:latest
@@ -54,11 +42,6 @@ services:
     restart: unless-stopped
     networks:
       - app-network
-    labels:
-      - 'com.synology.docker=true'
-      - 'com.docker.compose.project=writemd'
-      - 'com.docker.compose.service=py-mcp-server'
-      - 'service.type=api'
 
   backend:
     image: ghcr.io/yi5oyu/writemd-backend:latest
@@ -80,11 +63,6 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    labels:
-      - 'com.synology.docker=true'
-      - 'com.docker.compose.project=writemd'
-      - 'com.docker.compose.service=backend'
-      - 'service.type=backend'
 
   frontend:
     image: ghcr.io/yi5oyu/writemd-frontend:latest
@@ -96,11 +74,6 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    labels:
-      - 'com.synology.docker=true'
-      - 'com.docker.compose.project=writemd'
-      - 'com.docker.compose.service=frontend'
-      - 'service.type=frontend'
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -109,28 +82,27 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    labels:
-      - 'com.synology.docker=true'
-      - 'com.docker.compose.project=writemd'
-      - 'com.docker.compose.service=cloudflared'
-      - 'service.type=proxy'
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer-md
+    ports:
+      - '9000:9000'
+      - '9443:9443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   mysql_data:
-    labels:
-      com.synology.docker: 'true'
-      com.docker.compose.project: 'writemd'
-      com.docker.compose.volume: 'mysql_data'
   redis_data:
-    labels:
-      com.synology.docker: 'true'
-      com.docker.compose.project: 'writemd'
-      com.docker.compose.volume: 'redis_data'
+  portainer_data:
 
 networks:
   app-network:
     driver: bridge
-    labels:
-      com.synology.docker: 'true'
-      com.docker.compose.project: 'writemd'
-      com.docker.compose.network: 'app-network'

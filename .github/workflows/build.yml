@@ -70,8 +70,23 @@ jobs:
           # 프로젝트 이름 명시
           export COMPOSE_PROJECT_NAME=writemd
 
-          # 기존 컨테이너 정리 (프로젝트 이름 포함)
-          docker-compose -p writemd down --remove-orphans 2>/dev/null || true
+          # 더 강력한 컨테이너 정리
+          echo "기존 컨테이너 완전 정리 중..."
+
+          # 프로젝트별 정리
+          docker-compose -p writemd down --remove-orphans -v 2>/dev/null || true
+
+          # 개별 컨테이너 강제 정리 (이름별)
+          docker rm -f mysql-md redis-md py-mcp-server backend-app frontend-app cloudflared-tunnel 2>/dev/null || true
+
+          # writemd 관련 모든 컨테이너 정리
+          docker ps -a --filter "name=writemd" -q | xargs -r docker rm -f 2>/dev/null || true
+          docker ps -a --filter "label=com.docker.compose.project=writemd" -q | xargs -r docker rm -f 2>/dev/null || true
+
+          # 네트워크 정리
+          docker network rm writemd_app-network 2>/dev/null || true
+
+          echo "정리 완료. 새로 배포 시작..."
 
           # 최신 이미지 pull
           docker-compose -p writemd pull

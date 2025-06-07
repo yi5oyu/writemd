@@ -66,9 +66,59 @@ jobs:
       - name: 시놀로지에서 직접 배포
         run: |
           cd /workspace
-          docker-compose down --remove-orphans
-          docker-compose pull
-          docker-compose up -d
-          docker-compose ps
+
+          # 프로젝트 이름 명시
+          export COMPOSE_PROJECT_NAME=writemd
+
+          # 기존 컨테이너 정리 (프로젝트 이름 포함)
+          docker-compose -p writemd down --remove-orphans 2>/dev/null || true
+
+          # 최신 이미지 pull
+          docker-compose -p writemd pull
+
+          # 프로젝트로 배포
+          docker-compose -p writemd up -d
+
+          # DSM 프로젝트 인식을 위한 메타데이터 추가
+          echo "DSM 프로젝트 메타데이터 설정 중..."
+
+          # 모든 프로젝트 컨테이너에 완전한 메타데이터 추가
+          docker ps --filter "label=com.docker.compose.project=writemd" -q | while read container_id; do
+            if [ ! -z "$container_id" ]; then
+              container_name=$(docker inspect --format='{{.Name}}' $container_id | sed 's/^.//')
+              echo "프로젝트 메타데이터 설정: $container_name"
+              
+              docker update \
+                --label "com.synology.docker=true" \
+                --label "com.docker.compose.project=writemd" \
+                --label "com.docker.compose.working_dir=/workspace" \
+                --label "com.docker.compose.config-files=docker-compose.yml" \
+                --label "com.docker.compose.config-hash=$(echo -n /workspace/docker-compose.yml | sha256sum | cut -d' ' -f1)" \
+                --label "com.docker.compose.version=$(docker-compose version --short)" \
+                --label "deployed.by=github-actions" \
+                --label "deployed.at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                $container_id 2>/dev/null || true
+            fi
+          done
+
+          # 네트워크에도 프로젝트 라벨 추가
+          NETWORK_NAME="writemd_default"
+          if docker network ls --filter "name=$NETWORK_NAME" --format "{{.Name}}" | grep -q "$NETWORK_NAME"; then
+            echo "네트워크 $NETWORK_NAME에 프로젝트 라벨 추가"
+            # 네트워크는 라벨 업데이트가 안되므로 이미 있는 것 사용
+          fi
+
+          # 볼륨에도 프로젝트 라벨 추가 (있는 경우)
+          docker volume ls --filter "name=writemd" --format "{{.Name}}" | while read volume_name; do
+            echo "볼륨 $volume_name 확인됨"
+          done
+
+          # DSM Container Manager 새로고침
+          sudo synopkg restart ContainerManager 2>/dev/null || true
+
+          # 이미지 정리
           docker image prune -f
-          echo "배포 완료"
+
+          echo "배포 완료 - DSM Container Manager 프로젝트 탭에서 'writemd' 확인 가능"
+          echo "프로젝트 컨테이너 목록:"
+          docker ps --filter "label=com.docker.compose.project=writemd" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"

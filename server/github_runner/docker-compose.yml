@@ -5,7 +5,7 @@ services:
     container_name: github-runner
     environment:
       REPO_URL: https://github.com/yi5oyu/writemd
-      RUNNER_TOKEN: ${GITHUB_RUNNER_TOKEN}
+      ACCESS_TOKEN: ${GITHUB_RUNNER_TOKEN}
       RUNNER_NAME: synology-runner
       RUNNER_WORKDIR: /tmp/github-runner
     volumes:

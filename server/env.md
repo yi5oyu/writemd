@@ -29,7 +29,17 @@ FRONTEND_URL=frontend_url(http://localhost:5173)
 CLOUDFLARE_TUNNEL_TOKEN=cloudflare_tunnel_token
 
 # Github Runner
-GITHUB_RUNNER_TOKEN=github_runner_token
+RUNNER_TOKEN=github_runner_token 
+# Registration Token 일회용 (A로 시작)
+
+ACCESS_TOKEN=github_access_token
+# Personal Access Token (ghp_로 시작)
+GitHub > Settings > Developer settings > Personal access tokens
+권한 설정
+ - repo (모든 하위 권한 포함)
+ - workflow
+ - admin:repo_hook
+ - read:org
 ```
 
 ## Git Actions Secret

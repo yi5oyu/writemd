@@ -8,7 +8,7 @@ spring:
     livereload:
       enabled: false
     restart:
-      enabled: false # Docker에서는 비활성화
+      enabled: false
 
   # Docker 네트워크 내에서 연결 설정
   datasource:
@@ -22,11 +22,14 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        generate_statistics: true
 
   data:
     redis:
-      host: redis # 컨테이너 이름으로 연결
-      port: 6379 # 컨테이너 내부 포트
+      host: redis
+      port: 6379
       password: ${REDIS_PASSWORD}
 
   security:
@@ -47,7 +50,8 @@ spring:
         sse:
           connections:
             py-mcp-server:
-              url: http://py-mcp-server:9889 # 컨테이너 이름으로 연결
+              # 컨테이너 이름으로 연결
+              url: http://py-mcp-server:9889
 
 management:
   endpoints:
@@ -68,6 +72,9 @@ management:
     export:
       prometheus:
         enabled: true
+    enable:
+      hikari: true # DB 커넥션 풀 모니터링
+      hibernate: true # JPA 통계 모니터링
     distribution:
       percentiles-histogram:
         http.server.requests: true

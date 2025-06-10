@@ -31,6 +31,33 @@ services:
       - app-network
     restart: unless-stopped
 
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysql-exporter
+    ports:
+      - '9104:9104'
+    environment:
+      - DATA_SOURCE_NAME=yi5oyu:${MYSQL_USER_PASSWORD}@(mysql-md:3306)/
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    ports:
+      - '9121:9121'
+    environment:
+      - REDIS_ADDR=redis-md:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - redis
+    networks:
+      - app-network
+    restart: unless-stopped
+
   py-mcp-server:
     image: ghcr.io/yi5oyu/writemd-py-mcp-server:latest
     container_name: py-mcp-server

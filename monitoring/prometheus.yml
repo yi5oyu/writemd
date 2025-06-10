@@ -11,7 +11,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # 🎯 WriteMP Backend (Spring Boot)
+  # Spring Boot 3.x
   - job_name: 'writemd-backend'
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
@@ -22,12 +22,22 @@ scrape_configs:
         target_label: instance
         replacement: 'writemd-backend'
 
-  # 🗄️ MySQL (추후 exporter 추가)
-  # - job_name: 'mysql'
-  #   static_configs:
-  #     - targets: ['mysql-exporter:9104']
+  # MySQL Exporter
+  - job_name: 'mysql'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'writemd-mysql'
 
-  # ⚡ Redis (추후 exporter 추가)
-  # - job_name: 'redis'
-  #   static_configs:
-  #     - targets: ['redis-exporter:9121']
+  # Redis Exporter
+  - job_name: 'redis'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'writemd-redis'

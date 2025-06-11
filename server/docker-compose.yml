@@ -37,7 +37,7 @@ services:
     ports:
       - '9104:9104'
     environment:
-      - DATA_SOURCE_NAME=yi5oyu:${MYSQL_USER_PASSWORD}@(mysql-md:3306)/
+      - DATA_SOURCE_NAME=yi5oyu:${MYSQL_USER_PASSWORD}@tcp(mysql-md:3306)/md
     depends_on:
       - db
     networks:

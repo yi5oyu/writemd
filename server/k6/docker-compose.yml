@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  k6-test:
+    image: grafana/k6:latest
+    volumes:
+      - ./k6-scripts:/scripts:ro
+      - ./results:/results
+    networks:
+      - writemd_app-network
+    restart: 'no'
+    profiles:
+      - interactive
+
+networks:
+  writemd_app-network:
+    external: true

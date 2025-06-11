@@ -31,51 +31,6 @@ services:
       - app-network
     restart: unless-stopped
 
-  mysql-exporter:
-    image: prom/mysqld-exporter:latest
-    container_name: mysql-exporter
-    ports:
-      - '9104:9104'
-    environment:
-      DATA_SOURCE_NAME: yi5oyu:${MYSQL_USER_PASSWORD}@tcp(mysql-md:3306)/md
-    depends_on:
-      - db
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  redis-exporter:
-    image: oliver006/redis_exporter:latest
-    container_name: redis-exporter
-    ports:
-      - '9121:9121'
-    environment:
-      - REDIS_ADDR=redis-md:6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    depends_on:
-      - redis
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    ports:
-      - '9100:9100'
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    networks:
-      - app-network
-    restart: unless-stopped
-
   py-mcp-server:
     image: ghcr.io/yi5oyu/writemd-py-mcp-server:latest
     container_name: py-mcp-server

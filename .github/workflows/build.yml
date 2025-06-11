@@ -78,8 +78,8 @@ jobs:
 
           # 프로젝트로 배포
           docker-compose -p writemd up -d
-    - name: 이미지 정리
-      run: |
-        docker image prune -f
-        
-        docker image prune -a -f --filter "until=24h"
+      - name: 이미지 정리
+        run: |
+          docker image prune -f
+
+          docker image prune -a -f --filter "until=24h"

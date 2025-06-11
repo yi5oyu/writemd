@@ -41,3 +41,13 @@ scrape_configs:
       - source_labels: [__address__]
         target_label: instance
         replacement: 'writemd-redis'
+
+  # Node Exporter
+  - job_name: 'node'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'synology-nas'

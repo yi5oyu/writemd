@@ -37,11 +37,11 @@ services:
     ports:
       - '9104:9104'
     environment:
-      - MYSQL_USER=yi5oyu
-      - MYSQL_PASSWORD=${MYSQL_USER_PASSWORD}
-      - MYSQL_HOST=mysql-md
-      - MYSQL_PORT=3306
-      - MYSQL_DATABASE=md
+      MYSQL_USER: yi5oyu
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
+      MYSQL_HOST: mysql-md
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: md
     depends_on:
       - db
     networks:

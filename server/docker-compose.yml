@@ -32,16 +32,12 @@ services:
     restart: unless-stopped
 
   mysql-exporter:
-    image: bitnami/mysqld-exporter:latest
+    image: prom/mysqld-exporter:latest
     container_name: mysql-exporter
     ports:
       - '9104:9104'
     environment:
-      MYSQL_USER: yi5oyu
-      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
-      MYSQL_HOST: mysql-md
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: md
+      DATA_SOURCE_NAME: yi5oyu:${MYSQL_USER_PASSWORD}@tcp(mysql-md:3306)/md
     depends_on:
       - db
     networks:

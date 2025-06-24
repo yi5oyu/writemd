@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.dto.SessionDTO;
+import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
 import com.writemd.backend.prompt.GitHubPrompts;
+import com.writemd.backend.repository.ApiRepository;
 import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
@@ -21,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -78,6 +81,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final SessionRepository sessionRepository;
     private final NoteRepository noteRepository;
+    private final ApiRepository apiRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final SseEmitterManager sseEmitterManager;
     private final OAuth2AuthorizedClientService authorizedClientService;
@@ -147,6 +151,28 @@ public class ChatService {
                 .aiModel((String) map.get("aiModel"))
                 .apiKey((String) map.get("apiKey"))
                 .build();
+        }
+        return null;
+    }
+
+    // API 키 db조회
+    private APIDTO findApiKey(Long userId, Long apiId) {
+        Optional<APIs> apiEntity = apiRepository.findById(apiId);
+
+        if (apiEntity.isPresent()) {
+            APIs api = apiEntity.get();
+
+            APIDTO recoveredApiDTO = APIDTO.builder()
+                .apiId(api.getId())
+                .aiModel(api.getAiModel())
+                .apiKey(api.getApiKey())
+                .build();
+
+            String hashKey = "ai:" + userId;
+            String fieldKey = "key:" + apiId;
+            redisTemplate.opsForHash().put(hashKey, fieldKey, recoveredApiDTO);
+            redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
+            return recoveredApiDTO;
         }
         return null;
     }
@@ -272,6 +298,16 @@ public class ChatService {
             // API 키 조회
             log.info("STEP 2: API 키 조회 시작 (userId: {}, apiId: {})", userId, apiId);
             APIDTO api = getApiKey(userId, apiId);
+            if (api == null) {
+                api = findApiKey(userId, apiId);
+
+                if (api == null) {
+                    log.error("STEP 2-2: API 키를 찾을 수 없음, 채팅 중단 - apiId: {}", apiId);
+                    sseEmitterManager.sendToSession(sessionId, "error",
+                        "API_NOT_FOUND::API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
+                    return;
+                }
+            }
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
             log.info("STEP 2: API 키 조회 완료 (aiModel: {})", aiModel);

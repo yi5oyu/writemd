@@ -99,13 +99,22 @@
 
 ## 🏗️ 아키텍처  
 
-`네트워크 Cloudflared`    
+<img src="https://github.com/user-attachments/assets/db1e03a4-bf21-4078-bba0-f6046e81b9b0" width="800" alt="전체 아키텍처">
 
-`MCP`
+`네트워크 구조 Cloudflared`    
+
+<img src="https://github.com/user-attachments/assets/754787af-e2ad-4b2e-acd1-d75bb9372f19" width="800" alt="네트워크">
+
+`MCP 아키텍처`
+
+<img src="https://github.com/user-attachments/assets/327f9583-aa67-4d85-9ef1-a63bf0ed6d45" width="700" alt="MCP">
   
-`AI 채팅`
+`AI 채팅 플로우`
+
+<img src="https://github.com/user-attachments/assets/f87c911f-36cd-409b-8ee1-d9b8761ca00b" width="800" alt="AI 채팅">
 
 `ERD`
+
 ```mermaid
 erDiagram
     USERS {
@@ -175,21 +184,19 @@ erDiagram
         VARCHAR aiModel
         VARCHAR apiKey
     }
-
     %% Relationships
-    USERS ||--o{ NOTES : "has"
-    USERS ||--o{ FOLDERS : "owns"
-    USERS ||--o{ MEMOS : "writes"
-    USERS ||--o{ APIS : "stores"
+    USERS ||--o{ NOTES : "소유"
+    USERS ||--o{ FOLDERS : "관리"
+    USERS ||--o{ MEMOS : "작성"
+    USERS ||--o{ APIS : "저장"
     
-    NOTES ||--|| TEXTS : "contains"
-    NOTES ||--o{ SESSIONS : "includes"
+    NOTES ||--|| TEXTS : "포함"
+    NOTES ||--o{ SESSIONS : "생성"
     
-    SESSIONS ||--o{ CHATS : "has"
+    SESSIONS ||--o{ CHATS : "기록"
     
-    FOLDERS ||--o{ TEMPLATES : "contains"
+    FOLDERS ||--o{ TEMPLATES : "보관"
 ```
-
 ---
 
 ## 🌟 주요 기능

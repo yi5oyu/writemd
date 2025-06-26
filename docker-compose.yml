@@ -5,7 +5,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: md
-      MYSQL_USER: yi5oyu
+      MYSQL_USER: writemd
       MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
       MYSQL_ROOT_HOST: '%'
     ports:
@@ -14,7 +14,7 @@ services:
       - mysql_md_data:/var/lib/mysql
     networks:
       - app-network
-    command: --default-authentication-plugin=mysql_native_password # 추가
+    command: --default-authentication-plugin=mysql_native_password
 
   redis:
     image: redis:latest
@@ -49,11 +49,12 @@ services:
     ports:
       - '8888:8888'
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=local
       - MYSQL_PASSWORD=${MYSQL_USER_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL}
     depends_on:
       - db
       - redis

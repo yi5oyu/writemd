@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: backend
+  mvc:
+    async:
+      request-timeout: 300000
+  devtools:
+    livereload:
+      enabled: false
+    restart:
+      enabled: false
+
+  datasource:
+    url: jdbc:mysql://db:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: writemd
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        generate_statistics: true
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            redirect-uri: http://localhost:8888/login/oauth2/code/github
+            scope: read:user, user:email, repo
+
+  ai:
+    mcp:
+      client:
+        toolcallback:
+          enabled: true
+        sse:
+          connections:
+            py-mcp-server:
+              url: http://py-mcp-server:9889
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+        exclude: 'info'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+    metrics:
+      enabled: true
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
+
+server:
+  port: 8888
+  address: 0.0.0.0
+  tomcat:
+    connection-timeout: 300000
+  servlet:
+    session:
+      timeout: 30m
+
+logging:
+  level:
+    org.springframework.ai: INFO
+    org.springframework.web: DEBUG

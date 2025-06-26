@@ -14,7 +14,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3307/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: yi5oyu
+    username: writemd
     password: ${MYSQL_PASSWORD}
     # url: jdbc:h2:file:./data/chatdb
     # driver-class-name: org.h2.Driver
@@ -66,7 +66,6 @@ spring:
             py-mcp-server:
               url: http://localhost:9889
 
-
 management:
   endpoints:
     web:
@@ -80,7 +79,7 @@ management:
 server:
   port: 8888
   tomcat:
-    connection-timeout: 300000  # 5분
+    connection-timeout: 300000 # 5분
   servlet:
     session:
       timeout: 30m

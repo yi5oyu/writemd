@@ -1,0 +1,85 @@
+{
+  "openai": {
+    "keyword": "ChatGPT",
+    "model": ["gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini", "gpt-4o", "gpt-4o-mini"],
+    "token_limits": {
+      "gpt-4.1": {
+        "TPM": 30000,
+        "RPM": 500,
+        "TPD": 900000
+      },
+      "gpt-4.1-mini": {
+        "TPM": 200000,
+        "RPM": 500,
+        "TPD": 2000000
+      },
+      "gpt-4.1-nano": {
+        "TPM": 200000,
+        "RPM": 500,
+        "TPD": 2000000
+      },
+      "o4-mini": {
+        "TPM": 200000,
+        "RPM": 500,
+        "TPD": 2000000
+      },
+      "gpt-4o": {
+        "TPM": 30000,
+        "RPM": 500,
+        "TPD": 90000
+      },
+      "gpt-4o-mini": {
+        "TPM": 200000,
+        "RPM": 500,
+        "RPD": 10000,
+        "TPD": 2000000
+      }
+    },
+    "html": "https://platform.openai.com/settings/organization/limits"
+  },
+  "anthropic": {
+    "keyword": "Claude",
+    "model": [
+      "claude-3-7-sonnet-20250219",
+      "claude-3-5-haiku-20241022",
+      "claude-3-5-sonnet-20241022",
+      "claude-3-5-sonnet-20240620",
+      "claude-3-opus-20240229",
+      "claude-3-sonnet-20240229",
+      "claude-3-haiku-20240307"
+    ],
+    "token_limits": {
+      "claude-3-7-sonnet-20250219": {
+        "RPM": 50,
+        "InputTPM": 20000,
+        "OutputTPM": 8000
+      },
+      "claude-3-5-haiku-20241022": {
+        "RPM": 50,
+        "InputTPM": 50000,
+        "OutputTPM": 10000
+      },
+      "claude-3-5-sonnet-20241022": {
+        "RPM": 50,
+        "InputTPM": 40000,
+        "OutputTPM": 8000
+      },
+      "claude-3-5-sonnet-20240620": {
+        "RPM": 50,
+        "InputTPM": 40000,
+        "OutputTPM": 8000
+      },
+      "claude-3-opus-20240229": {
+        "RPM": 50,
+        "InputTPM": 20000,
+        "OutputTPM": 4000
+      },
+      "claude-3-haiku-20240307": {
+        "RPM": 50,
+        "InputTPM": 50000,
+        "OutputTPM": 10000
+      }
+    }
+  },
+  "html": "https://console.anthropic.com/settings/limits"
+}

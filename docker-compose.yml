@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-md
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: md
+      MYSQL_USER: yi5oyu
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql_md_data:/var/lib/mysql
+    # restart: always
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    container_name: redis-md
+    ports:
+      - '6380:6379'
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD}']
+    volumes:
+      - redis_md_data:/data
+    networks:
+      - app-network
+
+  # supergateway-webresearch:
+  #   image: node:23
+  #   command: >
+  #     sh -c "npm install -g @mzxrai/mcp-webresearch@latest && npx playwright install-deps && npx -y supergateway --stdio 'npx -y @mzxrai/mcp-webresearch@latest' --port 8000 --baseUrl http://0.0.0.0:8000 --cors"
+  #   ports:
+  #     - '8101:8000'
+  #   restart: unless-stopped
+  #   environment:
+  #     - NODE_ENV=production
+  #   networks:
+  #     - app-network
+
+volumes:
+  mysql_md_data:
+  redis_md_data:
+
+networks:
+  app-network:
+    driver: bridge

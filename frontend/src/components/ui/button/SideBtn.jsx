@@ -1,34 +1,13 @@
-import React, { useState } from 'react'
-import { Flex, Icon } from '@chakra-ui/react'
+import { InputGroup, Button, Icon } from '@chakra-ui/react'
+import { AddIcon } from '@chakra-ui/icons'
 
-const SideBtn = ({ icon, hoverIcon, onClick, mode, color }) => {
-  const [isHovered, setIsHovered] = useState(false)
-
+const SideBtn = ({ toggleBox }) => {
   return (
-    <Flex
-      mx="18px"
-      p="5px"
-      alignItems="center"
-      my={mode && '15px'}
-      onMouseEnter={() => hoverIcon && setIsHovered(true)}
-      onMouseLeave={() => hoverIcon && setIsHovered(false)}
-      borderRadius="md"
-      _hover={{
-        bg: 'transparent',
-      }}
-    >
-      <Icon
-        as={isHovered ? hoverIcon : icon}
-        onClick={onClick}
-        w={mode ? '35px' : '25px'}
-        h={mode ? '35px' : '25px'}
-        cursor="pointer"
-        color={color}
-        _hover={{
-          color: 'blue.500',
-        }}
-      />
-    </Flex>
+    <InputGroup>
+      <Button onClick={toggleBox} m="4" colorScheme="teal" leftIcon={<AddIcon />}>
+        버튼
+      </Button>
+    </InputGroup>
   )
 }
 

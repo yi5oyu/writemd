@@ -84,7 +84,7 @@
 - **Spring AI**: MCP(Model Context Protocol) 클라이언트/서버, 다중 AI API(OpenAI/Anthropic) 연동
 - **Spring Security**: OAuth2 GitHub 로그인, API 접근 제어
 - **MySQL + Redis**: 관계형 데이터 관리 + 세션/캐시 성능 최적화
-- **SSE(Server-Sent Events)**: AI 응답 실시간 스트리밍
+- **실시간 비동기 처리**: @Async + CompletableFuture 멀티스레드 비동기, SSE 실시간 스트리밍, ConcurrentHashMap 동시성 관리
 - **JPA + QueryDSL**: 엔티티 ORM(Object-Relational Mapping), 동적 타입 안전 쿼리, N+1 문제 해결
 - **Python**: MCP 서버, GitHub API 호출 Tools
   
@@ -99,7 +99,7 @@
 
 ## 🏗️ 아키텍처  
 
-<img src="https://github.com/user-attachments/assets/db1e03a4-bf21-4078-bba0-f6046e81b9b0" width="800" alt="전체 아키텍처">
+<img src="https://github.com/user-attachments/assets/7b544a7d-42b4-401e-b5cd-dd60a3609499" width="800" alt="전체 아키텍처">
 
 `네트워크 구조 Cloudflared`    
 

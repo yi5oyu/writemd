@@ -9,6 +9,7 @@ import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,31 +20,32 @@ public class NoteService {
     private final TextRepository textRepository;
 
     // 새노트 생성
+    @Transactional
     public NoteDTO createNote(String userName, String noteName) {
         Users user = userRepository.findByGithubId(userName)
             .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
+        // 관계 설정
         Notes newNote = Notes.builder()
             .users(user)
             .noteName(noteName)
             .build();
 
-        Notes savedNote = noteRepository.save(newNote);
-
         Texts text = Texts.builder()
-            .notes(savedNote)
+            .notes(newNote)
             .markdownText("")
             .build();
-        textRepository.save(text);
 
-        NoteDTO note = NoteDTO.builder()
+        newNote.setTexts(text);
+
+        Notes savedNote = noteRepository.save(newNote);
+
+        return NoteDTO.builder()
             .noteId(savedNote.getId())
             .noteName(savedNote.getNoteName())
             .createdAt(savedNote.getCreatedAt())
             .updatedAt(savedNote.getUpdatedAt())
             .build();
-
-        return note;
     }
 
     // 노트 업데이트

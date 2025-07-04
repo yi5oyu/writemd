@@ -1,7 +1,6 @@
 package com.writemd.backend.service;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.NoteDTO;
@@ -25,16 +24,12 @@ import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,83 +46,80 @@ public class UserService {
     private final SessionRepository sessionRepository;
     private final ChatRepository chatRepository;
     private final ObjectMapper objectMapper;
+    private final CachingDataService cachingDataService;
 
     // user 저장
     @Transactional
     public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
-        Optional<Users> user = userRepository.findByGithubId(githubId);
-        if (user.isPresent()) {
-            Users existingUser = user.get();
-            boolean updated = false;
 
-            if (!Objects.equals(existingUser.getName(), name)) {
-                existingUser.setName(name);
-                updated = true;
+        Optional<Users> existingUser = userRepository.findByGithubId(githubId);
+
+        Users user = existingUser
+            .map(ckUser -> {
+                // 변경사항 체크 후 업데이트(기존 사용자)
+                if (!Objects.equals(ckUser.getName(), name)) {
+                    ckUser.setName(name);
+                }
+                if (!Objects.equals(ckUser.getAvatarUrl(), avatarUrl)) {
+                    ckUser.setAvatarUrl(avatarUrl);
+                }
+                if (!Objects.equals(ckUser.getPrincipalName(), principalName)) {
+                    ckUser.setPrincipalName(principalName);
+                }
+                return ckUser;
+            })
+            .orElseGet(() -> {
+                // 새 유저 저장
+                return Users.builder()
+                    .githubId(githubId)
+                    .name(name)
+                    .htmlUrl(htmlUrl)
+                    .avatarUrl(avatarUrl)
+                    .principalName(principalName)
+                    .build();
+            });
+
+        Users savedUser = userRepository.save(user);
+
+        if (existingUser.isEmpty()) {
+            // JSON 파일에서 템플릿 데이터 로드
+            List<Map<String, String>> myTemplates = cachingDataService.getMyTemplates();
+            List<Map<String, String>> gitTemplates = cachingDataService.getGitTemplates();
+
+            Folders myFolder = Folders.builder()
+                .users(savedUser)
+                .title("내 템플릿")
+                .build();
+
+            Folders gitFolder = Folders.builder()
+                .users(savedUser)
+                .title("깃 허브")
+                .build();
+
+            for (Map<String, String> templateData : myTemplates) {
+                Templates template = Templates.builder().folders(myFolder)
+                    .title(templateData.getOrDefault("title", ""))
+                    .description(templateData.getOrDefault("description", ""))
+                    .content(templateData.getOrDefault("content", "")).build();
+
+                myFolder.getTemplates().add(template);
             }
-            if (!Objects.equals(existingUser.getAvatarUrl(), avatarUrl)) {
-                existingUser.setAvatarUrl(avatarUrl);
-                updated = true;
+
+            for (Map<String, String> templateData : gitTemplates) {
+                Templates template = Templates.builder().folders(gitFolder)
+                    .title(templateData.getOrDefault("title", ""))
+                    .description(templateData.getOrDefault("description", ""))
+                    .content(templateData.getOrDefault("content", "")).build();
+
+                gitFolder.getTemplates().add(template);
             }
-            if (!Objects.equals(existingUser.getPrincipalName(), principalName)) {
-                existingUser.setPrincipalName(principalName);
-                updated = true;
-            }
 
-            return updated ? userRepository.save(existingUser) : existingUser;
+            savedUser.getFolders().add(myFolder);
+            savedUser.getFolders().add(gitFolder);
+
+            return userRepository.save(savedUser);
         }
-
-        // 새 유저 저장
-        Users newUser = Users.builder().githubId(githubId).name(name).htmlUrl(htmlUrl)
-            .avatarUrl(avatarUrl).principalName(principalName).build();
-
-        Folders myFolder = Folders.builder().users(newUser).title("내 템플릿").build();
-
-        Folders gitFolder = Folders.builder().users(newUser).title("깃 허브").build();
-
-        // JSON 파일에서 템플릿 데이터 로드
-        List<Map<String, String>> myTemplates;
-        List<Map<String, String>> gitTemplates;
-
-        try {
-            Resource myResource = new ClassPathResource("data/template.json");
-            myTemplates = objectMapper.readValue(myResource.getInputStream(),
-                new TypeReference<List<Map<String, String>>>() {
-                });
-        } catch (IOException e) {
-            myTemplates = Collections.emptyList();
-        }
-        
-        for (Map<String, String> templateData : myTemplates) {
-            Templates template = Templates.builder().folders(myFolder)
-                .title(templateData.getOrDefault("title", ""))
-                .description(templateData.getOrDefault("description", ""))
-                .content(templateData.getOrDefault("content", "")).build();
-
-            myFolder.getTemplates().add(template);
-        }
-
-        try {
-            Resource resource = new ClassPathResource("data/git_template.json");
-            gitTemplates = objectMapper.readValue(resource.getInputStream(),
-                new TypeReference<List<Map<String, String>>>() {
-                });
-        } catch (IOException e) {
-            gitTemplates = Collections.emptyList();
-        }
-
-        for (Map<String, String> templateData : gitTemplates) {
-            Templates template = Templates.builder().folders(gitFolder)
-                .title(templateData.getOrDefault("title", ""))
-                .description(templateData.getOrDefault("description", ""))
-                .content(templateData.getOrDefault("content", "")).build();
-
-            gitFolder.getTemplates().add(template);
-        }
-
-        newUser.getFolders().add(myFolder);
-        newUser.getFolders().add(gitFolder);
-
-        return userRepository.save(newUser);
+        return savedUser;
     }
 
     // user 조회

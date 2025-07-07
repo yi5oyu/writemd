@@ -59,7 +59,6 @@ public class TemplateService {
                 oldFolder.getTemplates().remove(template);
             }
 
-
             template.setTitle(title);
             template.setDescription(description);
             template.setContent(content);
@@ -85,7 +84,7 @@ public class TemplateService {
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         // 폴더
-        List<Folders> userFolders = folderRepository.findByUsers(user);
+        List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user);
 
         List<FolderDTO> folderDTOs = new ArrayList<>();
 

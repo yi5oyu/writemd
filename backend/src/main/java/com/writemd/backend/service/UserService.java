@@ -1,25 +1,19 @@
 package com.writemd.backend.service;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.dto.TextDTO;
 import com.writemd.backend.dto.UserDTO;
-import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Folders;
-import com.writemd.backend.entity.Memos;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
 import com.writemd.backend.entity.Templates;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
-import com.writemd.backend.repository.ApiRepository;
 import com.writemd.backend.repository.ChatRepository;
-import com.writemd.backend.repository.FolderRepository;
-import com.writemd.backend.repository.MemoRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
 import com.writemd.backend.repository.TextRepository;
@@ -40,12 +34,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final NoteRepository noteRepository;
     private final TextRepository textRepository;
-    private final MemoRepository memoRepository;
-    private final ApiRepository apiRepository;
-    private final FolderRepository folderRepository;
     private final SessionRepository sessionRepository;
     private final ChatRepository chatRepository;
-    private final ObjectMapper objectMapper;
     private final CachingDataService cachingDataService;
 
     // user 저장
@@ -170,30 +160,8 @@ public class UserService {
     //
     @Transactional
     public void deleteUserData(Long userId) {
-        Users user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
-        // 채팅 및 세션 삭제
-        List<Notes> userNotes = noteRepository.findByUsers_Id(userId);
-        for (Notes note : userNotes) {
-            List<Sessions> sessions = sessionRepository.findByNotes_id(note.getId());
-            sessionRepository.deleteAll(sessions);
-        }
-
-        // 메모 삭제
-        List<Memos> userMemos = memoRepository.findByUsers_Id(userId);
-        memoRepository.deleteAll(userMemos);
-
-        // API 키 삭제
-        List<APIs> userApis = apiRepository.findByUsersId(userId);
-        apiRepository.deleteAll(userApis);
-
-        // 템플릿 삭제
-        List<Folders> userFolders = folderRepository.findByUsers(user);
-        folderRepository.deleteAll(userFolders);
-
-        // 노트 삭제
-        noteRepository.deleteAll(userNotes);
+        // 모든 데이터 삭제
+        userRepository.deleteUserDataBatch(userId);
     }
 
     @Transactional

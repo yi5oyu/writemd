@@ -113,7 +113,7 @@ public class UserService {
     }
 
     // user 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public UserDTO userInfo(String githubId) {
         // user 찾기
         Users user = userRepository.findByGithubId(githubId)
@@ -122,25 +122,33 @@ public class UserService {
         List<Notes> notes = noteRepository.findByUsers_Id(user.getId());
 
         // note 리스트
-        List<NoteDTO> note = notes.stream().map(this::convertNote).collect(Collectors.toList());
+        List<NoteDTO> note = notes.stream()
+            .map(this::convertNote)
+            .collect(Collectors.toList());
 
-        UserDTO userInfo = UserDTO.builder().userId(user.getId()).name(user.getName())
-            .githubId(user.getGithubId()).avatarUrl(user.getAvatarUrl())
-            .htmlUrl(user.getHtmlUrl()).notes(note).build();
-
-        return userInfo;
+        return UserDTO.builder()
+            .userId(user.getId())
+            .name(user.getName())
+            .githubId(user.getGithubId())
+            .avatarUrl(user.getAvatarUrl())
+            .htmlUrl(user.getHtmlUrl())
+            .notes(note)
+            .build();
     }
 
     // 노트 내용 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public NoteDTO noteContent(Long noteId) {
         Texts texts = textRepository.findByNotes_id(noteId)
             .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
 
+        /* 세션
         List<Sessions> sessions = sessionRepository.findByNotes_id(noteId);
-
         List<SessionDTO> sessionInfo =
-            sessions.stream().map(this::convertSession).collect(Collectors.toList());
+            sessions.stream()
+                .map(this::convertSession)
+                .collect(Collectors.toList());
+         */
 
         // 노트 이름 조회
         Notes notes = noteRepository.findById(noteId)
@@ -152,6 +160,7 @@ public class UserService {
             .createdAt(notes.getCreatedAt())
             .updatedAt(notes.getUpdatedAt())
             .texts(convertText(texts))
+//            .sessions(sessionInfo)
             .build();
 
         return note;
@@ -173,21 +182,25 @@ public class UserService {
     }
 
     // 채팅 리스트 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ChatDTO> chatList(Long sessionId) {
         List<Chats> chats = chatRepository.findBySessions_Id(sessionId);
 
-        List<ChatDTO> chat = chats.stream().map(this::convertChat).collect(Collectors.toList());
+        List<ChatDTO> chat = chats.stream()
+            .map(this::convertChat)
+            .collect(Collectors.toList());
 
         return chat;
     }
 
     // 세션 리스트 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public List<SessionDTO> sessionList(Long noteId) {
         List<Sessions> sessions = sessionRepository.findByNotes_id(noteId);
 
-        List<SessionDTO> session = sessions.stream().map(this::convertSession).collect(Collectors.toList());
+        List<SessionDTO> session = sessions.stream()
+            .map(this::convertSession)
+            .collect(Collectors.toList());
 
         return session;
     }
@@ -215,15 +228,21 @@ public class UserService {
     }
 
     private TextDTO convertText(Texts texts) {
-        TextDTO text = TextDTO.builder().textId(texts.getId()).markdownText(texts.getMarkdownText())
+        TextDTO text = TextDTO.builder()
+            .textId(texts.getId())
+            .markdownText(texts.getMarkdownText())
             .build();
 
         return text;
     }
 
     private ChatDTO convertChat(Chats chats) {
-        ChatDTO chat = ChatDTO.builder().chatId(chats.getId()).role(chats.getRole())
-            .content(chats.getContent()).time(chats.getTime()).build();
+        ChatDTO chat = ChatDTO.builder()
+            .chatId(chats.getId())
+            .role(chats.getRole())
+            .content(chats.getContent())
+            .time(chats.getTime())
+            .build();
 
         return chat;
     }

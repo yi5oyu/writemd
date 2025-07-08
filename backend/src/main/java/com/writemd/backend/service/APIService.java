@@ -15,10 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 
 @Service
 @RequiredArgsConstructor
 public class APIService {
+
 
     private final UserRepository userRepository;
     private final ApiRepository apiRepository;
@@ -34,7 +38,7 @@ public class APIService {
     public APIDTO saveAPIKey(Long userId, String aiModel, String apikey) {
         Users users = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User 찾을 수 없음"));
-        
+
         APIs newapi = APIs.builder()
             .aiModel(aiModel)
             .apiKey(apikey)
@@ -43,9 +47,6 @@ public class APIService {
 
         APIs api = apiRepository.save(newapi);
 
-        String hashKey = getUserHashKey(userId);
-        String fieldKey = "key:" + api.getId();
-
         String maskedApiKey = maskApiKey(apikey);
         APIDTO apiDTO = APIDTO.builder()
             .apiId(api.getId())
@@ -53,16 +54,29 @@ public class APIService {
             .apiKey(maskedApiKey)
             .build();
 
-        // Redis 저장
-        redisTemplate.opsForHash().put(hashKey, fieldKey,
-            APIDTO.builder()
-                .apiId(api.getId())
-                .aiModel(aiModel)
-                .apiKey(apikey)
-                .build()
-        );
-        redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
+        // 커밋 후 Redis 업데이트
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        String hashKey = getUserHashKey(userId);
+                        String fieldKey = "key:" + api.getId();
 
+                        redisTemplate.opsForHash().put(hashKey, fieldKey,
+                            APIDTO.builder()
+                                .apiId(api.getId())
+                                .aiModel(aiModel)
+                                .apiKey(apikey)
+                                .build()
+                        );
+                        redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
+                    } catch (Exception e) {
+                        // Redis 실패해도 DB는 정상 동작
+                    }
+                }
+            }
+        );
         return apiDTO;
     }
 

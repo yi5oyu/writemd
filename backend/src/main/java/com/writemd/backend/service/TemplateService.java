@@ -27,13 +27,13 @@ public class TemplateService {
         String title, String description, String content) {
         // 유저
         Users user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         // 폴더
         Folders folder;
         if (folderId != null) {
             folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
         } else {
             folder = Folders.builder()
                 .users(user)
@@ -43,27 +43,27 @@ public class TemplateService {
             user.getFolders().add(folder);
         }
 
-        Templates template;
-
         // 템플릿
+        Templates template;
         if (templateId != null) {
             template = templateRepository.findById(templateId)
-                .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다."));
-
-            // 템플릿 폴더 변경
+                .orElseThrow(() -> new RuntimeException("템플릿 찾을 수 없음"));
+            // 템플릿 폴더 이동
             if (template.getFolders() != null && !template.getFolders().equals(folder)) {
+                Folders oldFolder = template.getFolders();
+
+                oldFolder.getTemplates().remove(template);
+
                 template.setFolders(folder);
                 folder.getTemplates().add(template);
-
-                Folders oldFolder = template.getFolders();
-                oldFolder.getTemplates().remove(template);
             }
-
+            // 내용 업데이트
             template.setTitle(title);
             template.setDescription(description);
             template.setContent(content);
             templateRepository.save(template);
         } else {
+            // 새 템플릿 생성
             template = Templates.builder()
                 .folders(folder)
                 .title(title)
@@ -81,7 +81,7 @@ public class TemplateService {
     public List<FolderDTO> getTemplates(Long userId) {
         // 유저
         Users user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         // 폴더
         List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user);
@@ -118,7 +118,7 @@ public class TemplateService {
     @Transactional
     public void deleteTemplate(Long templateId) {
         Templates template = templateRepository.findById(templateId)
-            .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("템플릿 찾을 수 없음"));
 
         Folders folder = template.getFolders();
         if (folder != null) {
@@ -131,7 +131,7 @@ public class TemplateService {
     @Transactional
     public void deleteFolder(Long folderId) {
         Folders folder = folderRepository.findById(folderId)
-            .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
 
         Users user = folder.getUsers();
         if (user != null) {
@@ -144,7 +144,7 @@ public class TemplateService {
     @Transactional
     public Folders updateFolderTitle(Long folderId, String newTitle) {
         Folders folder = folderRepository.findById(folderId)
-            .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
 
         folder.setTitle(newTitle);
 

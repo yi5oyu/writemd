@@ -61,7 +61,7 @@ public class GithubService {
                 .retrieve()
                 .onStatus(status -> status.isError(), clientResponse ->
                     clientResponse.bodyToMono(String.class)
-                        .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API Error: " + errorBody)))
+                        .flatMap(errorBody -> Mono.error(new RuntimeException("GitHub API 에러: " + errorBody)))
                 )
                 .bodyToMono(Void.class)
                 .then(Mono.defer(() -> {
@@ -80,7 +80,7 @@ public class GithubService {
                         .onStatus(status -> status.isError(), clientResponse ->
                             clientResponse.bodyToMono(String.class)
                                 .flatMap(errorBody -> Mono.error(new RuntimeException(
-                                    "GitHub API Error (Rename - Create Step for " + newPath + "): " + errorBody)))
+                                    "GitHub API 에러: " + errorBody)))
                         )
                         .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                         }); // 최종 생성 결과 반환
@@ -99,7 +99,7 @@ public class GithubService {
             }
 
             return webClient.put()
-                // 생성/업데이트 시에는 'path'가 최종 목표 경로
+                // 생성/업데이트는 path 최종 목표
                 .uri("https://api.github.com/repos/{owner}/{repo}/contents/{filePath}", owner, repo, path)
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .bodyValue(requestBody)
@@ -107,7 +107,7 @@ public class GithubService {
                 .onStatus(status -> status.isError(), clientResponse ->
                     clientResponse.bodyToMono(String.class)
                         .flatMap(errorBody -> Mono.error(
-                            new RuntimeException("GitHub API Error (Create/Update for " + path + "): " + errorBody)))
+                            new RuntimeException("GitHub API 에러: " + errorBody)))
                 )
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                 });
@@ -116,11 +116,10 @@ public class GithubService {
 
     ;
 
-
     // 레포지토리, 하위 폴더/파일 조회
     public Mono<List<GitRepoDTO>> getGitInfo(Long userId, String principalName) {
         Users users = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User 찾을 수 없음"));
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         return Mono.fromCallable(() ->
                 userRepository.findByGithubId(users.getGithubId())
@@ -307,7 +306,7 @@ public class GithubService {
     public Mono<List<GitContentDTO>> getFolderContents(String principalName, String owner, String repo, String sha) {
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
         if (client == null) {
-            throw new IllegalStateException("GitHub OAuth2 login required.");
+            throw new IllegalStateException("GitHub OAuth2 로그인 필요");
         }
 
         String accessToken = client.getAccessToken().getTokenValue();
@@ -346,7 +345,7 @@ public class GithubService {
     public Mono<GitContentDTO> getblobFile(String principalName, String owner, String repo, String sha) {
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
         if (client == null) {
-            throw new IllegalStateException("GitHub OAuth2 login required.");
+            throw new IllegalStateException("GitHub OAuth2 로그인 필요");
         }
 
         String accessToken = client.getAccessToken().getTokenValue();
@@ -365,6 +364,4 @@ public class GithubService {
                 .build());
 
     }
-
-
 }

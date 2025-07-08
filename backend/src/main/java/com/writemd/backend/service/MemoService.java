@@ -29,20 +29,18 @@ public class MemoService {
         Memos memo;
 
         if (memoId != null) {
+            // 업데이트
             memo = memoRepository.findById(memoId)
-                .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음: " + memoId));
-
+                .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음"));
             memo.setText(text);
-
         } else {
+            // 새 메모 생성
             memo = Memos.builder()
                 .text(text)
                 .users(user)
                 .build();
 
             user.getMemos().add(memo);
-
-
         }
         return memoRepository.save(memo);
     }
@@ -63,7 +61,12 @@ public class MemoService {
     }
 
     // 메모 삭제
+    @Transactional
     public void deleteMemo(Long memoId) {
+        // 메모 확인
+        memoRepository.findById(memoId)
+            .orElseThrow(() -> new RuntimeException("메모 찾을 수 없음"));
+
         memoRepository.deleteById(memoId);
     }
 }

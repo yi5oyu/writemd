@@ -174,8 +174,8 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Long userId) {
-        Users user = userRepository.findById(userId)
+    public void deleteUser(String githubId) {
+        Users user = userRepository.findByGithubId(githubId)
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         userRepository.delete(user);

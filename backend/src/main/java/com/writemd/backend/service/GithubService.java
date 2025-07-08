@@ -3,7 +3,6 @@ package com.writemd.backend.service;
 import com.writemd.backend.dto.GitBranchDTO;
 import com.writemd.backend.dto.GitContentDTO;
 import com.writemd.backend.dto.GitRepoDTO;
-import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -117,12 +116,9 @@ public class GithubService {
     ;
 
     // 레포지토리, 하위 폴더/파일 조회
-    public Mono<List<GitRepoDTO>> getGitInfo(Long userId, String principalName) {
-        Users users = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
-
+    public Mono<List<GitRepoDTO>> getGitInfo(String githubId, String principalName) {
         return Mono.fromCallable(() ->
-                userRepository.findByGithubId(users.getGithubId())
+                userRepository.findByGithubId(githubId)
                     .orElseThrow(() -> new RuntimeException("GitHubID 찾을 수 없음")))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMap(user -> {
@@ -132,7 +128,6 @@ public class GithubService {
                     return Mono.error(new IllegalStateException("GitHub OAuth2 로그인 안됨"));
                 }
                 String accessToken = client.getAccessToken().getTokenValue();
-                String githubId = user.getGithubId();
 
                 return webClient.get()
                     .uri("https://api.github.com/users/{githubId}/repos", githubId)

@@ -27,9 +27,9 @@ public class TemplateController {
 
     private final TemplateService templateService;
 
-    @PostMapping("/{userId}")
+    @PostMapping("/{githubId}")
     public ResponseEntity<Templates> createOrUpdateTemplate(
-        @PathVariable Long userId,
+        @PathVariable String githubId,
         @RequestBody FolderDTO folderDTO
     ) {
         Long folderId = folderDTO.getFolderId();
@@ -42,14 +42,14 @@ public class TemplateController {
         String content = templateDTO.getContent();
 
         Templates template = templateService.saveTemplate(
-            userId, folderId, templateId, folderName, title, description, content);
+            githubId, folderId, templateId, folderName, title, description, content);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(template);
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<FolderDTO>> getUserTemplates(@PathVariable Long userId) {
-        List<FolderDTO> templates = templateService.getTemplates(userId);
+    @GetMapping("/{githubId}")
+    public ResponseEntity<List<FolderDTO>> getUserTemplates(@PathVariable String githubId) {
+        List<FolderDTO> templates = templateService.getTemplates(githubId);
         return ResponseEntity.ok(templates);
     }
 

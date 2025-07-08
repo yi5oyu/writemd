@@ -74,7 +74,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
 
   const confirmDeleteAuth = async () => {
     try {
-      await deleteUser(user.userId)
+      await deleteUser(user.githubId)
       toast({
         title: '계정 삭제 완료',
         description: '계정이 성공적으로 삭제되었습니다.',
@@ -166,7 +166,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   // apikey 저장
   const handleSaveAPI = async (aiModel, apiKey) => {
     if (apiKey.trim()) {
-      await saveApiKey(user.userId, aiModel, apiKey)
+      await saveApiKey(user.userId, user.githubId, aiModel, apiKey)
       await fetchApiKeys(user.userId)
     }
   }

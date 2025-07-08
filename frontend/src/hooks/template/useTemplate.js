@@ -10,12 +10,12 @@ function useTemplate() {
   const [templates, setTemplates] = useState([])
   const toast = useToast()
 
-  const getTemplates = ({ userId }) => {
+  const getTemplates = ({ githubId }) => {
     setLoading(true)
     setError(null)
 
     return axios
-      .get(`${API_URL}/api/template/${userId}`, {
+      .get(`${API_URL}/api/template/${githubId}`, {
         withCredentials: true,
       })
       .then((response) => {

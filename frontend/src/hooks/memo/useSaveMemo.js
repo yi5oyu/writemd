@@ -10,12 +10,12 @@ const useSaveMemo = () => {
   const [data, setData] = useState(null)
   const toast = useToast()
 
-  const saveMemo = (userId, text, memoId) => {
+  const saveMemo = (githubId, text, memoId) => {
     setLoading(true)
     setError(null)
     return axios
       .post(
-        `${API_URL}/api/memo/${userId}`,
+        `${API_URL}/api/memo/${githubId}`,
         { text },
         {
           params: { memoId },

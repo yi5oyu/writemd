@@ -35,8 +35,8 @@ public class APIService {
 
     // API 키 저장
     @Transactional
-    public APIDTO saveAPIKey(Long userId, String aiModel, String apikey) {
-        Users users = userRepository.findById(userId)
+    public APIDTO saveAPIKey(Long userId, String githubId, String aiModel, String apikey) {
+        Users users = userRepository.findByGithubId(githubId)
             .orElseThrow(() -> new RuntimeException("User 찾을 수 없음"));
 
         APIs newapi = APIs.builder()

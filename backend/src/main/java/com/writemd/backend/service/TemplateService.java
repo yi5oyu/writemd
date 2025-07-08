@@ -23,10 +23,10 @@ public class TemplateService {
     private final TemplateRepository templateRepository;
 
     @Transactional
-    public Templates saveTemplate(Long userId, Long folderId, Long templateId, String folderName,
+    public Templates saveTemplate(String githubId, Long folderId, Long templateId, String folderName,
         String title, String description, String content) {
         // 유저
-        Users user = userRepository.findById(userId)
+        Users user = userRepository.findByGithubId(githubId)
             .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         // 폴더
@@ -78,9 +78,9 @@ public class TemplateService {
     }
 
     @Transactional(readOnly = true)
-    public List<FolderDTO> getTemplates(Long userId) {
+    public List<FolderDTO> getTemplates(String githubId) {
         // 유저
-        Users user = userRepository.findById(userId)
+        Users user = userRepository.findByGithubId(githubId)
             .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         // 폴더

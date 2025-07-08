@@ -22,8 +22,8 @@ public class MemoService {
 
     // 메모 저장/업데이트
     @Transactional
-    public Memos saveMemo(Long userId, String text, Long memoId) {
-        Users user = userRepository.findById(userId)
+    public Memos saveMemo(String githubId, String text, Long memoId) {
+        Users user = userRepository.findByGithubId(githubId)
             .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         Memos memo;

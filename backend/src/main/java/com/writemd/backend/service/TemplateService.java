@@ -21,13 +21,13 @@ public class TemplateService {
     private final UserRepository userRepository;
     private final FolderRepository folderRepository;
     private final TemplateRepository templateRepository;
+    private final CachingDataService cachingDataService;
 
     @Transactional
     public Templates saveTemplate(String githubId, Long folderId, Long templateId, String folderName,
         String title, String description, String content) {
         // 유저
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
         Folders folder;
@@ -80,8 +80,7 @@ public class TemplateService {
     @Transactional(readOnly = true)
     public List<FolderDTO> getTemplates(String githubId) {
         // 유저
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
         List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user);

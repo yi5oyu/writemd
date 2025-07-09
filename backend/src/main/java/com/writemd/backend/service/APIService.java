@@ -4,7 +4,6 @@ import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
-import com.writemd.backend.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +23,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class APIService {
 
 
-    private final UserRepository userRepository;
+    private final CachingDataService cachingDataService;
     private final ApiRepository apiRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -36,8 +35,7 @@ public class APIService {
     // API 키 저장
     @Transactional
     public APIDTO saveAPIKey(Long userId, String githubId, String aiModel, String apikey) {
-        Users users = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("User 찾을 수 없음"));
+        Users users = cachingDataService.findUserByGithubId(githubId);
 
         APIs newapi = APIs.builder()
             .aiModel(aiModel)

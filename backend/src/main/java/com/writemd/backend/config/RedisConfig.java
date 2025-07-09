@@ -57,6 +57,10 @@ public class RedisConfig {
         cacheConfigurations.put("template-data",
             defaultConfig.entryTtl(Duration.ofDays(365)));
 
+        // 유저 캐시
+        cacheConfigurations.put("user",
+            defaultConfig.entryTtl(Duration.ofHours(12)));
+
         // (1시간)
         // cacheConfigurations.put("1",
         //     defaultConfig.entryTtl(Duration.ofHours(1)));

@@ -24,8 +24,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +42,7 @@ public class UserService {
     private final SessionRepository sessionRepository;
     private final ChatRepository chatRepository;
     private final CachingDataService cachingDataService;
+    private final CacheManager cacheManager;
 
     // user 저장
     @Transactional
@@ -107,8 +113,22 @@ public class UserService {
             savedUser.getFolders().add(myFolder);
             savedUser.getFolders().add(gitFolder);
 
-            return userRepository.save(savedUser);
+            savedUser = userRepository.save(savedUser);
         }
+
+        final Users finalSavedUser = savedUser;
+
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    Cache cache = cacheManager.getCache("user");
+                    if (cache != null) {
+                        cache.put(githubId, finalSavedUser);
+                    }
+                }
+            }
+        );
         return savedUser;
     }
 
@@ -116,8 +136,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDTO userInfo(String githubId) {
         // user 찾기
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         List<Notes> notes = noteRepository.findByUsers_Id(user.getId());
 
@@ -166,17 +185,17 @@ public class UserService {
         return note;
     }
 
-    //
+    // 모든 데이터 삭제
     @Transactional
     public void deleteUserData(Long userId) {
-        // 모든 데이터 삭제
         userRepository.deleteUserDataBatch(userId);
     }
 
+    // 유저 계정 삭제
     @Transactional
+    @CacheEvict(value = "user", key = "#githubId")
     public void deleteUser(String githubId) {
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         userRepository.delete(user);
     }

@@ -3,7 +3,6 @@ package com.writemd.backend.service;
 import com.writemd.backend.dto.GitBranchDTO;
 import com.writemd.backend.dto.GitContentDTO;
 import com.writemd.backend.dto.GitRepoDTO;
-import com.writemd.backend.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -32,7 +31,7 @@ public class GithubService {
 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final WebClient webClient;
-    private final UserRepository userRepository;
+    private final CachingDataService cachingDataService;
 
     // 파일 생성/업데이트
     public Mono<Map<String, Object>> createOrUpdateFile(String principalName, String owner,
@@ -118,8 +117,7 @@ public class GithubService {
     // 레포지토리, 하위 폴더/파일 조회
     public Mono<List<GitRepoDTO>> getGitInfo(String githubId, String principalName) {
         return Mono.fromCallable(() ->
-                userRepository.findByGithubId(githubId)
-                    .orElseThrow(() -> new RuntimeException("GitHubID 찾을 수 없음")))
+                cachingDataService.findUserByGithubId(githubId))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMap(user -> {
                 OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(

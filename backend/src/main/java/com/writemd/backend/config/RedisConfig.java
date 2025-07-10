@@ -61,17 +61,15 @@ public class RedisConfig {
         cacheConfigurations.put("user",
             defaultConfig.entryTtl(Duration.ofHours(12)));
 
-        // (1시간)
-        // cacheConfigurations.put("1",
-        //     defaultConfig.entryTtl(Duration.ofHours(1)));
+        // API 키 캐시
+        cacheConfigurations.put("api-key",
+            defaultConfig.entryTtl(Duration.ofHours(3)));
 
-        // (30분)
-        // cacheConfigurations.put("2",
-        //     defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        // 모든 API 키
+        cacheConfigurations.put("user-api-keys",
+            defaultConfig.entryTtl(Duration.ofHours(1)));
 
-        // (5분)
-        // cacheConfigurations.put("3",
-        //     defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        // Duration.ofDays(365), .ofHours(1), .ofMinutes(30), .ofMinutes(5)
 
         return RedisCacheManager.builder(redisConnectionFactory)
             .cacheDefaults(defaultConfig)

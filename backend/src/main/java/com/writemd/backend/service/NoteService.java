@@ -29,14 +29,16 @@ public class NoteService {
             .users(user)
             .noteName(noteName)
             .build();
-        Notes savedNote = noteRepository.save(newNote);
 
         // Texts 생성/저장
         Texts text = Texts.builder()
-            .notes(savedNote)
+            .notes(newNote)
             .markdownText("")
             .build();
-        textRepository.save(text);
+
+        newNote.setTexts(text);
+
+        Notes savedNote = noteRepository.save(newNote);
 
         return NoteDTO.builder()
             .noteId(savedNote.getId())

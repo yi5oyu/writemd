@@ -4,7 +4,6 @@ import com.writemd.backend.config.security.CustomAuthenticationSuccessHandler;
 import com.writemd.backend.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -101,10 +100,7 @@ public class SecurityConfig {
             String avatarUrl = oAuth2User.getAttribute("avatar_url");
             String principalName = "" + oAuth2User.getAttribute("id");
 
-            // 비동기 처리
-            CompletableFuture.runAsync(() -> {
-                userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
-            });
+            userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
 
             return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                 oAuth2User.getAttributes(), "id");

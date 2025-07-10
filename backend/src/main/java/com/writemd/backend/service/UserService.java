@@ -24,8 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +40,6 @@ public class UserService {
     private final SessionRepository sessionRepository;
     private final ChatRepository chatRepository;
     private final CachingDataService cachingDataService;
-    private final CacheManager cacheManager;
 
     // user 저장
     @Transactional
@@ -122,13 +119,11 @@ public class UserService {
             new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    Cache cache = cacheManager.getCache("user");
-                    if (cache != null) {
-                        cache.put(githubId, finalSavedUser);
-                    }
+                    cachingDataService.updateUserCacheAsync(githubId, finalSavedUser);
                 }
             }
         );
+
         return savedUser;
     }
 

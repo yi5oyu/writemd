@@ -43,8 +43,7 @@ public class UserService {
 
     // user 저장
     @Transactional
-    public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
-
+    public void saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
         Optional<Users> existingUser = userRepository.findByGithubId(githubId);
 
         Users user = existingUser
@@ -113,27 +112,31 @@ public class UserService {
             savedUser = userRepository.save(savedUser);
         }
 
-        final Users finalSavedUser = savedUser;
+        UserDTO userDTO = UserDTO.builder()
+            .userId(savedUser.getId())
+            .githubId(savedUser.getGithubId())
+            .name(savedUser.getName())
+            .avatarUrl(savedUser.getAvatarUrl())
+            .htmlUrl(savedUser.getHtmlUrl())
+            .build();
 
         TransactionSynchronizationManager.registerSynchronization(
             new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    cachingDataService.updateUserCacheAsync(githubId, finalSavedUser);
+                    cachingDataService.updateUserCache(githubId, userDTO);
                 }
             }
         );
-
-        return savedUser;
     }
 
     // user 조회
     @Transactional(readOnly = true)
     public UserDTO userInfo(String githubId) {
         // user 찾기
-        Users user = cachingDataService.findUserByGithubId(githubId);
+        UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
-        List<Notes> notes = noteRepository.findByUsers_Id(user.getId());
+        List<Notes> notes = noteRepository.findByUsers_Id(user.getUserId());
 
         // note 리스트
         List<NoteDTO> note = notes.stream()
@@ -141,7 +144,7 @@ public class UserService {
             .collect(Collectors.toList());
 
         return UserDTO.builder()
-            .userId(user.getId())
+            .userId(user.getUserId())
             .name(user.getName())
             .githubId(user.getGithubId())
             .avatarUrl(user.getAvatarUrl())
@@ -190,7 +193,8 @@ public class UserService {
     @Transactional
     @CacheEvict(value = "user", key = "#githubId")
     public void deleteUser(String githubId) {
-        Users user = cachingDataService.findUserByGithubId(githubId);
+        Users user = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
 
         userRepository.delete(user);
     }

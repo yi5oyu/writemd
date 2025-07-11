@@ -4,6 +4,7 @@ import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
+import com.writemd.backend.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,13 @@ public class APIService {
 
     private final CachingDataService cachingDataService;
     private final ApiRepository apiRepository;
-
+    private final UserRepository userRepository;
+    
     // API 키 저장
     @Transactional
     public APIDTO saveAPIKey(Long userId, String githubId, String aiModel, String apikey) {
-        Users users = cachingDataService.findUserByGithubId(githubId);
+        Users users = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
 
         APIs newapi = APIs.builder()
             .aiModel(aiModel)

@@ -1,6 +1,7 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.APIDTO;
+import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CachingDataService {
 
     private final CacheManager cacheManager;
@@ -39,14 +42,24 @@ public class CachingDataService {
 
     // 유저 정보 찾기
     @Cacheable(value = "user", key = "#githubId")
-    public Users findUserByGithubId(String githubId) {
-        return userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
+    public UserDTO findUserByGithubId(String githubId) {
+        Users user = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> {
+                return new RuntimeException("유저 찾을 수 없음: " + githubId);
+            });
+
+        return UserDTO.builder()
+            .userId(user.getId())
+            .githubId(user.getGithubId())
+            .name(user.getName())
+            .avatarUrl(user.getAvatarUrl())
+            .htmlUrl(user.getHtmlUrl())
+            .build();
     }
 
     // 유저 정보 저장
     @Async
-    public void updateUserCacheAsync(String githubId, Users user) {
+    public void updateUserCache(String githubId, UserDTO user) {
         Cache cache = cacheManager.getCache("user");
         if (cache != null) {
             cache.put(githubId, user);

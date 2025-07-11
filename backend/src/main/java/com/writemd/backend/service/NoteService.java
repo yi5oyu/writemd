@@ -6,23 +6,28 @@ import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.TextRepository;
+import com.writemd.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NoteService {
 
     private final NoteRepository noteRepository;
     private final CachingDataService cachingDataService;
     private final TextRepository textRepository;
+    private final UserRepository userRepository;
 
 
     // 새노트 생성
     @Transactional
     public NoteDTO createNote(String githubId, String noteName) {
-        Users user = cachingDataService.findUserByGithubId(githubId);
+        Users user = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
 
         // Notes 생성/저장
         Notes newNote = Notes.builder()

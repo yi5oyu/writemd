@@ -21,19 +21,19 @@ public class TemplateService {
     private final UserRepository userRepository;
     private final FolderRepository folderRepository;
     private final TemplateRepository templateRepository;
+    private final CachingDataService cachingDataService;
 
     @Transactional
-    public Templates saveTemplate(Long userId, Long folderId, Long templateId, String folderName,
+    public Templates saveTemplate(String githubId, Long folderId, Long templateId, String folderName,
         String title, String description, String content) {
         // 유저
-        Users user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
         Folders folder;
         if (folderId != null) {
             folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
         } else {
             folder = Folders.builder()
                 .users(user)
@@ -43,28 +43,27 @@ public class TemplateService {
             user.getFolders().add(folder);
         }
 
-        Templates template;
-
         // 템플릿
+        Templates template;
         if (templateId != null) {
             template = templateRepository.findById(templateId)
-                .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다."));
-
-            // 템플릿 폴더 변경
+                .orElseThrow(() -> new RuntimeException("템플릿 찾을 수 없음"));
+            // 템플릿 폴더 이동
             if (template.getFolders() != null && !template.getFolders().equals(folder)) {
+                Folders oldFolder = template.getFolders();
+
+                oldFolder.getTemplates().remove(template);
+
                 template.setFolders(folder);
                 folder.getTemplates().add(template);
-
-                Folders oldFolder = template.getFolders();
-                oldFolder.getTemplates().remove(template);
             }
-
-
+            // 내용 업데이트
             template.setTitle(title);
             template.setDescription(description);
             template.setContent(content);
             templateRepository.save(template);
         } else {
+            // 새 템플릿 생성
             template = Templates.builder()
                 .folders(folder)
                 .title(title)
@@ -79,13 +78,12 @@ public class TemplateService {
     }
 
     @Transactional(readOnly = true)
-    public List<FolderDTO> getTemplates(Long userId) {
+    public List<FolderDTO> getTemplates(String githubId) {
         // 유저
-        Users user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
-        List<Folders> userFolders = folderRepository.findByUsers(user);
+        List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user);
 
         List<FolderDTO> folderDTOs = new ArrayList<>();
 
@@ -119,7 +117,7 @@ public class TemplateService {
     @Transactional
     public void deleteTemplate(Long templateId) {
         Templates template = templateRepository.findById(templateId)
-            .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("템플릿 찾을 수 없음"));
 
         Folders folder = template.getFolders();
         if (folder != null) {
@@ -132,7 +130,7 @@ public class TemplateService {
     @Transactional
     public void deleteFolder(Long folderId) {
         Folders folder = folderRepository.findById(folderId)
-            .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
 
         Users user = folder.getUsers();
         if (user != null) {
@@ -145,7 +143,7 @@ public class TemplateService {
     @Transactional
     public Folders updateFolderTitle(Long folderId, String newTitle) {
         Folders folder = folderRepository.findById(folderId)
-            .orElseThrow(() -> new RuntimeException("폴더를 찾을 수 없습니다."));
+            .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
 
         folder.setTitle(newTitle);
 

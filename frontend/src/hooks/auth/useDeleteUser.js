@@ -9,11 +9,11 @@ const useDeleteUser = () => {
   const [error, setError] = useState(null)
   const toast = useToast()
 
-  const deleteUser = (userId) => {
+  const deleteUser = (githubId) => {
     setLoading(true)
     setError(null)
     return axios
-      .delete(`${API_URL}/api/user/${userId}`, {
+      .delete(`${API_URL}/api/user/${githubId}`, {
         withCredentials: true,
       })
       .then((response) => {

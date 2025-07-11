@@ -9,7 +9,15 @@ const useSaveTemplate = () => {
   const [error, setError] = useState(null)
   const toast = useToast()
 
-  const saveTemplate = (userId, folderId, templateId, folderName, title, description, content) => {
+  const saveTemplate = (
+    githubId,
+    folderId,
+    templateId,
+    folderName,
+    title,
+    description,
+    content
+  ) => {
     setLoading(true)
     setError(null)
 
@@ -27,7 +35,7 @@ const useSaveTemplate = () => {
     }
 
     return axios
-      .post(`${API_URL}/api/template/${userId}`, requestData, {
+      .post(`${API_URL}/api/template/${githubId}`, requestData, {
         headers: { 'Content-Type': 'application/json' },
         withCredentials: true,
       })

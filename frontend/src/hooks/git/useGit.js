@@ -10,12 +10,12 @@ function useGit() {
   const [data, setData] = useState(null)
   const toast = useToast()
 
-  const getRepo = ({ userId }) => {
+  const getRepo = ({ githubId }) => {
     setLoading(true)
     setError(null)
 
     return axios
-      .get(`${API_URL}/api/github/repo/${userId}`, {
+      .get(`${API_URL}/api/github/repo/${githubId}`, {
         withCredentials: true,
       })
       .then((response) => {

@@ -30,10 +30,10 @@ public class NoteController {
     private final ChatService chatService;
 
     // username으로 노트 생성
-    @PostMapping("/create/{userName}")
-    public ResponseEntity<NoteDTO> createNote(@PathVariable String userName,
+    @PostMapping("/create/{githubId}")
+    public ResponseEntity<NoteDTO> createNote(@PathVariable String githubId,
         @RequestBody Map<String, Object> requestPayload) {
-        NoteDTO savedNote = noteService.createNote(userName, (String) requestPayload.get("noteName"));
+        NoteDTO savedNote = noteService.createNote(githubId, (String) requestPayload.get("noteName"));
 
         return ResponseEntity.ok(savedNote);
     }

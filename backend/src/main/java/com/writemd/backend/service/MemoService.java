@@ -4,7 +4,6 @@ import com.writemd.backend.dto.MemoDTO;
 import com.writemd.backend.entity.Memos;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.MemoRepository;
-import com.writemd.backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,32 +16,29 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemoService {
 
-    private final UserRepository userRepository;
     private final MemoRepository memoRepository;
+    private final CachingDataService cachingDataService;
 
     // 메모 저장/업데이트
     @Transactional
-    public Memos saveMemo(Long userId, String text, Long memoId) {
-        Users user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+    public Memos saveMemo(String githubId, String text, Long memoId) {
+        Users user = cachingDataService.findUserByGithubId(githubId);
 
         Memos memo;
 
         if (memoId != null) {
+            // 업데이트
             memo = memoRepository.findById(memoId)
-                .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음: " + memoId));
-
+                .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음"));
             memo.setText(text);
-
         } else {
+            // 새 메모 생성
             memo = Memos.builder()
                 .text(text)
                 .users(user)
                 .build();
 
             user.getMemos().add(memo);
-
-
         }
         return memoRepository.save(memo);
     }
@@ -63,7 +59,12 @@ public class MemoService {
     }
 
     // 메모 삭제
+    @Transactional
     public void deleteMemo(Long memoId) {
+        // 메모 확인
+        memoRepository.findById(memoId)
+            .orElseThrow(() -> new RuntimeException("메모 찾을 수 없음"));
+
         memoRepository.deleteById(memoId);
     }
 }

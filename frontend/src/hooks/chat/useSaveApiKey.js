@@ -9,12 +9,16 @@ const useSaveApiKey = () => {
   const [error, setError] = useState(null)
   const toast = useToast()
 
-  const saveApiKey = (userId, aiModel, apiKey) => {
+  const saveApiKey = (userId, githubId, aiModel, apiKey) => {
     setLoading(true)
     setError(null)
 
     return axios
-      .post(`${API_URL}/api/user/key/${userId}`, { aiModel, apiKey }, { withCredentials: true })
+      .post(
+        `${API_URL}/api/user/key/${userId}/${githubId}`,
+        { aiModel, apiKey },
+        { withCredentials: true }
+      )
       .then((response) => {
         return response.data
       })

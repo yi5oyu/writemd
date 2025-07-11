@@ -54,14 +54,15 @@ public class UserController {
     }
 
     // API 키 저장
-    @PostMapping("/key/{userId}")
-    public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @RequestBody APIDTO apidto) {
+    @PostMapping("/key/{userId}/{githubId}")
+    public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @PathVariable String githubId,
+        @RequestBody APIDTO apidto) {
         try {
-            APIDTO savedApiDTO = apiService.saveAPIKey(userId, apidto.getAiModel(), apidto.getApiKey());
+            APIDTO savedApiDTO = apiService.saveAPIKey(userId, githubId, apidto.getAiModel(), apidto.getApiKey());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedApiDTO);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 키 저장 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("API 키 저장 중 오류 발생");
         }
     }
 
@@ -97,10 +98,10 @@ public class UserController {
 
 
     // 유저 삭제
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
+    @DeleteMapping("/{githubId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String githubId) {
         try {
-            userService.deleteUser(userId);
+            userService.deleteUser(githubId);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

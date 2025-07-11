@@ -6,12 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.dto.SessionDTO;
-import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Sessions;
 import com.writemd.backend.prompt.GitHubPrompts;
-import com.writemd.backend.repository.ApiRepository;
 import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.SessionRepository;
@@ -23,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -53,7 +50,6 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -81,12 +77,10 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final SessionRepository sessionRepository;
     private final NoteRepository noteRepository;
-    private final ApiRepository apiRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
     private final SseEmitterManager sseEmitterManager;
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final GitHubPrompts gitHubPrompts;
-
+    private final CachingDataService cachingDataService;
     private final Map<Long, Disposable> activeStreams = new ConcurrentHashMap<>();
 
 
@@ -137,44 +131,6 @@ public class ChatService {
             .build();
 
         return ChatClient.create(anthropicChatModel);
-    }
-
-    // API 조회
-    private APIDTO getApiKey(Long userId, Long apiId) {
-        Object value = redisTemplate.opsForHash().get("ai:" + userId, "key:" + apiId);
-        if (value instanceof APIDTO) {
-            return (APIDTO) value;
-        } else if (value instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) value;
-            return APIDTO.builder()
-                .apiId(apiId)
-                .aiModel((String) map.get("aiModel"))
-                .apiKey((String) map.get("apiKey"))
-                .build();
-        }
-        return null;
-    }
-
-    // API 키 db조회
-    private APIDTO findApiKey(Long userId, Long apiId) {
-        Optional<APIs> apiEntity = apiRepository.findById(apiId);
-
-        if (apiEntity.isPresent()) {
-            APIs api = apiEntity.get();
-
-            APIDTO recoveredApiDTO = APIDTO.builder()
-                .apiId(api.getId())
-                .aiModel(api.getAiModel())
-                .apiKey(api.getApiKey())
-                .build();
-
-            String hashKey = "ai:" + userId;
-            String fieldKey = "key:" + apiId;
-            redisTemplate.opsForHash().put(hashKey, fieldKey, recoveredApiDTO);
-            redisTemplate.expire(hashKey, 12, TimeUnit.HOURS);
-            return recoveredApiDTO;
-        }
-        return null;
     }
 
     // 채팅 조회
@@ -297,17 +253,14 @@ public class ChatService {
         try {
             // API 키 조회
             log.info("STEP 2: API 키 조회 시작 (userId: {}, apiId: {})", userId, apiId);
-            APIDTO api = getApiKey(userId, apiId);
+            APIDTO api = cachingDataService.findApiKey(userId, apiId);
             if (api == null) {
-                api = findApiKey(userId, apiId);
-
-                if (api == null) {
-                    log.error("STEP 2-2: API 키를 찾을 수 없음, 채팅 중단 - apiId: {}", apiId);
-                    sseEmitterManager.sendToSession(sessionId, "error",
-                        "API_NOT_FOUND::API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
-                    return;
-                }
+                log.error("STEP 2-2: API 키를 찾을 수 없음, 채팅 중단 - apiId: {}", apiId);
+                sseEmitterManager.sendToSession(sessionId, "error",
+                    "API_NOT_FOUND::API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
+                return;
             }
+
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
             log.info("STEP 2: API 키 조회 완료 (aiModel: {})", aiModel);
@@ -472,7 +425,7 @@ public class ChatService {
     @Async
     public CompletableFuture<String> directChat(Long userId, Long apiId, String model, String content,
         boolean enableTools) {
-        APIDTO api = getApiKey(userId, apiId);
+        APIDTO api = cachingDataService.findApiKey(userId, apiId);
         String aiModel = api.getAiModel();
         String apiKey = api.getApiKey();
 
@@ -505,7 +458,7 @@ public class ChatService {
 
         try {
             // API 키 조회
-            APIDTO api = getApiKey(userId, apiId);
+            APIDTO api = cachingDataService.findApiKey(userId, apiId);
             if (api == null) {
                 throw new IllegalArgumentException("API 키 정보를 찾을 수 없습니다.");
             }
@@ -578,7 +531,7 @@ public class ChatService {
             String accessToken = getGithubAccessToken(principalName);
 
             // API 키/ChatClient 초기화
-            APIDTO api = getApiKey(userId, apiId);
+            APIDTO api = cachingDataService.findApiKey(userId, apiId);
             String aiModel = api.getAiModel();
             String apiKey = api.getApiKey();
 
@@ -610,7 +563,7 @@ public class ChatService {
         String emitterId = "a" + userId;
 
         try {
-            APIDTO api = getApiKey(userId, apiId);
+            APIDTO api = cachingDataService.findApiKey(userId, apiId);
             if (api == null) {
                 throw new IllegalArgumentException("API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
             }
@@ -1295,13 +1248,7 @@ public class ChatService {
     // 모든 채팅 내역 삭제
     @Transactional
     public void deleteAllSessions(Long userId) {
-        List<Notes> userNotes = noteRepository.findByUsers_Id(userId);
-
-        for (Notes note : userNotes) {
-            List<Sessions> sessions = sessionRepository.findByNotes_id(note.getId());
-
-            sessionRepository.deleteAll(sessions);
-        }
+        sessionRepository.deleteAllSessionsByUserId(userId);
     }
 
     // assistant 메세지 추출

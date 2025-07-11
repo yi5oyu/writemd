@@ -48,11 +48,11 @@ public class GithubController {
     }
 
     // 레포지토리, 하위 폴더/파일 조회
-    @GetMapping("/repo/{userId}")
+    @GetMapping("/repo/{githubId}")
     public Mono<ResponseEntity<List<GitRepoDTO>>> getGitInfo(
         @AuthenticationPrincipal(expression = "name") String principalName,
-        @PathVariable Long userId) {
-        return githubService.getGitInfo(userId, principalName)
+        @PathVariable String githubId) {
+        return githubService.getGitInfo(githubId, principalName)
             .map(repos -> ResponseEntity.ok(repos))
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }

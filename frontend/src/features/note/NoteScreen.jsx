@@ -593,8 +593,8 @@ const NoteScreen = ({
 
   // 깃 정보 조회
   const handleGitLoad = useCallback(() => {
-    if (user && user.userId) {
-      getRepo({ userId: user.userId })
+    if (user && user.githubId) {
+      getRepo({ githubId: user.githubId })
     }
   }, [user, getRepo])
 
@@ -638,7 +638,7 @@ const NoteScreen = ({
   // 템플릿 저장
   const handleSaveTemplate = async (folderId, templateId, folderName, title, description) => {
     await saveTemplate(
-      user.userId,
+      user.githubId,
       folderId,
       templateId,
       folderName,
@@ -671,7 +671,7 @@ const NoteScreen = ({
   const handleGetTemplates = () => {
     if (isTemplateLoading) return
 
-    getTemplates({ userId: user.userId })
+    getTemplates({ githubId: user.githubId })
   }
 
   // 메모 저장/업데이트
@@ -680,7 +680,7 @@ const NoteScreen = ({
 
     try {
       const response = await saveMemo(
-        user.userId,
+        user.githubId,
         selectedScreen === 'markdown'
           ? markdownText
           : selectedScreen === 'template'
@@ -759,7 +759,7 @@ const NoteScreen = ({
     }
 
     try {
-      const savedKey = await saveApiKey(user.userId, aiModel, apiKey)
+      const savedKey = await saveApiKey(user.userId, user.githubId, aiModel, apiKey)
 
       await fetchApiKeys(user.userId)
 

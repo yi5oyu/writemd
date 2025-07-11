@@ -99,6 +99,7 @@ public class SecurityConfig {
             String htmlUrl = oAuth2User.getAttribute("html_url");
             String avatarUrl = oAuth2User.getAttribute("avatar_url");
             String principalName = "" + oAuth2User.getAttribute("id");
+
             userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
 
             return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),

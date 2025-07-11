@@ -26,13 +26,13 @@ public class MemoController {
     private final MemoService memoService;
 
     // 메모 저장
-    @PostMapping("/{userId}")
+    @PostMapping("/{githubId}")
     public ResponseEntity<Memos> saveMemo(
-        @PathVariable Long userId,
+        @PathVariable String githubId,
         @RequestBody Map<String, Object> requestPayload,
         @RequestParam(required = false) Long memoId) {
 
-        Memos savedMemo = memoService.saveMemo(userId, (String) requestPayload.get("text"), memoId);
+        Memos savedMemo = memoService.saveMemo(githubId, (String) requestPayload.get("text"), memoId);
         return ResponseEntity.ok(savedMemo);
     }
 

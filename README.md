@@ -231,13 +231,29 @@ erDiagram
 
 ---
 
-## 📊 모니터링
+## 📊 [모니터링](https://github.com/yi5oyu/writemd/wiki/%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81)
 
 - **Spring Actuator**: 애플리케이션 상태 실시간 헬스체크, JVM 메트릭 수집
 - **Prometheus**: 메트릭 데이터 수집 및 저장
 - **Grafana**: 실시간 성능 대시보드, 시각적 메트릭 분석 
 - **Portainer**: Docker 컨테이너 리소스 모니터링 및 관리
 
+### 성능 최적화
+#### [API 응답시간 개선](https://github.com/yi5oyu/writemd/wiki/API-%EC%9D%91%EB%8B%B5%EC%8B%9C%EA%B0%84-%EA%B0%9C%EC%84%A0)
+- **로그인 리다이렉트**: 로그인 정보 DB 저장 비동기 처리, 초기 데이터(JSON) 파일 읽기 캐싱
+> <!-- 평균 응답시간 832ms → 300ms -->
+- **노트 생성**: 반복적인 사용자 조회 캐싱, cascade 설정으로 DB 호출 감소
+> <!-- 평균 응답시간 204ms → 100ms -->
+
+#### [DB 인덱스](https://github.com/yi5oyu/writemd/wiki/DB-%EC%9D%B8%EB%8D%B1%EC%8A%A4)
+- 자동 생성된 인덱스 분석 및 쿼리 최적화
+- `github_id` 인덱스 추가로 사용자 조회 성능 개선
+
+#### [리팩토링](https://github.com/yi5oyu/writemd/wiki/%EB%A6%AC%ED%8C%A9%ED%86%A0%EB%A7%81)
+- **N+1 문제 해결**: QueryDSL fetchJoin 적용으로 쿼리 수 감소(N+1 -> 1)
+- **배치 처리**: QueryDSL 벌크 삭제로 대량 데이터 처리 최적화
+- **캐싱 전략**: Spring Cache 기반 캐싱 관리, Redis로 반복 조회 성능 개선
+  
 ---
 
 ## 📜 개발 컨벤션

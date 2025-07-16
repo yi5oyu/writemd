@@ -17,6 +17,7 @@ const useDeleteNote = () => {
         withCredentials: true,
       })
       .then((response) => {
+        localStorage.removeItem(noteId)
         return response.data
       })
       .catch((err) => {

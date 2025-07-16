@@ -13,9 +13,34 @@ const InputBox = ({
   screen,
   mode,
   selectedScreen,
+  onManualSave,
 }) => {
   const editorRef = useRef(null)
   const monaco = useMonaco()
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Ctrl+S (또는 Cmd+S) 감지
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault() // ✅ 브라우저 기본 동작 차단
+        event.stopPropagation()
+
+        // 에디터가 포커스된 상태에서만 저장 실행
+        if (editorRef.current && editorRef.current.hasTextFocus()) {
+          if (onManualSave) {
+            onManualSave()
+          }
+        }
+      }
+    }
+
+    // document 레벨에서 이벤트 리스너 등록
+    document.addEventListener('keydown', handleKeyDown, true) // ✅ capture 단계에서 처리
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true)
+    }
+  }, [onManualSave])
 
   useEffect(() => {
     if (monaco) {
@@ -76,6 +101,20 @@ const InputBox = ({
     editorRef.current = editor
     // 새로 정의한 명령어
     MarkdownActions(editor, mountedMonaco)
+
+    // Ctrl+S 저장 단축키 추가
+    editor.addAction({
+      id: 'save-document',
+      label: '문서 저장',
+      keybindings: [mountedMonaco.KeyMod.CtrlCmd | mountedMonaco.KeyCode.KeyS],
+      contextMenuGroupId: '1_modification',
+      run: () => {
+        if (onManualSave) {
+          onManualSave()
+        }
+        return null
+      },
+    })
   }
 
   // 테마 정의/설정
@@ -83,7 +122,7 @@ const InputBox = ({
     try {
       monacoInstance.editor.defineTheme('github-light', githubLightTheme)
     } catch (error) {
-      if (!error.message.includes('already defined')) console.error('테마 이미 정의됨:', error)
+      if (!error.message.includes('이미 정의됨')) console.error('테마 이미 정의됨:', error)
     }
     monacoInstance.editor.setTheme('github-light')
   }

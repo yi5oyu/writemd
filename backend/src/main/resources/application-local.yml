@@ -89,5 +89,8 @@ server:
 
 logging:
   level:
+    org.springframework.cache: DEBUG
+    com.writemd.backend.service.CachingDataService: DEBUG
+    org.springframework.data.redis: DEBUG
     org.springframework.ai: INFO
     org.springframework.web: DEBUG

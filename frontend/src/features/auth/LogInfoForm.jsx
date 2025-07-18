@@ -165,17 +165,100 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
 
   // apikey 저장
   const handleSaveAPI = async (aiModel, apiKey) => {
-    if (apiKey.trim()) {
-      await saveApiKey(user.userId, user.githubId, aiModel, apiKey)
+    if (!apiKey || !apiKey.trim()) {
+      toast({
+        title: 'API 키 입력 필요',
+        description: 'API 키를 입력해주세요.',
+        status: 'warning',
+      })
+      return
+    }
+
+    if (!user || !user.userId || !user.githubId) {
+      toast({
+        title: '사용자 정보 오류',
+        description: '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.',
+        status: 'error',
+      })
+      return
+    }
+
+    if (apiKeys && apiKeys.length >= 10) {
+      toast({
+        title: 'API 키 등록 제한',
+        description: 'API는 최대 10개까지 등록 가능합니다.',
+        status: 'warning',
+      })
+      return
+    }
+
+    try {
+      console.log('API 키 저장 시도:', { userId: user.userId, githubId: user.githubId, aiModel })
+
+      const savedKey = await saveApiKey(user.userId, user.githubId, aiModel, apiKey)
+
+      console.log('API 키 저장 결과:', savedKey)
+
       await fetchApiKeys(user.userId)
+
+      if (savedKey && savedKey.apiId) {
+        setSelectedAI(savedKey.apiId)
+        setApiKey('') // 입력 필드 초기화
+
+        toast({
+          title: 'API 키 저장 성공',
+          description: `새 API 키(${aiModel})가 저장되었습니다.`,
+          status: 'success',
+        })
+      } else {
+        toast({
+          title: 'API 키 저장 실패',
+          description: '서버에서 올바른 응답을 받지 못했습니다.',
+          status: 'error',
+        })
+      }
+    } catch (error) {
+      console.error('API 키 저장 오류:', error)
+
+      let errorMessage = 'API 키 저장 중 오류가 발생했습니다.'
+
+      if (error.response) {
+        // 서버에서 응답한 에러
+        errorMessage = `서버 오류: ${error.response.status} - ${
+          error.response.data || '알 수 없는 오류'
+        }`
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      toast({
+        title: 'API 키 저장 실패',
+        description: errorMessage,
+        status: 'error',
+      })
     }
   }
 
   // api 삭제
   const handleDeleteAPI = async (apiId) => {
-    await deleteApiKey(apiId)
-    await fetchApiKeys(user.userId)
-    setSelectedAI('')
+    try {
+      await deleteApiKey(apiId)
+      await fetchApiKeys(user.userId)
+      setSelectedAI('')
+
+      toast({
+        title: 'API 키 삭제 완료',
+        description: 'API 키가 성공적으로 삭제되었습니다.',
+        status: 'success',
+      })
+    } catch (err) {
+      toast({
+        title: 'API 키 삭제 실패',
+        description: 'API 키 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+      })
+      console.error('API 키 삭제 중 오류 발생:', err)
+    }
   }
 
   return (

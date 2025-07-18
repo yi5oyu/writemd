@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { debounce } from 'lodash'
 import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill } from 'react-icons/pi'
 import { safeTextCompression } from '../../utils/textCompression'
@@ -171,13 +170,6 @@ const NoteScreen = ({
     ? chatError.message
     : null
 
-  //
-  // const {
-  //   saveMarkdownText,
-  //   loading: saveMarkdownLoading,
-  //   error: saveMarkdownError,
-  // } = useSaveMarkdown()
-
   // 깃
   const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
   const {
@@ -296,57 +288,6 @@ const NoteScreen = ({
       ? setMemoName(e.target.value)
       : selectedScreen === 'git' && setGithubName(e.target.value)
   }
-
-  // 최초 markdowntext 불러옴
-  // useEffect(() => {
-  //   const savedText = localStorage.getItem(noteId)
-  //   if (savedText !== null) {
-  //     setMarkdownText(savedText)
-  //   } else if (note) {
-  //     setMarkdownText(note.texts.markdownText)
-  //   }
-
-  // }, [note])
-
-  // // localStorage에 저장
-  // useEffect(() => {
-  //   if (markdownText) {
-  //     localStorage.setItem(noteId, markdownText)
-  //   }
-  // }, [markdownText])
-
-  // 자동 저장
-  // const debouncedSave = useCallback(
-  //   debounce(
-  //     async (id, text) => {
-  //       try {
-  //         await saveMarkdownText(id, text)
-  //       } catch (error) {
-  //         console.log('자동 저장 실패: ', error)
-  //       }
-  //     },
-  //     [5000]
-  //   ),
-  //   []
-  // )
-
-  // useEffect(() => {
-  //   if (markdownText) {
-  //     debouncedSave(noteId, markdownText)
-  //   }
-  // }, [markdownText, debouncedSave])
-
-  // 브라우저 종료시 db에 저장
-  // useEffect(() => {
-  //   const handleBeforeUnload = () => {
-  //     if (markdownText) {
-  //       saveMarkdownText(noteId, markdownText)
-  //     }
-  //   }
-
-  //   window.addEventListener('beforeunload', handleBeforeUnload)
-  //   return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  // }, [markdownText])
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
@@ -885,12 +826,12 @@ const NoteScreen = ({
       )
       setIsWaitingForStream(false)
 
-      // setTimeout(() => {
-      //   refetch().then(() => {
-      //     // chatHistory에 저장된 후 임시 messages 제거
-      //     setMessages([])
-      //   })
-      // }, 500)
+      setTimeout(() => {
+        refetch().then(() => {
+          // chatHistory에 저장된 후 임시 messages 제거
+          setMessages([])
+        })
+      }, 500)
     }
   }, [sseIsComplete, streamingContent])
 

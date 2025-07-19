@@ -7,6 +7,8 @@ import { ko } from 'date-fns/locale'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
 import DeleteModal from '../../components/ui/modals/DeleteModal'
+import ErrorToast from '../../components/ui/toast/ErrorToast'
+import useSearchHistory from '../../hooks/auth/useSearchHistory'
 
 const NoteList = ({
   handleSaveNote,
@@ -22,7 +24,26 @@ const NoteList = ({
   const [noteId, setNoteId] = useState('')
   const { isOpen, onOpen, onClose } = useDisclosure()
 
+  // 노트 검색 관리
+  const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
+    'note-search-history',
+    8
+  )
+
   const toast = useToast()
+
+  // 검색 실행 시 기록 저장
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      addSearchHistory(searchQuery.trim())
+    }
+  }
+
+  // 검색 기록 선택 시
+  const handleSelectHistory = (historyItem) => {
+    setSearchQuery(historyItem)
+    addSearchHistory(historyItem)
+  }
 
   // 에러
   useEffect(() => {
@@ -100,6 +121,11 @@ const NoteList = ({
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           name="노트"
+          searchHistory={searchHistory}
+          onSelectHistory={handleSelectHistory}
+          onRemoveHistory={removeSearchHistory}
+          onSearchSubmit={handleSearchSubmit}
+          showHistory={true}
         />
 
         <Grid

@@ -111,8 +111,9 @@ public class ChatService {
 
     // anthropic(claude) 설정
     private ChatClient claude(String apikey, String model, Double temperature, Boolean tool) {
-        System.out.println(toolCallbackProvider.getToolCallbacks());
-        AnthropicApi anthropicApi = new AnthropicApi(apikey);
+        AnthropicApi anthropicApi = AnthropicApi.builder()
+            .apiKey(apikey)
+            .build();
 
         AnthropicChatOptions.Builder optionsBuilder = AnthropicChatOptions.builder()
             .model(model)

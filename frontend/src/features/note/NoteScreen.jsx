@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { debounce } from 'lodash'
 import { Box, Flex, Icon, Input, useToast } from '@chakra-ui/react'
 import { PiCheckFatFill } from 'react-icons/pi'
 import { safeTextCompression } from '../../utils/textCompression'
@@ -21,8 +20,9 @@ import MemoBox from '../memo/MemoBox'
 
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
+import useNoteAutoSave from '../../hooks/note/useNoteAutoSave'
 
-import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
+// import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 // 훅
 import useNote from '../../hooks/note/useNote'
 import useChat from '../../hooks/chat/useChat'
@@ -76,7 +76,7 @@ const NoteScreen = ({
   const [templateName, setTemplateName] = useState('')
   const [memoName, setMemoName] = useState('')
   const [reportName, setReportName] = useState('')
-  const [markdownText, setMarkdownText] = useState('')
+  // const [markdownText, setMarkdownText] = useState('')
   const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
   const [githubText, setGithubText] = useState('')
   const [memoText, setMemoText] = useState('<!-- 새 메모 -->')
@@ -170,13 +170,6 @@ const NoteScreen = ({
     ? chatError.message
     : null
 
-  //
-  const {
-    saveMarkdownText,
-    loading: saveMarkdownLoading,
-    error: saveMarkdownError,
-  } = useSaveMarkdown()
-
   // 깃
   const { getRepo, loading: gitLoading, error: gitError, data: gitRepoData } = useGit()
   const {
@@ -269,6 +262,9 @@ const NoteScreen = ({
   // const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
 
+  const { markdownText, characterInfo, saveInfo, handleTextChange, handleManualSave } =
+    useNoteAutoSave(noteId, note?.texts?.markdownText || '')
+
   const toast = useToast()
 
   // 에러 처리
@@ -292,60 +288,6 @@ const NoteScreen = ({
       ? setMemoName(e.target.value)
       : selectedScreen === 'git' && setGithubName(e.target.value)
   }
-
-  // 최초 markdowntext 불러옴
-  useEffect(() => {
-    const savedText = localStorage.getItem(noteId)
-    if (savedText !== null) {
-      setMarkdownText(savedText)
-    } else if (note) {
-      setMarkdownText(note.texts.markdownText)
-    }
-
-    if (note) {
-      setName(note.noteName)
-    }
-  }, [note])
-
-  // localStorage에 저장
-  useEffect(() => {
-    if (markdownText) {
-      localStorage.setItem(noteId, markdownText)
-    }
-  }, [markdownText])
-
-  // 자동 저장
-  const debouncedSave = useCallback(
-    debounce(
-      async (id, text) => {
-        try {
-          await saveMarkdownText(id, text)
-        } catch (error) {
-          console.log('자동 저장 실패: ', error)
-        }
-      },
-      [5000]
-    ),
-    []
-  )
-
-  useEffect(() => {
-    if (markdownText) {
-      debouncedSave(noteId, markdownText)
-    }
-  }, [markdownText, debouncedSave])
-
-  // 브라우저 종료시 db에 저장
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (markdownText) {
-        saveMarkdownText(noteId, markdownText)
-      }
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [markdownText])
 
   // 세션 생성
   const handleCreateSession = async (noteId, questionText) => {
@@ -403,9 +345,17 @@ const NoteScreen = ({
   }
 
   // 세션ID 변경
-  const handleSessionId = (sessionId) => {
-    setMessages([])
-    setSessionId(sessionId)
+  const handleSessionId = (clickedSessionId) => {
+    if (!(isWaitingForStream && sessionId === clickedSessionId)) {
+      setMessages([])
+    }
+
+    if (sessionId === clickedSessionId) {
+      refetch()
+    } else {
+      setSessionId(clickedSessionId)
+    }
+
     setBoxForm('chatBox')
   }
 
@@ -503,7 +453,7 @@ const NoteScreen = ({
   // 텍스트 지우기
   const handleClearMarkdown = () => {
     selectedScreen === 'markdown'
-      ? setMarkdownText('')
+      ? setTextDirectly('')
       : selectedScreen === 'template'
       ? setTemplateText('')
       : selectedScreen === 'memo'
@@ -871,25 +821,43 @@ const NoteScreen = ({
     }
   }, [])
 
+  useEffect(() => {
+    if (isWaitingForStream && streamingContent && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+
+      // 마지막 메시지가 스트리밍 중인 AI 메시지라면 업데이트
+      if (lastMessage && lastMessage.streaming && lastMessage.role === 'assistant') {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages]
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: streamingContent,
+            streaming: true,
+          }
+          return newMessages
+        })
+      }
+    }
+  }, [streamingContent, isWaitingForStream])
+
   // SSE 완료
   useEffect(() => {
-    if (sseIsComplete) {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) => {
-          if (msg.streaming === true && msg.role === 'assistant') {
-            return { ...msg, content: streamingContent, streaming: false }
-          }
-          return msg
-        })
-      )
-      setIsWaitingForStream(false)
+    if (sseIsComplete && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
 
-      // setTimeout(() => {
-      //   refetch().then(() => {
-      //     // chatHistory에 저장된 후 임시 messages 제거
-      //     setMessages([])
-      //   })
-      // }, 500)
+      if (lastMessage && lastMessage.streaming && lastMessage.role === 'assistant') {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages]
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: streamingContent,
+            streaming: false,
+          }
+          return newMessages
+        })
+
+        setIsWaitingForStream(false)
+      }
     }
   }, [sseIsComplete, streamingContent])
 
@@ -1246,7 +1214,7 @@ const NoteScreen = ({
               }
               setMarkdownText={
                 selectedScreen === 'markdown'
-                  ? setMarkdownText
+                  ? handleTextChange
                   : selectedScreen === 'template'
                   ? setTemplateText
                   : selectedScreen === 'memo'
@@ -1259,6 +1227,7 @@ const NoteScreen = ({
               item={item}
               setItem={setItem}
               screen={screen}
+              onManualSave={handleManualSave}
             />
             {tool && <EmojiBox tool={tool} setTool={setTool} handleItemSelect={handleItemSelect} />}
 
@@ -1342,6 +1311,9 @@ const NoteScreen = ({
                 model={model}
                 setModel={setModel}
                 availableModels={availableModels}
+                currentSessionId={sessionId}
+                isWaitingForStream={isWaitingForStream}
+                streamingContent={streamingContent}
               />
             )}
 
@@ -1375,6 +1347,7 @@ const NoteScreen = ({
                   messages={messages}
                   chatHistory={chatHistory || []}
                   streamingContent={streamingContent}
+                  isStreaming={isWaitingForStream}
                   messageLoading={messageLoading}
                   isChatLoading={isChatLoading}
                   isChatError={isChatError}

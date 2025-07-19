@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Flex,
@@ -25,6 +25,7 @@ import useTemplate from '../../hooks/template/useTemplate'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import MarkdownPreview from '../markdown/PreviewBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
+import useSearchHistory from '../../hooks/auth/useSearchHistory'
 
 const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
   const newNoteText = `# 문서 제목
@@ -56,7 +57,33 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
   const [screenSize, setScreenSize] = useState(1)
   const [tabIndex, setTabIndex] = useState(0)
 
+  // 검색 기록 관리
+  const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
+    'notehome-template-search-history',
+    8
+  )
+
   const toast = useToast()
+
+  // 검색 실행 시 기록 저장
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      addSearchHistory(searchQuery.trim())
+    }
+  }
+
+  // 검색 기록 선택 시
+  const handleSelectHistory = (historyItem) => {
+    setSearchQuery(historyItem)
+    addSearchHistory(historyItem)
+  }
+
+  // 템플릿 조회
+  const handleGetTemplates = useCallback(() => {
+    if (user && user.githubId) {
+      getTemplates({ githubId: user.githubId })
+    }
+  }, [user, getTemplates])
 
   // 제목 업데이트
   useEffect(() => {
@@ -169,7 +196,9 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
             onChange={(index) => {
               setTabIndex(index)
               setScreenSize(index === 0 ? 1 : 2)
-              index === 1 && getTemplates({ userId: user.userId })
+              if (index === 1 && templates.length === 0) {
+                handleGetTemplates()
+              }
             }}
           >
             <TabList mb="1em">
@@ -192,6 +221,15 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
                   query={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClick={() => setSearchQuery('')}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearchSubmit()
+                    }
+                  }}
+                  searchHistory={searchHistory}
+                  onSelectHistory={handleSelectHistory}
+                  onRemoveHistory={removeSearchHistory}
+                  showHistory={true}
                 />
                 <Box maxH="calc(100vh - 220px)" overflowY="auto">
                   <Accordion

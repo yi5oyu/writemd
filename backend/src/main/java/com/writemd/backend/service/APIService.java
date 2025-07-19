@@ -4,9 +4,11 @@ import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
+import com.writemd.backend.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -15,15 +17,18 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class APIService {
 
     private final CachingDataService cachingDataService;
     private final ApiRepository apiRepository;
+    private final UserRepository userRepository;
 
     // API 키 저장
     @Transactional
     public APIDTO saveAPIKey(Long userId, String githubId, String aiModel, String apikey) {
-        Users users = cachingDataService.findUserByGithubId(githubId);
+        Users users = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
 
         APIs newapi = APIs.builder()
             .aiModel(aiModel)
@@ -52,9 +57,9 @@ public class APIService {
                             .apiKey(apikey)
                             .build();
 
-                        cachingDataService.updateApiKeyCache(userId, cacheDto);
+                        cachingDataService.handleApiKeySaved(userId, cacheDto);
                     } catch (Exception e) {
-
+                        log.error("캐시 업데이트 실패: userId={}, apiId={}, error={}", userId, api.getId(), e.getMessage());
                     }
                 }
             }
@@ -98,6 +103,19 @@ public class APIService {
 
         apiRepository.deleteById(apiId);
 
-        cachingDataService.evictApiKeyCache(userId, apiId);
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        cachingDataService.handleApiKeyDeleted(userId, apiId); // 이것으로 변경
+                        log.info("API 키 삭제 후 캐시 업데이트 완료: userId={}, apiId={}", userId, apiId);
+                    } catch (Exception e) {
+                        log.error("캐시 삭제 실패: userId={}, apiId={}, error={}", userId, apiId, e.getMessage());
+                    }
+                }
+            }
+        );
+
     }
 }

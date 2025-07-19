@@ -20,6 +20,8 @@ import { AddIcon, DeleteIcon } from '@chakra-ui/icons'
 import CreateCard from '../../components/ui/card/CreateCard'
 import SearchFlex from '../../components/ui/search/SearchFlex'
 import DeleteModal from '../../components/ui/modals/DeleteModal'
+import useSearchHistory from '../../hooks/auth/useSearchHistory'
+import ScrollBox from '../../components/ui/scroll/ScrollBox'
 
 const TemplateList = ({
   handleSaveTemplate,
@@ -45,6 +47,29 @@ const TemplateList = ({
   const [baseTemplates, setBaseTemplates] = useState([])
 
   const { isOpen, onOpen, onClose } = useDisclosure()
+
+  const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
+    'template-search-history',
+    8
+  )
+
+  // 검색어 변경 핸들러
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+  }
+
+  // 엔터 키 또는 검색 실행 시 기록 저장
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      addSearchHistory(searchQuery.trim())
+    }
+  }
+
+  // 검색 기록 선택 시
+  const handleSelectHistory = (historyItem) => {
+    setSearchQuery(historyItem)
+    addSearchHistory(historyItem) // 최근 항목으로 이동
+  }
 
   // 제목 업데이트
   useEffect(() => {
@@ -189,6 +214,11 @@ const TemplateList = ({
         setSearchQuery={setSearchQuery}
         name="템플릿"
         isSetting={false}
+        searchHistory={searchHistory}
+        onSelectHistory={handleSelectHistory}
+        onRemoveHistory={removeSearchHistory}
+        onSearchSubmit={handleSearchSubmit}
+        showHistory={true}
       />
 
       {/* 새 템플릿 */}
@@ -217,7 +247,7 @@ const TemplateList = ({
       )}
 
       {/* 목록 */}
-      <Box
+      <ScrollBox
         overflowY="auto"
         h={
           screen
@@ -438,7 +468,7 @@ const TemplateList = ({
               )
             })}
         </Accordion>
-      </Box>
+      </ScrollBox>
 
       <DeleteModal
         isOpen={isOpen}

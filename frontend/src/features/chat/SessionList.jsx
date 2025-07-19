@@ -9,6 +9,7 @@ import SearchFlex from '../../components/ui/search/SearchFlex'
 import modelData from '../../data/model.json'
 import AiSelect from '../../components/ui/select/AiSelect'
 import DeleteModal from '../../components/ui/modals/DeleteModal'
+import useSearchHistory from '../../hooks/auth/useSearchHistory'
 
 const SessionList = ({
   sessions,
@@ -38,7 +39,26 @@ const SessionList = ({
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
+  // 검색 기록 관리
+  const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
+    'session-search-history',
+    8
+  )
+
   const toast = useToast()
+
+  // 검색 실행 시 기록 저장
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      addSearchHistory(searchQuery.trim())
+    }
+  }
+
+  // 검색 기록 선택 시
+  const handleSelectHistory = (historyItem) => {
+    setSearchQuery(historyItem)
+    addSearchHistory(historyItem)
+  }
 
   // 에러 처리
   useEffect(() => {
@@ -158,6 +178,11 @@ const SessionList = ({
             isSetting={isSetting}
             select={select}
             name="채팅"
+            searchHistory={searchHistory}
+            onSelectHistory={handleSelectHistory}
+            onRemoveHistory={removeSearchHistory}
+            onSearchSubmit={handleSearchSubmit}
+            showHistory={true}
           />
 
           <Grid

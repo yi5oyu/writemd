@@ -27,6 +27,9 @@ const SessionList = ({
   model,
   setModel,
   availableModels,
+  currentSessionId,
+  isWaitingForStream,
+  streamingContent,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionTitle, setSessionTitle] = useState('')
@@ -176,6 +179,12 @@ const SessionList = ({
                 error={isChatError}
                 loading={isChatLoading}
                 time={formatDate(session.updatedAt)}
+                isStreaming={isWaitingForStream && currentSessionId === session.sessionId}
+                streamingContent={
+                  isWaitingForStream && currentSessionId === session.sessionId
+                    ? streamingContent
+                    : null
+                }
               />
             ))}
           </Grid>

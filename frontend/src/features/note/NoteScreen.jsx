@@ -345,9 +345,17 @@ const NoteScreen = ({
   }
 
   // 세션ID 변경
-  const handleSessionId = (sessionId) => {
-    setMessages([])
-    setSessionId(sessionId)
+  const handleSessionId = (clickedSessionId) => {
+    if (!(isWaitingForStream && sessionId === clickedSessionId)) {
+      setMessages([])
+    }
+
+    if (sessionId === clickedSessionId) {
+      refetch()
+    } else {
+      setSessionId(clickedSessionId)
+    }
+
     setBoxForm('chatBox')
   }
 
@@ -813,25 +821,43 @@ const NoteScreen = ({
     }
   }, [])
 
+  useEffect(() => {
+    if (isWaitingForStream && streamingContent && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+
+      // 마지막 메시지가 스트리밍 중인 AI 메시지라면 업데이트
+      if (lastMessage && lastMessage.streaming && lastMessage.role === 'assistant') {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages]
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: streamingContent,
+            streaming: true,
+          }
+          return newMessages
+        })
+      }
+    }
+  }, [streamingContent, isWaitingForStream])
+
   // SSE 완료
   useEffect(() => {
-    if (sseIsComplete) {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) => {
-          if (msg.streaming === true && msg.role === 'assistant') {
-            return { ...msg, content: streamingContent, streaming: false }
-          }
-          return msg
-        })
-      )
-      setIsWaitingForStream(false)
+    if (sseIsComplete && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
 
-      setTimeout(() => {
-        refetch().then(() => {
-          // chatHistory에 저장된 후 임시 messages 제거
-          setMessages([])
+      if (lastMessage && lastMessage.streaming && lastMessage.role === 'assistant') {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages]
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: streamingContent,
+            streaming: false,
+          }
+          return newMessages
         })
-      }, 500)
+
+        setIsWaitingForStream(false)
+      }
     }
   }, [sseIsComplete, streamingContent])
 
@@ -1285,6 +1311,9 @@ const NoteScreen = ({
                 model={model}
                 setModel={setModel}
                 availableModels={availableModels}
+                currentSessionId={sessionId}
+                isWaitingForStream={isWaitingForStream}
+                streamingContent={streamingContent}
               />
             )}
 
@@ -1318,6 +1347,7 @@ const NoteScreen = ({
                   messages={messages}
                   chatHistory={chatHistory || []}
                   streamingContent={streamingContent}
+                  isStreaming={isWaitingForStream}
                   messageLoading={messageLoading}
                   isChatLoading={isChatLoading}
                   isChatError={isChatError}

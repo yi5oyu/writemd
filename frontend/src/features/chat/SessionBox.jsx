@@ -9,6 +9,8 @@ const SessionBox = ({
   error,
   time,
   loading,
+  isStreaming,
+  streamingContent,
 }) => {
   return (
     <Flex
@@ -16,7 +18,7 @@ const SessionBox = ({
       p="15px"
       borderRadius="md"
       border="1px solid"
-      borderColor="gray.200"
+      borderColor={isStreaming ? 'blue.300' : 'gray.200'}
       w="100%"
       minW="0"
       bg="gray.50"
@@ -47,16 +49,34 @@ const SessionBox = ({
         >
           {title}
         </Text>
-        <Text
-          my="10px"
-          pb="5px"
-          fontSize="14px"
-          noOfLines={1}
-          borderBottom="1px"
-          borderColor="gray.300"
-        >
-          {/* 콘텐츠(설명) */}
-        </Text>
+
+        {isStreaming && streamingContent ? (
+          <Text
+            fontSize="13px"
+            color="gray.700"
+            noOfLines={1}
+            lineHeight="1.3"
+            bg="white"
+            p="2"
+            borderRadius="md"
+            border="1px solid"
+            borderColor="blue.200"
+          >
+            실시간 채팅 전송 중...
+          </Text>
+        ) : (
+          <Text
+            my="10px"
+            pb="5px"
+            fontSize="14px"
+            noOfLines={1}
+            borderBottom="1px"
+            borderColor="gray.300"
+          >
+            {/* 콘텐츠(설명) */}
+          </Text>
+        )}
+
         <Text textAlign="right" fontSize="12px" noOfLines={1} title={time}>
           {time}
         </Text>

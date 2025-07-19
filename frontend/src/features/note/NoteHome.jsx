@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Flex,
@@ -57,6 +57,13 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
   const [tabIndex, setTabIndex] = useState(0)
 
   const toast = useToast()
+
+  // 템플릿 조회
+  const handleGetTemplates = useCallback(() => {
+    if (user && user.githubId) {
+      getTemplates({ githubId: user.githubId })
+    }
+  }, [user, getTemplates])
 
   // 제목 업데이트
   useEffect(() => {
@@ -169,7 +176,9 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
             onChange={(index) => {
               setTabIndex(index)
               setScreenSize(index === 0 ? 1 : 2)
-              index === 1 && getTemplates({ userId: user.userId })
+              if (index === 1 && templates.length === 0) {
+                handleGetTemplates()
+              }
             }}
           >
             <TabList mb="1em">

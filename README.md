@@ -76,7 +76,7 @@
 #### **Frontend**
 - **React**: 프론트/백엔드 분리, CSR(Client Side Rendering), 컴포넌트 기반 UI, Custom Hook 로직 재사용
 - **Vite**: 빌드도구, HMR(Hot Module Replacement) 지원, 빠른 개발 환경
-- **Web Storage**:사용자 설정/데이터 임시 저장으로 서버 요청 감소
+- **Web Storage**:검색 기록 저장 및 노트 임시 저장, 브라우저 새로고침 시에도 작업 내용 보존
 - **Chakra UI**: 컴포넌트 라이브러리, 반응형 디자인
   
 #### **Backend**
@@ -212,7 +212,11 @@ erDiagram
 - **다중 AI 모델**: GPT, Claude API 키/AI 모델 선택
 - **토큰 사용량**: 개인 API 키 토큰 사용량
 - **채팅 내역**: 채팅 히스토리 관리 및 검색
-- **실시간 스트리밍**: SSE 기반 AI 응답 실시간 수신
+- **실시간 스트리밍**: Spring AI Flux 기반 리액티브 스트림 + SSE로 AI 응답 실시간 수신
+
+### MCP Tools
+- **문서 분석**: AI 기반 마크다운 문서 검토 및 개선 제안
+- **Github Repository 분석**: 6단계 자동 분석 (기본정보 > 기술스택 > 구조 > 설정 > 배포 > 결론)
 
 ### 문서 관리
 - **편집 모드**: 노트/템플릿/메모/GitHub/Report 모드 전환
@@ -225,10 +229,6 @@ erDiagram
 <!-- - **파일 탐색**: 레포지토리 구조 분석, 폴더/파일 네비게이션 -->
 - **파일 관리**: GitHub API 기반 파일 내용 조회, 생성, 수정
 
-### MCP Tools
-- **문서 분석**: AI 기반 마크다운 문서 검토 및 개선 제안
-- **Github Repository 분석**: 6단계 자동 분석 (기본정보 > 기술스택 > 구조 > 설정 > 배포 > 결론)
-
 ---
 
 ## 📊 [모니터링](https://github.com/yi5oyu/writemd/wiki/%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81)
@@ -239,6 +239,7 @@ erDiagram
 - **Portainer**: Docker 컨테이너 리소스 모니터링 및 관리
 
 ### 성능 최적화
+
 #### [API 응답시간 개선](https://github.com/yi5oyu/writemd/wiki/API-%EC%9D%91%EB%8B%B5%EC%8B%9C%EA%B0%84-%EA%B0%9C%EC%84%A0)
 - **로그인 리다이렉트**: 로그인 정보 DB 저장 비동기 처리, 초기 데이터(JSON) 파일 읽기 캐싱
 > <!-- 평균 응답시간 832ms → 300ms -->
@@ -254,6 +255,25 @@ erDiagram
 - **배치 처리**: QueryDSL 벌크 삭제로 대량 데이터 처리 최적화
 - **캐싱 전략**: Spring Cache 기반 캐싱 관리, Redis로 반복 조회 성능 개선
   
+---
+
+## 🗺️ 향후 계획 로드맵
+
+### Frontend
+ - 반응형 웹 디자인
+ - 다크모드 테마 기능
+ - GitHub UI/UX 개선
+
+### Backend
+ - GitHub 기능 개선(브랜치, PR/이슈 등...)
+ - AI 채팅 메타데이터(토큰 사용량, AI 설정 세부 정보) 추가
+ - 게스트 모드 추가
+ - 외부 SSE MCP 서버 연결/외부 API를 활용한 MCP Tool 추가 
+ - 내부 정보를 활용한 AI 서비스(Spring boot 기반 MCP 서버 Tool) 추가
+
+### Infra
+ - AWS 서버 추가 확장
+
 ---
 
 ## 📜 개발 컨벤션

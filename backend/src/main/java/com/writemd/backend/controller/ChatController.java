@@ -2,7 +2,7 @@ package com.writemd.backend.controller;
 
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.ChatDTO;
-import com.writemd.backend.dto.SessionDTO;
+import com.writemd.backend.dto.ConversationDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import io.netty.handler.timeout.TimeoutException;
@@ -432,7 +432,7 @@ public class ChatController {
 
     // 세션 리스트 조회
     @GetMapping("/sessions/{noteId}")
-    public List<SessionDTO> getSessions(@PathVariable Long noteId) {
+    public List<ConversationDTO> getSessions(@PathVariable Long noteId) {
         return userService.sessionList(noteId);
     }
 

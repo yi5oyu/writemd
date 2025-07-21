@@ -18,5 +18,5 @@ public class NoteDTO {
     private TextDTO texts;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<SessionDTO> sessions;
+    private List<ConversationDTO> conversationS;
 }

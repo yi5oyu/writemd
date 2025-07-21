@@ -2,20 +2,20 @@ package com.writemd.backend.service;
 
 
 import com.writemd.backend.dto.ChatDTO;
+import com.writemd.backend.dto.ConversationDTO;
 import com.writemd.backend.dto.NoteDTO;
-import com.writemd.backend.dto.SessionDTO;
 import com.writemd.backend.dto.TextDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Chats;
+import com.writemd.backend.entity.Conversations;
 import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Notes;
-import com.writemd.backend.entity.Sessions;
 import com.writemd.backend.entity.Templates;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ChatRepository;
+import com.writemd.backend.repository.ConversationRepository;
 import com.writemd.backend.repository.NoteRepository;
-import com.writemd.backend.repository.SessionRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
 import java.util.List;
@@ -39,7 +39,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final NoteRepository noteRepository;
     private final TextRepository textRepository;
-    private final SessionRepository sessionRepository;
+    private final ConversationRepository conversationRepository;
     private final ChatRepository chatRepository;
     private final CachingDataService cachingDataService;
 
@@ -204,7 +204,7 @@ public class UserService {
     // 채팅 리스트 조회
     @Transactional(readOnly = true)
     public List<ChatDTO> chatList(Long sessionId) {
-        List<Chats> chats = chatRepository.findBySessions_Id(sessionId);
+        List<Chats> chats = chatRepository.findByConversations_Id(sessionId);
 
         List<ChatDTO> chat = chats.stream()
             .map(this::convertChat)
@@ -215,14 +215,14 @@ public class UserService {
 
     // 세션 리스트 조회
     @Transactional(readOnly = true)
-    public List<SessionDTO> sessionList(Long noteId) {
-        List<Sessions> sessions = sessionRepository.findByNotes_id(noteId);
+    public List<ConversationDTO> sessionList(Long noteId) {
+        List<Conversations> conversations = conversationRepository.findByNotes_id(noteId);
 
-        List<SessionDTO> session = sessions.stream()
-            .map(this::convertSession)
+        List<ConversationDTO> conversation = conversations.stream()
+            .map(this::convertConversation)
             .collect(Collectors.toList());
 
-        return session;
+        return conversation;
     }
 
     private NoteDTO convertNote(Notes notes) {
@@ -236,15 +236,15 @@ public class UserService {
         return note;
     }
 
-    private SessionDTO convertSession(Sessions sessions) {
-        SessionDTO session = SessionDTO.builder()
-            .sessionId(sessions.getId())
-            .title(sessions.getTitle())
-            .createdAt(sessions.getCreatedAt())
-            .updatedAt(sessions.getUpdatedAt())
+    private ConversationDTO convertConversation(Conversations conversations) {
+        ConversationDTO conversation = ConversationDTO.builder()
+            .conversationId(conversations.getId())
+            .title(conversations.getTitle())
+            .createdAt(conversations.getCreatedAt())
+            .updatedAt(conversations.getUpdatedAt())
             .build();
 
-        return session;
+        return conversation;
     }
 
     private TextDTO convertText(Texts texts) {

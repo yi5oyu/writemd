@@ -58,7 +58,7 @@ public class Notes {
     @OneToMany(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
-    private List<Sessions> sessions = new ArrayList<>();
+    private List<Conversations> conversations = new ArrayList<>();
 
     @OneToOne(mappedBy = "notes", cascade = CascadeType.ALL, orphanRemoval = true)
     private Texts texts;

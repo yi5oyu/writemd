@@ -25,6 +25,11 @@ spring:
       hibernate:
         generate_statistics: true
 
+  session:
+    store-type: redis
+    redis:
+      namespace: spring:session
+    timeout: 60m
   data:
     redis:
       host: redis

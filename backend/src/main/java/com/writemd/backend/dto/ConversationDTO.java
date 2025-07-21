@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SessionDTO {
+public class ConversationDTO {
 
-    private Long sessionId;
+    private Long conversationId;
     private String title;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

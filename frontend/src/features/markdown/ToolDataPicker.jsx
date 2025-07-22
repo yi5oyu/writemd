@@ -15,9 +15,9 @@ const ToolDataPicker = ({ data, type, onSelect, screen }) => {
   // TODO: w조절
   useEffect(() => {
     const boxWidth = document.getElementById('feature').offsetWidth
-    setGridWidth(boxWidth) // Adjust width based on container width
-    setColCount(Math.floor(boxWidth / itemSize)) // Dynamically calculate column count
-  }, [window.width, screen]) // Empty dependency array ensures this only runs once on mount
+    setGridWidth(boxWidth)
+    setColCount(Math.floor(boxWidth / itemSize))
+  }, [window.width, screen])
 
   return (
     <Box ref={boxRef} borderRadius="8px" padding="4px">
@@ -51,7 +51,7 @@ const ToolDataPicker = ({ data, type, onSelect, screen }) => {
                 <Text fontSize="32px">{key.split('/')[1]}</Text>
               ) : type === 'logo' ? (
                 // 로고
-                <Image src={`https://cdn.simpleicons.org/${key}`} width="32px" height="32px" />
+                <Image src={`/icons/${key}`} width="32px" height="32px" />
               ) : null}
             </Box>
           )

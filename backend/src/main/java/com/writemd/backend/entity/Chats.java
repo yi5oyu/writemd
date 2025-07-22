@@ -30,9 +30,9 @@ public class Chats {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "session_id", nullable = false)
+    @JoinColumn(name = "conversation_id", nullable = false)
     @JsonBackReference
-    private Sessions sessions;
+    private Conversations conversations;
 
     private String role;
 

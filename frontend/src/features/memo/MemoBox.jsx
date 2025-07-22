@@ -7,6 +7,8 @@ import MemoList from './MemoList'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import SearchBar from '../../components/ui/search/SearchBar'
+import useSearchHistory from '../../hooks/auth/useSearchHistory'
+import ScrollBox from '../../components/ui/scroll/ScrollBox'
 
 const MemoBox = ({
   text,
@@ -27,7 +29,26 @@ const MemoBox = ({
   const [searchQuery, setSearchQuery] = useState('')
   const nodeRef = useRef(null)
 
+  // 검색 기록 관리
+  const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
+    'memo-search-history',
+    8
+  )
+
   const toast = useToast()
+
+  // 검색 실행 시 기록 저장
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      addSearchHistory(searchQuery.trim())
+    }
+  }
+
+  // 검색 기록 선택 시
+  const handleSelectHistory = (historyItem) => {
+    setSearchQuery(historyItem)
+    addSearchHistory(historyItem)
+  }
 
   // 메모 저장
   const handleSaveMemo = async (selectedMemo) => {
@@ -106,7 +127,13 @@ const MemoBox = ({
         cursor={isDragging ? 'move' : 'default'}
         filter={isLoading ? 'blur(4px)' : 'none'}
       >
-        <Flex alignItems="center" my="5px" p="5px" borderBottom="1px solid" borderColor="gray.100">
+        <Flex
+          alignItems="center"
+          my="5px"
+          p="5px 0px 5px 10px"
+          borderBottom="1px solid"
+          borderColor="gray.100"
+        >
           <Text ml="5px" fontSize="20px" fontWeight={600}>
             메모
           </Text>
@@ -163,7 +190,8 @@ const MemoBox = ({
             title="닫기"
           />
         </Flex>
-        <Box p="5px" overflowY="auto">
+
+        <ScrollBox p="5px" flex="1">
           <Box
             mb="12px"
             p="5px 12px 12px 12px"
@@ -209,6 +237,15 @@ const MemoBox = ({
             query={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onClick={() => setSearchQuery('')}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearchSubmit()
+              }
+            }}
+            searchHistory={searchHistory}
+            onSelectHistory={handleSelectHistory}
+            onRemoveHistory={removeSearchHistory}
+            showHistory={true}
           />
           {text.length > 0 && (
             <Text ml="5px" fontSize="sm" color="gray.500" mb="10px">
@@ -258,7 +295,7 @@ const MemoBox = ({
               )}
             </>
           )}
-        </Box>
+        </ScrollBox>
         {isLoading && <LoadingSpinner />}
       </Flex>
     </Draggable>

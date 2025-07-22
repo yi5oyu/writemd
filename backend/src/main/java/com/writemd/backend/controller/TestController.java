@@ -67,7 +67,9 @@ public class TestController {
     public String testClaude() {
         String apiKey = "key";
 
-        AnthropicApi anthropicApi = new AnthropicApi(apiKey);
+        AnthropicApi anthropicApi = AnthropicApi.builder()
+            .apiKey(apiKey)
+            .build();
 
         AnthropicChatOptions anthropicChatOptions = AnthropicChatOptions.builder()
             .model("")

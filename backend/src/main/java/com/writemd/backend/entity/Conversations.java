@@ -31,9 +31,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "SESSIONS")
+@Table(name = "CONVERSATIONS")
 @EntityListeners(AuditingEntityListener.class)
-public class Sessions {
+public class Conversations {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,7 +54,7 @@ public class Sessions {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "sessions", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "conversations", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
     private List<Chats> chats = new ArrayList<>();

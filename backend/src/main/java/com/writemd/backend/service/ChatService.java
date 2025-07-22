@@ -5,14 +5,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.APIDTO;
-import com.writemd.backend.dto.SessionDTO;
+import com.writemd.backend.dto.ConversationDTO;
 import com.writemd.backend.entity.Chats;
+import com.writemd.backend.entity.Conversations;
 import com.writemd.backend.entity.Notes;
-import com.writemd.backend.entity.Sessions;
 import com.writemd.backend.prompt.GitHubPrompts;
 import com.writemd.backend.repository.ChatRepository;
+import com.writemd.backend.repository.ConversationRepository;
 import com.writemd.backend.repository.NoteRepository;
-import com.writemd.backend.repository.SessionRepository;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class ChatService {
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
     private final ChatRepository chatRepository;
-    private final SessionRepository sessionRepository;
+    private final ConversationRepository conversationRepository;
     private final NoteRepository noteRepository;
     private final SseEmitterManager sseEmitterManager;
     private final OAuth2AuthorizedClientService authorizedClientService;
@@ -111,8 +111,9 @@ public class ChatService {
 
     // anthropic(claude) 설정
     private ChatClient claude(String apikey, String model, Double temperature, Boolean tool) {
-        System.out.println(toolCallbackProvider.getToolCallbacks());
-        AnthropicApi anthropicApi = new AnthropicApi(apikey);
+        AnthropicApi anthropicApi = AnthropicApi.builder()
+            .apiKey(apikey)
+            .build();
 
         AnthropicChatOptions.Builder optionsBuilder = AnthropicChatOptions.builder()
             .model(model)
@@ -136,7 +137,7 @@ public class ChatService {
     // 채팅 조회
     @Transactional(readOnly = true)
     private List<Message> chatHistory(Long sessionId, String content) {
-        List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
+        List<Chats> chatHistory = chatRepository.findByConversations_Id(sessionId);
         List<Message> messages = new ArrayList<>();
 
         // 최근 메시지 개수 제한 및 토큰 관리
@@ -207,18 +208,18 @@ public class ChatService {
     // 채팅 저장
     @Transactional
     public void saveChat(Long sessionId, String role, String content) {
-        Sessions session = sessionRepository.findById(sessionId)
+        Conversations conversation = conversationRepository.findById(sessionId)
             .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
 
         Chats chat = Chats.builder()
-            .sessions(session)
+            .conversations(conversation)
             .role(role)
             .content(content)
             .build();
 
         chatRepository.save(chat);
-        session.setUpdatedAt(LocalDateTime.now());
-        sessionRepository.save(session);
+        conversation.setUpdatedAt(LocalDateTime.now());
+        conversationRepository.save(conversation);
     }
 
     // 채팅 중지
@@ -1189,7 +1190,7 @@ public class ChatService {
     @Transactional
     public String chatCompletion(Long sessionId) {
         // 채팅 조회
-        List<Chats> chatHistory = chatRepository.findBySessions_Id(sessionId);
+        List<Chats> chatHistory = chatRepository.findByConversations_Id(sessionId);
         List<Map<String, Object>> messages = new ArrayList<>();
 
         Map<String, Object> messageMap = new HashMap<>();
@@ -1219,36 +1220,34 @@ public class ChatService {
 
 
     // 세션 생성
-    public SessionDTO createSession(Long noteId, String title) {
+    public ConversationDTO createSession(Long noteId, String title) {
         Notes note = noteRepository.findById(noteId)
             .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
 
-        Sessions sessions = Sessions.builder()
+        Conversations conversations = Conversations.builder()
             .notes(note)
             .title(title)
             .build();
 
-        Sessions savedSesssions = sessionRepository.save(sessions);
+        Conversations savedConversations = conversationRepository.save(conversations);
 
-        SessionDTO session = SessionDTO.builder()
-            .sessionId(savedSesssions.getId())
-            .title(savedSesssions.getTitle())
-            .createdAt(savedSesssions.getCreatedAt())
-            .updatedAt(savedSesssions.getUpdatedAt())
+        return ConversationDTO.builder()
+            .conversationId(savedConversations.getId())
+            .title(savedConversations.getTitle())
+            .createdAt(savedConversations.getCreatedAt())
+            .updatedAt(savedConversations.getUpdatedAt())
             .build();
-
-        return session;
     }
 
     // 채팅 세션 삭제
     public void deleteSession(Long sessionId) {
-        sessionRepository.deleteById(sessionId);
+        conversationRepository.deleteById(sessionId);
     }
 
     // 모든 채팅 내역 삭제
     @Transactional
     public void deleteAllSessions(Long userId) {
-        sessionRepository.deleteAllSessionsByUserId(userId);
+        conversationRepository.deleteAllConversationsByUserId(userId);
     }
 
     // assistant 메세지 추출

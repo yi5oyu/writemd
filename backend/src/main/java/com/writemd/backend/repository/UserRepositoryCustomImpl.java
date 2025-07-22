@@ -3,10 +3,10 @@ package com.writemd.backend.repository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.writemd.backend.entity.QAPIs;
 import com.writemd.backend.entity.QChats;
+import com.writemd.backend.entity.QConversations;
 import com.writemd.backend.entity.QFolders;
 import com.writemd.backend.entity.QMemos;
 import com.writemd.backend.entity.QNotes;
-import com.writemd.backend.entity.QSessions;
 import com.writemd.backend.entity.QTemplates;
 import com.writemd.backend.entity.QTexts;
 import com.writemd.backend.entity.QUsers;
@@ -22,7 +22,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
     private final QUsers qUsers = QUsers.users;
     private final QNotes qNotes = QNotes.notes;
-    private final QSessions qSessions = QSessions.sessions;
+    private final QConversations qConversations = QConversations.conversations;
     private final QChats qChats = QChats.chats;
     private final QTexts qTexts = QTexts.texts;
     private final QMemos qMemos = QMemos.memos;
@@ -56,11 +56,11 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     public void deleteUserDataBatch(Long userId) {
         // 순서대로 삭제
         queryFactory.delete(qChats)
-            .where(qChats.sessions.notes.users.id.eq(userId))
+            .where(qChats.conversations.notes.users.id.eq(userId))
             .execute();
 
-        queryFactory.delete(qSessions)
-            .where(qSessions.notes.users.id.eq(userId))
+        queryFactory.delete(qConversations)
+            .where(qConversations.notes.users.id.eq(userId))
             .execute();
 
         queryFactory.delete(qTemplates)

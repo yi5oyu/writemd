@@ -11,16 +11,16 @@ import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
- * QSessions is a Querydsl query type for Sessions
+ * QConversations is a Querydsl query type for Conversations
  */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
-public class QSessions extends EntityPathBase<Sessions> {
+public class QConversations extends EntityPathBase<Conversations> {
 
-    private static final long serialVersionUID = 379665001L;
+    private static final long serialVersionUID = -1034778108L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 
-    public static final QSessions sessions = new QSessions("sessions");
+    public static final QConversations conversations = new QConversations("conversations");
 
     public final ListPath<Chats, QChats> chats = this.<Chats, QChats>createList("chats", Chats.class, QChats.class, PathInits.DIRECT2);
 
@@ -34,23 +34,23 @@ public class QSessions extends EntityPathBase<Sessions> {
 
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
-    public QSessions(String variable) {
-        this(Sessions.class, forVariable(variable), INITS);
+    public QConversations(String variable) {
+        this(Conversations.class, forVariable(variable), INITS);
     }
 
-    public QSessions(Path<? extends Sessions> path) {
+    public QConversations(Path<? extends Conversations> path) {
         this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
-    public QSessions(PathMetadata metadata) {
+    public QConversations(PathMetadata metadata) {
         this(metadata, PathInits.getFor(metadata, INITS));
     }
 
-    public QSessions(PathMetadata metadata, PathInits inits) {
-        this(Sessions.class, metadata, inits);
+    public QConversations(PathMetadata metadata, PathInits inits) {
+        this(Conversations.class, metadata, inits);
     }
 
-    public QSessions(Class<? extends Sessions> type, PathMetadata metadata, PathInits inits) {
+    public QConversations(Class<? extends Conversations> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.notes = inits.isInitialized("notes") ? new QNotes(forProperty("notes"), inits.get("notes")) : null;
     }

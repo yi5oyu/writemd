@@ -10,6 +10,11 @@ const SearchFlex = ({
   name,
   isSetting,
   select,
+  searchHistory,
+  onSelectHistory,
+  onRemoveHistory,
+  onSearchSubmit,
+  showHistory = true,
 }) => {
   return (
     <>
@@ -38,10 +43,19 @@ const SearchFlex = ({
       </Flex>
       {isSetting && <CreateCard select={select} />}
       <SearchBar
-        placeholder={`${name} 이름 검색...`}
+        placeholder={`${name} 검색...`}
         query={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onClick={() => setSearchQuery('')}
+        searchHistory={searchHistory}
+        onSelectHistory={onSelectHistory}
+        onRemoveHistory={onRemoveHistory}
+        onKeyPress={(e) => {
+          if (e.key === 'Enter' && onSearchSubmit) {
+            onSearchSubmit()
+          }
+        }}
+        showHistory={showHistory}
       />
     </>
   )

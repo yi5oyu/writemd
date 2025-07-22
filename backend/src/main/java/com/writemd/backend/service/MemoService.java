@@ -4,6 +4,7 @@ import com.writemd.backend.dto.MemoDTO;
 import com.writemd.backend.entity.Memos;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.MemoRepository;
+import com.writemd.backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,12 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemoService {
 
     private final MemoRepository memoRepository;
-    private final CachingDataService cachingDataService;
+    private final UserRepository userRepository;
 
     // 메모 저장/업데이트
     @Transactional
     public Memos saveMemo(String githubId, String text, Long memoId) {
-        Users user = cachingDataService.findUserByGithubId(githubId);
+        Users user = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
 
         Memos memo;
 

@@ -2,7 +2,7 @@ package com.writemd.backend.controller;
 
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.ChatDTO;
-import com.writemd.backend.dto.SessionDTO;
+import com.writemd.backend.dto.ConversationDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import io.netty.handler.timeout.TimeoutException;
@@ -16,9 +16,7 @@ import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +42,6 @@ public class ChatController {
     private final UserService userService;
     private final ChatService chatService;
     private final SseEmitterManager sseEmitterManager;
-    private final ToolCallbackProvider toolCallbackProvider;
 
     // 채팅 시작
     @PostMapping("/{userId}/{sessionId}/{apiId}")
@@ -435,7 +432,7 @@ public class ChatController {
 
     // 세션 리스트 조회
     @GetMapping("/sessions/{noteId}")
-    public List<SessionDTO> getSessions(@PathVariable Long noteId) {
+    public List<ConversationDTO> getSessions(@PathVariable Long noteId) {
         return userService.sessionList(noteId);
     }
 
@@ -454,23 +451,5 @@ public class ChatController {
         // 204
         return ResponseEntity.noContent().build();
     }
-
-    @GetMapping("/tool-callbacks")
-    public ResponseEntity<String> getToolCallbacks() {
-        FunctionCallback[] callbacks = toolCallbackProvider.getToolCallbacks();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("등록된 도구 콜백 수: ").append(callbacks.length).append("\n");
-
-        for (int i = 0; i < callbacks.length; i++) {
-            FunctionCallback callback = callbacks[i];
-            sb.append(i + 1).append(". 도구명: ").append(callback.getName()).append("\n");
-            sb.append("   설명: ").append(callback.getDescription()).append("\n");
-            sb.append("   입력 스키마: ").append(callback.getInputTypeSchema()).append("\n\n");
-        }
-
-        return ResponseEntity.ok(sb.toString());
-    }
-
 
 }

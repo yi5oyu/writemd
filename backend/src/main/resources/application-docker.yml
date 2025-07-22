@@ -26,6 +26,11 @@ spring:
       hibernate:
         generate_statistics: true
 
+  session:
+    store-type: redis
+    redis:
+      namespace: spring:session
+    timeout: 60m
   data:
     redis:
       host: redis
@@ -43,7 +48,16 @@ spring:
             scope: read:user, user:email, repo
 
   ai:
+    anthropic:
+      api-key: dummy-key-not-used
+    openai:
+      api-key: dummy-key-not-used
     mcp:
+      enabled: true
+      name: writemd-mcp-client
+      version: 1.0.0
+      request-timeout: 120s
+      type: SYNC
       client:
         toolcallback:
           enabled: true

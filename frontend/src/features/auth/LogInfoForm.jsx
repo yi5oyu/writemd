@@ -261,6 +261,24 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
   }
 
+  // api키 등록시 업데이트
+  useEffect(() => {
+    if (apiKeys && apiKeys.length > 0 && selectedAI) {
+      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+      if (selectedApiKey) {
+        const displayName =
+          selectedApiKey.aiModel === 'openai'
+            ? 'OpenAI'
+            : selectedApiKey.aiModel === 'anthropic'
+            ? 'Anthropic'
+            : selectedApiKey.aiModel.toUpperCase()
+        setApi(`${displayName}(${selectedApiKey.apiKey})`)
+      }
+    } else {
+      setApi('선택된 AI 없음')
+    }
+  }, [selectedAI, apiKeys])
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} size="auto" isCentered>
@@ -416,7 +434,24 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                     API
                   </Heading>
                   <Box ml="10px">
-                    <Badge mb="5px" variant="outline" colorScheme="green">
+                    <Badge
+                      mb="5px"
+                      variant="outline"
+                      colorScheme={
+                        apiKeys && apiKeys.length > 0 && selectedAI
+                          ? (() => {
+                              const selectedApiKey = apiKeys.find(
+                                (key) => String(key.apiId) === String(selectedAI)
+                              )
+                              return selectedApiKey?.aiModel === 'openai'
+                                ? 'green'
+                                : selectedApiKey?.aiModel === 'anthropic'
+                                ? 'orange'
+                                : 'gray'
+                            })()
+                          : 'gray'
+                      }
+                    >
                       {api ? api : '선택된 AI 없음'}
                     </Badge>
                   </Box>
@@ -455,7 +490,9 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                         </option>
                       ))
                     ) : (
-                      <option disabled>사용 가능한 API 키 없음</option>
+                      <option value="" disabled>
+                        사용 가능한 API 키 없음
+                      </option>
                     )}
                   </Select>
 

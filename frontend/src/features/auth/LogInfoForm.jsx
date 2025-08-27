@@ -263,9 +263,10 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal isOpen={isOpen} onClose={onClose} size="auto" isCentered>
         <ModalOverlay />
         <ModalContent
+          h="auto"
           borderRadius="lg"
           px="6"
           pt="6"
@@ -282,7 +283,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
               <Tab isDisabled={isLoadingSpin}>API</Tab>
             </TabList>
             <TabIndicator mt="-1.5px" height="2px" bg="blue.500" borderRadius="1px" />
-            <TabPanels mt="15px" bg="white" borderRadius="md" h="calc(50vh - 100px)">
+            <TabPanels mt="15px" bg="white" borderRadius="md" h="auto">
               <TabPanel h="100%" display="flex" flexDirection="column">
                 <Heading as="h5" size="sm">
                   프로필 정보

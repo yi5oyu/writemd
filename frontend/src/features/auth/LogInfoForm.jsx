@@ -193,17 +193,17 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
 
     try {
-      console.log('API 키 저장 시도:', { userId: user.userId, githubId: user.githubId, aiModel })
+      // console.log('API 키 저장 시도:', { userId: user.userId, githubId: user.githubId, aiModel })
 
       const savedKey = await saveApiKey(user.userId, user.githubId, aiModel, apiKey)
 
-      console.log('API 키 저장 결과:', savedKey)
+      // console.log('API 키 저장 결과:', savedKey)
 
       await fetchApiKeys(user.userId)
 
       if (savedKey && savedKey.apiId) {
         setSelectedAI(savedKey.apiId)
-        setApiKey('') // 입력 필드 초기화
+        setApiKey('')
 
         toast({
           title: 'API 키 저장 성공',
@@ -271,7 +271,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
             ? 'OpenAI'
             : selectedApiKey.aiModel === 'anthropic'
             ? 'Anthropic'
-            : selectedApiKey.aiModel.toUpperCase()
+            : selectedApiKey.aiModel
         setApi(`${displayName}(${selectedApiKey.apiKey})`)
       }
     } else {
@@ -548,7 +548,12 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                 </Flex>
                 <InputGroup size="sm" mt="auto">
                   <InputLeftAddon>모델 등록</InputLeftAddon>
-                  <Input placeholder="모델 이름을 입력해주세요" pr="25px" />
+                  <Input
+                    disabled={true}
+                    cursor="not-allowed"
+                    placeholder="미구현 기능입니다.(모델 이름을 입력해주세요)"
+                    pr="25px"
+                  />
                   <Tooltip label="API 등록" placement="top" hasArrow>
                     <InputRightElement>
                       <CheckIcon

@@ -453,7 +453,7 @@ const NoteScreen = ({
   // 텍스트 지우기
   const handleClearMarkdown = () => {
     selectedScreen === 'markdown'
-      ? setTextDirectly('')
+      ? handleTextChange('')
       : selectedScreen === 'template'
       ? setTemplateText('')
       : selectedScreen === 'memo'

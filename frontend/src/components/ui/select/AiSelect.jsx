@@ -1,4 +1,4 @@
-import { Flex, Select, IconButton } from '@chakra-ui/react'
+import { Flex, Select, IconButton, Badge } from '@chakra-ui/react'
 import { DeleteIcon } from '@chakra-ui/icons'
 import { SettingsIcon } from '@chakra-ui/icons'
 
@@ -11,11 +11,44 @@ const AiSelect = ({
   icon,
   selectedAI,
   model,
+  showBadge = false,
 }) => {
+  // 뱃지 텍스트트
+  const getApiText = () => {
+    if (!apiKeys || apiKeys.length === 0) {
+      return '선택된 AI 없음'
+    }
+
+    const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+
+    const apiToUse = selectedApiKey || apiKeys[0]
+    return `${apiToUse.aiModel}(${apiToUse.apiKey})`
+  }
+
   return (
     <Flex direction="column">
       <Flex alignItems="center" gap={1}>
-        {apiKeys && apiKeys.length > 0 ? (
+        {showBadge && apiKeys && apiKeys.length > 0 ? (
+          <Badge
+            variant="outline"
+            colorScheme={
+              apiKeys && apiKeys.length > 0 && selectedAI
+                ? (() => {
+                    const selectedApiKey = apiKeys.find(
+                      (key) => String(key.apiId) === String(selectedAI)
+                    )
+                    return selectedApiKey?.aiModel === 'openai'
+                      ? 'green'
+                      : selectedApiKey?.aiModel === 'anthropic'
+                      ? 'orange'
+                      : 'gray'
+                  })()
+                : 'gray'
+            }
+          >
+            {getApiText()}
+          </Badge>
+        ) : apiKeys && apiKeys.length > 0 ? (
           <>
             <Select size="sm" w="auto" spacing={3} value={selectedAI || ''} onChange={apiChange}>
               {apiKeys.length > 0 &&

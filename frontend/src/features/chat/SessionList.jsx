@@ -150,7 +150,7 @@ const SessionList = ({
         bg="white"
         overflowY="auto"
       >
-        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+        <Flex position="absolute" top="20px" right="10px" w="auto" alignItems="center">
           {/* 설정값 바뀌게 */}
           <AiSelect
             apiKeys={apiKeys}
@@ -161,6 +161,7 @@ const SessionList = ({
             selectedAI={selectedAI}
             model={model}
             icon="setting"
+            showBadge={true}
           />
         </Flex>
         <Box

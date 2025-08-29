@@ -35,7 +35,7 @@ const InputBox = ({
     }
 
     // document 레벨에서 이벤트 리스너 등록
-    document.addEventListener('keydown', handleKeyDown, true) // ✅ capture 단계에서 처리
+    document.addEventListener('keydown', handleKeyDown, true)
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true)

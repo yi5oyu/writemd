@@ -74,8 +74,6 @@ const NoteScreen = ({
   const [name, setName] = useState('')
   const [githubName, setGithubName] = useState('')
   const [templateName, setTemplateName] = useState('')
-  const [memoName, setMemoName] = useState('')
-  const [reportName, setReportName] = useState('')
   // const [markdownText, setMarkdownText] = useState('')
   const [templateText, setTemplateText] = useState('<!-- 새 템플릿 -->')
   const [githubText, setGithubText] = useState('')
@@ -279,14 +277,19 @@ const NoteScreen = ({
     }
   }, [error, toast])
 
+  // 노트 이름 초기화
+  useEffect(() => {
+    if (note && note.noteName) {
+      setName(note.noteName)
+    }
+  }, [note])
+
+  // 노트 이름 변경
   const handleTitleChange = (e) => {
-    selectedScreen === 'markdown'
-      ? setName(e.target.value)
-      : selectedScreen === 'template'
-      ? setTemplateName(e.target.value)
-      : selectedScreen === 'memo'
-      ? setMemoName(e.target.value)
-      : selectedScreen === 'git' && setGithubName(e.target.value)
+    selectedScreen === 'template' && setTemplateName(e.target.value)
+    selectedScreen === 'git' && setGithubName(e.target.value)
+    ;(selectedScreen === 'markdown' || selectedScreen === 'report' || selectedScreen === 'memo') &&
+      setName(e.target.value)
   }
 
   // 세션 생성
@@ -1151,10 +1154,10 @@ const NoteScreen = ({
                 : selectedScreen === 'template'
                 ? templateName
                 : selectedScreen === 'memo'
-                ? memoName
+                ? name
                 : selectedScreen === 'git'
                 ? githubName
-                : selectedScreen === 'report' && reportName
+                : selectedScreen === 'report' && name
             }
             fontSize="20px"
             pl="5px"
@@ -1167,18 +1170,22 @@ const NoteScreen = ({
                 : selectedScreen === 'template'
                 ? '템플릿 이름을 입력해주세요.'
                 : selectedScreen === 'memo'
-                ? '메모 이름을 입력해주세요'
-                : selectedScreen === 'git'
                 ? '제목을 입력해주세요.'
-                : selectedScreen === 'report' && '보고서'
+                : selectedScreen === 'git'
+                ? '깃 파일명을 입력해주세요.'
+                : selectedScreen === 'report' && '제목을 입력해주세요.'
             }
           />
           <Icon
             as={PiCheckFatFill}
             color="gray.200"
-            cursor="pointer"
+            cursor={
+              selectedScreen === 'git' || selectedScreen === 'template' ? 'not-allowed' : 'pointer'
+            }
             onClick={() => handleUpdateNote(noteId, name)}
-            _hover={{ color: 'blue.400' }}
+            _hover={
+              selectedScreen === 'git' || selectedScreen === 'template' ? {} : { color: 'blue.400' }
+            }
           />
         </Flex>
 
@@ -1387,6 +1394,7 @@ const NoteScreen = ({
 
             {boxForm === 'template' && (
               <TemplateScreen
+                name={templateName}
                 setName={setTemplateName}
                 setTemplateText={setTemplateText}
                 screen={screen}

@@ -6,6 +6,7 @@ import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 
 const TemplateScreen = ({
+  name,
   setName,
   setTemplateText,
   screen,
@@ -42,6 +43,7 @@ const TemplateScreen = ({
     >
       <Box mx="15px" my="15px" h="100%" borderRadius="md" boxShadow="md" bg="white">
         <TemplateList
+          name={name}
           setName={setName}
           setTemplateText={setTemplateText}
           handleSaveTemplate={handleSaveTemplate}

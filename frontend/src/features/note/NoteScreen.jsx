@@ -277,6 +277,13 @@ const NoteScreen = ({
     }
   }, [error, toast])
 
+  // 노트 클릭시 초기화
+  useEffect(() => {
+    if (noteId) {
+      setSelectedScreen('markdown')
+    }
+  }, [noteId])
+
   // 노트 이름 초기화
   useEffect(() => {
     if (note && note.noteName) {

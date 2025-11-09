@@ -39,7 +39,7 @@ public class Folders {
 
     private String title;
 
-    @OneToMany(mappedBy = "folders", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "folders", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @JsonManagedReference
     private List<Templates> templates = new ArrayList<>();

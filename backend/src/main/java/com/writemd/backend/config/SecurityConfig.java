@@ -32,7 +32,7 @@ public class SecurityConfig {
     @Autowired
     private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
-    @Value("${app.frontend.url:http://localhost:5173}")  // 추가!
+    @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     @Bean
@@ -42,8 +42,10 @@ public class SecurityConfig {
         configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6277");
         configuration.addAllowedOriginPattern("http://127.0.0.1:5577");
+        // mcp 서버
         configuration.addAllowedOriginPattern("http://127.0.0.1:9888");
         configuration.addAllowedOriginPattern("http://127.0.0.1:9889");
+
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
@@ -59,19 +61,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http.csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(
-                (requests) -> requests.requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**",
-                        "/login/oauth2/**", "/actuator/**",
-                        "/logout", "/v1/**", "/sse").permitAll()
-                    .requestMatchers("/profile/**", "/api/**", "/h2-console/**")
-                    .authenticated()
-                    .anyRequest().authenticated())
+            .authorizeHttpRequests((requests) -> requests
+                // 인증 권한
+                .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**",
+                    "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse").permitAll()
+                .requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()
+                .anyRequest().authenticated())
+
+            // 로그인
             .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService()))
                 .successHandler(customAuthenticationSuccessHandler))
+
+            // 로그아웃
             .logout(logout -> logout.logoutUrl("/logout")
                 .logoutSuccessUrl(frontendUrl)
                 .logoutSuccessHandler((request, response, authentication) -> {

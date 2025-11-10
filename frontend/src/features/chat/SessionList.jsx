@@ -196,8 +196,8 @@ const SessionList = ({
           >
             {filteredAndSortedSessions.map((session) => (
               <SessionBox
-                key={session.sessionId}
-                sessionId={session.sessionId}
+                key={session.conversationId}
+                sessionId={session.conversationId}
                 title={session.title}
                 handleChatLoad={handleChatLoad}
                 handleSessionId={handleSessionId}
@@ -205,9 +205,9 @@ const SessionList = ({
                 error={isChatError}
                 loading={isChatLoading}
                 time={formatDate(session.updatedAt)}
-                isStreaming={isWaitingForStream && currentSessionId === session.sessionId}
+                isStreaming={isWaitingForStream && currentSessionId === session.conversationId}
                 streamingContent={
-                  isWaitingForStream && currentSessionId === session.sessionId
+                  isWaitingForStream && currentSessionId === session.conversationId
                     ? streamingContent
                     : null
                 }

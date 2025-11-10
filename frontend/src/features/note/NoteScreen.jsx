@@ -319,11 +319,11 @@ const NoteScreen = ({
       const title = content.length > maxLen ? content.slice(0, maxLen) : content
       session = await saveSession(noteId, title)
       setSessions((s) => [...s, session])
-      setSessionId(session.sessionId)
+      setSessionId(session.conversationId)
 
       const response = await sendChatMessage({
         userId: user.userId,
-        sessionId: session.sessionId,
+        sessionId: session.conversationId,
         apiId: selectedAI,
         aiModel: model,
         questionText: content,
@@ -339,12 +339,12 @@ const NoteScreen = ({
       }
     } catch (error) {
       console.error('세션 생성 또는 메시지 전송 실패:', error)
-      if (session && session.sessionId) {
+      if (session && session.conversationId) {
         try {
-          await deleteSession(session.sessionId)
-          setSessions((s) => s.filter((ses) => ses.sessionId !== session.sessionId))
+          await deleteSession(session.conversationId)
+          setSessions((s) => s.filter((ses) => ses.sessionId !== session.conversationId))
         } catch (deleteError) {
-          console.error(`세션 삭제 중 추가 오류 발생 (ID: ${session.sessionId}):`, deleteError)
+          console.error(`세션 삭제 중 추가 오류 발생 (ID: ${session.conversationId}):`, deleteError)
         }
       }
       setMessages((m) => m.filter((msg) => msg.id !== tempAiMessageId && msg.role !== 'user'))
@@ -434,7 +434,7 @@ const NoteScreen = ({
 
     try {
       await deleteSession(sessionId)
-      setSessions((s) => s.filter((session) => session.sessionId !== sessionId))
+      setSessions((s) => s.filter((session) => session.conversationId !== sessionId))
     } catch (error) {
       console.log('세션 삭제 실패: ' + error)
     }

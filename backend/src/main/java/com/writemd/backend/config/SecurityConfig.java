@@ -65,8 +65,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests((requests) -> requests
                 // 인증 권한
-                .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**",
-                    "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse").permitAll()
+                .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
+                    "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse").permitAll()
                 .requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()
                 .anyRequest().authenticated())
 

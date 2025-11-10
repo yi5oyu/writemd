@@ -13,13 +13,10 @@ import com.writemd.backend.prompt.GitHubPrompts;
 import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.ConversationRepository;
 import com.writemd.backend.repository.NoteRepository;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -635,7 +632,7 @@ public class ChatService {
                     stageUpdate.put("totalStages", 6);
                     stageUpdate.put("result", stageResults.get(stageName));
                     stageUpdate.put("status", "completed");
-                    stageUpdate.put("timestamp", new SimpleDateFormat("a h:mm:ss", Locale.KOREAN).format(new Date()));
+                    stageUpdate.put("timestamp", System.currentTimeMillis());
 
                     // 현재까지의 토큰 사용량 포함
                     stageUpdate.put("tokenUsage", new HashMap<>(tokenUsage));
@@ -831,7 +828,7 @@ public class ChatService {
         stageStartInfo.put("stageNumber", currentStage);
         stageStartInfo.put("totalStages", totalStages);
         stageStartInfo.put("status", "started");
-        stageStartInfo.put("timestamp", new SimpleDateFormat("a h:mm:ss", Locale.KOREAN).format(new Date()));
+        stageStartInfo.put("timestamp", System.currentTimeMillis());
 
         sseEmitterManager.sendToNamedSession(emitterId, "stageStarted", stageStartInfo);
 

@@ -327,20 +327,49 @@ public class ChatService {
                 .doOnError(error -> {
                     log.error("STEP 7-ERROR: AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(),
                         error);
-                    String errorMessage = "AI 서비스 응답 스트림 처리 중 오류 발생";
 
-                    if (error.getMessage() != null && error.getMessage().contains("message endpoint")) {
-                        log.error("STEP 7-ERROR: 도구 실행 관련 오류 발생");
+                    String errorMessage;
+                    String errorType;
+
+                    // 에러 메시지 먼저 확인
+                    String message = error.getMessage() != null ? error.getMessage().toLowerCase() : "";
+
+                    // API 키 관련 오류 체크 (401, invalid_api_key 등)
+                    if (message.contains("401") ||
+                        message.contains("unauthorized") ||
+                        message.contains("invalid_api_key") ||
+                        message.contains("authentication_error")) {
+                        errorType = "INVALID_API_KEY";
+                        errorMessage = "올바르지 않은 API 키입니다. API 설정을 확인해주세요.";
+                        log.error("STEP 7-ERROR: API 키 오류 감지");
+
+                    } else if (message.contains("429") || message.contains("rate_limit")) {
+                        errorType = "RATE_LIMIT_EXCEEDED";
+                        errorMessage = "API 사용량 제한을 초과했습니다.";
+                        log.error("STEP 7-ERROR: 사용량 제한 초과");
+
+                    } else if (message.contains("insufficient_quota")) {
+                        errorType = "INSUFFICIENT_QUOTA";
+                        errorMessage = "API 할당량이 부족합니다.";
+                        log.error("STEP 7-ERROR: 할당량 부족");
+
+                    } else if (message.contains("message endpoint")) {
+                        errorType = "TOOL_EXECUTION_ERROR";
                         errorMessage = "AI 도구 실행 중 오류 발생: " + error.getMessage();
+                        log.error("STEP 7-ERROR: 도구 실행 오류");
+
                     } else if (error instanceof NonTransientAiException) {
-                        log.error("STEP 7-ERROR: NonTransientAiException 발생");
+                        errorType = "AI_SERVICE_ERROR";
                         errorMessage = "AI 서비스 오류: " + error.getMessage();
+                        log.error("STEP 7-ERROR: NonTransientAiException 발생");
+
                     } else {
-                        log.error("STEP 7-ERROR: 기타 내부 오류 발생");
+                        errorType = "STREAM_ERROR";
                         errorMessage = "스트림 처리 중 내부 오류: " + error.getMessage();
+                        log.error("STEP 7-ERROR: 기타 내부 오류 발생");
                     }
 
-                    sseEmitterManager.sendToSession(sessionId, "error", errorMessage);
+                    sseEmitterManager.sendToSession(sessionId, "error", errorType + "::" + errorMessage);
                 })
                 // 스트림 정상 완료
                 .doOnComplete(() -> {

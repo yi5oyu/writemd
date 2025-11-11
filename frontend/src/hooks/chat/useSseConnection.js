@@ -7,6 +7,7 @@ const useSseConnection = (sessionId, enabled = false) => {
   const [error, setError] = useState(null)
   const [isComplete, setIsComplete] = useState(false)
   const eventSourceRef = useRef(null)
+  const errorHandledRef = useRef(false)
 
   // 연결 종료
   const disconnect = useCallback(() => {
@@ -36,6 +37,7 @@ const useSseConnection = (sessionId, enabled = false) => {
         withCredentials: true,
       })
       eventSourceRef.current = es
+      errorHandledRef.current = false
 
       // 연결 성공
       es.onopen = () => {
@@ -71,48 +73,38 @@ const useSseConnection = (sessionId, enabled = false) => {
         setIsComplete(true)
       })
 
-      // error 이벤트 처리
-      es.addEventListener('error', (event) => {
-        if (event.data) {
-          // console.error(`error 이벤트: ${event.data}`)
-          const [errorType, errorMessage] = event.data.split('::')
+      // error 처리
+      es.onerror = (errorEvent) => {
+        // console.error('[SSE] EventSource 오류 발생:', errorEvent)
+
+        // 서버가 보낸 에러 데이터가 있는 경우 (API 키 오류 등)
+        if (errorEvent.data) {
+          const [errorType, errorMessage] = errorEvent.data.split('::')
+
           setError({
             type: errorType || 'SERVER_ERROR',
             message: errorMessage || '알 수 없는 서버 오류',
           })
-        } else {
-          // console.error(`데이터 없는 error 이벤트 수신:`, event)
-          setError({
-            type: 'UNKNOWN_SERVER_EVENT_ERROR',
-            message: '서버로부터 데이터 없는 오류 이벤트 수신',
-          })
+          disconnect()
+          return
         }
-        disconnect()
-      })
 
-      // 연결 중 오류 처리 (세션 만료 처리 제거)
-      es.onerror = (errorEvent) => {
-        console.error('[SSE 훅] EventSource 기본 오류 발생:', errorEvent)
-
-        // 세션 만료 처리 제거 - SSE 연결 실패는 단순히 연결 문제로 처리
-
+        // 일반 연결 오류
         const currentEs = eventSourceRef.current
         if (currentEs && currentEs.readyState === EventSource.CLOSED) {
-          // console.log('EventSource 연결이 종료되었습니다.')
           if (status !== 'closed') {
             setError({
               type: 'CONNECTION_ERROR',
-              message: 'SSE 연결이 예기치 않게 종료되었습니다.',
+              message: 'AI 서비스와의 연결이 종료되었습니다.',
             })
             setStatus('closed')
             eventSourceRef.current = null
           }
         } else {
-          // console.warn('EventSource 오류 발생, 재연결 시도 가능성 있음...')
           setStatus('connecting')
           setError({
             type: 'CONNECTION_INTERRUPTED',
-            message: 'SSE 연결 중단됨.',
+            message: 'AI 서비스 연결이 일시적으로 중단되었습니다.',
           })
         }
       }

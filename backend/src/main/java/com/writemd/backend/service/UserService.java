@@ -46,90 +46,132 @@ public class UserService {
     // user 저장
     @Transactional
     public void saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
-        Optional<Users> existingUser = userRepository.findByGithubId(githubId);
 
-        Users user = existingUser
-            .map(ckUser -> {
-                // 변경사항 체크 후 업데이트(기존 사용자)
-                if (!Objects.equals(ckUser.getName(), name)) {
-                    ckUser.setName(name);
-                }
-                if (!Objects.equals(ckUser.getAvatarUrl(), avatarUrl)) {
-                    ckUser.setAvatarUrl(avatarUrl);
-                }
-                if (!Objects.equals(ckUser.getPrincipalName(), principalName)) {
-                    ckUser.setPrincipalName(principalName);
-                }
-                return ckUser;
-            })
-            .orElseGet(() -> {
-                // 새 유저 저장
-                return Users.builder()
-                    .githubId(githubId)
-                    .name(name)
-                    .htmlUrl(htmlUrl)
-                    .avatarUrl(avatarUrl)
-                    .principalName(principalName)
-                    .build();
-            });
-
-        Users savedUser = userRepository.save(user);
-
-        if (existingUser.isEmpty()) {
-            // JSON 파일에서 템플릿 데이터 로드
-            List<Map<String, String>> myTemplates = cachingDataService.getMyTemplates();
-            List<Map<String, String>> gitTemplates = cachingDataService.getGitTemplates();
-
-            Folders myFolder = Folders.builder()
-                .users(savedUser)
-                .title("내 템플릿")
-                .build();
-
-            Folders gitFolder = Folders.builder()
-                .users(savedUser)
-                .title("깃 허브")
-                .build();
-
-            for (Map<String, String> templateData : myTemplates) {
-                Templates template = Templates.builder().folders(myFolder)
-                    .title(templateData.getOrDefault("title", ""))
-                    .description(templateData.getOrDefault("description", ""))
-                    .content(templateData.getOrDefault("content", "")).build();
-
-                myFolder.getTemplates().add(template);
-            }
-
-            for (Map<String, String> templateData : gitTemplates) {
-                Templates template = Templates.builder().folders(gitFolder)
-                    .title(templateData.getOrDefault("title", ""))
-                    .description(templateData.getOrDefault("description", ""))
-                    .content(templateData.getOrDefault("content", "")).build();
-
-                gitFolder.getTemplates().add(template);
-            }
-
-            savedUser.getFolders().add(myFolder);
-            savedUser.getFolders().add(gitFolder);
-
-            savedUser = userRepository.save(savedUser);
+        // 캐시 조회
+        UserDTO cachedUser = null;
+        try {
+            cachedUser = cachingDataService.findUserByGithubId(githubId);
+        } catch (RuntimeException e) {
+            // 캐시 미스
         }
 
-        UserDTO userDTO = UserDTO.builder()
-            .userId(savedUser.getId())
-            .githubId(savedUser.getGithubId())
-            .name(savedUser.getName())
-            .avatarUrl(savedUser.getAvatarUrl())
-            .htmlUrl(savedUser.getHtmlUrl())
-            .build();
+        // 캐시 히트
+        if (cachedUser != null) {
+            // 변경사항 체크 후 업데이트
+            if (!Objects.equals(cachedUser.getName(), name) || !Objects.equals(cachedUser.getAvatarUrl(), avatarUrl)) {
 
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    cachingDataService.updateUserCache(githubId, userDTO);
-                }
+                Users user = userRepository.getReferenceById(cachedUser.getUserId());
+
+//                Users user = userRepository.findByGithubId(githubId)
+//                    .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+
+                user.setName(name);
+                user.setAvatarUrl(avatarUrl);
+
+                UserDTO updatedDTO = UserDTO.builder()
+                    .userId(user.getId())
+                    .githubId(user.getGithubId())
+                    .name(user.getName())
+                    .avatarUrl(user.getAvatarUrl())
+                    .htmlUrl(user.getHtmlUrl())
+                    .build();
+
+                TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            cachingDataService.updateUserCache(githubId, updatedDTO);
+                        }
+                    }
+                );
             }
-        );
+            // 캐시 미스
+        } else {
+            Optional<Users> existingUser = userRepository.findByGithubId(githubId);
+
+            Users user = existingUser
+                .map(ckUser -> {
+                    // 변경사항 체크 후 업데이트
+                    if (!Objects.equals(ckUser.getName(), name)) {
+                        ckUser.setName(name);
+                    }
+                    if (!Objects.equals(ckUser.getAvatarUrl(), avatarUrl)) {
+                        ckUser.setAvatarUrl(avatarUrl);
+                    }
+                    if (!Objects.equals(ckUser.getPrincipalName(), principalName)) {
+                        ckUser.setPrincipalName(principalName);
+                    }
+                    return ckUser;
+                })
+                .orElseGet(() -> {
+                    // 새 유저 저장
+                    return Users.builder()
+                        .githubId(githubId)
+                        .name(name)
+                        .htmlUrl(htmlUrl)
+                        .avatarUrl(avatarUrl)
+                        .principalName(principalName)
+                        .build();
+                });
+
+            Users savedUser = userRepository.save(user);
+
+            if (existingUser.isEmpty()) {
+                // JSON 파일에서 템플릿 데이터 로드
+                List<Map<String, String>> myTemplates = cachingDataService.getMyTemplates();
+                List<Map<String, String>> gitTemplates = cachingDataService.getGitTemplates();
+
+                Folders myFolder = Folders.builder()
+                    .users(savedUser)
+                    .title("내 템플릿")
+                    .build();
+
+                Folders gitFolder = Folders.builder()
+                    .users(savedUser)
+                    .title("깃 허브")
+                    .build();
+
+                for (Map<String, String> templateData : myTemplates) {
+                    Templates template = Templates.builder().folders(myFolder)
+                        .title(templateData.getOrDefault("title", ""))
+                        .description(templateData.getOrDefault("description", ""))
+                        .content(templateData.getOrDefault("content", "")).build();
+
+                    myFolder.getTemplates().add(template);
+                }
+
+                for (Map<String, String> templateData : gitTemplates) {
+                    Templates template = Templates.builder().folders(gitFolder)
+                        .title(templateData.getOrDefault("title", ""))
+                        .description(templateData.getOrDefault("description", ""))
+                        .content(templateData.getOrDefault("content", "")).build();
+
+                    gitFolder.getTemplates().add(template);
+                }
+
+                savedUser.getFolders().add(myFolder);
+                savedUser.getFolders().add(gitFolder);
+
+                savedUser = userRepository.save(savedUser);
+            }
+
+            UserDTO userDTO = UserDTO.builder()
+                .userId(savedUser.getId())
+                .githubId(savedUser.getGithubId())
+                .name(savedUser.getName())
+                .avatarUrl(savedUser.getAvatarUrl())
+                .htmlUrl(savedUser.getHtmlUrl())
+                .build();
+
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        cachingDataService.updateUserCache(githubId, userDTO);
+                    }
+                }
+            );
+        }
     }
 
     // user 조회

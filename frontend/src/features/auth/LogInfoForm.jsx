@@ -193,17 +193,17 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
 
     try {
-      console.log('API 키 저장 시도:', { userId: user.userId, githubId: user.githubId, aiModel })
+      // console.log('API 키 저장 시도:', { userId: user.userId, githubId: user.githubId, aiModel })
 
       const savedKey = await saveApiKey(user.userId, user.githubId, aiModel, apiKey)
 
-      console.log('API 키 저장 결과:', savedKey)
+      // console.log('API 키 저장 결과:', savedKey)
 
       await fetchApiKeys(user.userId)
 
       if (savedKey && savedKey.apiId) {
         setSelectedAI(savedKey.apiId)
-        setApiKey('') // 입력 필드 초기화
+        setApiKey('')
 
         toast({
           title: 'API 키 저장 성공',
@@ -261,11 +261,30 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
   }
 
+  // api키 등록시 업데이트
+  useEffect(() => {
+    if (apiKeys && apiKeys.length > 0 && selectedAI) {
+      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
+      if (selectedApiKey) {
+        const displayName =
+          selectedApiKey.aiModel === 'openai'
+            ? 'OpenAI'
+            : selectedApiKey.aiModel === 'anthropic'
+            ? 'Anthropic'
+            : selectedApiKey.aiModel
+        setApi(`${displayName}(${selectedApiKey.apiKey})`)
+      }
+    } else {
+      setApi('선택된 AI 없음')
+    }
+  }, [selectedAI, apiKeys])
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal isOpen={isOpen} onClose={onClose} size="auto" isCentered>
         <ModalOverlay />
         <ModalContent
+          h="auto"
           borderRadius="lg"
           px="6"
           pt="6"
@@ -282,7 +301,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
               <Tab isDisabled={isLoadingSpin}>API</Tab>
             </TabList>
             <TabIndicator mt="-1.5px" height="2px" bg="blue.500" borderRadius="1px" />
-            <TabPanels mt="15px" bg="white" borderRadius="md" h="calc(50vh - 100px)">
+            <TabPanels mt="15px" bg="white" borderRadius="md" h="auto">
               <TabPanel h="100%" display="flex" flexDirection="column">
                 <Heading as="h5" size="sm">
                   프로필 정보
@@ -415,7 +434,24 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                     API
                   </Heading>
                   <Box ml="10px">
-                    <Badge mb="5px" variant="outline" colorScheme="green">
+                    <Badge
+                      mb="5px"
+                      variant="outline"
+                      colorScheme={
+                        apiKeys && apiKeys.length > 0 && selectedAI
+                          ? (() => {
+                              const selectedApiKey = apiKeys.find(
+                                (key) => String(key.apiId) === String(selectedAI)
+                              )
+                              return selectedApiKey?.aiModel === 'openai'
+                                ? 'green'
+                                : selectedApiKey?.aiModel === 'anthropic'
+                                ? 'orange'
+                                : 'gray'
+                            })()
+                          : 'gray'
+                      }
+                    >
                       {api ? api : '선택된 AI 없음'}
                     </Badge>
                   </Box>
@@ -454,7 +490,9 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                         </option>
                       ))
                     ) : (
-                      <option disabled>사용 가능한 API 키 없음</option>
+                      <option value="" disabled>
+                        사용 가능한 API 키 없음
+                      </option>
                     )}
                   </Select>
 
@@ -510,7 +548,12 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
                 </Flex>
                 <InputGroup size="sm" mt="auto">
                   <InputLeftAddon>모델 등록</InputLeftAddon>
-                  <Input placeholder="모델 이름을 입력해주세요" pr="25px" />
+                  <Input
+                    disabled={true}
+                    cursor="not-allowed"
+                    placeholder="미구현 기능입니다.(모델 이름을 입력해주세요)"
+                    pr="25px"
+                  />
                   <Tooltip label="API 등록" placement="top" hasArrow>
                     <InputRightElement>
                       <CheckIcon

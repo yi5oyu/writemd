@@ -71,6 +71,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // API 문서화
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
     // Spring AI MCP Client, openai, anthropic(claude)
     // implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
     implementation 'org.springframework.ai:spring-ai-starter-mcp-client'

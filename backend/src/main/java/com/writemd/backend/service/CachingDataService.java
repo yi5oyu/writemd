@@ -42,10 +42,10 @@ public class CachingDataService {
     // 유저 정보 찾기
     @Cacheable(value = "user", key = "#githubId")
     public UserDTO findUserByGithubId(String githubId) {
+        log.info("DB에서 유저 조회: githubId={}", githubId);
+
         Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> {
-                return new RuntimeException("유저 찾을 수 없음: " + githubId);
-            });
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
 
         return UserDTO.builder()
             .userId(user.getId())
@@ -59,6 +59,7 @@ public class CachingDataService {
     // 유저 정보 저장
     @Async
     public void updateUserCache(String githubId, UserDTO user) {
+        log.info("유저 캐시 업데이트: githubId={}", githubId);
         Cache cache = cacheManager.getCache("user");
         if (cache != null) {
             cache.put(githubId, user);

@@ -150,7 +150,7 @@ const SessionList = ({
         bg="white"
         overflowY="auto"
       >
-        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
+        <Flex position="absolute" top="20px" right="10px" w="auto" alignItems="center">
           {/* 설정값 바뀌게 */}
           <AiSelect
             apiKeys={apiKeys}
@@ -161,6 +161,7 @@ const SessionList = ({
             selectedAI={selectedAI}
             model={model}
             icon="setting"
+            showBadge={true}
           />
         </Flex>
         <Box
@@ -195,8 +196,8 @@ const SessionList = ({
           >
             {filteredAndSortedSessions.map((session) => (
               <SessionBox
-                key={session.sessionId}
-                sessionId={session.sessionId}
+                key={session.conversationId}
+                sessionId={session.conversationId}
                 title={session.title}
                 handleChatLoad={handleChatLoad}
                 handleSessionId={handleSessionId}
@@ -204,9 +205,9 @@ const SessionList = ({
                 error={isChatError}
                 loading={isChatLoading}
                 time={formatDate(session.updatedAt)}
-                isStreaming={isWaitingForStream && currentSessionId === session.sessionId}
+                isStreaming={isWaitingForStream && currentSessionId === session.conversationId}
                 streamingContent={
-                  isWaitingForStream && currentSessionId === session.sessionId
+                  isWaitingForStream && currentSessionId === session.conversationId
                     ? streamingContent
                     : null
                 }

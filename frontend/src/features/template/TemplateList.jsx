@@ -30,6 +30,7 @@ const TemplateList = ({
   handleUpdateFolder,
   templates,
   isLoading,
+  name,
   setName,
   setTemplateText,
   isDisabled,
@@ -75,6 +76,20 @@ const TemplateList = ({
   useEffect(() => {
     selectedTemplate && setName(selectedTemplate.title)
   }, [selectedTemplate])
+
+  // 제목 변경 확인
+  useEffect(() => {
+    if (name && selectedTemplate && selectedTemplate.title !== name) {
+      setSelectedTemplate((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: name,
+            }
+          : null
+      )
+    }
+  }, [name, selectedTemplate])
 
   // 템플릿 배열 통합
   useEffect(() => {

@@ -85,6 +85,18 @@ const Screen = ({
   const handleUpdateNote = async (noteId, name) => {
     if (updateError) return
 
+    if (selectedScreen === 'git' || selectedScreen === 'template') return
+
+    // 공백 검사
+    if (!name || !name.trim()) {
+      toast({
+        duration: 3000,
+        isClosable: true,
+        render: ({ onClose }) => <ErrorToast onClose={onClose} message="제목을 입력해주세요." />,
+      })
+      return
+    }
+
     try {
       const updatedNote = await updateNoteName(noteId, name)
       setNotes((n) => n.map((note) => (note.noteId === updatedNote.noteId ? updatedNote : note)))

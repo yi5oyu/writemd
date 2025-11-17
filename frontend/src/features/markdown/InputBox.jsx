@@ -22,7 +22,7 @@ const InputBox = ({
     const handleKeyDown = (event) => {
       // Ctrl+S (또는 Cmd+S) 감지
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-        event.preventDefault() // ✅ 브라우저 기본 동작 차단
+        event.preventDefault()
         event.stopPropagation()
 
         // 에디터가 포커스된 상태에서만 저장 실행
@@ -35,7 +35,7 @@ const InputBox = ({
     }
 
     // document 레벨에서 이벤트 리스너 등록
-    document.addEventListener('keydown', handleKeyDown, true) // ✅ capture 단계에서 처리
+    document.addEventListener('keydown', handleKeyDown, true)
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true)

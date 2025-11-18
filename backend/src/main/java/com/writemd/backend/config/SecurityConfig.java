@@ -1,16 +1,20 @@
 package com.writemd.backend.config;
 
 import com.writemd.backend.config.security.CustomAuthenticationSuccessHandler;
+import com.writemd.backend.config.security.JwtAuthenticationFilter;
+import com.writemd.backend.entity.Users;
 import com.writemd.backend.service.UserService;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -18,19 +22,20 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private UserService userService;
 
-    @Autowired
-    private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final UserService userService;
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -61,8 +66,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http
+            .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // 세션: STATELESS
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
             .authorizeHttpRequests((requests) -> requests
                 // 인증 권한
                 .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
@@ -70,12 +81,12 @@ public class SecurityConfig {
                 .requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()
                 .anyRequest().authenticated())
 
-            // 로그인
+            // OAuth2 로그인
             .oauth2Login(oauth2 -> oauth2.loginPage("/oauth2/authorization/github")
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService()))
                 .successHandler(customAuthenticationSuccessHandler))
 
-            // 로그아웃
+            /* 로그아웃(STATELESS로 변경됨)
             .logout(logout -> logout.logoutUrl("/logout")
                 .logoutSuccessUrl(frontendUrl)
                 .logoutSuccessHandler((request, response, authentication) -> {
@@ -88,6 +99,11 @@ public class SecurityConfig {
                 }).invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .clearAuthentication(true))
+            */
+
+            // JWT 필터
+            .addFilterBefore(jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class)
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
@@ -104,10 +120,14 @@ public class SecurityConfig {
             String avatarUrl = oAuth2User.getAttribute("avatar_url");
             String principalName = "" + oAuth2User.getAttribute("id");
 
-            userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
+            Users user = userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
+
+            //
+            Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
+            attributes.put("userEntity", user);
 
             return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                oAuth2User.getAttributes(), "id");
+                attributes, "id");
         };
     }
 }

@@ -3,12 +3,16 @@ package com.writemd.backend.service;
 import com.writemd.backend.dto.TokenDTO;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class TokenRedisService {
+
+    private static final Logger log = LoggerFactory.getLogger(TokenRedisService.class);
 
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
     // 로그아웃 시 토큰 무효화
@@ -25,6 +29,8 @@ public class TokenRedisService {
         redisTemplate.opsForHash().put(key, deviceId, tokenData);
         // 만료 시간 설정
         redisTemplate.expire(key, expirationMillis, TimeUnit.MILLISECONDS);
+
+        log.info("리프레시 토큰 저장 - githubId: {}, deviceId: {}, 만료시간: {}", githubId, deviceId, expirationMillis);
     }
 
     // Refresh Token 조회
@@ -78,11 +84,16 @@ public class TokenRedisService {
     public void logoutSingleDevice(String githubId, String deviceId) {
         String key = REFRESH_TOKEN_PREFIX + githubId;
         redisTemplate.opsForHash().delete(key, deviceId);
+
+        log.info("로그아웃 - githubId: {}, deviceId: {}", githubId, deviceId);
+
     }
 
     // 모든 장치 로그아웃
     public void logoutAllDevices(String githubId) {
         String key = REFRESH_TOKEN_PREFIX + githubId;
         redisTemplate.delete(key);
+
+        log.info("모든 장치 로그아웃 - githubId: {}", githubId);
     }
 }

@@ -4,6 +4,7 @@ spring:
   mvc:
     async:
       request-timeout: 300000
+
   # devtools 설정
   devtools:
     livereload:
@@ -70,6 +71,11 @@ spring:
             #              url: http://localhost:9888
             py-mcp-server:
               url: http://localhost:9889
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity: 900000      # 15분
+  refresh-token-validity: 604800000  # 7일
 
 management:
   endpoints:

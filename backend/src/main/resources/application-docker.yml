@@ -67,6 +67,11 @@ spring:
               # 컨테이너 이름으로 연결
               url: http://py-mcp-server:9889
 
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity: 900000      # 15분
+  refresh-token-validity: 604800000  # 7일
+
 management:
   endpoints:
     web:

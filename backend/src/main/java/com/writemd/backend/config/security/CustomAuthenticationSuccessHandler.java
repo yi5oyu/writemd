@@ -1,7 +1,6 @@
 package com.writemd.backend.config.security;
 
 import com.writemd.backend.dto.TokenResponseDTO;
-import com.writemd.backend.entity.Users;
 import com.writemd.backend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,10 +33,11 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         Authentication authentication) throws IOException {
 
         OAuth2User oAuth2User = ((OAuth2AuthenticationToken) authentication).getPrincipal();
-        Users user = oAuth2User.getAttribute("userEntity");
+        String githubId = oAuth2User.getAttribute("login");
+        String name = oAuth2User.getAttribute("name");
         String deviceId = request.getHeader("User-Agent") + "-" + request.getRemoteAddr();
 
-        TokenResponseDTO tokens = authService.issueToken(user, deviceId);
+        TokenResponseDTO tokens = authService.issueToken(githubId, name, deviceId);
 
         /*
          OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;

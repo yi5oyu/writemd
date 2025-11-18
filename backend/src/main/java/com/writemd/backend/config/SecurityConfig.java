@@ -2,11 +2,8 @@ package com.writemd.backend.config;
 
 import com.writemd.backend.config.security.CustomAuthenticationSuccessHandler;
 import com.writemd.backend.config.security.JwtAuthenticationFilter;
-import com.writemd.backend.entity.Users;
 import com.writemd.backend.service.UserService;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -54,6 +51,8 @@ public class SecurityConfig {
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
+
+        configuration.addExposedHeader("Authorization");
         configuration.addExposedHeader("Cache-Control");
         configuration.addExposedHeader("Connection");
         configuration.addExposedHeader("Content-Type");
@@ -120,14 +119,10 @@ public class SecurityConfig {
             String avatarUrl = oAuth2User.getAttribute("avatar_url");
             String principalName = "" + oAuth2User.getAttribute("id");
 
-            Users user = userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
-
-            //
-            Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
-            attributes.put("userEntity", user);
+            userService.saveUser(githubId, name, htmlUrl, avatarUrl, principalName);
 
             return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                attributes, "id");
+                oAuth2User.getAttributes(), "id");
         };
     }
 }

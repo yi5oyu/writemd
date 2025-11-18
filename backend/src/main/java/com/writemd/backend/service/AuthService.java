@@ -27,21 +27,21 @@ public class AuthService {
     private long refreshTokenValidity;
 
     @Transactional
-    public TokenResponseDTO issueToken(Users user, String deviceId) {
+    public TokenResponseDTO issueToken(String githubId, String name, String deviceId) {
 
         // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.createAccessToken(user.getGithubId(), user.getName());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getGithubId());
+        String accessToken = jwtTokenProvider.createAccessToken(githubId, name);
+        String refreshToken = jwtTokenProvider.createRefreshToken(githubId);
 
         // Refresh Token을 Redis에 저장
         tokenRedisService.saveRefreshToken(
-            user.getGithubId(),
+            githubId,
             refreshToken,
             deviceId,
             refreshTokenValidity
         );
 
-        log.info("토큰 발행 성공 - githubId: {}", user.getGithubId());
+        log.info("토큰 발행 성공 - githubId: {}", githubId);
 
         return new TokenResponseDTO(accessToken, refreshToken);
     }

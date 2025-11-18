@@ -1,5 +1,6 @@
 package com.writemd.backend.config.security;
 
+import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.UserRepository;
 import com.writemd.backend.service.TokenRedisService;
@@ -50,9 +51,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String githubId = jwtTokenProvider.getGithubId(token);
                 Users user = userRepository.findByGithubId(githubId)
                     .orElseThrow(() -> new UsernameNotFoundException("유저 없음: " + githubId));
+
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                        user,
+                        UserDTO.builder()
+                            .userId(user.getId())
+                            .githubId(user.getGithubId())
+                            .name(user.getName())
+                            .htmlUrl(user.getHtmlUrl())
+                            .avatarUrl(user.getAvatarUrl())
+                            .build(),
                         null,
                         Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
                     );

@@ -44,7 +44,7 @@ public class UserService {
 
     // user 저장
     @Transactional
-    public Users saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
+    public void saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
 
         // 캐시 조회
         UserDTO cachedUser = null;
@@ -52,19 +52,17 @@ public class UserService {
             cachedUser = cachingDataService.findUserByGithubId(githubId);
         } catch (RuntimeException e) {
             // 캐시 미스
-            log.info("캐시 미스: {}", githubId);
         }
 
         // 캐시 히트
         if (cachedUser != null) {
-
-            Users user = userRepository.getReferenceById(cachedUser.getUserId());
-
-//            Users user = userRepository.findByGithubId(githubId)
-//                .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
-
             // 변경사항 체크 후 업데이트
             if (!Objects.equals(cachedUser.getName(), name) || !Objects.equals(cachedUser.getAvatarUrl(), avatarUrl)) {
+
+                Users user = userRepository.getReferenceById(cachedUser.getUserId());
+
+//                Users user = userRepository.findByGithubId(githubId)
+//                    .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
                 user.setName(name);
                 user.setAvatarUrl(avatarUrl);
@@ -86,7 +84,6 @@ public class UserService {
                     }
                 );
             }
-            return user;
             // 캐시 미스
         } else {
             Optional<Users> existingUser = userRepository.findByGithubId(githubId);
@@ -173,7 +170,6 @@ public class UserService {
                     }
                 }
             );
-            return savedUser;
         }
     }
 

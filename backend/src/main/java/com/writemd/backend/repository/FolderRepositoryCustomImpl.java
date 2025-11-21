@@ -7,6 +7,7 @@ import com.writemd.backend.entity.QTemplates;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ public class FolderRepositoryCustomImpl implements FolderRepositoryCustom {
     private final QTemplates qTemplates = QTemplates.templates;
 
     @Override
+    @Transactional(readOnly = true)
     public List<Folders> findByUsersWithTemplates(Long userId) {
         return queryFactory
             .selectFrom(qFolders)

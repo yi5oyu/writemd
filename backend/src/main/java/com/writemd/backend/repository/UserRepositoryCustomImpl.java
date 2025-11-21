@@ -1,5 +1,7 @@
 package com.writemd.backend.repository;
 
+import static com.writemd.backend.entity.QUsers.users;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.writemd.backend.entity.QAPIs;
 import com.writemd.backend.entity.QChats;
@@ -13,6 +15,7 @@ import com.writemd.backend.entity.QUsers;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -20,7 +23,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    private final QUsers qUsers = QUsers.users;
+    private final QUsers qUsers = users;
     private final QNotes qNotes = QNotes.notes;
     private final QConversations qConversations = QConversations.conversations;
     private final QChats qChats = QChats.chats;
@@ -31,6 +34,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     private final QTemplates qTemplates = QTemplates.templates;
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Long> findIdByGithubId(String githubId) {
         Long userId = queryFactory
             .select(qUsers.id)
@@ -42,6 +46,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<String> findPrincipalNameByGithubId(String githubId) {
         String principalName = queryFactory
             .select(qUsers.principalName)
@@ -53,8 +58,9 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     }
 
     @Override
-    public void deleteUserDataBatch(Long userId) {
-        // 순서대로 삭제
+    @Transactional
+    public void deleteAllContentByUserId(Long userId) {
+        // 하위 부터 순서대로 삭제
         queryFactory.delete(qChats)
             .where(qChats.conversations.notes.users.id.eq(userId))
             .execute();
@@ -86,9 +92,34 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
         queryFactory.delete(qAPIs)
             .where(qAPIs.users.id.eq(userId))
             .execute();
+    }
 
+    @Override
+    @Transactional
+    public void deleteUserAndAllContent(Long userId) {
+        deleteAllContentByUserId(userId);
+
+        // 유저 삭제
         queryFactory.delete(qUsers)
             .where(qUsers.id.eq(userId))
+            .execute();
+    }
+
+    @Override
+    public long updateGithubAccessToken(String githubId, String token) {
+        return queryFactory
+            .update(users)
+            .set(users.githubAccessToken, token)
+            .where(users.githubId.eq(githubId))
+            .execute();
+    }
+
+    @Override
+    public long deleteGithubAccessToken(String githubId) {
+        return queryFactory
+            .update(users)
+            .setNull(users.githubAccessToken)
+            .where(users.githubId.eq(githubId))
             .execute();
     }
 }

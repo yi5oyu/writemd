@@ -61,7 +61,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
   const { fetchApiKeys, apiKeys, loading: apiLoading, error: apiError } = useApiKey()
   const { saveApiKey, loading: saveApiLoading, error: saveApiError } = useSaveApiKey()
   const { deleteApiKey, loading: delApiLoading, error: delApiError } = useDeleteApiKey()
-  const { logout, isLoading, error } = useLogout()
+  const { logout, logoutAll, isLoading, error } = useLogout()
   const {
     deleteAllUserSessions,
     loading: deletingChats,

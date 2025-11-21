@@ -1,7 +1,9 @@
 package com.writemd.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,6 +26,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "USERS")
 public class Users {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,6 +41,10 @@ public class Users {
     private String avatarUrl;
 
     private String principalName;
+
+    @JsonIgnore
+    @Column(length = 500)
+    private String githubAccessToken;
 
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

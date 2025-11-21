@@ -30,11 +30,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+
+  session:
+    store-type: none
+
   data:
     redis:
       host: localhost
       port: 6380
       password: ${REDIS_PASSWORD}
+
   # 보안
   security:
     oauth2:
@@ -91,9 +96,9 @@ server:
   port: 8888
   tomcat:
     connection-timeout: 300000 # 5분
-  servlet:
-    session:
-      timeout: 30m
+#  servlet:
+#    session:
+#      timeout: 30m
 
 logging:
   level:

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
+import apiClient from '../../api/apiClient'
 
 const useGetMemo = (userId) => {
   const [memo, setMemo] = useState(null)
@@ -12,17 +12,11 @@ const useGetMemo = (userId) => {
   useEffect(() => {
     setLoading(true)
     setError(null)
-    fetch(`${API_URL}/api/memo/${userId}`, {
-      credentials: 'include',
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('메모 조회 실패.')
-        }
-        return res.json()
-      })
-      .then((data) => {
-        setMemo(data)
+
+    apiClient
+      .get(`/api/memo/${userId}`)
+      .then((response) => {
+        setMemo(response.data)
       })
       .catch((err) => {
         handleSessionExpiry(toast, err)

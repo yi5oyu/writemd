@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
+import { tokenManager } from '../../utils/tokenManager'
+import apiClient from '../../api/apiClient'
 
 const useAuth = () => {
   const [user, setUser] = useState(null)
@@ -10,10 +11,20 @@ const useAuth = () => {
   const toast = useToast()
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   // 로그인 성공 페이지 처리
   useEffect(() => {
     if (location.pathname === '/login-success') {
+      // JWT 토큰 추출
+      const accessToken = searchParams.get('accessToken')
+      const refreshToken = searchParams.get('refreshToken')
+
+      if (accessToken && refreshToken) {
+        // console.log('JWT 토큰 로그인 처리')
+        tokenManager.setTokens(accessToken, refreshToken)
+      }
+
       fetchUserInfo()
         .then(() => {
           navigate('/', { replace: true })
@@ -31,23 +42,16 @@ const useAuth = () => {
           navigate('/', { replace: true })
         })
     }
-  }, [location.pathname, navigate, toast])
+  }, [location.pathname, searchParams, navigate, toast])
 
   // 사용자 정보 가져오기
   const fetchUserInfo = () => {
     setLoading(true)
 
-    return fetch(`${API_URL}/api/user/info`, {
-      credentials: 'include',
-    })
+    return apiClient
+      .get('/api/user/info')
       .then((response) => {
-        if (!response.ok) {
-          sessionStorage.removeItem('user')
-          throw new Error('사용자 정보를 가져오는데 실패했습니다.')
-        }
-        return response.json()
-      })
-      .then((data) => {
+        const data = response.data
         sessionStorage.setItem('user', JSON.stringify(data))
         setUser(data)
         return data

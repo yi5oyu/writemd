@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 function useGit() {
   const [loading, setLoading] = useState(false)
@@ -14,10 +13,8 @@ function useGit() {
     setLoading(true)
     setError(null)
 
-    return axios
-      .get(`${API_URL}/api/github/repo/${githubId}`, {
-        withCredentials: true,
-      })
+    return apiClient
+      .get(`/api/github/repo/${githubId}`)
       .then((response) => {
         setData(response.data)
         return response.data

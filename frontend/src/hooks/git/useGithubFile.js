@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 function useGithubFile() {
   const [loading, setLoading] = useState(false)
@@ -14,11 +13,10 @@ function useGithubFile() {
     setLoading(true)
     setError(null)
 
-    return axios
-      .post(`${API_URL}/api/github/repo/${owner}/${repo}/file`, content, {
+    return apiClient
+      .post(`/api/github/repo/${owner}/${repo}/file`, content, {
         params: { path, message, sha, newPath },
         headers: { 'Content-Type': 'text/plain' },
-        withCredentials: true,
       })
       .then((response) => {
         setData(response.data)

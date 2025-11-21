@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
+import apiClient from '../../api/apiClient'
 
 const useChat = ({ sessionId }) => {
   const [chat, setChat] = useState([])
@@ -14,12 +14,10 @@ const useChat = ({ sessionId }) => {
     setLoading(true)
     setError(null)
 
-    fetch(`${API_URL}/api/chat/${sessionId}`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setChat(data)
+    apiClient
+      .get(`/api/chat/${sessionId}`)
+      .then((response) => {
+        setChat(response.data)
       })
       .catch((err) => {
         handleSessionExpiry(toast, err)

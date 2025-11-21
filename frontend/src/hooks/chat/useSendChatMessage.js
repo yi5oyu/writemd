@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useSendChatMessage = () => {
   const [loading, setLoading] = useState(false)
@@ -14,19 +13,12 @@ const useSendChatMessage = () => {
       if (!questionText.trim()) return Promise.resolve()
       setLoading(true)
       setError(null)
-      return axios
-        .post(
-          `${API_URL}/api/chat/${userId}/${sessionId}/${apiId}`,
-          {
-            model: aiModel,
-            content: questionText,
-            processedContent: processedContent,
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        )
+      return apiClient
+        .post(`/api/chat/${userId}/${sessionId}/${apiId}`, {
+          model: aiModel,
+          content: questionText,
+          processedContent: processedContent,
+        })
         .then((response) => {
           if (response.status === 202) {
             return true

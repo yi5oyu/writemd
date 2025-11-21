@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useDeleteMemo = () => {
   const [loading, setLoading] = useState(false)
@@ -12,10 +11,8 @@ const useDeleteMemo = () => {
   const deleteMemo = (memoId) => {
     setLoading(true)
     setError(null)
-    return axios
-      .delete(`${API_URL}/api/memo/${memoId}`, {
-        withCredentials: true,
-      })
+    return apiClient
+      .delete(`/api/memo/${memoId}`)
       .then((response) => {
         return response.data
       })

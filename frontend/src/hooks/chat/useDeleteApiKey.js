@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useDeleteApiKey = () => {
   const [loading, setLoading] = useState(false)
@@ -19,10 +18,8 @@ const useDeleteApiKey = () => {
       setLoading(true)
       setError(null)
 
-      return axios
-        .delete(`${API_URL}/api/user/key/${apiId}`, {
-          withCredentials: true,
-        })
+      return apiClient
+        .delete(`/api/user/key/${apiId}`)
         .then(() => {
           return true
         })

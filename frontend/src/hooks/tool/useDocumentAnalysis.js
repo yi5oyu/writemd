@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useDocumentAnalysis = () => {
   const [loading, setLoading] = useState(false)
@@ -16,18 +15,11 @@ const useDocumentAnalysis = () => {
       setLoading(true)
       setError(null)
 
-      return axios
-        .post(
-          `${API_URL}/api/chat/document/${userId}/${apiId}`,
-          {
-            content,
-            model,
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        )
+      return apiClient
+        .post(`/api/chat/document/${userId}/${apiId}`, {
+          content,
+          model,
+        })
         .then((response) => {
           if (response.data && response.data.error === true) {
             const serviceErrorMessage = response.data.message || '문서 분석 중 오류가 발생했습니다.'

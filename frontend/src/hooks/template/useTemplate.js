@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 function useTemplate() {
   const [loading, setLoading] = useState(false)
@@ -15,10 +14,8 @@ function useTemplate() {
       setLoading(true)
       setError(null)
 
-      return axios
-        .get(`${API_URL}/api/template/${githubId}`, {
-          withCredentials: true,
-        })
+      return apiClient
+        .get(`/api/template/${githubId}`)
         .then((response) => {
           setTemplates(response.data)
           return response.data

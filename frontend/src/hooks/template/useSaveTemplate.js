@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useSaveTemplate = () => {
   const [loading, setLoading] = useState(false)
@@ -34,11 +33,8 @@ const useSaveTemplate = () => {
       ],
     }
 
-    return axios
-      .post(`${API_URL}/api/template/${githubId}`, requestData, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true,
-      })
+    return apiClient
+      .post(`/api/template/${githubId}`, requestData)
       .then((response) => response.data)
       .catch((err) => {
         handleSessionExpiry(toast, err)

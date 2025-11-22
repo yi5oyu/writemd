@@ -3,6 +3,7 @@ package com.writemd.backend.controller;
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.ConversationDTO;
+import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.UserService;
 import io.netty.handler.timeout.TimeoutException;
@@ -107,7 +108,7 @@ public class ChatController {
     // 레포지토리 구조
     @PostMapping("/structure/{userId}/{apiId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> getRepoStructure(
-        @AuthenticationPrincipal(expression = "name") String principalName, @PathVariable Long userId,
+        @AuthenticationPrincipal UserDTO userDTO, @PathVariable Long userId,
         @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
 
         String repo = (String) requestPayload.get("repo");
@@ -116,19 +117,16 @@ public class ChatController {
         String githubId = (String) requestPayload.get("githubId");
         Integer maxDepth = (Integer) requestPayload.get("maxDepth");
 
-        if (repo == null || repo.trim().isEmpty()) {
+        if (userDTO == null) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "repo는 필수 값입니다.");
-            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
+            errorResponse.put("error", "인증이 필요합니다");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse));
         }
 
-        if (model == null || model.trim().isEmpty()) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "model은 필수 값입니다.");
-            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(errorResponse));
-        }
+//        String principalName = userDTO.getGithubId();
 
-        return chatService.githubRepoStructure(principalName, userId, apiId, model, repo, githubId, branch, maxDepth)
+        return chatService.githubRepoStructure(userId, apiId, model, repo, userDTO.getGithubId(), branch, maxDepth)
             .thenApply(response -> {
                 log.info("GitHub 레포지토리 구조 응답 완료: repo={}", repo);
                 return ResponseEntity.ok(response);
@@ -153,7 +151,8 @@ public class ChatController {
 
     // 문서 분석
     @PostMapping("/document/{userId}/{apiId}")
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> analyzeDocument(@PathVariable Long userId,
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> analyzeDocument(
+        @AuthenticationPrincipal UserDTO userDTO, @PathVariable Long userId,
         @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
 
         String content = (String) requestPayload.get("content");
@@ -187,7 +186,7 @@ public class ChatController {
     }
 
     @PostMapping("/analysis/{userId}/{apiId}")
-    public Object analyzeRepository(@AuthenticationPrincipal(expression = "name") String principalName,
+    public Object analyzeRepository(@AuthenticationPrincipal UserDTO userDTO,
         @PathVariable Long userId, @PathVariable Long apiId, @RequestBody Map<String, Object> requestPayload) {
 
         // 요청 파라미터 추출
@@ -197,6 +196,8 @@ public class ChatController {
         String githubId = (String) requestPayload.get("githubId");
         Boolean stream = (Boolean) requestPayload.get("stream");
         Integer maxDepth = (Integer) requestPayload.get("maxDepth");
+
+//        String principalName = userDTO.getGithubId();
 
         // 필수 파라미터 검증
         if (repo == null || repo.trim().isEmpty()) {
@@ -230,7 +231,7 @@ public class ChatController {
                             "분석 작업이 시작되었습니다.")));
 
                     // 비동기 분석 시작
-                    chatService.githubRepoStageAnalysis(principalName, userId, apiId, model, repo, githubId,
+                    chatService.githubRepoStageAnalysis(userId, apiId, model, repo, userDTO.getGithubId(),
                         branch != null ? branch : "main", maxDepth != null ? maxDepth : 3);
 
                     return ResponseEntity.ok(Map.of("status", "started", "emitterId", emitterId));
@@ -248,7 +249,7 @@ public class ChatController {
             }
         } else {
             // 스트리밍 없이 동기 방식으로 처리 (기존 코드와 동일)
-            return chatService.githubRepoStageAnalysis(principalName, userId, apiId, model, repo, githubId, branch,
+            return chatService.githubRepoStageAnalysis(userId, apiId, model, repo, userDTO.getGithubId(), branch,
                 maxDepth).thenApply(response -> {
                 log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자", repo,
                     response.containsKey("content") ? ((String) response.get("content")).length() : 0);
@@ -299,9 +300,10 @@ public class ChatController {
         }
     }
 
-    // 스트리밍 연결용 GET 엔드포인트 (개선)
+    // 스트리밍 연결용 GET 엔드포인트
     @GetMapping(value = "/analysis/{userId}/{apiId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamAnalysis(@PathVariable Long userId, @PathVariable Long apiId) {
+    public SseEmitter streamAnalysis(@AuthenticationPrincipal UserDTO userDTO, @PathVariable Long userId,
+        @PathVariable Long apiId) {
         log.info("SSE 연결 요청 수신: /analysis/{}/{}", userId, apiId);
 
         // 고유 이미터 ID 생성

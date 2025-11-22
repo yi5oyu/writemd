@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/github")
@@ -34,7 +35,7 @@ public class GithubController {
 
     // 파일 생성/업데이트
     @PostMapping("/repo/{owner}/{repo}/file")
-    public ResponseEntity<?> createOrUpdateFile(
+    public Mono<ResponseEntity<Map<String, Object>>> createOrUpdateFile(
         @PathVariable String owner,
         @PathVariable String repo,
         @RequestParam String path,
@@ -43,11 +44,11 @@ public class GithubController {
         @RequestParam(required = false) String newPath,
         @RequestBody String fileContent) {
 
-        Map<String, Object> content = githubService.createOrUpdateFile(
-            owner, repo, path, message, fileContent, sha, newPath).block();
-
-        return ResponseEntity.ok(content);
-
+        return githubService.createOrUpdateFile(owner, repo, path, message, fileContent, sha, newPath)
+            .map(response -> ResponseEntity.ok(response))
+            .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Collections.singletonMap("error", e.getMessage())
+            )));
     }
 
     // 레포지토리, 하위 폴더/파일 조회
@@ -76,43 +77,47 @@ public class GithubController {
         }
     }
 
-
-    // 파일 내용 조회
     @GetMapping("/repo/{owner}/{repo}/contents/{path}")
-    public ResponseEntity<GitContentDTO> getFileContent(
+    public Mono<GitContentDTO> getFileContent(
 //        @AuthenticationPrincipal UserDTO userDTO,
         @PathVariable String owner,
         @PathVariable String repo,
         @PathVariable String path) {
-
-        GitContentDTO content = githubService.getFileContent(owner, repo, path).block();
-
-        return ResponseEntity.ok(content);
-
+        return githubService.getFileContent(owner, repo, path);
     }
+
+    // 파일 내용 조회
+//    @GetMapping("/repo/{owner}/{repo}/contents/{path}")
+//    public ResponseEntity<GitContentDTO> getFileContent(
+////        @AuthenticationPrincipal UserDTO userDTO,
+//        @PathVariable String owner,
+//        @PathVariable String repo,
+//        @PathVariable String path) {
+//
+//        GitContentDTO content = githubService.getFileContent(owner, repo, path).block();
+//
+//        return ResponseEntity.ok(content);
+//
+//    }
 
     // 폴더 내용 조회
     @GetMapping("/repo/{owner}/{repo}/folder/{sha}")
-    public ResponseEntity<List<GitContentDTO>> getFolderContents(
+    public Mono<List<GitContentDTO>> getFolderContents(
         @PathVariable String owner,
         @PathVariable String repo,
         @PathVariable String sha) {
 
-        List<GitContentDTO> content = githubService.getFolderContents(owner, repo, sha).block();
-
-        return ResponseEntity.ok(content);
+        return githubService.getFolderContents(owner, repo, sha);
     }
 
     // 폴더안 파일 조회
     @GetMapping("/repo/{owner}/{repo}/blobs/{sha}")
-    public ResponseEntity<GitContentDTO> getBlobFile(
+    public Mono<GitContentDTO> getBlobFile(
         @PathVariable String owner,
         @PathVariable String repo,
         @PathVariable String sha) {
 
-        GitContentDTO content = githubService.getblobFile(owner, repo, sha).block();
-
-        return ResponseEntity.ok(content);
+        return githubService.getblobFile(owner, repo, sha);
     }
 
 }

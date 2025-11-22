@@ -3,6 +3,7 @@ import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
 import { API_URL } from '../../config/api'
 import axios from 'axios'
+import { tokenManager } from '../../utils/tokenManager'
 
 const useGithubAnalysis = () => {
   const [loading, setLoading] = useState(false)
@@ -47,10 +48,24 @@ const useGithubAnalysis = () => {
       closeEventSource()
 
       return new Promise((resolve, reject) => {
+        // accesstoken 토큰
+        const accessToken = tokenManager.getAccessToken()
+        if (!accessToken) {
+          const err = new Error('accesstoken 없음')
+          handleSessionExpiry(toast, err)
+          setLoading(false)
+          return reject(err)
+        }
+
         // SSE 연결
-        const eventSource = new EventSource(`${API_URL}/api/chat/analysis/${userId}/${apiId}`, {
-          withCredentials: true,
-        })
+        const eventSource = new EventSource(
+          `${API_URL}/api/chat/analysis/${userId}/${apiId}?token=${encodeURIComponent(
+            accessToken
+          )}`,
+          {
+            withCredentials: true,
+          }
+        )
         eventSourceRef.current = eventSource
 
         // 분석 시작 이벤트
@@ -370,6 +385,7 @@ const useGithubAnalysis = () => {
               {
                 headers: {
                   'Content-Type': 'application/json',
+                  Authorization: `Bearer ${accessToken}`,
                 },
                 withCredentials: true,
               }

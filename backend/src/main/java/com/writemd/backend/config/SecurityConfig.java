@@ -3,6 +3,7 @@ package com.writemd.backend.config;
 import com.writemd.backend.config.security.CustomAuthenticationSuccessHandler;
 import com.writemd.backend.config.security.JwtAuthenticationFilter;
 import com.writemd.backend.service.UserService;
+import jakarta.servlet.DispatcherType;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,6 +75,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             .authorizeHttpRequests((requests) -> requests
+                .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                 // 인증 권한
                 .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
                     "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse").permitAll()

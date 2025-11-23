@@ -383,7 +383,7 @@ const NoteScreen = ({
       id: `ai-${Date.now()}`,
     }
 
-    setMessages([userMessage, aiPlaceholder])
+    setMessages((m) => [...m, userMessage, aiPlaceholder])
     setIsWaitingForStream(true)
 
     try {

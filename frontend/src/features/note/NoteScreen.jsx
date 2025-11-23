@@ -689,7 +689,7 @@ const NoteScreen = ({
     if (memo && memoData) {
       setText(memoData)
     }
-  }, [memo, memoData])
+  }, [memoData])
 
   // 메모 삭제
   const handelDelMemoClick = async (memoId) => {

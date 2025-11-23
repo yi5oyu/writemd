@@ -73,23 +73,29 @@ const TemplateList = ({
   }
 
   // 제목 업데이트
-  useEffect(() => {
-    selectedTemplate && setName(selectedTemplate.title)
-  }, [selectedTemplate])
+  // useEffect(() => {
+  //   selectedTemplate && setName(selectedTemplate.title)
+  // }, [selectedTemplate])
 
   // 제목 변경 확인
+  // useEffect(() => {
+  //   if (name && selectedTemplate && selectedTemplate.title !== name) {
+  //     setSelectedTemplate((prev) =>
+  //       prev
+  //         ? {
+  //             ...prev,
+  //             title: name,
+  //           }
+  //         : null
+  //     )
+  //   }
+  // }, [name, selectedTemplate])
+
   useEffect(() => {
-    if (name && selectedTemplate && selectedTemplate.title !== name) {
-      setSelectedTemplate((prev) =>
-        prev
-          ? {
-              ...prev,
-              title: name,
-            }
-          : null
-      )
+    if (selectedTemplate) {
+      setName(selectedTemplate.title)
     }
-  }, [name, selectedTemplate])
+  }, [selectedTemplate?.templateId])
 
   // 템플릿 배열 통합
   useEffect(() => {

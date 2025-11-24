@@ -76,12 +76,31 @@ const Sidebar = ({
   const handleDeleteNote = async (noteId) => {
     if (error) return
 
+    const preNotes = [...notes]
+    const preSessionUser = sessionStorage.getItem('user')
+
     try {
+      // state 삭제
+      const updatedNotes = notes.filter((note) => note.noteId !== noteId)
+      setNotes(updatedNotes)
+
+      // sessionStorage 업데이트
+      if (preSessionUser) {
+        const userNote = JSON.parse(preSessionUser)
+        userNote.notes = updatedNotes
+        sessionStorage.setItem('user', JSON.stringify(userNote))
+      }
+
       await deleteNote(noteId)
-      setNotes((n) => n.filter((note) => note.noteId !== noteId))
       setCurrentScreen('home')
     } catch (error) {
       console.log('삭제 실패: ' + error)
+
+      // 롤백
+      setNotes(preNotes)
+      if (preSessionUser) {
+        sessionStorage.setItem('user', preSessionUser)
+      }
     }
   }
 

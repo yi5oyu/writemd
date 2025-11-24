@@ -214,9 +214,13 @@ erDiagram
 - **채팅 내역**: 채팅 히스토리 관리 및 검색
 - **실시간 스트리밍**: Spring AI Flux 기반 리액티브 스트림 + SSE로 AI 응답 실시간 수신
 
+<video src="./video/writemdchat.mp4" controls="controls" width="100%"></video>
+Y
 ### MCP Tools
 - **문서 분석**: AI 기반 마크다운 문서 검토 및 개선 제안
 - **Github Repository 분석**: 6단계 자동 분석 (기본정보 > 기술스택 > 구조 > 설정 > 배포 > 결론)
+
+<video src="./video/writemdgit.mp4" controls="controls" width="100%"></video>
 
 ### 문서 관리
 - **편집 모드**: 노트/템플릿/메모/GitHub/Report 모드 전환
@@ -261,6 +265,7 @@ erDiagram
   
 ---
 
+<!-- 
 ## 🗺️ 향후 계획 로드맵
 
 ### Frontend
@@ -279,6 +284,7 @@ erDiagram
  - AWS 서버 추가 확장
 
 ---
+-->
 
 ## 📜 개발 컨벤션
 

@@ -383,7 +383,7 @@ const NoteScreen = ({
       id: `ai-${Date.now()}`,
     }
 
-    setMessages([userMessage, aiPlaceholder])
+    setMessages((m) => [...m, userMessage, aiPlaceholder])
     setIsWaitingForStream(true)
 
     try {
@@ -1191,7 +1191,12 @@ const NoteScreen = ({
             cursor={
               selectedScreen === 'git' || selectedScreen === 'template' ? 'not-allowed' : 'pointer'
             }
-            onClick={() => handleUpdateNote(noteId, name)}
+            onClick={() => {
+              if (selectedScreen === 'git' || selectedScreen === 'template') {
+                return
+              }
+              handleUpdateNote(noteId, name)
+            }}
             _hover={
               selectedScreen === 'git' || selectedScreen === 'template' ? {} : { color: 'blue.400' }
             }

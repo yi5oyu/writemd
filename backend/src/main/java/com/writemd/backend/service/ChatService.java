@@ -658,7 +658,7 @@ public class ChatService {
                     stageUpdate.put("totalStages", 6);
                     stageUpdate.put("result", stageResults.get(stageName));
                     stageUpdate.put("status", "completed");
-                    stageUpdate.put("timestamp", System.currentTimeMillis());
+//                    stageUpdate.put("timestamp", System.currentTimeMillis());
 
                     // 현재까지의 토큰 사용량 포함
                     stageUpdate.put("tokenUsage", new HashMap<>(tokenUsage));
@@ -854,7 +854,7 @@ public class ChatService {
         stageStartInfo.put("stageNumber", currentStage);
         stageStartInfo.put("totalStages", totalStages);
         stageStartInfo.put("status", "started");
-        stageStartInfo.put("timestamp", System.currentTimeMillis());
+//        stageStartInfo.put("timestamp", System.currentTimeMillis());
 
         sseEmitterManager.sendToNamedSession(emitterId, "stageStarted", stageStartInfo);
 

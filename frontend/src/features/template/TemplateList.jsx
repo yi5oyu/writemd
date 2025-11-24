@@ -78,18 +78,18 @@ const TemplateList = ({
   }, [selectedTemplate])
 
   // 제목 변경 확인
-  useEffect(() => {
-    if (name && selectedTemplate && selectedTemplate.title !== name) {
-      setSelectedTemplate((prev) =>
-        prev
-          ? {
-              ...prev,
-              title: name,
-            }
-          : null
-      )
-    }
-  }, [name, selectedTemplate])
+  // useEffect(() => {
+  //   if (name && selectedTemplate && selectedTemplate.title !== name) {
+  //     setSelectedTemplate((prev) =>
+  //       prev
+  //         ? {
+  //             ...prev,
+  //             title: name,
+  //           }
+  //         : null
+  //     )
+  //   }
+  // }, [name, selectedTemplate])
 
   // 템플릿 배열 통합
   useEffect(() => {
@@ -104,7 +104,7 @@ const TemplateList = ({
       selectedTemplate.folderId,
       selectedTemplate.templateId,
       selectedTemplate.folderName,
-      selectedTemplate.title,
+      name,
       selectedTemplate.description
     )
     setSelectedTemplate(null)
@@ -197,8 +197,10 @@ const TemplateList = ({
 
     if (isLoading) return
 
-    handleUpdateFolder(folderId, folderName)
+    setEditedTitles({})
     setEdit('')
+
+    handleUpdateFolder(folderId, folderName)
   }
 
   // 템플릿 빈 문자열 검사

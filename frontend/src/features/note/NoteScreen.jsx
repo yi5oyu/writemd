@@ -383,7 +383,7 @@ const NoteScreen = ({
       id: `ai-${Date.now()}`,
     }
 
-    setMessages([userMessage, aiPlaceholder])
+    setMessages((m) => [...m, userMessage, aiPlaceholder])
     setIsWaitingForStream(true)
 
     try {
@@ -689,7 +689,7 @@ const NoteScreen = ({
     if (memo && memoData) {
       setText(memoData)
     }
-  }, [memo, memoData])
+  }, [memoData])
 
   // 메모 삭제
   const handelDelMemoClick = async (memoId) => {
@@ -1189,7 +1189,12 @@ const NoteScreen = ({
             cursor={
               selectedScreen === 'git' || selectedScreen === 'template' ? 'not-allowed' : 'pointer'
             }
-            onClick={() => handleUpdateNote(noteId, name)}
+            onClick={() => {
+              if (selectedScreen === 'git' || selectedScreen === 'template') {
+                return
+              }
+              handleUpdateNote(noteId, name)
+            }}
             _hover={
               selectedScreen === 'git' || selectedScreen === 'template' ? {} : { color: 'blue.400' }
             }

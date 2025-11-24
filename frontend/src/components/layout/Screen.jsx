@@ -70,7 +70,15 @@ const Screen = ({
     try {
       const savedNote = await saveNote(user, title)
       if (savedNote && savedNote.noteId) {
-        setNotes((n) => [...n, savedNote])
+        // state 업데이트
+        const updatedNotes = [...notes, savedNote]
+        setNotes(updatedNotes)
+
+        // sessionStorage 업데이트
+        const userNote = JSON.parse(sessionStorage.getItem('user'))
+        userNote.notes = updatedNotes
+        sessionStorage.setItem('user', JSON.stringify(userNote))
+
         await saveMarkdownText(savedNote.noteId, text)
         setCurrentScreen(savedNote.noteId)
       } else {
@@ -85,7 +93,7 @@ const Screen = ({
   const handleUpdateNote = async (noteId, name) => {
     if (updateError) return
 
-    if (selectedScreen === 'git' || selectedScreen === 'template') return
+    // if (selectedScreen === 'git' || selectedScreen === 'template') return
 
     // 공백 검사
     if (!name || !name.trim()) {
@@ -97,11 +105,38 @@ const Screen = ({
       return
     }
 
+    const preNotes = [...notes]
+    const preSessionUser = sessionStorage.getItem('user')
+
     try {
-      const updatedNote = await updateNoteName(noteId, name)
-      setNotes((n) => n.map((note) => (note.noteId === updatedNote.noteId ? updatedNote : note)))
+      // state 업데이트
+      const updatedNotes = notes.map((note) =>
+        note.noteId === noteId ? { ...note, noteName: name } : note
+      )
+      setNotes(updatedNotes)
+
+      // sessionStorage 업데이트
+      if (preSessionUser) {
+        const userNote = JSON.parse(preSessionUser)
+        userNote.notes = updatedNotes
+        sessionStorage.setItem('user', JSON.stringify(userNote))
+      }
+
+      await updateNoteName(noteId, name)
     } catch (error) {
       console.log('업데이트 실패: ' + error)
+
+      setNotes(preNotes)
+      if (preSessionUser) {
+        sessionStorage.setItem('user', preSessionUser)
+      }
+
+      toast({
+        title: '변경 실패',
+        description: '제목을 변경하지 못했습니다.',
+        status: 'error',
+        isClosable: true,
+      })
     }
   }
 
@@ -109,11 +144,37 @@ const Screen = ({
   const handleDeleteNote = async (noteId) => {
     if (deleteError) return
 
+    const preNotes = [...notes]
+    const preSessionUser = sessionStorage.getItem('user')
+
     try {
+      // state 삭제
+      const updatedNotes = notes.filter((note) => note.noteId !== noteId)
+      setNotes(updatedNotes)
+
+      // sessionStorage 업데이트
+      if (preSessionUser) {
+        const userNote = JSON.parse(preSessionUser)
+        userNote.notes = updatedNotes
+        sessionStorage.setItem('user', JSON.stringify(userNote))
+      }
+
       await deleteNote(noteId)
-      setNotes((n) => n.filter((note) => note.noteId !== noteId))
     } catch (error) {
       console.log('삭제 실패: ' + error)
+
+      setNotes(preNotes)
+      if (preSessionUser) {
+        sessionStorage.setItem('user', preSessionUser)
+      }
+
+      toast({
+        title: '삭제 실패',
+        description: '서버 오류로 인해 삭제가 취소되었습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
     }
   }
 

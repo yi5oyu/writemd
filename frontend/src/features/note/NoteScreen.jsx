@@ -688,10 +688,10 @@ const NoteScreen = ({
   useEffect(() => {
     if (getMemoError) return
 
-    if (memo && memoData) {
+    if (memoData) {
       setText(memoData)
     }
-  }, [memo, memoData])
+  }, [memoData, getMemoError])
 
   // 메모 삭제
   const handelDelMemoClick = async (memoId) => {

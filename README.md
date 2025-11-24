@@ -80,10 +80,10 @@
 - **Chakra UI**: 컴포넌트 라이브러리, 반응형 디자인
   
 #### **Backend**
-- **Spring Boot 3**: REST API 서버
+- **Spring Boot 3**: REST API 서버, MCP 클라이언트
 - **Spring AI**: MCP(Model Context Protocol) 클라이언트/서버, 다중 AI API(OpenAI/Anthropic) 연동
-- **Spring Security**: OAuth2 GitHub 로그인, API 접근 제어
-- **MySQL + Redis**: 관계형 데이터 관리 + 세션/캐시 성능 최적화
+- **Spring Security + JWT**: OAuth2 GitHub 로그인, JWT(Access/Refresh Token) 기반 인증, API 접근 제어
+- **MySQL + Redis**: 관계형 데이터 관리 + 캐시 성능 최적화
 - **실시간 비동기 처리**: @Async + CompletableFuture 멀티스레드 비동기, SSE 실시간 스트리밍, ConcurrentHashMap 동시성 관리
 - **JPA + QueryDSL**: 엔티티 ORM(Object-Relational Mapping), 동적 타입 안전 쿼리, N+1 문제 해결
 - **Python**: MCP 서버, GitHub API 호출 Tools
@@ -229,6 +229,10 @@ erDiagram
 <!-- - **파일 탐색**: 레포지토리 구조 분석, 폴더/파일 네비게이션 -->
 - **파일 관리**: GitHub API 기반 파일 내용 조회, 생성, 수정
 
+### 인증/보안
+- **JWT 인증**: Access Token(30분) + Refresh Token(7일) 방식
+- **토큰 관리**: Redis 기반 Refresh Token 저장 및 블랙리스트 관리
+
 ---
 
 ## 📊 [모니터링](https://github.com/yi5oyu/writemd/wiki/%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81)
@@ -356,7 +360,7 @@ erDiagram
     body (커밋 내용)
 
     ex)
-    feat(FE) : 홈화면 추가 (#1)
+    feat : 홈화면 추가 (#1)
 
     - 레이아웃 구성
 
@@ -382,6 +386,76 @@ erDiagram
     bugfix/[이슈번호-버그명]    
 
  - [Git Flow](https://github.com/yi5oyu/Study/blob/main/git/branch/git%20flow) vs [GitHub Flow](https://github.com/yi5oyu/Study/blob/main/git/branch/github%20flow)
+
+---
+
+## 환경설정
+
+### docker-compose.yml
+
+`파일 위치`     
+/volume1/docker/writemd/docker-compose.yml  
+/volume1/docker/writemd/.env    
+
+`.env`      
+```
+# Database
+MYSQL_ROOT_PASSWORD=mysql_root_password     
+MYSQL_USER_PASSWORD=mysql_user_password     
+
+# Redis 
+REDIS_PASSWORD=redis_password       
+
+# GitHub OAuth
+GITHUB_CLIENT_ID=github_client_id       
+GITHUB_CLIENT_SECRET=github_client_secret       
+GITHUB_REDIRECT_URI=http://localhost:8888/login/oauth2/code/github      
+// https://api.writemd.space/login/oauth2/code/github       
+
+# Frontend
+FRONTEND_URL=frontend_url(http://localhost:5173)
+// https://www.writemd.space
+
+# Cloudflare
+CLOUDFLARE_TUNNEL_TOKEN=cloudflare_tunnel_token
+
+# Github Runner
+RUNNER_TOKEN=github_runner_token 
+# Registration Token 일회용 (A로 시작)
+
+ACCESS_TOKEN=github_access_token
+# Personal Access Token (ghp_로 시작)
+GitHub > Settings > Developer settings > Personal access tokens
+권한 설정
+ - repo (모든 하위 권한 포함)
+ - workflow
+ - admin:repo_hook
+ - read:org
+
+# JWT_SECRET
+JWT_SECRET=16진수_문자열
+HS256(HMAC-SHA256) 서명에 사용되는 비밀 키(64바이트를 16진수로 표현)
+키 생성(터미널): openssl rand -hex 64
+```
+
+### Git Actions Secret
+
+`Repository` > `Settings` > `Secrets and variables` > `New Repository secret`
+
+VITE_API_URL=backend_url(http://localhost:8888)     
+// https://api.writemd.space        
+
+### GitHub Developer Settings
+
+`https://github.com/settings/profile` > `Developer Settings` > `OAuth Apps` > `project_name`
+
+Homepage URL        
+`http://localhost:5173`      
+// https://www.writemd.space        
+
+Authorization callback URL      
+`http://localhost:8888/login/oauth2/code/github`        
+// https://api.writemd.space/login/oauth2/code/github       
 
 ---
 

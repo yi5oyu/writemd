@@ -516,7 +516,9 @@ const NoteScreen = ({
   // Base64 디코딩, UTF-8 변환
   useEffect(() => {
     if (gitFileData) {
-      const decodedContent = atob(gitFileData)
+      // 줄바꿈/공백 제거
+      const cleanBase64 = gitFileData.content.replace(/\s/g, '')
+      const decodedContent = atob(cleanBase64)
 
       const byteArray = new Uint8Array(decodedContent.length)
       for (let i = 0; i < decodedContent.length; i++) {
@@ -686,10 +688,10 @@ const NoteScreen = ({
   useEffect(() => {
     if (getMemoError) return
 
-    if (memo && memoData) {
+    if (memoData) {
       setText(memoData)
     }
-  }, [memoData])
+  }, [memoData, getMemoError])
 
   // 메모 삭제
   const handelDelMemoClick = async (memoId) => {

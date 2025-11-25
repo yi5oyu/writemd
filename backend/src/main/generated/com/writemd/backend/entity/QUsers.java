@@ -26,6 +26,8 @@ public class QUsers extends EntityPathBase<Users> {
 
     public final ListPath<Folders, QFolders> folders = this.<Folders, QFolders>createList("folders", Folders.class, QFolders.class, PathInits.DIRECT2);
 
+    public final StringPath githubAccessToken = createString("githubAccessToken");
+
     public final StringPath githubId = createString("githubId");
 
     public final StringPath htmlUrl = createString("htmlUrl");

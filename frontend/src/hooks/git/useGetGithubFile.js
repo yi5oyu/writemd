@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
-import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 function useGetGithubFile() {
   const [loading, setLoading] = useState(false)
@@ -11,28 +9,39 @@ function useGetGithubFile() {
   const toast = useToast()
 
   const getFileContent = ({ owner, repo, path }) => {
-    setData(null)
     setLoading(true)
     setError(null)
 
-    return axios
-      .get(`${API_URL}/api/github/repo/${owner}/${repo}/contents/${path}`, {
-        withCredentials: true,
-      })
+    return apiClient
+      .get(`/api/github/repo/${owner}/${repo}/contents/${path}`)
       .then((response) => {
-        setData(response.data.content)
-        return response.data.content
+        setData(response.data)
+
+        return response.data
       })
       .catch((err) => {
-        handleSessionExpiry(toast, err)
+        setError(err)
 
-        const isSessionError =
-          err.message?.includes('Failed to fetch') ||
-          err.message?.includes('Network Error') ||
-          err.message?.includes('net::ERR_FAILED')
+        if (err.response?.status === 401) {
+          toast({
+            title: '인증이 필요합니다',
+            description: '다시 로그인해주세요.',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          })
 
-        if (!isSessionError) {
-          setError(err)
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          window.location.href = '/login'
+        } else if (err.message === 'Network Error') {
+          toast({
+            title: '네트워크 오류',
+            description: '서버 연결을 확인해주세요.',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          })
         }
 
         throw err

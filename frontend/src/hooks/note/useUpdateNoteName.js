@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useUpdateNoteName = () => {
   const [loading, setLoading] = useState(false)
@@ -12,14 +11,8 @@ const useUpdateNoteName = () => {
   const updateNoteName = (noteId, noteName) => {
     setLoading(true)
     setError(null)
-    return axios
-      .put(
-        `${API_URL}/api/note/name/${noteId}`,
-        { noteName: noteName.trim() },
-        {
-          withCredentials: true,
-        }
-      )
+    return apiClient
+      .put(`/api/note/name/${noteId}`, { noteName: noteName.trim() })
       .then((response) => {
         return response.data
       })

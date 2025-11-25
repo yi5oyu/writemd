@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useSaveNote = () => {
   const [loading, setLoading] = useState(false)
@@ -25,15 +24,8 @@ const useSaveNote = () => {
       setLoading(true)
       setError(null)
 
-      return axios
-        .post(
-          `${API_URL}/api/note/create/${user.githubId}`,
-          { noteName: noteName.trim() },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        )
+      return apiClient
+        .post(`/api/note/create/${user.githubId}`, { noteName: noteName.trim() })
         .then((response) => {
           return response.data
         })

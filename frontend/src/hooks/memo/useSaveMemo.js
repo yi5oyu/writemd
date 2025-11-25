@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useSaveMemo = () => {
   const [loading, setLoading] = useState(false)
@@ -13,16 +12,8 @@ const useSaveMemo = () => {
   const saveMemo = (githubId, text, memoId) => {
     setLoading(true)
     setError(null)
-    return axios
-      .post(
-        `${API_URL}/api/memo/${githubId}`,
-        { text },
-        {
-          params: { memoId },
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true,
-        }
-      )
+    return apiClient
+      .post(`/api/memo/${githubId}`, { text }, { params: { memoId } })
       .then((response) => {
         setData(text)
         return response.data

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useDeleteNote = () => {
   const [loading, setLoading] = useState(false)
@@ -12,10 +11,8 @@ const useDeleteNote = () => {
   const deleteNote = (noteId) => {
     setLoading(true)
     setError(null)
-    return axios
-      .delete(`${API_URL}/api/note/${noteId}`, {
-        withCredentials: true,
-      })
+    return apiClient
+      .delete(`/api/note/${noteId}`)
       .then((response) => {
         localStorage.removeItem(noteId)
         return response.data

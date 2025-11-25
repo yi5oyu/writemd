@@ -53,8 +53,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -74,8 +72,9 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final ConversationRepository conversationRepository;
     private final NoteRepository noteRepository;
+    private final UserService userService;
     private final SseEmitterManager sseEmitterManager;
-    private final OAuth2AuthorizedClientService authorizedClientService;
+    //    private final OAuth2AuthorizedClientService authorizedClientService;
     private final GitHubPrompts gitHubPrompts;
     private final CachingDataService cachingDataService;
     private final Map<Long, Disposable> activeStreams = new ConcurrentHashMap<>();
@@ -550,12 +549,11 @@ public class ChatService {
 
     // 깃허브 구조 정리
     @Async
-    public CompletableFuture<Map<String, Object>> githubRepoStructure(String principalName, Long userId, Long apiId,
-        String model,
+    public CompletableFuture<Map<String, Object>> githubRepoStructure(Long userId, Long apiId, String model,
         String repo, String githubId, String branch, Integer maxDepth) {
         try {
             // GitHub 접근 토큰
-            String accessToken = getGithubAccessToken(principalName);
+            String accessToken = getGithubAccessToken(githubId);
 
             // API 키/ChatClient 초기화
             APIDTO api = cachingDataService.findApiKey(userId, apiId);
@@ -578,8 +576,7 @@ public class ChatService {
     }
 
     @Async
-    public CompletableFuture<Map<String, Object>> githubRepoStageAnalysis(
-        String principalName, Long userId, Long apiId, String model,
+    public CompletableFuture<Map<String, Object>> githubRepoStageAnalysis(Long userId, Long apiId, String model,
         String repo, String githubId, String branch, Integer maxDepth) {
 
         log.info("GitHub 레포지토리 단계별 분석 시작 준비: {}/{}", githubId, repo);
@@ -596,7 +593,7 @@ public class ChatService {
             }
 
             // GitHub 접근 토큰 획득
-            String accessToken = getGithubAccessToken(principalName);
+            String accessToken = getGithubAccessToken(githubId);
 
             // 분석 결과를 저장할 맵
             Map<String, String> stageResults = new ConcurrentHashMap<>();
@@ -1103,12 +1100,8 @@ public class ChatService {
     }
 
     // GitHub 토큰
-    private String getGithubAccessToken(String principalName) {
-        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("github", principalName);
-        if (client == null) {
-            throw new RuntimeException("GitHub OAuth2 로그인이 되어 있지 않습니다.");
-        }
-        return client.getAccessToken().getTokenValue();
+    private String getGithubAccessToken(String githubId) {
+        return userService.getGithubAccessToken(githubId);
     }
 
     // ChatClient 초기화

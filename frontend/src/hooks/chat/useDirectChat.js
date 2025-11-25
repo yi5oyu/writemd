@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useDirectChat = () => {
   const [loading, setLoading] = useState(false)
@@ -14,18 +13,11 @@ const useDirectChat = () => {
       if (!content.trim()) return Promise.resolve()
       setLoading(true)
       setError(null)
-      return axios
-        .post(
-          `${API_URL}/api/chat/direct/${userId}/${apiId}`,
-          {
-            model: model,
-            content: content,
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        )
+      return apiClient
+        .post(`/api/chat/direct/${userId}/${apiId}`, {
+          model: model,
+          content: content,
+        })
         .then((response) => response.data)
         .catch((err) => {
           handleSessionExpiry(toast, err)

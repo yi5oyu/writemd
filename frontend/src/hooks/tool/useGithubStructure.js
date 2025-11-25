@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useGithubStructure = () => {
   const [loading, setLoading] = useState(false)
@@ -16,21 +15,14 @@ const useGithubStructure = () => {
       setLoading(true)
       setError(null)
 
-      return axios
-        .post(
-          `${API_URL}/api/chat/structure/${userId}/${apiId}`,
-          {
-            repo,
-            model,
-            branch,
-            maxDepth,
-            githubId,
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        )
+      return apiClient
+        .post(`/api/chat/structure/${userId}/${apiId}`, {
+          repo,
+          model,
+          branch,
+          maxDepth,
+          githubId,
+        })
         .then((response) => response.data)
         .catch((err) => {
           handleSessionExpiry(toast, err)

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '@chakra-ui/react'
 import { handleSessionExpiry } from '../../utils/sessionManager'
-import { API_URL } from '../../config/api'
-import axios from 'axios'
+import apiClient from '../../api/apiClient'
 
 const useDeleteFolder = () => {
   const [loading, setLoading] = useState(false)
@@ -13,10 +12,8 @@ const useDeleteFolder = () => {
     setLoading(true)
     setError(null)
 
-    return axios
-      .delete(`${API_URL}/api/template/folder/${folderId}`, {
-        withCredentials: true,
-      })
+    return apiClient
+      .delete(`/api/template/folder/${folderId}`)
       .then((response) => {
         return response.data
       })

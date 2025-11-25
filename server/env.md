@@ -40,6 +40,11 @@ GitHub > Settings > Developer settings > Personal access tokens
  - workflow
  - admin:repo_hook
  - read:org
+
+# JWT_SECRET
+JWT_SECRET=16진수_문자열
+HS256(HMAC-SHA256) 서명에 사용되는 비밀 키(64바이트를 16진수로 표현)
+키 생성(터미널): openssl rand -hex 64
 ```
 
 ## Git Actions Secret
@@ -54,7 +59,7 @@ VITE_API_URL=backend_url(http://localhost:8888)
 `https://github.com/settings/profile` > `Developer Settings` > `OAuth Apps` > `project_name`
 
 Homepage URL
-`http://localhost`
+`http://localhost:5173`
 // https://www.writemd.space
 
 Authorization callback URL

@@ -8,5 +8,12 @@ public interface UserRepositoryCustom {
 
     Optional<String> findPrincipalNameByGithubId(String githubId);
 
-    void deleteUserDataBatch(Long userId);
+    void deleteAllContentByUserId(Long userId);
+
+    void deleteUserAndAllContent(Long userId);
+
+    long updateGithubAccessToken(String githubId, String token);
+
+    long deleteGithubAccessToken(String githubId);
+
 }

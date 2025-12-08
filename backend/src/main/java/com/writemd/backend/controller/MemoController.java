@@ -6,6 +6,7 @@ import com.writemd.backend.service.MemoService;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/memo")
 @RequiredArgsConstructor
+@Slf4j
 public class MemoController {
 
     private final MemoService memoService;

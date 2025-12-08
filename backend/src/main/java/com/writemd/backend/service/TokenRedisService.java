@@ -3,16 +3,14 @@ package com.writemd.backend.service;
 import com.writemd.backend.dto.TokenDTO;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TokenRedisService {
-
-    private static final Logger log = LoggerFactory.getLogger(TokenRedisService.class);
 
     private static final String REFRESH_TOKEN_PREFIX = "RT:";
     // 로그아웃 시 토큰 무효화

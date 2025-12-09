@@ -1,45 +1,36 @@
 package com.writemd.backend.repository;
 
+import static com.writemd.backend.entity.QAPIs.aPIs;
+import static com.writemd.backend.entity.QChats.chats;
+import static com.writemd.backend.entity.QConversations.conversations;
+import static com.writemd.backend.entity.QFolders.folders;
+import static com.writemd.backend.entity.QMemos.memos;
+import static com.writemd.backend.entity.QNotes.notes;
+import static com.writemd.backend.entity.QTemplates.templates;
+import static com.writemd.backend.entity.QTexts.texts;
 import static com.writemd.backend.entity.QUsers.users;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.writemd.backend.entity.QAPIs;
-import com.writemd.backend.entity.QChats;
-import com.writemd.backend.entity.QConversations;
-import com.writemd.backend.entity.QFolders;
-import com.writemd.backend.entity.QMemos;
-import com.writemd.backend.entity.QNotes;
-import com.writemd.backend.entity.QTemplates;
-import com.writemd.backend.entity.QTexts;
-import com.writemd.backend.entity.QUsers;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-
-    private final QUsers qUsers = users;
-    private final QNotes qNotes = QNotes.notes;
-    private final QConversations qConversations = QConversations.conversations;
-    private final QChats qChats = QChats.chats;
-    private final QTexts qTexts = QTexts.texts;
-    private final QMemos qMemos = QMemos.memos;
-    private final QAPIs qAPIs = QAPIs.aPIs;
-    private final QFolders qFolders = QFolders.folders;
-    private final QTemplates qTemplates = QTemplates.templates;
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Long> findIdByGithubId(String githubId) {
         Long userId = queryFactory
-            .select(qUsers.id)
-            .from(qUsers)
-            .where(qUsers.githubId.eq(githubId))
+            .select(users.id)
+            .from(users)
+            .where(users.githubId.eq(githubId))
             .fetchOne();
 
         return Optional.ofNullable(userId);
@@ -49,9 +40,9 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     @Transactional(readOnly = true)
     public Optional<String> findPrincipalNameByGithubId(String githubId) {
         String principalName = queryFactory
-            .select(qUsers.principalName)
-            .from(qUsers)
-            .where(qUsers.githubId.eq(githubId))
+            .select(users.principalName)
+            .from(users)
+            .where(users.githubId.eq(githubId))
             .fetchOne();
 
         return Optional.ofNullable(principalName);
@@ -60,38 +51,83 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     @Override
     @Transactional
     public void deleteAllContentByUserId(Long userId) {
-        // 하위 부터 순서대로 삭제
-        queryFactory.delete(qChats)
-            .where(qChats.conversations.notes.users.id.eq(userId))
-            .execute();
+        try {
+            // Chats 삭제
+            log.info("Chats 삭제 시작");
+            long chatsDeleted = queryFactory.delete(chats)
+                .where(chats.conversations.id.in(
+                    queryFactory.select(conversations.id)
+                        .from(conversations)
+                        .where(conversations.notes.users.id.eq(userId))
+                ))
+                .execute();
+            log.info("Chats 삭제 완료: {} 건", chatsDeleted);
 
-        queryFactory.delete(qConversations)
-            .where(qConversations.notes.users.id.eq(userId))
-            .execute();
+            // Conversations 삭제
+            log.info("Conversations 삭제 시작");
+            long conversationsDeleted = queryFactory.delete(conversations)
+                .where(conversations.notes.id.in(
+                    queryFactory.select(notes.id)
+                        .from(notes)
+                        .where(notes.users.id.eq(userId))
+                ))
+                .execute();
+            log.info("Conversations 삭제 완료: {} 건", conversationsDeleted);
 
-        queryFactory.delete(qTemplates)
-            .where(qTemplates.folders.users.id.eq(userId))
-            .execute();
+            // Texts 삭제
+            log.info("Texts 삭제 시작");
+            long textsDeleted = queryFactory.delete(texts)
+                .where(texts.notes.id.in(
+                    queryFactory.select(notes.id)
+                        .from(notes)
+                        .where(notes.users.id.eq(userId))
+                ))
+                .execute();
+            log.info("Texts 삭제 완료: {} 건", textsDeleted);
 
-        queryFactory.delete(qFolders)
-            .where(qFolders.users.id.eq(userId))
-            .execute();
+            // Notes 삭제
+            log.info("Notes 삭제 시작");
+            long notesDeleted = queryFactory.delete(notes)
+                .where(notes.users.id.eq(userId))
+                .execute();
+            log.info("Notes 삭제 완료: {} 건", notesDeleted);
 
-        queryFactory.delete(qTexts)
-            .where(qTexts.notes.users.id.eq(userId))
-            .execute();
+            // Templates 삭제
+            log.info("Templates 삭제 시작");
+            long templatesDeleted = queryFactory.delete(templates)
+                .where(templates.folders.id.in(
+                    queryFactory.select(folders.id)
+                        .from(folders)
+                        .where(folders.users.id.eq(userId))
+                ))
+                .execute();
+            log.info("Templates 삭제 완료: {} 건", templatesDeleted);
 
-        queryFactory.delete(qNotes)
-            .where(qNotes.users.id.eq(userId))
-            .execute();
+            // Folders 삭제
+            log.info("Folders 삭제 시작");
+            long foldersDeleted = queryFactory.delete(folders)
+                .where(folders.users.id.eq(userId))
+                .execute();
+            log.info("Folders 삭제 완료: {} 건", foldersDeleted);
 
-        queryFactory.delete(qMemos)
-            .where(qMemos.users.id.eq(userId))
-            .execute();
+            // Memos 삭제
+            log.info("Memos 삭제 시작");
+            long memosDeleted = queryFactory.delete(memos)
+                .where(memos.users.id.eq(userId))
+                .execute();
+            log.info("Memos 삭제 완료: {} 건", memosDeleted);
 
-        queryFactory.delete(qAPIs)
-            .where(qAPIs.users.id.eq(userId))
-            .execute();
+            // APIs 삭제
+            log.info("APIs 삭제 시작");
+            long apisDeleted = queryFactory.delete(aPIs)
+                .where(aPIs.users.id.eq(userId))
+                .execute();
+            log.info("APIs 삭제 완료: {} 건", apisDeleted);
+
+        } catch (Exception e) {
+            log.error("모든 데이터 삭제 오류 발생 - userId: {}", userId, e);
+            throw e;
+        }
     }
 
     @Override
@@ -100,8 +136,8 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
         deleteAllContentByUserId(userId);
 
         // 유저 삭제
-        queryFactory.delete(qUsers)
-            .where(qUsers.id.eq(userId))
+        queryFactory.delete(users)
+            .where(users.id.eq(userId))
             .execute();
     }
 

@@ -61,7 +61,7 @@ spring:
         sse:
           connections:
             py-mcp-server:
-              url: http://py-mcp-server:9889
+              uri: http://py-mcp-server:9889/sse
 
 jwt:
   secret: ${JWT_SECRET}

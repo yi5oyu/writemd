@@ -47,6 +47,7 @@ const Sidebar = ({
   setScreen,
   selectedAI,
   setSelectedAI,
+  onDataDeleted,
 }) => {
   const [isSideBoxVisible, setIsSideBoxVisible] = useState(true)
   const [isNoteBoxVisible, setIsNoteBoxVisible] = useState(true)
@@ -150,6 +151,7 @@ const Sidebar = ({
           user={user}
           selectedAI={selectedAI}
           setSelectedAI={setSelectedAI}
+          onDataDeleted={onDataDeleted}
         />
       ) : (
         <LoginForm isOpen={isOpenLogin} onClose={onCloseLogin} />

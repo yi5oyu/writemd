@@ -63,7 +63,7 @@ spring:
           connections:
             py-mcp-server:
               # 컨테이너 이름으로 연결
-              url: http://py-mcp-server:9889
+              uri: http://py-mcp-server:9889/sse
 
 jwt:
   secret: ${JWT_SECRET}

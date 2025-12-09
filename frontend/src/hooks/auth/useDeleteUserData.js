@@ -8,12 +8,16 @@ const useDeleteUserData = () => {
   const [error, setError] = useState(null)
   const toast = useToast()
 
-  const deleteUserData = (userId) => {
+  const deleteUserData = (userId, onSuccess) => {
     setLoading(true)
     setError(null)
     return apiClient
       .delete(`/api/user/${userId}/data`)
       .then((response) => {
+        // 성공 시 콜백 실행
+        if (onSuccess && typeof onSuccess === 'function') {
+          onSuccess()
+        }
         return response.data
       })
       .catch((err) => {

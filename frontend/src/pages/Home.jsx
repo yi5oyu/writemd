@@ -17,6 +17,28 @@ const Home = ({ user }) => {
     }
   }, [user])
 
+  // 모든 데이터 초기화 함수
+  const handleClearAllData = () => {
+    // notes 상태 초기화
+    setNotes([])
+
+    // sessionStorage의 user 객체 정리
+    const userStr = sessionStorage.getItem('user')
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr)
+        // 데이터 관련 속성만 삭제
+        delete userObj.notes
+        delete userObj.memos
+        delete userObj.templates
+        delete userObj.folders
+        sessionStorage.setItem('user', JSON.stringify(userObj))
+      } catch (e) {
+        console.error('sessionStorage 정리 실패:', e)
+      }
+    }
+  }
+
   return (
     <Flex h="100vh">
       <Sidebar
@@ -31,6 +53,7 @@ const Home = ({ user }) => {
         setScreen={setScreen}
         selectedAI={selectedAI}
         setSelectedAI={setSelectedAI}
+        onDataDeleted={handleClearAllData}
       />
 
       <Screen

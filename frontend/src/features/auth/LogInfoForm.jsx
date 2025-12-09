@@ -42,7 +42,7 @@ import APIInputGroup from '../../components/ui/input/APIInputGroup'
 import useDeleteApiKey from '../../hooks/chat/useDeleteApiKey'
 import DeleteModal from '../../components/ui/modals/DeleteModal'
 
-const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
+const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataDeleted }) => {
   const [confirm, setConfirm] = useState('')
   const [api, setApi] = useState('')
   const [aiModel, setAiModel] = useState('openai')
@@ -93,18 +93,24 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI }) => {
     }
   }
 
+  // 데이터 삭제
   const confirmDeleteData = async () => {
     try {
-      await deleteUserData(user.userId)
+      // onDataDeleted 콜백 전달
+      await deleteUserData(user.userId, () => {
+        // 상태 초기화 콜백 실행
+        if (onDataDeleted) {
+          onDataDeleted()
+        }
+      })
+
       toast({
         title: '데이터 삭제 완료',
         description: '모든 데이터가 성공적으로 삭제되었습니다.',
         status: 'success',
       })
+
       onDelDataClose()
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 1000)
     } catch (err) {
       toast({
         title: '데이터 삭제 실패',

@@ -7,18 +7,17 @@ import com.writemd.backend.dto.TextDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Chats;
 import com.writemd.backend.entity.Conversations;
-import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Notes;
-import com.writemd.backend.entity.Templates;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
+import com.writemd.backend.event.UserCreatedEvent;
+import com.writemd.backend.event.UserUpdatedEvent;
 import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.ConversationRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +25,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +45,7 @@ public class UserService {
     private final ChatRepository chatRepository;
     private final CachingDataService cachingDataService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     // GitHub Access Token 저장
@@ -62,7 +61,7 @@ public class UserService {
         String cacheKey = GITHUB_TOKEN_CACHE_PREFIX + githubId;
         redisTemplate.opsForValue().set(cacheKey, accessToken, CACHE_EXPIRATION_HOURS, TimeUnit.HOURS);
 
-        System.out.println("GitHub Access Token 저장 완료. githubId: " + githubId);
+        log.info("GitHub Access Token 저장 완료. githubId: {}", githubId);
     }
 
     // GitHub Access Token 조회
@@ -72,7 +71,7 @@ public class UserService {
         // Redis 캐시 확인
         String cachedToken = (String) redisTemplate.opsForValue().get(cacheKey);
         if (cachedToken != null && !cachedToken.isEmpty()) {
-            System.out.println("GitHub Token 조회(캐싱): " + githubId);
+            log.info("GitHub Token 조회(캐싱): {}", githubId);
             return cachedToken;
         }
 
@@ -89,7 +88,7 @@ public class UserService {
 
         // Redis에 캐싱
         redisTemplate.opsForValue().set(cacheKey, token, CACHE_EXPIRATION_HOURS, TimeUnit.HOURS);
-        System.out.println("GitHub Token DB 조회 후 캐싱: " + githubId);
+        log.info("GitHub Token DB 조회 후 캐싱: {}", githubId);
 
         return token;
     }
@@ -107,14 +106,12 @@ public class UserService {
         String cacheKey = GITHUB_TOKEN_CACHE_PREFIX + githubId;
         redisTemplate.delete(cacheKey);
 
-        System.out.println("GitHub Access Token 삭제: " + githubId);
+        log.info("GitHub Access Token 삭제: {}", githubId);
     }
-
 
     // user 저장
     @Transactional
     public void saveUser(String githubId, String name, String htmlUrl, String avatarUrl, String principalName) {
-
         // 캐시 조회
         UserDTO cachedUser = null;
         try {
@@ -127,118 +124,62 @@ public class UserService {
         if (cachedUser != null) {
             // 변경사항 체크 후 업데이트
             if (!Objects.equals(cachedUser.getName(), name) || !Objects.equals(cachedUser.getAvatarUrl(), avatarUrl)) {
+                Users userToUpdate = userRepository.getReferenceById(cachedUser.getUserId());
+                userToUpdate.setName(name);
+                userToUpdate.setAvatarUrl(avatarUrl);
+                Users savedUser = userRepository.save(userToUpdate);
 
-                Users user = userRepository.getReferenceById(cachedUser.getUserId());
+                // 캐시 업데이트(이벤트 발행)
+                eventPublisher.publishEvent(new UserUpdatedEvent(this, UserDTO.fromEntity(savedUser)));
+            }
+            return;
+        }
 
-//                Users user = userRepository.findByGithubId(githubId)
-//                    .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+        // 캐시 미스
+        Optional<Users> userOpt = userRepository.findByGithubId(githubId);
 
+        // 기존 사용자
+        if (userOpt.isPresent()) {
+            Users user = userOpt.get();
+            boolean isUpdated = false;
+
+            // 변경사항 체크
+            if (!Objects.equals(user.getName(), name)) {
                 user.setName(name);
+                isUpdated = true;
+            }
+            if (!Objects.equals(user.getAvatarUrl(), avatarUrl)) {
                 user.setAvatarUrl(avatarUrl);
-
-                UserDTO updatedDTO = UserDTO.builder()
-                    .userId(user.getId())
-                    .githubId(user.getGithubId())
-                    .name(user.getName())
-                    .avatarUrl(user.getAvatarUrl())
-                    .htmlUrl(user.getHtmlUrl())
-                    .build();
-
-                TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            cachingDataService.updateUserCache(githubId, updatedDTO);
-                        }
-                    }
-                );
+                isUpdated = true;
             }
-            // 캐시 미스
+            if (!Objects.equals(user.getPrincipalName(), principalName)) {
+                user.setPrincipalName(principalName);
+                isUpdated = true;
+            }
+
+            // 변경사항 있으면 업데이트
+            if (isUpdated) {
+                user = userRepository.save(user);
+            }
+            // 캐시 업데이트(이벤트 발행)
+            eventPublisher.publishEvent(new UserUpdatedEvent(this, UserDTO.fromEntity(user)));
+
+            // 새로운 사용자
         } else {
-            Optional<Users> existingUser = userRepository.findByGithubId(githubId);
-
-            Users user = existingUser
-                .map(ckUser -> {
-                    // 변경사항 체크 후 업데이트
-                    if (!Objects.equals(ckUser.getName(), name)) {
-                        ckUser.setName(name);
-                    }
-                    if (!Objects.equals(ckUser.getAvatarUrl(), avatarUrl)) {
-                        ckUser.setAvatarUrl(avatarUrl);
-                    }
-                    if (!Objects.equals(ckUser.getPrincipalName(), principalName)) {
-                        ckUser.setPrincipalName(principalName);
-                    }
-                    return ckUser;
-                })
-                .orElseGet(() -> {
-                    // 새 유저 저장
-                    return Users.builder()
-                        .githubId(githubId)
-                        .name(name)
-                        .htmlUrl(htmlUrl)
-                        .avatarUrl(avatarUrl)
-                        .principalName(principalName)
-                        .build();
-                });
-
-            Users savedUser = userRepository.save(user);
-
-            if (existingUser.isEmpty()) {
-                // JSON 파일에서 템플릿 데이터 로드
-                List<Map<String, String>> myTemplates = cachingDataService.getMyTemplates();
-                List<Map<String, String>> gitTemplates = cachingDataService.getGitTemplates();
-
-                Folders myFolder = Folders.builder()
-                    .users(savedUser)
-                    .title("내 템플릿")
-                    .build();
-
-                Folders gitFolder = Folders.builder()
-                    .users(savedUser)
-                    .title("깃 허브")
-                    .build();
-
-                for (Map<String, String> templateData : myTemplates) {
-                    Templates template = Templates.builder().folders(myFolder)
-                        .title(templateData.getOrDefault("title", ""))
-                        .description(templateData.getOrDefault("description", ""))
-                        .content(templateData.getOrDefault("content", "")).build();
-
-                    myFolder.getTemplates().add(template);
-                }
-
-                for (Map<String, String> templateData : gitTemplates) {
-                    Templates template = Templates.builder().folders(gitFolder)
-                        .title(templateData.getOrDefault("title", ""))
-                        .description(templateData.getOrDefault("description", ""))
-                        .content(templateData.getOrDefault("content", "")).build();
-
-                    gitFolder.getTemplates().add(template);
-                }
-
-                savedUser.getFolders().add(myFolder);
-                savedUser.getFolders().add(gitFolder);
-
-                savedUser = userRepository.save(savedUser);
-            }
-
-            UserDTO userDTO = UserDTO.builder()
-                .userId(savedUser.getId())
-                .githubId(savedUser.getGithubId())
-                .name(savedUser.getName())
-                .avatarUrl(savedUser.getAvatarUrl())
-                .htmlUrl(savedUser.getHtmlUrl())
+            Users newUser = Users.builder()
+                .githubId(githubId)
+                .name(name)
+                .htmlUrl(htmlUrl)
+                .avatarUrl(avatarUrl)
+                .principalName(principalName)
                 .build();
+            Users savedUser = userRepository.save(newUser);
 
-            TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        cachingDataService.updateUserCache(githubId, userDTO);
-                    }
-                }
-            );
+            // 새 사용자 이벤트 발행(초기 데이터 생성)
+            eventPublisher.publishEvent(new UserCreatedEvent(this, savedUser));
+
+            // 캐시 업데이트(이벤트 발행)
+            eventPublisher.publishEvent(new UserUpdatedEvent(this, UserDTO.fromEntity(savedUser)));
         }
     }
 

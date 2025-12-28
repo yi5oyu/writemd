@@ -132,7 +132,7 @@ public class ChatService {
     // 채팅 조회
     @Transactional(readOnly = true)
     private List<Message> chatHistory(Long sessionId, String content) {
-        List<Chats> chatHistory = chatRepository.findByConversations_Id(sessionId);
+        List<Chats> chatHistory = chatRepository.findByConversations_IdWithFetchJoin(sessionId);
         List<Message> messages = new ArrayList<>();
 
         // 최근 메시지 개수 제한 및 토큰 관리
@@ -588,16 +588,16 @@ public class ChatService {
         try {
             APIDTO api = cachingDataService.findApiKey(userId, apiId);
             if (api == null) {
-                throw new IllegalArgumentException("API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
+                throw new IllegalArgumentException("API 키 정보를 찾을 수 없음(설정 확인 필요)");
             }
 
-            // GitHub 접근 토큰 획득
+            // GitHub 접근 토큰
             String accessToken = getGithubAccessToken(githubId);
 
-            // 분석 결과를 저장할 맵
+            // 분석 결과 저장
             Map<String, String> stageResults = new ConcurrentHashMap<>();
 
-            // 토큰 사용량을 추적할 맵
+            // 토큰 사용량 추적
             Map<String, Integer> tokenUsage = new ConcurrentHashMap<>();
             tokenUsage.put("totalTokens", 0);
             tokenUsage.put("promptTokens", 0);
@@ -608,7 +608,7 @@ public class ChatService {
             limitCheckTokenUsage.put("promptTokens", 0);
             limitCheckTokenUsage.put("completionTokens", 0);
 
-            // 결과 및 메타데이터를 담을 최종 맵
+            // 결과/메타데이터 저장
             Map<String, Object> finalResult = new HashMap<>();
 
             Map<String, Object> startInfo = new HashMap<>();
@@ -659,10 +659,10 @@ public class ChatService {
                     stageUpdate.put("status", "completed");
 //                    stageUpdate.put("timestamp", System.currentTimeMillis());
 
-                    // 현재까지의 토큰 사용량 포함
+                    // 토큰 사용량
                     stageUpdate.put("tokenUsage", new HashMap<>(tokenUsage));
 
-                    // SseEmitterManager를 통해 프론트엔드로 전송 (문자열 식별자 사용)
+                    // 프론트엔드로 전송
                     sseEmitterManager.sendToNamedSession(emitterId, "stageComplete", stageUpdate);
 
                     return CompletableFuture.completedFuture(null);
@@ -673,69 +673,69 @@ public class ChatService {
                 }
             };
 
-            // 단계 1: 기본 정보 및 주요 특징 분석
+            // 단계 1: 기본 정보/주요 특징
             return processStage(
                 emitterId, model, githubId, repo, branch, accessToken,
                 gitHubPrompts.createRepoBasicInfoPrompt(githubId, repo, branch, accessToken),
                 "basicInfo", 1, 6, stageResults, api, tokenUsage, limitCheckTokenUsage)
                 .thenCompose(v -> sendStageResult.apply("basicInfo"))
 
-                // 단계 2: 기술 스택 및 아키텍처 분석
+                // 단계 2: 기술 스택/아키텍처
                 .thenCompose(v -> processStage(
                     emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoTechStackPrompt(githubId, repo, branch, accessToken),
                     "techStack", 2, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
                 .thenCompose(v -> sendStageResult.apply("techStack"))
 
-                // 단계 3: 코드 구조 및 핵심 코드 분석
+                // 단계 3: 코드 구조/핵심 코드
                 .thenCompose(v -> processStage(
                     emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoCodeStructurePrompt(githubId, repo, branch, accessToken),
                     "codeStructure", 3, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
                 .thenCompose(v -> sendStageResult.apply("codeStructure"))
 
-                // 단계 4: 설정, 환경 및 코드 품질 분석
+                // 단계 4: 설정, 환경, 코드 품질
                 .thenCompose(v -> processStage(
                     emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoConfigQualityPrompt(githubId, repo, branch, accessToken),
                     "configQuality", 4, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
                 .thenCompose(v -> sendStageResult.apply("configQuality"))
 
-                // 단계 5: 보안, 성능 및 워크플로우 분석
+                // 단계 5: 보안, 성능, 워크플로우
                 .thenCompose(v -> processStage(
                     emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoSecurityWorkflowPrompt(githubId, repo, branch, accessToken),
                     "securityWorkflow", 5, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
                 .thenCompose(v -> sendStageResult.apply("securityWorkflow"))
 
-                // 단계 6: 결론 및 개선점 분석
+                // 단계 6: 결론/개선점
                 .thenCompose(v -> processStage(
                     emitterId, model, githubId, repo, branch, accessToken,
                     gitHubPrompts.createRepoConclusionPrompt(githubId, repo, branch, accessToken),
                     "conclusion", 6, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
                 .thenCompose(v -> sendStageResult.apply("conclusion"))
 
-                // 모든 단계 완료 후 결과 통합
+                // 결과 통합
                 .thenApply(v -> {
                     log.info("GitHub 레포지토리 단계별 분석 완료: {}/{}", githubId, repo);
 
-                    // 분석 종료 시간 계산
+                    // 분석 종료 시간
                     long endTime = System.currentTimeMillis();
                     long duration = endTime - startTime;
 
-                    // 분석 시간 (분:초 형식으로 변환)
+                    // 분석 시간
                     long minutes = duration / (1000 * 60);
                     long seconds = (duration / 1000) % 60;
                     String formattedDuration = minutes + "분 " + seconds + "초";
 
-                    // 전체 분석 결과 통합 (메타데이터 제외)
+                    // 전체 분석 결과
                     String combinedAnalysis = combineAnalysisResults(stageResults, githubId, repo);
 
-                    // 최종 결과 맵 구성 - 내용과 메타데이터 분리
+                    // 최종 결과(내용/메타데이터 분리)
                     finalResult.put("content", combinedAnalysis);
                     finalResult.put("sections", new HashMap<>(stageResults));
 
-                    // 메타데이터는 별도 필드로 제공
+                    // 메타데이터
                     Map<String, Object> metadata = new HashMap<>();
                     metadata.put("analysisTime", duration);
                     metadata.put("formattedAnalysisTime", formattedDuration);
@@ -745,7 +745,7 @@ public class ChatService {
                     // 최종 결과 전송
                     sseEmitterManager.sendToNamedSession(emitterId, "analysisComplete", finalResult);
 
-                    // 모든 처리가 끝났으므로 SSE 연결 완료
+                    // SSE 연결 완료 처리
                     sseEmitterManager.completeNamedSession(emitterId);
 
                     return finalResult;
@@ -760,17 +760,17 @@ public class ChatService {
                     finalResult.put("error", true);
                     finalResult.put("message", errorMessage);
 
-                    // 분석 종료 시간 계산 (오류 발생 시에도)
+                    // 분석 종료 시간
                     long endTime = System.currentTimeMillis();
                     long duration = endTime - startTime;
 
-                    // 메타데이터는 별도 필드로 제공
+                    // 메타데이터
                     Map<String, Object> metadata = new HashMap<>();
                     metadata.put("analysisTime", duration);
                     metadata.put("tokenUsage", tokenUsage);
                     finalResult.put("metadata", metadata);
 
-                    // 일부라도 결과가 있으면 포함
+                    // 결과 있으면 포함
                     if (!stageResults.isEmpty()) {
                         String partialAnalysis = combineAnalysisResults(stageResults, githubId, repo);
                         finalResult.put("content", partialAnalysis);
@@ -781,7 +781,7 @@ public class ChatService {
                     // 초기화 오류 전송
                     sseEmitterManager.sendToNamedSession(emitterId, "analysisError", finalResult);
 
-                    // 오류가 발생했으므로 SSE 연결 완료
+                    // SSE 연결 완료(오류 발생 시)
                     sseEmitterManager.completeNamedSession(emitterId);
 
                     return finalResult;
@@ -794,7 +794,7 @@ public class ChatService {
             errorResult.put("error", true);
             errorResult.put("message", "분석 초기화 중 오류가 발생했습니다: " + e.getMessage());
 
-            // 분석 시간(짧음)도 기록
+            // 분석 시간 기록
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             errorResult.put("analysisTime", duration);
@@ -803,7 +803,7 @@ public class ChatService {
             // 초기화 오류 전송
             sseEmitterManager.sendToNamedSession(emitterId, "initError", errorResult);
 
-            // 초기화 오류이므로 SSE 연결 완료
+            // SSE 연결 완료(오류 발생 시)
             sseEmitterManager.completeNamedSession(emitterId);
 
             return CompletableFuture.completedFuture(errorResult);
@@ -860,7 +860,7 @@ public class ChatService {
         // CompletableFuture 생성
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        // 타임아웃 설정 (3분)
+        // 타임아웃(3분)
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
             if (!future.isDone()) {
@@ -893,7 +893,7 @@ public class ChatService {
                     log.info("토큰 사용량({}개)이 임계값({}개)을 초과하여 60초 대기 시작: 단계 {}",
                         currentLimitCheckTokens, TOKEN_THRESHOLD, stageKey);
 
-                    // 60초 대기 (TPM 제한 리셋 시간)
+                    // 60초 대기(TPM 제한 리셋 시간)
                     Thread.sleep(60000);
 
                     synchronized (limitCheckTokenUsage) {
@@ -922,7 +922,7 @@ public class ChatService {
                 List<Message> messages = new ArrayList<>();
                 messages.add(new UserMessage(prompt));
 
-                // API 호출 시도 (rate limit 오류 처리 포함)
+                // API 호출 시도(rate limit 오류 처리)
                 ChatResponse response = null;
                 int maxRetries = 3;
                 int retryCount = 0;
@@ -946,7 +946,7 @@ public class ChatService {
                                 throw e; // 최대 재시도 횟수 초과
                             }
 
-                            // 오류 메시지에서 대기 시간 추출 (정규식 패턴)
+                            // 오류 메시지에서 대기 시간 추출
                             String waitTimeStr = null;
                             Pattern pattern = Pattern.compile("Please try again in (\\d+)ms");
                             Matcher matcher = pattern.matcher(e.getMessage());
@@ -954,7 +954,7 @@ public class ChatService {
                                 waitTimeStr = matcher.group(1);
                             }
 
-                            // 대기 시간 계산 (최소 1초, 없으면 기본 5초)
+                            // 대기 시간 계산(최소 1초, 없으면 기본 5초)
                             long waitTime = 5000;
                             if (waitTimeStr != null) {
                                 waitTime = Long.parseLong(waitTimeStr) + 500;
@@ -1208,12 +1208,11 @@ public class ChatService {
     @Transactional
     public String chatCompletion(Long sessionId) {
         // 채팅 조회
-        List<Chats> chatHistory = chatRepository.findByConversations_Id(sessionId);
+        List<Chats> chatHistory = chatRepository.findByConversations_IdWithFetchJoin(sessionId);
         List<Map<String, Object>> messages = new ArrayList<>();
 
-        Map<String, Object> messageMap = new HashMap<>();
-
         for (Chats chat : chatHistory) {
+            Map<String, Object> messageMap = new HashMap<>();
             messageMap.put("role", chat.getRole());
             messageMap.put("content", chat.getContent());
             messages.add(messageMap);

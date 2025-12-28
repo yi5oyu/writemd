@@ -255,7 +255,7 @@ public class UserService {
     // 채팅 리스트 조회
     @Transactional(readOnly = true)
     public List<ChatDTO> chatList(Long sessionId) {
-        List<Chats> chats = chatRepository.findByConversations_Id(sessionId);
+        List<Chats> chats = chatRepository.findByConversations_IdWithFetchJoin(sessionId);
 
         List<ChatDTO> chat = chats.stream()
             .map(this::convertChat)

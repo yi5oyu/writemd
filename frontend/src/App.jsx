@@ -11,7 +11,7 @@ const App = () => {
   // user 조회
   useEffect(() => {
     setLoading(true)
-    setUser(JSON.parse(sessionStorage.getItem('user')))
+    setUser(JSON.parse(localStorage.getItem('user')))
     setLoading(false)
   }, [])
 

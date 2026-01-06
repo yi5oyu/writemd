@@ -52,7 +52,7 @@ const useAuth = () => {
       .get('/api/user/info')
       .then((response) => {
         const data = response.data
-        sessionStorage.setItem('user', JSON.stringify(data))
+        localStorage.setItem('user', JSON.stringify(data))
         setUser(data)
         return data
       })
@@ -65,7 +65,7 @@ const useAuth = () => {
           error.message?.includes('net::ERR_FAILED')
 
         if (!isSessionError) {
-          sessionStorage.removeItem('user')
+          localStorage.removeItem('user')
           setUser(null)
         }
 

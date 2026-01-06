@@ -48,11 +48,15 @@ const useAuth = () => {
   const fetchUserInfo = () => {
     setLoading(true)
 
+    // 로그인 상태 유지 확인
+    const rememberMe = localStorage.getItem('rememberMe') === 'true'
+    const storage = rememberMe ? localStorage : sessionStorage
+
     return apiClient
       .get('/api/user/info')
       .then((response) => {
         const data = response.data
-        localStorage.setItem('user', JSON.stringify(data))
+        storage.setItem('user', JSON.stringify(data))
         setUser(data)
         return data
       })
@@ -65,7 +69,7 @@ const useAuth = () => {
           error.message?.includes('net::ERR_FAILED')
 
         if (!isSessionError) {
-          localStorage.removeItem('user')
+          storage.removeItem('user')
           setUser(null)
         }
 

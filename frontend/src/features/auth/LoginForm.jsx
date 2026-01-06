@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Button,
   Text,
@@ -14,13 +14,19 @@ import {
   Box,
   Icon,
   Flex,
+  Switch,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react'
 import { API_URL } from '../../config/api'
 import { BsGithub } from 'react-icons/bs'
 import { FiZap, FiEdit3 } from 'react-icons/fi'
 
 const LoginForm = ({ isOpen, onClose }) => {
+  const [rememberMe, setRememberMe] = useState(true)
+
   const gitOauthClick = () => {
+    localStorage.setItem('rememberMe', rememberMe)
     window.location.href = `${API_URL}/oauth2/authorization/github`
   }
 
@@ -124,6 +130,21 @@ const LoginForm = ({ isOpen, onClose }) => {
                 GitHub 계정으로 간편하고 안전하게 로그인
               </Text>
             </Box>
+
+            {/* 로그인 상태 유지 스위치 */}
+            <FormControl display="flex" alignItems="center" justifyContent="center">
+              <FormLabel htmlFor="remember-me" mb="0" mr="3">
+                <Text fontSize="sm" color="gray.700" fontWeight="medium">
+                  로그인 상태 유지
+                </Text>
+              </FormLabel>
+              <Switch
+                id="remember-me"
+                isChecked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                colorScheme="blue"
+              />
+            </FormControl>
 
             {/* GitHub 로그인 버튼 */}
             <Button

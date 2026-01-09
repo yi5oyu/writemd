@@ -32,8 +32,21 @@ const useSseConnection = (sessionId, enabled = false) => {
         eventSourceRef.current.close()
       }
 
+      // JWT 토큰
+      const token = localStorage.getItem('accessToken')
+
+      // 토큰없으면 인증 오류
+      if (!token) {
+        setError({
+          type: 'AUTH_ERROR',
+          message: '인증 토큰이 없습니다. 로그인이 필요합니다.',
+        })
+        setStatus('closed')
+        return
+      }
+
       // 연결
-      const es = new EventSource(`${API_URL}/api/chat/stream/${sessionId}`, {
+      const es = new EventSource(`${API_URL}/api/chat/stream/${sessionId}?token=${token}`, {
         withCredentials: true,
       })
       eventSourceRef.current = es

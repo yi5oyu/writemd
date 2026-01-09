@@ -3,16 +3,17 @@ package com.writemd.backend.service;
 import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.entity.APIs;
 import com.writemd.backend.entity.Users;
+import com.writemd.backend.event.ApiKeyDeletedEvent;
+import com.writemd.backend.event.ApiKeySavedEvent;
 import com.writemd.backend.repository.ApiRepository;
 import com.writemd.backend.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 
 @Service
@@ -23,8 +24,8 @@ public class APIService {
     private final CachingDataService cachingDataService;
     private final ApiRepository apiRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    // API 키 저장
     @Transactional
     public APIDTO saveAPIKey(Long userId, String githubId, String aiModel, String apikey) {
         Users users = userRepository.findByGithubId(githubId)
@@ -38,33 +39,22 @@ public class APIService {
 
         APIs api = apiRepository.save(newapi);
 
+        APIDTO cacheDto = APIDTO.builder()
+            .apiId(api.getId())
+            .aiModel(aiModel)
+            .apiKey(apikey)
+            .build();
+
+        // 이벤트 발행
+        eventPublisher.publishEvent(new ApiKeySavedEvent(this, userId, cacheDto));
+
+        // 마스킹
         String maskedApiKey = maskApiKey(apikey);
-        APIDTO apiDTO = APIDTO.builder()
+        return APIDTO.builder()
             .apiId(api.getId())
             .aiModel(aiModel)
             .apiKey(maskedApiKey)
             .build();
-
-        // 캐싱
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        APIDTO cacheDto = APIDTO.builder()
-                            .apiId(api.getId())
-                            .aiModel(aiModel)
-                            .apiKey(apikey)
-                            .build();
-
-                        cachingDataService.handleApiKeySaved(userId, cacheDto);
-                    } catch (Exception e) {
-                        log.error("캐시 업데이트 실패: userId={}, apiId={}, error={}", userId, api.getId(), e.getMessage());
-                    }
-                }
-            }
-        );
-        return apiDTO;
     }
 
     // API 키 조회
@@ -97,25 +87,13 @@ public class APIService {
     @Transactional
     public void deleteAPIKey(Long apiId) {
         APIs api = apiRepository.findById(apiId)
-            .orElseThrow(() -> new RuntimeException("삭제할 API 키를 찾을 수 없습니다. ID: " + apiId));
+            .orElseThrow(() -> new RuntimeException("삭제할 API 키 없음 ID: " + apiId));
 
         Long userId = api.getUsers().getId();
 
         apiRepository.deleteById(apiId);
 
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        cachingDataService.handleApiKeyDeleted(userId, apiId); // 이것으로 변경
-                        log.info("API 키 삭제 후 캐시 업데이트 완료: userId={}, apiId={}", userId, apiId);
-                    } catch (Exception e) {
-                        log.error("캐시 삭제 실패: userId={}, apiId={}, error={}", userId, apiId, e.getMessage());
-                    }
-                }
-            }
-        );
-
+        // 이벤트 발행
+        eventPublisher.publishEvent(new ApiKeyDeletedEvent(this, userId, apiId));
     }
 }

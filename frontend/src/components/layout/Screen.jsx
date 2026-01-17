@@ -67,6 +67,17 @@ const Screen = ({
 
   // 새 노트 저장
   const handleSaveNote = async (title, text) => {
+    if (notes.length >= 20) {
+      toast({
+        duration: 5000,
+        isClosable: true,
+        render: ({ onClose }) => (
+          <ErrorToast onClose={onClose} message={'노트는 최대 20개까지 생성할 수 있습니다.'} />
+        ),
+      })
+      return
+    }
+
     try {
       const savedNote = await saveNote(user, title)
       if (savedNote && savedNote.noteId) {

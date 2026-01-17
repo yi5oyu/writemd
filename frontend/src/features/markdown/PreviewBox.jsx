@@ -23,7 +23,7 @@ const PreviewBox = ({ markdownText, mode, screen, chat }) => {
           ? screen === 'tab'
             ? 'calc(100vh - 155px)'
             : 'calc(100vh - 145px)'
-          : 'calc(100vh - 99px)'
+          : 'calc(100vh - 93px)'
       }
       overflowY={chat ? 'none' : 'auto'}
       px={!chat && '7'}

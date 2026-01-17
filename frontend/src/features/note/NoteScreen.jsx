@@ -265,6 +265,8 @@ const NoteScreen = ({
 
   const toast = useToast()
 
+  const isApiKeyMissing = !apiKeys || apiKeys.length === 0
+
   // 에러 처리
   useEffect(() => {
     if (error) {
@@ -1099,7 +1101,17 @@ const NoteScreen = ({
         ? githubText
         : selectedScreen === 'report' && reportText
 
-    if (!contentText.trim()) return
+    if (!contentText.trim()) {
+      toast({
+        title: '알림',
+        description: '분석할 내용이 비어있습니다.',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+        position: 'top',
+      })
+      return
+    }
     setSelectedScreen('report')
 
     let result = '<!-- 보고서 작성 중 입니다... -->'
@@ -1116,7 +1128,7 @@ const NoteScreen = ({
       })
 
       setReportText(
-        `<!-- 분석 시간: ${result.analysisTime}, 사용된 토큰 수: ${result.analysisTime} -->\n ${result.content}`
+        `<!-- 분석 시간: ${result.analysisTime}, 사용된 토큰 수: ${result.analysisTime} -->\\n ${result.content}`
       )
     } catch (err) {
       console.log('분석 실패:', err)
@@ -1219,6 +1231,7 @@ const NoteScreen = ({
                 setSelectedScreen={setSelectedScreen}
                 setIsFold={setIsFold}
                 handleDocAnalyze={handleDocAnalyze}
+                isApiKeyMissing={isApiKeyMissing}
               />
             )}
             <MarkdownInputBox

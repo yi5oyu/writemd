@@ -21,6 +21,7 @@ const ToolBox = ({
   setMemo,
   setIsFold,
   handleDocAnalyze,
+  isApiKeyMissing,
 }) => {
   const [copied, setCopied] = useState(false)
 
@@ -38,7 +39,7 @@ const ToolBox = ({
         <UtilityBtn
           icon={MdSpellcheck}
           label="맞춤법 검사"
-          // disabled={false}
+          disabled={isApiKeyMissing}
           onClick={handleDocAnalyze}
         />
         <UtilityBtn

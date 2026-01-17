@@ -20,9 +20,15 @@ const useAuth = () => {
       const accessToken = searchParams.get('accessToken')
       const refreshToken = searchParams.get('refreshToken')
 
+      const deviceId = searchParams.get('deviceId')
+
       if (accessToken && refreshToken) {
         // console.log('JWT 토큰 로그인 처리')
         tokenManager.setTokens(accessToken, refreshToken)
+
+        if (deviceId) {
+          localStorage.setItem('deviceId', deviceId)
+        }
       }
 
       fetchUserInfo()

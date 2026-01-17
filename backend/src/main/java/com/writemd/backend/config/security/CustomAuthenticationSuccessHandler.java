@@ -7,6 +7,7 @@ import com.writemd.backend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         String principalName = oauthToken.getName();
         String githubId = oAuth2User.getAttribute("login");
         String name = oAuth2User.getAttribute("name");
-        String deviceId = request.getHeader("User-Agent") + "-" + request.getRemoteAddr();
+        String deviceId = UUID.randomUUID().toString();
 
         // GitHub Access Token 저장
         try {
@@ -88,7 +89,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         response.sendRedirect(frontendUrl + "/login-success" +
             "?accessToken=" + tokens.getAccessToken() +
-            "&refreshToken=" + tokens.getRefreshToken());
+            "&refreshToken=" + tokens.getRefreshToken() +
+            "&deviceId=" + deviceId);
     }
 
 }

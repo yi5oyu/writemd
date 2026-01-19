@@ -205,7 +205,7 @@ const InputBox = ({
   return (
     <Box
       position="relative"
-      h={mode ? '100%' : screen ? 'calc(100vh - 145px)' : 'calc(100vh - 99px)'}
+      h={mode ? '100%' : screen ? 'calc(100vh - 145px)' : 'calc(100vh - 93px)'}
       w="100%"
       boxShadow="md"
       bg="white"

@@ -3,6 +3,8 @@ import { Spinner, Center } from '@chakra-ui/react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import LoginSuccess from './pages/LoginSuccess'
 import Home from './pages/Home'
+import apiClient from './api/apiClient'
+import { tokenManager } from './utils/tokenManager'
 
 const App = () => {
   const [user, setUser] = useState(null)
@@ -10,9 +12,30 @@ const App = () => {
 
   // user 조회
   useEffect(() => {
-    setLoading(true)
-    setUser(JSON.parse(sessionStorage.getItem('user')))
-    setLoading(false)
+    const validateSession = async () => {
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
+      const refreshToken = tokenManager.getRefreshToken()
+      if (storedUser && refreshToken) {
+        try {
+          const response = await apiClient.get('/api/user/info')
+          const freshUser = response.data
+          // 업데이트
+          if (localStorage.getItem('user')) {
+            localStorage.setItem('user', JSON.stringify(freshUser))
+          } else {
+            sessionStorage.setItem('user', JSON.stringify(freshUser))
+          }
+          setUser(freshUser)
+        } catch (error) {
+          console.error('세션 검증 실패:', error)
+          localStorage.removeItem('user')
+          sessionStorage.removeItem('user')
+          setUser(null)
+        }
+      }
+      setLoading(false)
+    }
+    validateSession()
   }, [])
 
   // 로딩

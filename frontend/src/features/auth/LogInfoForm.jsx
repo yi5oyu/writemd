@@ -27,6 +27,9 @@ import {
   InputRightElement,
   Tooltip,
   useToast,
+  Switch,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 
@@ -47,6 +50,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
   const [api, setApi] = useState('')
   const [aiModel, setAiModel] = useState('openai')
   const [apiKey, setApiKey] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
 
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
@@ -72,6 +76,42 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
 
   const isLoadingSpin = isLoading || deletingChats || deletingData || deletingUser
 
+  // 로그인 상태 유지 스위치 초기화
+  useEffect(() => {
+    if (isOpen) {
+      const storedRememberMe = localStorage.getItem('rememberMe') === 'true'
+      setRememberMe(storedRememberMe)
+    }
+  }, [isOpen])
+  // 로그인 상태 유지 설정 변경
+  const handleRememberMeChange = (e) => {
+    const isChecked = e.target.checked
+    setRememberMe(isChecked)
+    localStorage.setItem('rememberMe', isChecked)
+    const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user'))
+    if (isChecked) {
+      if (currentUser) {
+        localStorage.setItem('user', JSON.stringify(currentUser))
+        sessionStorage.removeItem('user')
+      }
+      toast({
+        title: '로그인 상태 유지 활성화',
+        description: '이제 브라우저를 닫아도 로그인 정보가 유지됩니다.',
+        status: 'success',
+      })
+    } else {
+      if (currentUser) {
+        sessionStorage.setItem('user', JSON.stringify(currentUser))
+        localStorage.removeItem('user')
+      }
+      toast({
+        title: '로그인 상태 유지 비활성화',
+        description: '이제 브라우저를 닫으면 자동으로 로그아웃됩니다.',
+        status: 'info',
+      })
+    }
+  }
+
   const confirmDeleteAuth = async () => {
     try {
       await deleteUser(user.githubId)
@@ -96,9 +136,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
   // 데이터 삭제
   const confirmDeleteData = async () => {
     try {
-      // onDataDeleted 콜백 전달
       await deleteUserData(user.userId, () => {
-        // 상태 초기화 콜백 실행
         if (onDataDeleted) {
           onDataDeleted()
         }
@@ -333,11 +371,30 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                 </Flex>
                 <Divider my="15px" borderWidth="2px" />
 
-                <Heading as="h5" size="sm">
-                  시스템
-                </Heading>
+                <Flex justify="space-between" align="center" mb="15px">
+                  <Heading as="h5" size="sm">
+                    시스템
+                  </Heading>
+                  <FormControl display="flex" alignItems="center" w="auto">
+                    <FormLabel
+                      htmlFor="remember-me"
+                      mb="0"
+                      mr="3"
+                      fontSize="sm"
+                      whiteSpace="nowrap"
+                    >
+                      로그인 상태 유지
+                    </FormLabel>
+                    <Switch
+                      id="remember-me"
+                      isChecked={rememberMe}
+                      onChange={handleRememberMeChange}
+                      colorScheme="blue"
+                    />
+                  </FormControl>
+                </Flex>
                 <Flex direction="column" mt="auto">
-                  <Flex justify="space-between" align="center" mb="5px">
+                  <Flex justify="space-between" align="center" mb="10px">
                     <Box>로그아웃</Box>
                     <Button
                       w="85px"

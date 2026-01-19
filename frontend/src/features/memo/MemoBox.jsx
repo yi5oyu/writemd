@@ -52,6 +52,17 @@ const MemoBox = ({
 
   // 메모 저장
   const handleSaveMemo = async (selectedMemo) => {
+    if (text.length >= 30) {
+      toast({
+        title: '메모 생성 제한',
+        description: '메모는 최대 30개까지 생성할 수 있습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+        position: 'top',
+      })
+      return
+    }
     try {
       const memoId = await handleSaveMemoClick(selectedMemo ? selectedMemo : null)
       setSelectedMemo(memoId)

@@ -268,11 +268,11 @@ const Sidebar = ({
                             cursor="pointer"
                             borderRadius="md"
                             alignItems="center"
-                            color="gray.600"
+                            color="blue.500"
                             _hover={{
                               bg: 'white',
                               boxShadow: 'md',
-                              color: 'black',
+                              color: 'blue.500',
                             }}
                             onClick={(e) => {
                               e.stopPropagation()

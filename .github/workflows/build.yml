@@ -2,7 +2,7 @@ name: Build and Deploy Docker Images
 
 on:
   push:
-    branches: [main, faeture/**]
+    branches: [main, test/**]
   pull_request:
     branches: [main]
 
@@ -60,7 +60,9 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
-    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/develop')) && github.event_name == 'push'
+    if: >
+      github.event_name == 'push' && 
+      (github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[deploy]'))
 
     steps:
       - name: GitHub Actions Runner

@@ -13,6 +13,7 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,9 +31,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenRedisService tokenRedisService;
     private final UserRepository userRepository;
 
+    @Value("${app.test.load-test-key}")
+    private String loadTestKey;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
+
+        // 테스트용 헤더 확인
+        String userKey = request.getHeader("X-Load-Test-Key");
+        String testUserId = request.getHeader("X-Load-Test-User-Id");
+
+        if (loadTestKey != null && loadTestKey.equals(userKey) && testUserId != null) {
+            try {
+                // 테스트용 유저 ID(githubId)로 실제 DB 유저 조회
+                Users user = userRepository.findByGithubId(testUserId)
+                    .orElseThrow(() -> new UsernameNotFoundException("테스트 유저 없음: " + testUserId));
+
+                UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                        UserDTO.builder()
+                            .userId(user.getId())
+                            .githubId(user.getGithubId())
+                            .name(user.getName())
+                            .htmlUrl(user.getHtmlUrl())
+                            .avatarUrl(user.getAvatarUrl())
+                            .build(),
+                        null,
+                        Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
+                    );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info("부하 테스트 인증 성공 - userId: {}, URI: {}", testUserId, request.getRequestURI());
+
+                // 인증 성공 시 기존 JWT 로직 생략
+                filterChain.doFilter(request, response);
+                return;
+            } catch (Exception e) {
+                log.error("부하 테스트 인증 실패", e);
+            }
+        }
 
         final String token = resolveToken(request);
 

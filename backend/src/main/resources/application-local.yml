@@ -85,7 +85,9 @@ management:
 app:
   frontend:
     url: ${FRONTEND_URL}
-
+  test:
+    load-test-key: ${LOAD_TEST_KEY}
+    
 server:
   port: 8888
   address: 0.0.0.0

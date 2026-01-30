@@ -83,8 +83,10 @@ public class SecurityConfig {
                 // 인증 권한
                 .requestMatchers("/**").access((authentication, context) -> {
                     String userKey = context.getRequest().getHeader("X-Load-Test-Key");
-                    boolean isAllowed = loadTestKey.equals(userKey);
-                    return new AuthorizationDecision(isAllowed);
+                    if (loadTestKey != null && loadTestKey.equals(userKey)) {
+                        return new AuthorizationDecision(true); // 테스트 키가 맞으면 무조건 허용
+                    }
+                    return null; // 결정 유보 -> 아래의 authenticated() 규칙을 따름
                 })
                 .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
                     "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse").permitAll()

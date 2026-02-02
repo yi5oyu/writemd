@@ -67,7 +67,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-validity: 900000      # 15분
+  access-token-validity: 1800000     # 30분
   refresh-token-validity: 604800000  # 7일
 
 management:
@@ -109,6 +109,8 @@ server:
   port: 8888
   address: 0.0.0.0 # 외부 접근 허용
   tomcat:
+    threads:
+      max: 500
     connection-timeout: 300000
 
 logging:

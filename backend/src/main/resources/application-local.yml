@@ -65,7 +65,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-validity: 900000      # 15분
+  access-token-validity: 1800000      # 30분
   refresh-token-validity: 604800000  # 7일
 
 management:
@@ -87,11 +87,13 @@ app:
     url: ${FRONTEND_URL}
   test:
     load-test-key: ${LOAD_TEST_KEY}
-    
+
 server:
   port: 8888
   address: 0.0.0.0
   tomcat:
+    threads:
+      max: 500
     connection-timeout: 300000
 #  servlet:
 #    session:

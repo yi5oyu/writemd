@@ -11,8 +11,8 @@ spring:
       enabled: false
 
   datasource:
-    #    hikari:
-    #      maximum-pool-size: 30
+    hikari:
+      maximum-pool-size: 30
     url: jdbc:mysql://db:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: writemd

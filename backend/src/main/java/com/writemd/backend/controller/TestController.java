@@ -9,6 +9,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +38,10 @@ public class TestController {
 //            .content();
 //    }
 
+    @GetMapping("/connected")
+    public ResponseEntity<String> checkConnection() {
+        return ResponseEntity.ok("connected");
+    }
 
     @GetMapping("/openai")
     public String testOpenAI() {

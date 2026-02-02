@@ -22,3 +22,14 @@ services:
     command: >
       run /k6-test/scripts/test2.js
       --summary-export=/k6-test/results/summary_test2.json
+
+  # DB 부하 테스트
+  test3:
+    image: grafana/k6:latest
+    environment:
+      - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
+    volumes:
+      - ./:/k6-test
+    command: >
+      run /k6-test/scripts/test3.js 
+      --summary-export=/k6-test/results/summary_test3.json

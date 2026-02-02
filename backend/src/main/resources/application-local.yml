@@ -11,6 +11,8 @@ spring:
       enabled: false
 
   datasource:
+    hikari:
+      maximum-pool-size: 30
     url: jdbc:mysql://db:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: writemd
@@ -20,7 +22,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         generate_statistics: true
@@ -93,7 +95,7 @@ server:
   address: 0.0.0.0
   tomcat:
     threads:
-      max: 500
+      max: 300
     connection-timeout: 300000
 #  servlet:
 #    session:

@@ -1,12 +1,13 @@
 version: '3.8'
 
 services:
-  k6:
+  # 페이지 접속 테스트(10000명)
+  test1:
     image: grafana/k6:latest
-    container_name: k6-local-stress-test
+    environment:
+      - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
     volumes:
       - ./:/k6-test
     command: >
-      run /k6-test/scripts/test1.js 
-      --summary-export=/k6-project/results/summary_tes1.json
-    restart: 'no'
+      run /k6-test/scripts/test1.js
+      --summary-export=/k6-test/results/summary_test1.json

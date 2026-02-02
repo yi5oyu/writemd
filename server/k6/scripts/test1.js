@@ -3,8 +3,10 @@ import { check, sleep } from 'k6'
 
 export let options = {
   stages: [
-    { duration: '2m', target: 500 }, // 2분안에 500명
-    { duration: '5m', target: 1000 }, // 그 후 5분 동안 1000명
+    { duration: '2m', target: 2000 },
+    { duration: '2m', target: 5000 },
+    // { duration: '2m', target: 10000 },
+    { duration: '2m', target: 0 },
   ],
   thresholds: {
     // 95% 응답 시간 500ms를 넘으면 중단

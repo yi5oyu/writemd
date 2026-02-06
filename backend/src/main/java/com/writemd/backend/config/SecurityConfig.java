@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -37,6 +38,9 @@ public class SecurityConfig {
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
+
+    @Value("${app.test.load-test-key}")
+    private String loadTestKey;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -77,6 +81,13 @@ public class SecurityConfig {
             .authorizeHttpRequests((requests) -> requests
                 .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                 // 인증 권한
+                .requestMatchers("/**").access((authentication, context) -> {
+                    String userKey = context.getRequest().getHeader("X-Load-Test-Key");
+                    if (loadTestKey != null && loadTestKey.equals(userKey)) {
+                        return new AuthorizationDecision(true);
+                    }
+                    return null;
+                })
                 .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
                     "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse").permitAll()
                 .requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()

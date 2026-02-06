@@ -12,6 +12,8 @@ spring:
 
   # Docker 네트워크 내에서 연결 설정
   datasource:
+    hikari:
+      maximum-pool-size: 30
     url: jdbc:mysql://db:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: yi5oyu
@@ -67,7 +69,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-validity: 900000      # 15분
+  access-token-validity: 1800000     # 30분
   refresh-token-validity: 604800000  # 7일
 
 management:
@@ -102,11 +104,15 @@ management:
 app:
   frontend:
     url: ${FRONTEND_URL}
+  test:
+    load-test-key: ${LOAD_TEST_KEY}
 
 server:
   port: 8888
   address: 0.0.0.0 # 외부 접근 허용
   tomcat:
+    threads:
+      max: 300
     connection-timeout: 300000
 
 logging:

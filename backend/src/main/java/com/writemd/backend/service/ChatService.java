@@ -61,6 +61,7 @@ import reactor.core.publisher.Flux;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class ChatService {
 
 
@@ -130,7 +131,6 @@ public class ChatService {
     }
 
     // 채팅 조회
-    @Transactional(readOnly = true)
     private List<Message> chatHistory(Long sessionId, String content) {
         List<Chats> chatHistory = chatRepository.findByConversations_IdWithFetchJoin(sessionId);
         List<Message> messages = new ArrayList<>();
@@ -1237,6 +1237,7 @@ public class ChatService {
 
 
     // 세션 생성
+    @Transactional
     public ConversationDTO createSession(Long noteId, String title) {
         Notes note = noteRepository.findById(noteId)
             .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
@@ -1257,6 +1258,7 @@ public class ChatService {
     }
 
     // 채팅 세션 삭제
+    @Transactional
     public void deleteSession(Long sessionId) {
         conversationRepository.deleteById(sessionId);
     }

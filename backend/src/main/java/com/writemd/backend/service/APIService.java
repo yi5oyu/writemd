@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class APIService {
 
     private final CachingDataService cachingDataService;
@@ -58,7 +59,6 @@ public class APIService {
     }
 
     // API 키 조회
-    @Transactional(readOnly = true)
     public List<APIDTO> getAPIKeys(Long userId) {
         List<APIDTO> apiKeys = cachingDataService.findApiKeysByUserId(userId);
 

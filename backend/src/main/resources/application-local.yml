@@ -64,11 +64,13 @@ spring:
           connections:
             py-mcp-server:
               uri: http://py-mcp-server:9889/sse
+            sb-mcp-server: # <--- Spring Boot MCP 서버 연결 추가
+              uri: http://sb-mcp-server:9888/sse # (또는 서버 엔드포인트에 맞게)
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-validity: 1800000      # 30분
-  refresh-token-validity: 604800000  # 7일
+  access-token-validity: 1800000 # 30분
+  refresh-token-validity: 604800000 # 7일
 
 management:
   endpoints:

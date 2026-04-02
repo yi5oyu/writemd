@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class McpServerApplication {
 
 	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure().systemProperties().load();
+//		Dotenv dotenv = Dotenv.configure().systemProperties().load();
 
 		SpringApplication.run(McpServerApplication.class, args);
 	}

@@ -2,8 +2,9 @@ package com.wirtemd.mcp_server.config;
 
 import com.wirtemd.mcp_server.tool.TestTool;
 import java.util.List;
+import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbacks;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

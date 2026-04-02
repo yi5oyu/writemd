@@ -41,6 +41,22 @@ services:
     networks:
       - app-network
 
+  # sb-mcp-server:
+  #   build:
+  #     context: ./mcp-server
+  #     dockerfile: Dockerfile
+  #   container_name: sb-mcp-server
+  #   ports:
+  #     - '9888:9888'
+  #   environment:
+  #     - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/md?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+  #     - MYSQL_PASSWORD=${MYSQL_USER_PASSWORD}
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -60,6 +76,7 @@ services:
       - db
       - redis
       - py-mcp-server
+      # - sb-mcp-server
     networks:
       - app-network
     # restart: on-failure

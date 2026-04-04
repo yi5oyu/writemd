@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 
@@ -32,6 +33,7 @@ public class GithubService {
 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final WebClient webClient;
+    private final Executor getAsyncExecutor;
     private final UserService userService;
 
     // 파일 생성/업데이트
@@ -113,8 +115,9 @@ public class GithubService {
 
         String accessToken = userService.getGithubAccessToken(githubId);
 
+        // 레포지토리 목록
         return webClient.get()
-            .uri("https://api.github.com/users/{githubId}/repos", githubId)
+            .uri("https://api.github.com/users/{githubId}/repos?per_page=100&sort=pushed", githubId)
             .headers(headers -> headers.setBearerAuth(accessToken))
             .retrieve()
             .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
@@ -123,74 +126,70 @@ public class GithubService {
                 if (reposList == null) {
                     return Mono.just(Collections.<GitRepoDTO>emptyList());
                 }
-                // 브랜치
-                List<Mono<GitRepoDTO>> repoMonos = reposList.stream()
-                    .map(repoData -> {
-                        String repoName = (String) repoData.get("name");
-                        Long repoId = ((Number) repoData.get("id")).longValue();
-                        String owner = githubId;
-
-                        return webClient.get()
-                            .uri("https://api.github.com/repos/{owner}/{repo}/branches", owner, repoName)
-                            .headers(headers -> headers.setBearerAuth(accessToken))
-                            .retrieve()
-                            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                            })
-                            .flatMap(branchesList -> {
-                                if (branchesList == null) {
-                                    return Mono.just(GitRepoDTO.builder()
-                                        .repoId(repoId)
-                                        .repo(repoName)
-                                        .branches(Collections.emptyList())
-                                        .build());
-                                }
-                                // main, master 콘텐츠 불러오기
-                                List<Mono<GitBranchDTO>> branchMonos = branchesList.stream()
-                                    .map(branchInfo -> {
-                                        String branchName = (String) branchInfo.get("name");
-                                        if ("main".equals(branchName) || "master".equals(branchName)) {
-                                            return fetchBranchContents(accessToken, owner, repoName,
-                                                branchName);
-                                        } else {
-                                            return Mono.just(GitBranchDTO.builder()
-                                                .branch(branchName)
-                                                .contents(Collections.emptyList())
-                                                .build());
-                                        }
-                                    })
-                                    .collect(Collectors.toList());
-
-                                // 모든 브랜치 결과
-                                return Flux.fromIterable(branchMonos)
-                                    .flatMap(mono -> mono)
-                                    .collectList()
-                                    .map(branchDTOs -> GitRepoDTO.builder()
-                                        .repoId(repoId)
-                                        .repo(repoName)
-                                        .branches(branchDTOs)
-                                        .build());
-                            })
-                            .onErrorResume(e -> {
-                                System.err.println(
-                                    "브랜치 목록 가져오기 실패 Repo: " + repoName + ", Error: " + e.getMessage());
-                                return Mono.just(GitRepoDTO.builder()
-                                    .repoId(repoId)
-                                    .repo(repoName)
-                                    .branches(Collections.emptyList())
-                                    .build());
-                            });
-                    })
+                // 각 레포지토리 병렬 조회
+                List<CompletableFuture<GitRepoDTO>> futures = reposList.stream()
+                    .map(repoData -> CompletableFuture.supplyAsync(() ->
+                        fetchSingleRepoDetails(repoData, githubId, accessToken), getAsyncExecutor
+                    ))
                     .collect(Collectors.toList());
 
-                return Flux.fromIterable(repoMonos)
-                    .flatMap(mono -> mono)
-                    .collectList();
+                // 모든 스레드가 조회 마칠 때까지 대기
+                CompletableFuture<List<GitRepoDTO>> allFutures = CompletableFuture.allOf(
+                        futures.toArray(new CompletableFuture[0]))
+                    .thenApply(v -> futures.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()));
+
+                // Mono로 반환
+                return Mono.fromFuture(allFutures);
             })
             .onErrorResume(e -> {
                 System.err.println("레포지토리 목록 가져오기 실패 User: " + githubId + ", Error: " + e.getMessage());
                 return Mono.just(Collections.emptyList());
             });
 
+    }
+
+    private GitRepoDTO fetchSingleRepoDetails(Map<String, Object> repoData, String owner, String accessToken) {
+        String repoName = (String) repoData.get("name");
+        Long repoId = ((Number) repoData.get("id")).longValue();
+
+        try {
+            // 각 스레드는 블로킹
+            List<Map<String, Object>> branchesList = webClient.get()
+                .uri("https://api.github.com/repos/{owner}/{repo}/branches", owner, repoName)
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                })
+                .block();
+
+            if (branchesList == null || branchesList.isEmpty()) {
+                return GitRepoDTO.builder().repoId(repoId).repo(repoName).branches(Collections.emptyList()).build();
+            }
+
+            // main, master 브랜치
+            List<GitBranchDTO> branchDTOs = branchesList.stream()
+                .map(branchInfo -> {
+                    String branchName = (String) branchInfo.get("name");
+                    if ("main".equals(branchName) || "master".equals(branchName)) {
+                        return fetchBranchContents(accessToken, owner, repoName, branchName).block();
+                    } else {
+                        return GitBranchDTO.builder().branch(branchName).contents(Collections.emptyList()).build();
+                    }
+                })
+                .collect(Collectors.toList());
+
+            return GitRepoDTO.builder()
+                .repoId(repoId)
+                .repo(repoName)
+                .branches(branchDTOs)
+                .build();
+
+        } catch (Exception e) {
+            log.error("브랜치 목록 가져오기 실패 Repo: {}, Error: {}", repoName, e.getMessage());
+            return GitRepoDTO.builder().repoId(repoId).repo(repoName).branches(Collections.emptyList()).build();
+        }
     }
 
     private Mono<GitBranchDTO> fetchBranchContents(String accessToken, String owner, String repo, String branchName) {

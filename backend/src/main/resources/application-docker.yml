@@ -1,6 +1,8 @@
 spring:
   application:
     name: backend
+  cache:
+    type: none
   mvc:
     async:
       request-timeout: 300000

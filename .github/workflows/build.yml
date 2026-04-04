@@ -2,7 +2,7 @@ name: Build and Deploy Docker Images
 
 on:
   push:
-    branches: [main, test/**]
+    branches: [main, test/**, refactor/**]
   pull_request:
     branches: [main]
 

@@ -165,9 +165,13 @@ public class GithubService {
                 List<GitContentDTO> contents = new ArrayList<>();
                 if (entries.isArray()) {
                     for (JsonNode entry : entries) {
+                        String gqlType = entry.path("type").asText();
+                        String mappedType = "blob".equals(gqlType) ? "file" :
+                            ("tree".equals(gqlType) ? "dir" : gqlType);
+
                         contents.add(GitContentDTO.builder()
                             .path(entry.path("name").asText())
-                            .type(entry.path("type").asText())
+                            .type(mappedType)
                             .sha(entry.path("oid").asText())   // REST API: sha = GraphQL: oid
                             .build());
                     }

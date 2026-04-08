@@ -63,11 +63,11 @@ public class RedisConfig {
 
         // API 키 캐시
         cacheConfigurations.put("api-key",
-            defaultConfig.entryTtl(Duration.ofHours(3)));
+            defaultConfig.entryTtl(Duration.ofHours(1)));
 
         // 모든 API 키
         cacheConfigurations.put("user-api-keys",
-            defaultConfig.entryTtl(Duration.ofHours(1)));
+            defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
         // Duration.ofDays(365), .ofHours(1), .ofMinutes(30), .ofMinutes(5)
 

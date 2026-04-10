@@ -1,6 +1,9 @@
 package com.writemd.backend.config;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,8 +32,19 @@ public class AsyncConfig implements AsyncConfigurer {
         // TaskDecorator 설정(SecurityContext 전파)
         executor.setTaskDecorator(new SecurityContextTaskDecorator());
 
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+
         executor.initialize();
         return executor;
+    }
+
+    @Bean(name = "taskScheduler")
+    public ScheduledExecutorService taskScheduler() {
+        return Executors.newScheduledThreadPool(5, runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("scheduler-pool-");
+            return thread;
+        });
     }
 
     @Override

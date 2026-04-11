@@ -54,10 +54,11 @@ import useSseConnection from '../../hooks/chat/useSseConnection'
 import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
 import useDirectChat from '../../hooks/chat/useDirectChat'
 
-import modelData from '../../data/model.json'
 import useGithubStructure from '../../hooks/tool/useGithubStructure'
 import useGithubAnalysis from '../../hooks/tool/useGithubAnalysis'
 import useDocumentAnalysis from '../../hooks/tool/useDocumentAnalysis'
+
+import { useAiConfig } from '../../context/AiConfigContext'
 
 const NoteScreen = ({
   user,
@@ -96,6 +97,8 @@ const NoteScreen = ({
   const [tool, setTool] = useState(false)
   const [memo, setMemo] = useState(false)
   const [text, setText] = useState([])
+
+  const { config: modelData, loading: modelDataloading } = useAiConfig()
 
   const { note, loading, error } = useNote(noteId)
 
@@ -818,7 +821,7 @@ const NoteScreen = ({
       setAvailableModels([])
       setModel('')
     }
-  }, [selectedAI, apiKeys, model])
+  }, [selectedAI, apiKeys, model, modelData])
 
   // 모델 저장
   useEffect(() => {
@@ -1472,7 +1475,7 @@ const NoteScreen = ({
         </Flex>
       </Flex>
       {/* 로딩 시 Spinner */}
-      {(loading || updateLoading) && <LoadingSpinner />}
+      {(loading || updateLoading || modelDataloading) && <LoadingSpinner />}
     </Box>
   )
 }

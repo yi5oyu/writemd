@@ -63,9 +63,8 @@ spring:
         sse:
           connections:
             py-mcp-server:
-              uri: http://py-mcp-server:9889/sse
-            sb-mcp-server: # <--- Spring Boot MCP 서버 연결 추가
-              uri: http://sb-mcp-server:9888/sse # (또는 서버 엔드포인트에 맞게)
+              url: http://py-mcp-server:9889/sse
+
 
 jwt:
   secret: ${JWT_SECRET}
@@ -90,7 +89,7 @@ app:
   frontend:
     url: ${FRONTEND_URL}
   test:
-    load-test-key: ${LOAD_TEST_KEY}
+    load-test-key: ${LOAD_TEST_KEY:}
 
 server:
   port: 8888
@@ -110,3 +109,4 @@ logging:
     org.springframework.data.redis: DEBUG
     org.springframework.ai: INFO
     org.springframework.web: DEBUG
+

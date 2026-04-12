@@ -26,8 +26,9 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        generate_statistics: true
+        generate_statistics: false
 
+  
   session:
     store-type: none
 
@@ -65,12 +66,12 @@ spring:
           connections:
             py-mcp-server:
               # 컨테이너 이름으로 연결
-              uri: http://py-mcp-server:9889/sse
+              url: http://py-mcp-server:9889/sse
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-validity: 1800000     # 30분
-  refresh-token-validity: 604800000  # 7일
+  access-token-validity: 1800000 # 30분
+  refresh-token-validity: 604800000 # 7일
 
 management:
   endpoints:
@@ -105,7 +106,7 @@ app:
   frontend:
     url: ${FRONTEND_URL}
   test:
-    load-test-key: ${LOAD_TEST_KEY}
+    load-test-key: ${LOAD_TEST_KEY:}
 
 server:
   port: 8888
@@ -118,3 +119,7 @@ server:
 logging:
   level:
     org.springframework.ai: INFO
+    reactor.netty.http.client: INFO
+    org.springframework.web.client.DefaultRestClient: WARN
+    org.springframework.web.HttpLogging: WARN
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: WARN

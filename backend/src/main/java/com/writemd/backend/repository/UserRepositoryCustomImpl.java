@@ -11,6 +11,8 @@ import static com.writemd.backend.entity.QTexts.texts;
 import static com.writemd.backend.entity.QUsers.users;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.writemd.backend.entity.Users;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Long> findIdByGithubId(String githubId) {
         Long userId = queryFactory
             .select(users.id)
@@ -37,7 +39,6 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<String> findPrincipalNameByGithubId(String githubId) {
         String principalName = queryFactory
             .select(users.principalName)
@@ -142,6 +143,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     }
 
     @Override
+    @Transactional
     public long updateGithubAccessToken(String githubId, String token) {
         return queryFactory
             .update(users)
@@ -151,11 +153,20 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     }
 
     @Override
+    @Transactional
     public long deleteGithubAccessToken(String githubId) {
         return queryFactory
             .update(users)
             .setNull(users.githubAccessToken)
             .where(users.githubId.eq(githubId))
             .execute();
+    }
+
+    @Override
+    public List<Users> findAllGuests(String prefix) {
+        return queryFactory
+            .selectFrom(users)
+            .where(users.githubId.startsWith(prefix))
+            .fetch();
     }
 }

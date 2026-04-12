@@ -28,7 +28,6 @@ spring:
       hibernate:
         generate_statistics: false
 
-  
   session:
     store-type: none
 
@@ -72,6 +71,7 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-validity: 1800000 # 30분
   refresh-token-validity: 604800000 # 7일
+  guest-refresh-token-validity: 86400000 # 1일
 
 management:
   endpoints:
@@ -106,7 +106,10 @@ app:
   frontend:
     url: ${FRONTEND_URL}
   test:
-    load-test-key: ${LOAD_TEST_KEY:}
+    load-test-key: ${LOAD_TEST_KEY}
+  guest:
+    openai-api-key: ${GUEST_OPENAI_API_KEY}
+    ai-daily-limit: 10
 
 server:
   port: 8888

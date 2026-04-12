@@ -17,17 +17,58 @@ import {
   Switch,
   FormControl,
   FormLabel,
+  useToast,
+  Divider,
 } from '@chakra-ui/react'
 import { API_URL } from '../../config/api'
 import { BsGithub } from 'react-icons/bs'
-import { FiZap, FiEdit3 } from 'react-icons/fi'
+import { FiZap, FiEdit3, FiUser } from 'react-icons/fi'
+import apiClient from '../../api/apiClient'
+import { authApi } from '../../api/authApi'
+import { tokenManager } from '../../utils/tokenManager'
 
 const LoginForm = ({ isOpen, onClose }) => {
   const [rememberMe, setRememberMe] = useState(true)
+  const [isGuestLoading, setIsGuestLoading] = useState(false)
+  const toast = useToast()
 
   const gitOauthClick = () => {
     localStorage.setItem('rememberMe', rememberMe)
     window.location.href = `${API_URL}/oauth2/authorization/github`
+  }
+
+  const handleGuestLogin = async () => {
+    try {
+      setIsGuestLoading(true)
+      const data = await authApi.guestLogin()
+
+      // 발급받은 토큰/디바이스 ID 저장
+      tokenManager.setTokens(data.accessToken, data.refreshToken)
+      if (data.deviceId) {
+        localStorage.setItem('deviceId', data.deviceId)
+      }
+      localStorage.setItem('rememberMe', rememberMe)
+      localStorage.setItem('isGuest', 'true')
+
+      const userResponse = await apiClient.get('/api/user/info')
+      const storage = rememberMe ? localStorage : sessionStorage
+      storage.setItem('user', JSON.stringify(userResponse.data))
+
+      onClose()
+
+      window.location.href = '/'
+    } catch (error) {
+      console.error('게스트 로그인 실패:', error)
+      toast({
+        title: '게스트 로그인 실패',
+        description: '서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    } finally {
+      setIsGuestLoading(false)
+    }
   }
 
   return (
@@ -171,9 +212,42 @@ const LoginForm = ({ isOpen, onClose }) => {
               GitHub 로그인
             </Button>
 
+            {/* 구분선 */}
+            <HStack w="full">
+              <Divider />
+              <Text fontSize="xs" color="gray.400" whiteSpace="nowrap">
+                또는
+              </Text>
+              <Divider />
+            </HStack>
+
+            {/* 💡 게스트 로그인 버튼 */}
+            <Button
+              w="full"
+              size="lg"
+              h="12"
+              variant="outline"
+              borderColor="gray.300"
+              color="gray.700"
+              leftIcon={<Icon as={FiUser} boxSize="5" />}
+              _hover={{
+                bg: 'gray.50',
+                borderColor: 'gray.400',
+              }}
+              _active={{ bg: 'gray.100' }}
+              borderRadius="xl"
+              fontWeight="semibold"
+              fontSize="sm"
+              onClick={handleGuestLogin}
+              isLoading={isGuestLoading}
+              loadingText="계정 생성 중..."
+            >
+              게스트로 체험하기
+            </Button>
+
             {/* 약관 동의 */}
-            <Box textAlign="center" pt="2">
-              {/* <Text fontSize="xs" color="gray.400" mb="3" lineHeight="1.4">
+            {/* <Box textAlign="center" pt="2"> */}
+            {/* <Text fontSize="xs" color="gray.400" mb="3" lineHeight="1.4">
                 계속하면 아래 약관에 동의하는 것으로 간주됩니다
               </Text>
               <HStack spacing="3" justify="center">
@@ -205,7 +279,7 @@ const LoginForm = ({ isOpen, onClose }) => {
                   개인정보처리방침
                 </Link>
               </HStack> */}
-            </Box>
+            {/* </Box> */}
           </VStack>
         </ModalBody>
       </ModalContent>

@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,6 +30,9 @@ public class CachingDataService {
     private final UserRepository userRepository;
     private final ApiRepository apiRepository;
 
+    @Value("${app.guest.openai-api-key}")
+    private String guestOpenaiApiKey;
+    
     @Cacheable(value = "template-data", key = "'my-templates'")
     public List<Map<String, String>> getMyTemplates() {
         return Collections.emptyList();
@@ -84,8 +88,16 @@ public class CachingDataService {
     // API 키
     @Cacheable(value = "api-key", key = "#userId + ':' + #apiId")
     public APIDTO findApiKey(Long userId, Long apiId) {
-        log.info("DB에서 API 키 조회: userId={}", userId);
+        if (apiId == 0) {
+            return APIDTO.builder()
+                .apiId(0L)
+                .aiModel("openai")
+                .apiKey(guestOpenaiApiKey)
+                .build();
+        }
+
         Optional<APIs> apiEntity = apiRepository.findById(apiId);
+        log.info("DB에서 API 키 조회: userId={}", userId);
 
         if (apiEntity.isPresent()) {
             APIs api = apiEntity.get();

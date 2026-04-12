@@ -534,7 +534,7 @@ public class ChatService {
             }
 
             // GitHub 접근 토큰
-            String accessToken = getGithubAccessToken(githubId);
+            final String accessToken = (apiId != 0) ? getGithubAccessToken(githubId) : "";
 
             // 분석 결과 저장
             Map<String, String> stageResults = new ConcurrentHashMap<>();

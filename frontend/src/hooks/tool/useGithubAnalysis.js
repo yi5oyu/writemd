@@ -115,7 +115,7 @@ const useGithubAnalysis = () => {
 
             setStreamData((current) => ({
               ...current,
-              [data.stage]: data.result,
+              [data.stageKey || data.stage]: data.result,
             }))
 
             if (data.tokenUsage) {

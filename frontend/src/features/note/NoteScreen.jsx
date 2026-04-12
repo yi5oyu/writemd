@@ -1035,11 +1035,11 @@ const NoteScreen = ({
           // console.log('스트리밍 데이터 수신:', data)
 
           // 이벤트 유형별 처리
-          if (data.stage && data.result) {
+          if ((data.stageKey || data.stage) && data.result) {
             // 단계 결과 업데이트
             setStages((prev) => ({
               ...prev,
-              [data.stage]: data.result,
+              [data.stageKey || data.stage]: data.result,
             }))
           }
 

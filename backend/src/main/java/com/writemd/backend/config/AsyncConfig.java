@@ -1,7 +1,6 @@
 package com.writemd.backend.config;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
@@ -12,6 +11,7 @@ import org.springframework.core.task.TaskDecorator;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -27,11 +27,11 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setCorePoolSize(10);
         executor.setMaxPoolSize(20);
         executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("async-");
+        executor.setThreadNamePrefix("task-async-");
 
         // TaskDecorator 설정(SecurityContext 전파)
         executor.setTaskDecorator(new SecurityContextTaskDecorator());
-
+        // 메인 스레드 위임
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         executor.initialize();
@@ -39,12 +39,23 @@ public class AsyncConfig implements AsyncConfigurer {
     }
 
     @Bean(name = "taskScheduler")
-    public ScheduledExecutorService taskScheduler() {
-        return Executors.newScheduledThreadPool(5, runnable -> {
-            Thread thread = new Thread(runnable);
-            thread.setName("scheduler-pool-");
-            return thread;
-        });
+    public ThreadPoolTaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(10);
+        scheduler.setThreadNamePrefix("scheduler-");
+
+        scheduler.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+
+//        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+//        scheduler.setAwaitTerminationSeconds(60);
+
+        scheduler.initialize();
+        return scheduler;
+    }
+
+    @Bean
+    public ScheduledExecutorService scheduledExecutorService(ThreadPoolTaskScheduler taskScheduler) {
+        return taskScheduler.getScheduledExecutor();
     }
 
     @Override

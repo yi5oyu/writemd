@@ -37,6 +37,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=9889
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
     restart: unless-stopped
     networks:
       - app-network
@@ -72,6 +73,7 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - GUEST_OPENAI_API_KEY=${GUEST_OPENAI_API_KEY}
     depends_on:
       - db
       - redis

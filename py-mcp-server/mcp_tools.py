@@ -1,8 +1,13 @@
+import os
 from github import Github
 from mcp.server.fastmcp import FastMCP
 from typing import List, Dict, Any
-
+from dotenv import load_dotenv
 from git.repo import create_github_client, get_repository_tree, get_repository_tree_with_metadata
+
+load_dotenv()
+
+github_token = os.getenv("GITHUB_TOKEN")
 
 mcp = FastMCP("py-mcp-server")
 
@@ -23,15 +28,17 @@ def githubRepoStructure(owner: str, repo: str, branch: str = "", max_depth: int 
     """
     
     try:
-        # 1. GitHub 객체 생성
-        github_client = create_github_client(access_token)
+        token_to_use = access_token if access_token else github_token
+
+        # GitHub 객체 생성
+        github_client = create_github_client(token_to_use)
         
-        # 2. 레포지토리 및 트리 데이터 가져오기
+        # 레포지토리/트리 데이터 가져오기
         full_repo, branch, paths = get_repository_tree(
             github_client, owner, repo, branch, max_depth
         )
         
-        # 3. 경로 목록 출력 포맷팅
+        # 경로 목록 출력
         result = [f"{full_repo} ({branch})"]
         result.extend(paths)
 
@@ -62,15 +69,17 @@ def githubRepoFiles(owner: str, repo: str, branch: str = "", max_depth: int = 0,
     """
     
     try:
-        # 1. GitHub 객체 생성
-        github_client = create_github_client(access_token)
+        token_to_use = access_token if access_token else github_token
+
+        # GitHub 객체 생성
+        github_client = create_github_client(token_to_use)
         
-        # 2. 레포지토리 및 트리 데이터 가져오기 (메타데이터 포함)
+        # 레포지토리/트리 데이터 가져오기
         full_repo, branch, items = get_repository_tree_with_metadata(
             github_client, owner, repo, branch, max_depth
         )
         
-        # 3. 결과 포맷팅
+        # 결과 포맷팅
         result = [f"{full_repo} ({branch})"]
         result.append("")
         result.append("PATH | TYPE | SHA")
@@ -106,8 +115,10 @@ def githubFileContent(owner: str, repo: str, path: str, branch: str = "", access
     """
     
     try:
-        # 1. GitHub 객체 생성
-        github_client = create_github_client(access_token)
+        token_to_use = access_token if access_token else github_token
+
+        # GitHub 객체 생성
+        github_client = create_github_client(token_to_use)
         
         # 레포지토리 형식 처리
         full_repo = repo
@@ -118,17 +129,17 @@ def githubFileContent(owner: str, repo: str, path: str, branch: str = "", access
         
         full_repo = f"{owner}/{repo}"
         
-        # 2. 레포지토리 가져오기
+        # 레포지토리 가져오기
         try:
             repository = github_client.get_repo(full_repo)
         except Exception as e:
             raise Exception(f"레포지토리를 찾을 수 없습니다: {str(e)}")
         
-        # 3. 브랜치 처리
+        # 브랜치 처리
         if not branch or branch.strip() == "":
             branch = repository.default_branch
         
-        # 4. 파일 내용 가져오기
+        # 파일 내용 가져오기
         try:
             file_content = repository.get_contents(path, ref=branch)
             if isinstance(file_content, list):

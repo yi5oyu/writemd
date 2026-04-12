@@ -267,6 +267,8 @@ const NoteScreen = ({
 
   const isApiKeyMissing = !apiKeys || apiKeys.length === 0
 
+  const isGuest = user?.githubId?.startsWith('guest:')
+
   // 에러 처리
   useEffect(() => {
     if (error) {
@@ -557,7 +559,7 @@ const NoteScreen = ({
 
   // 깃 정보 조회
   const handleGitLoad = useCallback(() => {
-    if (user && user.githubId) {
+    if (!isGuest && user && user.githubId) {
       getRepo({ githubId: user.githubId })
     }
   }, [user, getRepo])
@@ -784,10 +786,12 @@ const NoteScreen = ({
 
   // apiId(selectedAI) 초기화
   useEffect(() => {
-    if (apiKeys && apiKeys.length > 0 && !selectedAI) {
+    if (isGuest && (!apiKeys || apiKeys.length === 0)) {
+      setSelectedAI(0)
+    } else if (apiKeys && apiKeys.length > 0 && !selectedAI) {
       setSelectedAI(apiKeys[0].apiId)
     }
-  }, [apiKeys])
+  }, [apiKeys, isGuest])
 
   // apiKeys 초기화
   useEffect(() => {
@@ -798,6 +802,16 @@ const NoteScreen = ({
 
   // API 키 변경 시 모델 목록 업데이트/선택
   useEffect(() => {
+    if (String(selectedAI) === '0') {
+      const guestModels = ['gpt-5.4-nano']
+      setAvailableModels(guestModels)
+
+      if (!model || !guestModels.includes(model)) {
+        setModel(guestModels[0])
+      }
+      return
+    }
+
     if (selectedAI !== undefined && selectedAI !== null && apiKeys && apiKeys.length > 0) {
       const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
 
@@ -1399,6 +1413,7 @@ const NoteScreen = ({
                 >
                   <Box mx="auto">
                     <Questionbar
+                      isGuest={isGuest}
                       questionText={questionText}
                       setQuestionText={setQuestionText}
                       handleSendChatMessage={handleSendChatMessage}
@@ -1438,6 +1453,7 @@ const NoteScreen = ({
 
             {boxForm === 'git' && (
               <GitScreen
+                isGuest={isGuest}
                 name={githubName}
                 setName={setGithubName}
                 setGithubText={setGithubText}

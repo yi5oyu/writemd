@@ -38,6 +38,7 @@ const useLogout = () => {
       } finally {
         // 클라이언트 스토리지 정리
         localStorage.removeItem('user')
+        localStorage.removeItem('isGuest')
         sessionStorage.removeItem('user')
 
         // 페이지 새로고침 UI 초기화

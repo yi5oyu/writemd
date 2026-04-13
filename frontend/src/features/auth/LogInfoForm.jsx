@@ -33,7 +33,7 @@ import {
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 
-import AiModel from '../../data/model.json'
+import { useAiConfig } from '../../context/AiConfigContext'
 import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
 import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
 import useDeleteUser from '../../hooks/auth/useDeleteUser'
@@ -52,6 +52,8 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
   const [apiKey, setApiKey] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
   const [isGuest, setIsGuest] = useState(false)
+
+  const { config } = useAiConfig()
 
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
@@ -508,9 +510,11 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                       colorScheme={
                         displayApiKeys && displayApiKeys.length > 0 && selectedAI
                           ? (() => {
-                              const selectedApiKey = apiKeys.find(
+                              const selectedApiKey = displayApiKeys.find(
                                 (key) => String(key.apiId) === String(selectedAI)
                               )
+                              if (String(selectedApiKey?.apiId) === '0') return 'purple'
+
                               return selectedApiKey?.aiModel === 'openai'
                                 ? 'green'
                                 : selectedApiKey?.aiModel === 'anthropic'
@@ -559,7 +563,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                       displayApiKeys.map((apiKeyData) => (
                         <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
                           {String(apiKeyData.apiId) === '0'
-                            ? '기본 제공 API 사용'
+                            ? 'gpt-5.4-nano(Guest)'
                             : `${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
                         </option>
                       ))
@@ -594,7 +598,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                           OpenAI(ChatGPT)
                         </Heading>
                         <Flex gap={2}>
-                          {AiModel.openai.model.map((m, index) => (
+                          {config?.openai?.model?.map((m, index) => (
                             <Badge variant="outline" colorScheme="green" key={index}>
                               {m}
                             </Badge>
@@ -604,7 +608,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                           Anthropic(Claude)
                         </Heading>
                         <Flex gap={2} wrap="wrap">
-                          {AiModel.anthropic.model.map((m, index) => (
+                          {config?.anthropic?.model?.map((m, index) => (
                             <Badge variant="outline" colorScheme="orange" key={index}>
                               {m}
                             </Badge>

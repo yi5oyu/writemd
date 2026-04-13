@@ -151,6 +151,7 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
       boxShadow="md"
       borderRadius="md"
       w={isFold ? 'calc(100% - 300px)' : 'calc(100% - 130px)'}
+      h="calc(100vh - 30px)"
       direction="column"
       bg="gray.50"
       py="15px"
@@ -158,36 +159,52 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
       position="relative"
       filter={isLoading || loading ? 'blur(4px)' : 'none'}
     >
-      <Input
-        value={title}
-        fontSize="20px"
-        pl="5px"
-        variant="flushed"
-        onChange={(e) => setTitle(e.target.value)}
-        maxLength={35}
-        placeholder="노트이름을 입력해주세요."
-        focusBorderColor="blue.400"
-        minH="10px"
-        mb="10px"
-        resize="none"
-        isDisabled={isLoading || loading}
-      />
-      <Flex position="absolute" top="5px" right="5px">
+      {/* 상단 헤더 영역 */}
+      <Flex w="100%" mb="15px" alignItems="center" gap="4" flexShrink={0}>
+        <Input
+          value={title}
+          fontSize="24px"
+          fontWeight="bold"
+          pl="5px"
+          variant="flushed"
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={35}
+          placeholder="노트 이름을 입력해주세요."
+          focusBorderColor="blue.400"
+          isDisabled={isLoading || loading}
+          flex="1"
+        />
         <Button
           isLoading={isLoading || loading}
-          variant="outline"
           colorScheme="blue"
-          size="sm"
+          size="md"
+          px="6"
+          fontWeight="bold"
+          boxShadow="sm"
+          _hover={{ transform: 'translateY(-1px)', boxShadow: 'md' }}
           onClick={() => handleSaveNote(title, text)}
         >
           새 노트 생성
         </Button>
       </Flex>
 
-      <Flex gap="5" h="100%">
-        <Box flex={`${screenSize}`} borderRadius="md" minWidth="0">
+      {/* 하단 콘텐츠 영역 */}
+      <Flex gap="5" flex="1" minH="0">
+        {/* 좌측: 마크다운 에디터 */}
+        <Flex
+          flex={`${screenSize}`}
+          minWidth="0"
+          bg="white"
+          borderRadius="md"
+          boxShadow="md"
+          h="100%"
+          direction="column"
+          overflow="hidden"
+        >
           <MarkdownInputBox markdownText={text} setMarkdownText={setText} screen={false} />
-        </Box>
+        </Flex>
+
+        {/* 우측: 탭 영역 */}
         <Box flex="1" bg="white" borderRadius="md" boxShadow="md" minWidth="0">
           <Tabs
             isFitted
@@ -211,7 +228,7 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
             <TabPanels>
               {/* 프리뷰 */}
               <TabPanel p="0" h="100%">
-                <MarkdownPreview markdownText={text} screen={'tab'} />
+                <MarkdownPreview markdownText={text} screen={'newnote'} />
               </TabPanel>
 
               {/* 템플릿 */}
@@ -362,5 +379,4 @@ const NoteHome = ({ handleSaveNote, isLoading, user, isFold }) => {
     </Flex>
   )
 }
-
 export default NoteHome

@@ -22,6 +22,8 @@ const PreviewBox = ({ markdownText, mode, screen, chat }) => {
           : screen
           ? screen === 'tab'
             ? 'calc(100vh - 155px)'
+            : screen === 'newnote'
+            ? `calc(100vh - 172px)`
             : 'calc(100vh - 145px)'
           : 'calc(100vh - 93px)'
       }

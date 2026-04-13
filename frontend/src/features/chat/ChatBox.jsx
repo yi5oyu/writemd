@@ -1,5 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react'
-import { Box, Flex, Icon, Text, useToast } from '@chakra-ui/react'
+import {
+  Box,
+  Flex,
+  Icon,
+  Text,
+  useToast,
+  SkeletonText,
+  SkeletonCircle,
+  HStack,
+} from '@chakra-ui/react'
 import { PiChatCircleFill } from 'react-icons/pi'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import ContentsSpinner from '../../components/ui/spinner/ContentsSpinner'
@@ -17,6 +26,7 @@ const ChatBox = ({
   isChatLoading,
   isChatError,
   chatErrorMessage,
+  isStreaming,
 }) => {
   const scrollRef = useRef(null)
 
@@ -63,6 +73,7 @@ const ChatBox = ({
         pr="5px"
         pb="110px"
       >
+        {/* 비었을때 */}
         {chatHistory.length === 0 && messages.length === 0 && !isChatLoading && (
           <Flex
             direction="column"
@@ -86,7 +97,7 @@ const ChatBox = ({
             </Box>
           </Flex>
         )}
-
+        {/* 과거 대화 내역 */}
         {chatHistory.length > 0 &&
           chatHistory.map((m, index) => {
             const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}`
@@ -98,24 +109,40 @@ const ChatBox = ({
               </Box>
             )
           })}
-
+        {/* 현재 대화 */}
         {messages.length > 0 &&
           messages.map((m, index) => {
             const key = m.id || `${m.role}-${index}-${m.content?.slice(0, 10)}`
-            return m.role === 'user' ? (
-              <UserChatMessage key={key} content={m.content} lines={3} />
-            ) : (
-              <Box pl="15px">
-                <PreviewBox
-                  key={key}
-                  markdownText={m.streaming ? streamingContent : m.content}
-                  chat={true}
-                />
+            // 유저 메시지
+            if (m.role === 'user') {
+              return <UserChatMessage key={key} content={m.content} lines={3} />
+            }
+
+            const contentText = m.streaming ? streamingContent : m.content
+
+            // 데이터 없고 스트리밍 중
+            if (!contentText && isStreaming) {
+              return (
+                <Box key={key} pl="15px" py="10px">
+                  <HStack align="flex-start" spacing={3}>
+                    <SkeletonCircle size="8" />
+                    <Box flex="1" p={4} borderRadius="lg" bg="gray.50" maxW="80%">
+                      <SkeletonText noOfLines={3} spacing="4" skeletonHeight="2" />
+                    </Box>
+                  </HStack>
+                </Box>
+              )
+            }
+
+            // 스트리밍 데이터 출력
+            return (
+              <Box key={key} pl="15px">
+                <PreviewBox markdownText={contentText} chat={true} />
               </Box>
             )
           })}
-        {/* {messageLoading && <ContentsSpinner />} */}
 
+        {/* {messageLoading && <ContentsSpinner />} */}
         {isChatLoading && <LoadingSpinner />}
       </ScrollBox>
     </Flex>

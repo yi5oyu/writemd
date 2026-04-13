@@ -94,4 +94,9 @@ public class TokenRedisService {
 
         log.info("모든 장치 로그아웃 - githubId: {}", githubId);
     }
+
+    public boolean hasActiveSession(String githubId) {
+        String key = REFRESH_TOKEN_PREFIX + githubId;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
 }

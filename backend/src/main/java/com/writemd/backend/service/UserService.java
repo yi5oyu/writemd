@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class UserService {
 
     private static final String GITHUB_TOKEN_CACHE_PREFIX = "GITHUB_TOKEN:";
@@ -184,7 +185,6 @@ public class UserService {
     }
 
     // user 조회
-    @Transactional(readOnly = true)
     public UserDTO userInfo(String githubId) {
         // user 찾기
         UserDTO user = cachingDataService.findUserByGithubId(githubId);
@@ -207,7 +207,6 @@ public class UserService {
     }
 
     // 노트 내용 조회
-    @Transactional(readOnly = true)
     public NoteDTO noteContent(Long noteId) {
         Texts texts = textRepository.findByNotes_id(noteId)
             .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
@@ -253,7 +252,6 @@ public class UserService {
     }
 
     // 채팅 리스트 조회
-    @Transactional(readOnly = true)
     public List<ChatDTO> chatList(Long sessionId) {
         List<Chats> chats = chatRepository.findByConversations_IdWithFetchJoin(sessionId);
 
@@ -265,7 +263,6 @@ public class UserService {
     }
 
     // 세션 리스트 조회
-    @Transactional(readOnly = true)
     public List<ConversationDTO> sessionList(Long noteId) {
         List<Conversations> conversations = conversationRepository.findByNotes_id(noteId);
 

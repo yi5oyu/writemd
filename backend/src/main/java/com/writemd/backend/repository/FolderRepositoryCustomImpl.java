@@ -14,12 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class FolderRepositoryCustomImpl implements FolderRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    @Transactional(readOnly = true)
     public List<Folders> findByUsersWithTemplates(Long userId) {
         return queryFactory
             .selectFrom(folders)

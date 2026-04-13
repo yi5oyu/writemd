@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class ConversationRepositoryCustomImpl implements ConversationRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;

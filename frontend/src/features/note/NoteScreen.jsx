@@ -54,10 +54,11 @@ import useSseConnection from '../../hooks/chat/useSseConnection'
 import useSseStopConnection from '../../hooks/chat/useSseStopConnection'
 import useDirectChat from '../../hooks/chat/useDirectChat'
 
-import modelData from '../../data/model.json'
 import useGithubStructure from '../../hooks/tool/useGithubStructure'
 import useGithubAnalysis from '../../hooks/tool/useGithubAnalysis'
 import useDocumentAnalysis from '../../hooks/tool/useDocumentAnalysis'
+
+import { useAiConfig } from '../../context/AiConfigContext'
 
 const NoteScreen = ({
   user,
@@ -96,6 +97,8 @@ const NoteScreen = ({
   const [tool, setTool] = useState(false)
   const [memo, setMemo] = useState(false)
   const [text, setText] = useState([])
+
+  const { config: modelData, loading: modelDataloading } = useAiConfig()
 
   const { note, loading, error } = useNote(noteId)
 
@@ -266,6 +269,8 @@ const NoteScreen = ({
   const toast = useToast()
 
   const isApiKeyMissing = !apiKeys || apiKeys.length === 0
+
+  const isGuest = user?.githubId?.startsWith('guest:')
 
   // 에러 처리
   useEffect(() => {
@@ -557,7 +562,7 @@ const NoteScreen = ({
 
   // 깃 정보 조회
   const handleGitLoad = useCallback(() => {
-    if (user && user.githubId) {
+    if (!isGuest && user && user.githubId) {
       getRepo({ githubId: user.githubId })
     }
   }, [user, getRepo])
@@ -784,10 +789,12 @@ const NoteScreen = ({
 
   // apiId(selectedAI) 초기화
   useEffect(() => {
-    if (apiKeys && apiKeys.length > 0 && !selectedAI) {
+    if (isGuest && (!apiKeys || apiKeys.length === 0)) {
+      setSelectedAI(0)
+    } else if (apiKeys && apiKeys.length > 0 && !selectedAI) {
       setSelectedAI(apiKeys[0].apiId)
     }
-  }, [apiKeys])
+  }, [apiKeys, isGuest])
 
   // apiKeys 초기화
   useEffect(() => {
@@ -798,6 +805,16 @@ const NoteScreen = ({
 
   // API 키 변경 시 모델 목록 업데이트/선택
   useEffect(() => {
+    if (String(selectedAI) === '0') {
+      const guestModels = ['gpt-5.4-nano']
+      setAvailableModels(guestModels)
+
+      if (!model || !guestModels.includes(model)) {
+        setModel(guestModels[0])
+      }
+      return
+    }
+
     if (selectedAI !== undefined && selectedAI !== null && apiKeys && apiKeys.length > 0) {
       const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
 
@@ -818,7 +835,7 @@ const NoteScreen = ({
       setAvailableModels([])
       setModel('')
     }
-  }, [selectedAI, apiKeys, model])
+  }, [selectedAI, apiKeys, model, modelData])
 
   // 모델 저장
   useEffect(() => {
@@ -1032,11 +1049,11 @@ const NoteScreen = ({
           // console.log('스트리밍 데이터 수신:', data)
 
           // 이벤트 유형별 처리
-          if (data.stage && data.result) {
+          if ((data.stageKey || data.stage) && data.result) {
             // 단계 결과 업데이트
             setStages((prev) => ({
               ...prev,
-              [data.stage]: data.result,
+              [data.stageKey || data.stage]: data.result,
             }))
           }
 
@@ -1399,6 +1416,7 @@ const NoteScreen = ({
                 >
                   <Box mx="auto">
                     <Questionbar
+                      isGuest={isGuest}
                       questionText={questionText}
                       setQuestionText={setQuestionText}
                       handleSendChatMessage={handleSendChatMessage}
@@ -1438,6 +1456,7 @@ const NoteScreen = ({
 
             {boxForm === 'git' && (
               <GitScreen
+                isGuest={isGuest}
                 name={githubName}
                 setName={setGithubName}
                 setGithubText={setGithubText}
@@ -1472,7 +1491,7 @@ const NoteScreen = ({
         </Flex>
       </Flex>
       {/* 로딩 시 Spinner */}
-      {(loading || updateLoading) && <LoadingSpinner />}
+      {(loading || updateLoading || modelDataloading) && <LoadingSpinner />}
     </Box>
   )
 }

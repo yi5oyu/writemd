@@ -6,10 +6,10 @@ import SessionBox from './SessionBox'
 import ErrorToast from '../../components/ui/toast/ErrorToast'
 import LoadingSpinner from '../../components/ui/spinner/LoadingSpinner'
 import SearchFlex from '../../components/ui/search/SearchFlex'
-import modelData from '../../data/model.json'
 import AiSelect from '../../components/ui/select/AiSelect'
 import DeleteModal from '../../components/ui/modals/DeleteModal'
 import useSearchHistory from '../../hooks/auth/useSearchHistory'
+import { useAiConfig } from '../../context/AiConfigContext'
 
 const SessionList = ({
   sessions,
@@ -36,6 +36,8 @@ const SessionList = ({
   const [sessionTitle, setSessionTitle] = useState('')
   const [sessionId, setSessionId] = useState('')
   const [isSetting, setIsSetting] = useState(false)
+
+  const { config, loading } = useAiConfig()
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -136,7 +138,7 @@ const SessionList = ({
     model: model,
     selectedAI: selectedAI,
     setSelectedAI: setSelectedAI,
-    modelData: modelData,
+    modelData: config || {},
   }
 
   return (
@@ -219,7 +221,7 @@ const SessionList = ({
 
       <DeleteModal isOpen={isOpen} onClose={onClose} onClick={confirmDelete} title={sessionTitle} />
 
-      {isChatLoading && <LoadingSpinner />}
+      {(isChatLoading || loading) && <LoadingSpinner />}
     </>
   )
 }

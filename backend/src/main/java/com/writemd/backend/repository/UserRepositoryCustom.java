@@ -1,5 +1,7 @@
 package com.writemd.backend.repository;
 
+import com.writemd.backend.entity.Users;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepositoryCustom {
@@ -15,5 +17,7 @@ public interface UserRepositoryCustom {
     long updateGithubAccessToken(String githubId, String token);
 
     long deleteGithubAccessToken(String githubId);
+
+    List<Users> findAllGuests(String prefix);
 
 }

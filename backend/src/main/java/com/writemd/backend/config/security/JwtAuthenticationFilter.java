@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenRedisService tokenRedisService;
     private final UserRepository userRepository;
 
-    @Value("${app.test.load-test-key}")
+    @Value("${app.test.load-test-key:}")
     private String loadTestKey;
 
     @Override

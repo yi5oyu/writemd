@@ -1,7 +1,6 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.GitContentDTO;
-import com.writemd.backend.dto.GitRepoDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.service.GithubService;
 import java.util.Collections;
@@ -28,7 +27,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Slf4j
 public class GithubController {
-    
+
     private final GithubService githubService;
 
     // 파일 생성/업데이트
@@ -51,28 +50,26 @@ public class GithubController {
 
     // 레포지토리, 하위 폴더/파일 조회
     @GetMapping("/repo/{githubId}")
-    public ResponseEntity<?> getGitInfo(
+    public Mono<ResponseEntity<Object>> getGitInfo(
         @AuthenticationPrincipal UserDTO userDTO,
         @PathVariable String githubId) {
 
         if (userDTO == null) {
             log.warn("인증되지 않은 GitHub API 요청");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Collections.singletonMap("error", "인증 필요"));
+            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Collections.singletonMap("error", "인증 필요")));
         }
 
         String principalName = userDTO.getGithubId();
         log.info("GitHub API 요청. githubId: {}, 인증된 사용자: {}", githubId, principalName);
 
-        try {
-            List<GitRepoDTO> repos = githubService.getGitInfo(githubId)
-                .block();
-            return ResponseEntity.ok(repos);
-        } catch (Exception e) {
-            log.error("GitHub API 오류: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Collections.singletonMap("error", e.getMessage()));
-        }
+        return githubService.getGitInfo(githubId)
+            .map(repos -> ResponseEntity.<Object>ok(repos))
+            .onErrorResume(e -> {
+                log.error("GitHub API 오류: {}", e.getMessage(), e);
+                return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", e.getMessage())));
+            });
     }
 
     @GetMapping("/repo/{owner}/{repo}/contents/{path}")

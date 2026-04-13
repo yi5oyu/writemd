@@ -75,12 +75,13 @@ spring:
             #            sb-mcp-server:
             #              url: http://localhost:9888
             py-mcp-server:
-              uri: http://localhost:9889/sse
+              url: http://py-mcp-server:9889/sse
 
 jwt:
   secret: ${JWT_SECRET}
   access-token-validity: 900000 # 15분
   refresh-token-validity: 604800000 # 7일
+  guest-refresh-token-validity: 86400000 # 1일
 
 management:
   endpoints:
@@ -91,6 +92,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  test:
+    load-test-key: ${LOAD_TEST_KEY:}
 
 server:
   port: 8888
@@ -103,3 +108,7 @@ server:
 logging:
   level:
     org.springframework.ai: INFO
+    reactor.netty.http.client: INFO
+    org.springframework.web.client.DefaultRestClient: WARN
+    org.springframework.web.HttpLogging: WARN
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: WARN

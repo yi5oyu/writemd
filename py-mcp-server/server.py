@@ -1,23 +1,21 @@
+import os
 import uvicorn
-from starlette.applications import Starlette
-from starlette.routing import Mount
-
+from fastapi import FastAPI, Request
 from mcp_tools import mcp
 
-# uv venv
-# .venv\Scripts\activate
-# uv run server.py
+app = FastAPI(title="Writemd MCP Server")
 
-def start_server(host="0.0.0.0", port=9889):
-    """MCP 서버를 시작합니다."""
-    app = Starlette(
-        routes=[
-            Mount('/', app=mcp.sse_app()),
-        ]
-    )
-    
-    print(f"MCP 서버를 {host}:{port} 에서 SSE 모드로 실행합니다.")
-    uvicorn.run(app, host=host, port=port)
+# middleware: 모든 HTTP 요청 필터링
+@app.middleware("http")
+async def bypass_host_validation(request: Request, call_next):
+    # 헤더 덮어쓰기
+    request.scope["headers"] = [
+        (b"host", b"localhost:9889") if key.lower() == b"host" else (key, val)
+        for key, val in request.scope["headers"]
+    ]
+    return await call_next(request)
+
+app.mount("/", mcp.sse_app())
 
 if __name__ == "__main__":
-    start_server()
+    uvicorn.run(app, host="0.0.0.0", port=9889, proxy_headers=True)

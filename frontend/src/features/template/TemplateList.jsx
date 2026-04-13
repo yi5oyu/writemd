@@ -242,12 +242,15 @@ const TemplateList = ({
       {!isReadOnly && (isNewTemplate || selectedTemplate) && <CreateCard select={select} />}
 
       {!isReadOnly && !(isNewTemplate || selectedTemplate) && (
-        <Flex position="absolute" top="10px" right="0" w="auto" alignItems="center">
-          <IconButton
-            bg="transparent"
-            aria-label="새 템플릿 생성"
-            icon={<AddIcon />}
-            _hover={{ bg: 'transparent', color: 'blue.500' }}
+        <Flex position="absolute" top="10px" right="16px" w="auto" alignItems="center" zIndex={2}>
+          <Button
+            colorScheme="blue"
+            size="md"
+            px="5"
+            fontSize="15px"
+            leftIcon={<AddIcon boxSize="12px" />}
+            boxShadow="sm"
+            _hover={{ transform: 'translateY(-1px)', boxShadow: 'md' }}
             onClick={() => {
               setIsNewTemplate(true)
               setSelectedTemplate({
@@ -259,7 +262,9 @@ const TemplateList = ({
               })
               setTemplateText('')
             }}
-          />
+          >
+            새 템플릿
+          </Button>
         </Flex>
       )}
 

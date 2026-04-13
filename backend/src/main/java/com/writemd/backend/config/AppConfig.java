@@ -3,13 +3,14 @@ package com.writemd.backend.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 @Configuration
 @EnableJpaAuditing
 public class AppConfig {
+
     @Bean
-    public RestTemplate restTemplate(){
-        return new RestTemplate();
+    public RestClient restClient(RestClient.Builder builder) {
+        return builder.build();
     }
 }

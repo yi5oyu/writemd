@@ -33,7 +33,7 @@ import {
 } from '@chakra-ui/react'
 import { CheckIcon, DeleteIcon } from '@chakra-ui/icons'
 
-import AiModel from '../../data/model.json'
+import { useAiConfig } from '../../context/AiConfigContext'
 import useDeleteAllUserSessions from '../../hooks/chat/useDeleteAllUserSessions'
 import useDeleteUserData from '../../hooks/auth/useDeleteUserData'
 import useDeleteUser from '../../hooks/auth/useDeleteUser'
@@ -51,6 +51,9 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
   const [aiModel, setAiModel] = useState('openai')
   const [apiKey, setApiKey] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
+  const [isGuest, setIsGuest] = useState(false)
+
+  const { config } = useAiConfig()
 
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
   const { isOpen: isDelDataOpen, onOpen: onDelDataOpen, onClose: onDelDataClose } = useDisclosure()
@@ -75,6 +78,24 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
   const { deleteUser, loading: deletingUser, error: deleteUserError } = useDeleteUser()
 
   const isLoadingSpin = isLoading || deletingChats || deletingData || deletingUser
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        setIsGuest(user?.githubId?.startsWith('guest:'))
+      } catch (e) {
+        console.error('사용자 정보 파싱 오류:', e)
+        setIsGuest(false)
+      }
+    }
+  }, [])
+
+  // 게스트일 때만 공용 키
+  const displayApiKeys = isGuest
+    ? [{ apiId: 0, aiModel: 'gpt-5.4-nano', apiKey: 'Guest' }, ...(apiKeys || [])]
+    : apiKeys || []
 
   // 로그인 상태 유지 스위치 초기화
   useEffect(() => {
@@ -193,19 +214,33 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
 
   // apiId(selectedAI) 초기화
   useEffect(() => {
-    if (apiKeys && apiKeys.length > 0 && !selectedAI) {
-      setSelectedAI(apiKeys[0].apiId)
-      setApi(`${apiKeys[0].aiModel}(${apiKeys[0].apiKey})`)
+    if (displayApiKeys && displayApiKeys.length > 0 && !selectedAI) {
+      setSelectedAI(displayApiKeys[0].apiId)
     }
-  }, [apiKeys])
+  }, [displayApiKeys, selectedAI, setSelectedAI])
 
-  // api 초기화
   useEffect(() => {
-    if (selectedAI && apiKeys && apiKeys.length > 0) {
-      const selectedApiKeyData = apiKeys.find((keyData) => keyData.apiId.toString() === selectedAI)
-      selectedApiKeyData && setApi(`${selectedApiKeyData.aiModel}(${selectedApiKeyData.apiKey})`)
+    if (selectedAI && displayApiKeys && displayApiKeys.length > 0) {
+      const selectedApiKeyData = displayApiKeys.find(
+        (keyData) => String(keyData.apiId) === String(selectedAI)
+      )
+      if (selectedApiKeyData) {
+        if (String(selectedApiKeyData.apiId) === '0') {
+          setApi('기본 제공 API')
+        } else {
+          const displayName =
+            selectedApiKeyData.aiModel === 'openai'
+              ? 'OpenAI'
+              : selectedApiKeyData.aiModel === 'anthropic'
+              ? 'Anthropic'
+              : selectedApiKeyData.aiModel
+          setApi(`${displayName}(${selectedApiKeyData.apiKey})`)
+        }
+      }
+    } else {
+      setApi('선택된 AI 없음')
     }
-  }, [selectedAI, apiKeys])
+  }, [selectedAI, displayApiKeys])
 
   // apikey 저장
   const handleSaveAPI = async (aiModel, apiKey) => {
@@ -283,45 +318,17 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
     }
   }
 
-  // api 삭제
+  // api 키 삭제
   const handleDeleteAPI = async (apiId) => {
     try {
       await deleteApiKey(apiId)
       await fetchApiKeys(user.userId)
-      setSelectedAI('')
-
-      toast({
-        title: 'API 키 삭제 완료',
-        description: 'API 키가 성공적으로 삭제되었습니다.',
-        status: 'success',
-      })
+      setSelectedAI(displayApiKeys[0]?.apiId || '')
+      toast({ title: 'API 키 삭제 완료', status: 'success' })
     } catch (err) {
-      toast({
-        title: 'API 키 삭제 실패',
-        description: 'API 키 삭제 중 오류가 발생했습니다.',
-        status: 'error',
-      })
-      console.error('API 키 삭제 중 오류 발생:', err)
+      toast({ title: 'API 키 삭제 실패', status: 'error' })
     }
   }
-
-  // api키 등록시 업데이트
-  useEffect(() => {
-    if (apiKeys && apiKeys.length > 0 && selectedAI) {
-      const selectedApiKey = apiKeys.find((key) => String(key.apiId) === String(selectedAI))
-      if (selectedApiKey) {
-        const displayName =
-          selectedApiKey.aiModel === 'openai'
-            ? 'OpenAI'
-            : selectedApiKey.aiModel === 'anthropic'
-            ? 'Anthropic'
-            : selectedApiKey.aiModel
-        setApi(`${displayName}(${selectedApiKey.apiKey})`)
-      }
-    } else {
-      setApi('선택된 AI 없음')
-    }
-  }, [selectedAI, apiKeys])
 
   return (
     <>
@@ -501,11 +508,13 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                       mb="5px"
                       variant="outline"
                       colorScheme={
-                        apiKeys && apiKeys.length > 0 && selectedAI
+                        displayApiKeys && displayApiKeys.length > 0 && selectedAI
                           ? (() => {
-                              const selectedApiKey = apiKeys.find(
+                              const selectedApiKey = displayApiKeys.find(
                                 (key) => String(key.apiId) === String(selectedAI)
                               )
+                              if (String(selectedApiKey?.apiId) === '0') return 'purple'
+
                               return selectedApiKey?.aiModel === 'openai'
                                 ? 'green'
                                 : selectedApiKey?.aiModel === 'anthropic'
@@ -518,22 +527,26 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                       {api ? api : '선택된 AI 없음'}
                     </Badge>
                   </Box>
-                  <Tooltip label="API 삭제" placement="top" hasArrow>
-                    <DeleteIcon
-                      position="absolute"
-                      top="0"
-                      right="0"
-                      cursor="pointer"
-                      aria-label="API 삭제"
-                      _hover={{ color: 'red.500' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setConfirm('api')
-                        onDelAPIOpen()
-                      }}
-                      opacity={isLoadingSpin ? 0.5 : 1}
-                    />
-                  </Tooltip>
+
+                  {/* 삭제 아이콘 */}
+                  {String(selectedAI) !== '0' && (
+                    <Tooltip label="API 삭제" placement="top" hasArrow>
+                      <DeleteIcon
+                        position="absolute"
+                        top="0"
+                        right="0"
+                        cursor="pointer"
+                        aria-label="API 삭제"
+                        _hover={{ color: 'red.500' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setConfirm('api')
+                          onDelAPIOpen()
+                        }}
+                        opacity={isLoadingSpin ? 0.5 : 1}
+                      />
+                    </Tooltip>
+                  )}
                 </Flex>
 
                 <Flex direction="column">
@@ -546,10 +559,12 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                     onChange={(event) => setSelectedAI(event.target.value)}
                     value={selectedAI || ''}
                   >
-                    {apiKeys && apiKeys.length > 0 ? (
-                      apiKeys.map((apiKeyData) => (
+                    {displayApiKeys && displayApiKeys.length > 0 ? (
+                      displayApiKeys.map((apiKeyData) => (
                         <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                          {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                          {String(apiKeyData.apiId) === '0'
+                            ? 'gpt-5.4-nano(Guest)'
+                            : `${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
                         </option>
                       ))
                     ) : (
@@ -583,7 +598,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                           OpenAI(ChatGPT)
                         </Heading>
                         <Flex gap={2}>
-                          {AiModel.openai.model.map((m, index) => (
+                          {config?.openai?.model?.map((m, index) => (
                             <Badge variant="outline" colorScheme="green" key={index}>
                               {m}
                             </Badge>
@@ -593,7 +608,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                           Anthropic(Claude)
                         </Heading>
                         <Flex gap={2} wrap="wrap">
-                          {AiModel.anthropic.model.map((m, index) => (
+                          {config?.anthropic?.model?.map((m, index) => (
                             <Badge variant="outline" colorScheme="orange" key={index}>
                               {m}
                             </Badge>

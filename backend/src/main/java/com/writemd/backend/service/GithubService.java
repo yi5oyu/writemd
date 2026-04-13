@@ -1,9 +1,11 @@
 package com.writemd.backend.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.writemd.backend.dto.GitBranchDTO;
 import com.writemd.backend.dto.GitContentDTO;
 import com.writemd.backend.dto.GitRepoDTO;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.graphql.client.HttpGraphQlClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,9 +24,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,10 @@ public class GithubService {
 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
     private final UserService userService;
+
+    //    private final Executor getAsyncExecutor;
 
     // 파일 생성/업데이트
     public Mono<Map<String, Object>> createOrUpdateFile(String owner, String repo, String path, String message,
@@ -110,120 +114,83 @@ public class GithubService {
 
     // 레포지토리, 하위 폴더/파일 조회
     public Mono<List<GitRepoDTO>> getGitInfo(String githubId) {
-
         String accessToken = userService.getGithubAccessToken(githubId);
 
-        return webClient.get()
-            .uri("https://api.github.com/users/{githubId}/repos", githubId)
-            .headers(headers -> headers.setBearerAuth(accessToken))
-            .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
-            })
-            .flatMap(reposList -> {
-                if (reposList == null) {
-                    return Mono.just(Collections.<GitRepoDTO>emptyList());
+        // GraphQL 클라이언트
+        HttpGraphQlClient graphQlClient = HttpGraphQlClient.builder(webClientBuilder)
+            .url("https://api.github.com/graphql")
+            .header("Authorization", "Bearer " + accessToken)
+            .build();
+
+        return graphQlClient.documentName("githubUserInfo")
+            .variable("username", githubId)
+            .execute()
+            .map(response -> {
+                if (!response.isValid()) {
+                    log.error("GraphQL 쿼리 실행 에러: {}", response.getErrors());
+                    return Collections.<GitRepoDTO>emptyList();
                 }
-                // 브랜치
-                List<Mono<GitRepoDTO>> repoMonos = reposList.stream()
-                    .map(repoData -> {
-                        String repoName = (String) repoData.get("name");
-                        Long repoId = ((Number) repoData.get("id")).longValue();
-                        String owner = githubId;
 
-                        return webClient.get()
-                            .uri("https://api.github.com/repos/{owner}/{repo}/branches", owner, repoName)
-                            .headers(headers -> headers.setBearerAuth(accessToken))
-                            .retrieve()
-                            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                            })
-                            .flatMap(branchesList -> {
-                                if (branchesList == null) {
-                                    return Mono.just(GitRepoDTO.builder()
-                                        .repoId(repoId)
-                                        .repo(repoName)
-                                        .branches(Collections.emptyList())
-                                        .build());
-                                }
-                                // main, master 콘텐츠 불러오기
-                                List<Mono<GitBranchDTO>> branchMonos = branchesList.stream()
-                                    .map(branchInfo -> {
-                                        String branchName = (String) branchInfo.get("name");
-                                        if ("main".equals(branchName) || "master".equals(branchName)) {
-                                            return fetchBranchContents(accessToken, owner, repoName,
-                                                branchName);
-                                        } else {
-                                            return Mono.just(GitBranchDTO.builder()
-                                                .branch(branchName)
-                                                .contents(Collections.emptyList())
-                                                .build());
-                                        }
-                                    })
-                                    .collect(Collectors.toList());
+                // nodes JsonNode 트리만 조회
+                JsonNode reposNode = response.field("user.repositories.nodes").toEntity(JsonNode.class);
 
-                                // 모든 브랜치 결과
-                                return Flux.fromIterable(branchMonos)
-                                    .flatMap(mono -> mono)
-                                    .collectList()
-                                    .map(branchDTOs -> GitRepoDTO.builder()
-                                        .repoId(repoId)
-                                        .repo(repoName)
-                                        .branches(branchDTOs)
-                                        .build());
-                            })
-                            .onErrorResume(e -> {
-                                System.err.println(
-                                    "브랜치 목록 가져오기 실패 Repo: " + repoName + ", Error: " + e.getMessage());
-                                return Mono.just(GitRepoDTO.builder()
-                                    .repoId(repoId)
-                                    .repo(repoName)
-                                    .branches(Collections.emptyList())
-                                    .build());
-                            });
-                    })
-                    .collect(Collectors.toList());
-
-                return Flux.fromIterable(repoMonos)
-                    .flatMap(mono -> mono)
-                    .collectList();
+                return parseReposNode(reposNode);
             })
             .onErrorResume(e -> {
-                System.err.println("레포지토리 목록 가져오기 실패 User: " + githubId + ", Error: " + e.getMessage());
+                log.error("GraphQL 통신 실패 User: {}, Error: {}", githubId, e.getMessage());
                 return Mono.just(Collections.emptyList());
             });
-
     }
 
-    private Mono<GitBranchDTO> fetchBranchContents(String accessToken, String owner, String repo, String branchName) {
-        return webClient.get()
-            .uri("https://api.github.com/repos/{owner}/{repo}/contents?ref={branchName}", owner, repo, branchName)
-            .headers(headers -> headers.setBearerAuth(accessToken))
-            .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
-            })
-            .map(contents -> {
-                List<GitContentDTO> contentDTOs = Collections.emptyList();
-                if (contents != null) {
-                    contentDTOs = contents.stream()
-                        .map(content -> GitContentDTO.builder()
-                            .path((String) content.get("path"))
-                            .type((String) content.get("type"))
-                            .sha((String) content.get("sha"))
-                            .build())
-                        .collect(Collectors.toList());
+    // GraphQL JSON 응답 DTO로 변환
+    private List<GitRepoDTO> parseReposNode(JsonNode reposNode) {
+        List<GitRepoDTO> resultList = new ArrayList<>();
+
+        if (reposNode == null || !reposNode.isArray()) {
+            return resultList;
+        }
+
+        for (JsonNode repoNode : reposNode) {
+            Long repoId = repoNode.path("databaseId").asLong(0);
+            String repoName = repoNode.path("name").asText();
+
+            List<GitBranchDTO> branchDTOs = new ArrayList<>();
+            JsonNode branchRef = repoNode.path("defaultBranchRef");
+
+            // main/master
+            if (!branchRef.isMissingNode() && !branchRef.isNull()) {
+                String branchName = branchRef.path("name").asText();
+                JsonNode entries = branchRef.path("target").path("tree").path("entries");
+
+                List<GitContentDTO> contents = new ArrayList<>();
+                if (entries.isArray()) {
+                    for (JsonNode entry : entries) {
+                        String gqlType = entry.path("type").asText();
+                        String mappedType = "blob".equals(gqlType) ? "file" :
+                            ("tree".equals(gqlType) ? "dir" : gqlType);
+
+                        contents.add(GitContentDTO.builder()
+                            .path(entry.path("name").asText())
+                            .type(mappedType)
+                            .sha(entry.path("oid").asText())   // REST API: sha = GraphQL: oid
+                            .build());
+                    }
                 }
-                return GitBranchDTO.builder()
+
+                branchDTOs.add(GitBranchDTO.builder()
                     .branch(branchName)
-                    .contents(contentDTOs)
-                    .build();
-            })
-            .onErrorResume(e -> {
-                System.err.println(
-                    "브랜치 콘텐츠 가져오기 실패 Repo: " + repo + ", Branch: " + branchName + ", Error: " + e.getMessage());
-                return Mono.just(GitBranchDTO.builder()
-                    .branch(branchName)
-                    .contents(Collections.emptyList())
+                    .contents(contents)
                     .build());
-            });
+            }
+
+            resultList.add(GitRepoDTO.builder()
+                .repoId(repoId)
+                .repo(repoName)
+                .branches(branchDTOs)
+                .build());
+        }
+
+        return resultList;
     }
 
     // DTO 변환

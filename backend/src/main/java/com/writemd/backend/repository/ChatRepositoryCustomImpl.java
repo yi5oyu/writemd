@@ -7,9 +7,11 @@ import com.writemd.backend.entity.Chats;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChatRepositoryCustomImpl implements ChatRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;

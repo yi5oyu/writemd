@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class TemplateService {
 
     private final UserRepository userRepository;
@@ -80,8 +81,7 @@ public class TemplateService {
 
         return template;
     }
-
-    @Transactional(readOnly = true)
+    
     public List<FolderDTO> getTemplates(String githubId) {
         // 유저
         UserDTO user = cachingDataService.findUserByGithubId(githubId);

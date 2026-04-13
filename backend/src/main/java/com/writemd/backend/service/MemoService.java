@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class MemoService {
 
     private final MemoRepository memoRepository;
@@ -48,7 +49,6 @@ public class MemoService {
     }
 
     // 메모 전체 조회
-    @Transactional(readOnly = true)
     public List<MemoDTO> getMemos(Long userId) {
         List<Memos> memos = memoRepository.findByUsers_Id(userId);
 

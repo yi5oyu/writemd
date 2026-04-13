@@ -3,6 +3,7 @@ package com.writemd.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.writemd.backend.ai.ChatClientManager;
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.APIDTO;
 import com.writemd.backend.dto.ConversationDTO;
@@ -13,6 +14,7 @@ import com.writemd.backend.prompt.GitHubPrompts;
 import com.writemd.backend.repository.ChatRepository;
 import com.writemd.backend.repository.ConversationRepository;
 import com.writemd.backend.repository.NoteRepository;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,19 +22,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.anthropic.AnthropicChatModel;
-import org.springframework.ai.anthropic.AnthropicChatOptions;
-import org.springframework.ai.anthropic.api.AnthropicApi;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -41,31 +39,24 @@ import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class ChatService {
 
-
-    private final RestTemplate restTemplate;
-    private final ToolCallbackProvider toolCallbackProvider;
+    private final RestClient restClient;
     private final String LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
     private final ChatRepository chatRepository;
@@ -73,64 +64,16 @@ public class ChatService {
     private final NoteRepository noteRepository;
     private final UserService userService;
     private final SseEmitterManager sseEmitterManager;
-    //    private final OAuth2AuthorizedClientService authorizedClientService;
+    // private final OAuth2AuthorizedClientService authorizedClientService;
     private final GitHubPrompts gitHubPrompts;
+    private final ChatClientManager chatClientManager;
     private final CachingDataService cachingDataService;
+    private final AiModelConfigService aiModelConfigService;
+    private final Executor taskExecutor;
+    private final ScheduledExecutorService taskScheduler;
     private final Map<Long, Disposable> activeStreams = new ConcurrentHashMap<>();
 
-
-    // openai(chatgpt) 설정
-    private ChatClient openai(String apikey, String model, Double temperature, Boolean tool) {
-        OpenAiApi openAiApi = OpenAiApi.builder()
-            .apiKey(() -> apikey)
-            .build();
-
-        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
-            .model(model)
-//            .maxTokens()
-            .temperature(temperature);
-
-        if (tool) {
-            optionsBuilder.toolCallbacks(toolCallbackProvider.getToolCallbacks());
-        }
-
-        OpenAiChatOptions openAiChatOptions = optionsBuilder.build();
-
-        OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-            .openAiApi(openAiApi)
-            .defaultOptions(openAiChatOptions)
-            .build();
-
-        return ChatClient.create(openAiChatModel);
-    }
-
-    // anthropic(claude) 설정
-    private ChatClient claude(String apikey, String model, Double temperature, Boolean tool) {
-        AnthropicApi anthropicApi = AnthropicApi.builder()
-            .apiKey(apikey)
-            .build();
-
-        AnthropicChatOptions.Builder optionsBuilder = AnthropicChatOptions.builder()
-            .model(model)
-            .temperature(temperature)
-            .maxTokens(1000);
-
-        if (tool) {
-            optionsBuilder.toolCallbacks(toolCallbackProvider.getToolCallbacks());
-        }
-
-        AnthropicChatOptions anthropicChatOptions = optionsBuilder.build();
-
-        AnthropicChatModel anthropicChatModel = AnthropicChatModel.builder()
-            .anthropicApi(anthropicApi)
-            .defaultOptions(anthropicChatOptions)
-            .build();
-
-        return ChatClient.create(anthropicChatModel);
-    }
-
     // 채팅 조회
-    @Transactional(readOnly = true)
     private List<Message> chatHistory(Long sessionId, String content) {
         List<Chats> chatHistory = chatRepository.findByConversations_IdWithFetchJoin(sessionId);
         List<Message> messages = new ArrayList<>();
@@ -141,9 +84,9 @@ public class ChatService {
         int maxTokens = 3000;
 
         // 최근 메시지부터 역순으로 처리
-        List<Chats> recentHistory = chatHistory.size() > maxHistoryCount ?
-            chatHistory.subList(chatHistory.size() - maxHistoryCount, chatHistory.size()) :
-            chatHistory;
+        List<Chats> recentHistory = chatHistory.size() > maxHistoryCount
+                ? chatHistory.subList(chatHistory.size() - maxHistoryCount, chatHistory.size())
+                : chatHistory;
 
         for (Chats chat : recentHistory) {
             String role = chat.getRole().toLowerCase();
@@ -179,23 +122,20 @@ public class ChatService {
         }
 
         String compressed = text
-            // 연속 공백을 하나로
-            .replaceAll("[ \\t]+", " ")
-            // 연속 줄바꿈 제한
-            .replaceAll("\\n{3,}", "\\n\\n")
-            // 줄바꿈 앞뒤 공백 제거
-            .replaceAll("[ \\t]*\\n[ \\t]*", "\\n")
-            // 문장부호 앞 공백 제거
-            .replaceAll("\\s+([,.!?;:])", "$1")
-            // 문장부호 뒤 공백 정리
-            .replaceAll("([,.!?;:])\\s+", "$1 ")
-            // 괄호 안쪽 공백 제거
-            .replaceAll("\\(\\s+", "(")
-            .replaceAll("\\s+\\)", ")")
-            // 따옴표 안쪽 공백 정리
-            .replaceAll("\"\\s+", "\"")
-            .replaceAll("\\s+\"", "\"")
-            .trim();
+                // 연속 공백을 하나로
+                .replaceAll("[ \\t]+", " ")
+                // 연속 줄바꿈 제한
+                .replaceAll("\\n{3,}", "\\n\\n")
+                // 줄바꿈 앞뒤 공백 제거
+                .replaceAll("[ \\t]*\\n[ \\t]*", "\\n")
+                // 문장부호 앞 공백 제거
+                .replaceAll("\\s+([,.!?;:])", "$1")
+                // 문장부호 뒤 공백 정리
+                .replaceAll("([,.!?;:])\\s+", "$1 ")
+                // 괄호 안쪽 공백 제거
+                .replaceAll("\\(\\s+", "(").replaceAll("\\s+\\)", ")")
+                // 따옴표 안쪽 공백 정리
+                .replaceAll("\"\\s+", "\"").replaceAll("\\s+\"", "\"").trim();
 
         return compressed;
     }
@@ -204,13 +144,10 @@ public class ChatService {
     @Transactional
     public void saveChat(Long sessionId, String role, String content) {
         Conversations conversation = conversationRepository.findById(sessionId)
-            .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
+                .orElseThrow(() -> new IllegalArgumentException("세션 없음"));
 
-        Chats chat = Chats.builder()
-            .conversations(conversation)
-            .role(role)
-            .content(content)
-            .build();
+        Chats chat =
+                Chats.builder().conversations(conversation).role(role).content(content).build();
 
         chatRepository.save(chat);
         conversation.setUpdatedAt(LocalDateTime.now());
@@ -241,9 +178,10 @@ public class ChatService {
     }
 
     @Async
-    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, String processedContent,
-        boolean enableTools) {
-        log.info("STEP 1: 채팅 처리 시작 (sessionId: {}, userId: {}, apiId: {}, model: {})", sessionId, userId, apiId, model);
+    public void chat(Long sessionId, Long userId, Long apiId, String model, String content,
+            String processedContent, boolean enableTools) {
+        log.info("STEP 1: 채팅 처리 시작 (sessionId: {}, userId: {}, apiId: {}, model: {})", sessionId,
+                userId, apiId, model);
 
         Disposable disposable = null;
         try {
@@ -253,7 +191,7 @@ public class ChatService {
             if (api == null) {
                 log.error("STEP 2-2: API 키를 찾을 수 없음, 채팅 중단 - apiId: {}", apiId);
                 sseEmitterManager.sendToSession(sessionId, "error",
-                    "API_NOT_FOUND::API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
+                        "API_NOT_FOUND::API 키 정보를 찾을 수 없습니다. 설정을 확인해주세요.");
                 return;
             }
 
@@ -270,30 +208,31 @@ public class ChatService {
             log.info("STEP 4: 채팅 내역 조회 완료 (메시지 수: {})", messages.size());
 
             // 일반 호출 시도 (문제점 파악용)
-//            log.info("STEP 5: 일반 호출 시도 시작");
-//            try {
-//                chatClient.prompt(new Prompt(messages))
-//                    .call()
-//                    .content();
-//                log.info("STEP 5: 일반 호출 성공 (이 로그가 보이면 일반 호출은 문제 없음)");
-//            } catch (Exception e) {
-//                log.error("STEP 5: 일반 호출 실패: {}", e.getMessage(), e);
-//            }
+            // log.info("STEP 5: 일반 호출 시도 시작");
+            // try {
+            // chatClient.prompt(new Prompt(messages))
+            // .call()
+            // .content();
+            // log.info("STEP 5: 일반 호출 성공 (이 로그가 보이면 일반 호출은 문제 없음)");
+            // } catch (Exception e) {
+            // log.error("STEP 5: 일반 호출 실패: {}", e.getMessage(), e);
+            // }
 
             // 스트림 설정
             log.info("STEP 6: 스트림 설정 시작");
-            Flux<ChatResponse> responseStream = chatClient.prompt(new Prompt(messages))
-                .stream()
-                .chatResponse()
-                .onErrorResume(error -> {
-                    log.error("STEP 6-ERROR: 스트림 오류 발생: {}", error.getMessage());
-                    if (error.getMessage() != null && error.getMessage().contains("message endpoint")) {
-                        log.error("STEP 6-ERROR: 도구 실행 오류 감지 (sessionId: {}): {}", sessionId, error.getMessage());
-                        sseEmitterManager.sendToSession(sessionId, "error", "AI 도구 실행 오류: " + error.getMessage());
-                        return Flux.empty();
-                    }
-                    return Flux.error(error);
-                });
+            Flux<ChatResponse> responseStream = chatClient.prompt(new Prompt(messages)).stream()
+                    .chatResponse().onErrorResume(error -> {
+                        log.error("STEP 6-ERROR: 스트림 오류 발생: {}", error.getMessage());
+                        if (error.getMessage() != null
+                                && error.getMessage().contains("message endpoint")) {
+                            log.error("STEP 6-ERROR: 도구 실행 오류 감지 (sessionId: {}): {}", sessionId,
+                                    error.getMessage());
+                            sseEmitterManager.sendToSession(sessionId, "error",
+                                    "AI 도구 실행 오류: " + error.getMessage());
+                            return Flux.empty();
+                        }
+                        return Flux.error(error);
+                    });
             log.info("STEP 6: 스트림 설정 완료");
 
             StringBuilder fullResponse = new StringBuilder();
@@ -301,105 +240,112 @@ public class ChatService {
 
             // 응답 처리 구독
             disposable = responseStream
-                // 각 chunk 처리
-                .doOnNext(chatResponse -> {
-                    log.debug("STEP 7-CHUNK: 응답 청크 수신");
-                    if (activeStreams.get(sessionId) == null || activeStreams.get(sessionId).isDisposed()) {
-                        log.warn("STEP 7-WARN: 스트림 처리 중 중단 감지 (sessionId: {}), 추가 처리 중단.", sessionId);
-                    }
+                    // 각 chunk 처리
+                    .doOnNext(chatResponse -> {
+                        log.debug("STEP 7-CHUNK: 응답 청크 수신");
+                        if (activeStreams.get(sessionId) == null
+                                || activeStreams.get(sessionId).isDisposed()) {
+                            log.warn("STEP 7-WARN: 스트림 처리 중 중단 감지 (sessionId: {}), 추가 처리 중단.",
+                                    sessionId);
+                        }
 
-                    String chunk = chatResponse.getResult() != null && chatResponse.getResult().getOutput() != null
-                        ? chatResponse.getResult().getOutput().getText()
-                        : "";
-                    if (chunk != null && !chunk.isEmpty()) {
-                        log.debug("STEP 7-CHUNK: 청크 내용: {} (길이: {})",
-                            chunk.length() > 20 ? chunk.substring(0, 20) + "..." : chunk,
-                            chunk.length());
-                        fullResponse.append(chunk);
-                        sseEmitterManager.sendToSession(sessionId, "message", chunk);
-                    } else {
-                        log.debug("STEP 7-CHUNK: 빈 응답 청크 수신 (sessionId: {})", sessionId);
-                    }
-                })
-                // 스트림 처리 중 에러
-                .doOnError(error -> {
-                    log.error("STEP 7-ERROR: AI 스트리밍 중 오류 발생 (sessionId: {}): {}", sessionId, error.getMessage(),
-                        error);
+                        String chunk = chatResponse.getResult() != null
+                                && chatResponse.getResult().getOutput() != null
+                                        ? chatResponse.getResult().getOutput().getText()
+                                        : "";
+                        if (chunk != null && !chunk.isEmpty()) {
+                            log.debug("STEP 7-CHUNK: 청크 내용: {} (길이: {})",
+                                    chunk.length() > 20 ? chunk.substring(0, 20) + "..." : chunk,
+                                    chunk.length());
+                            fullResponse.append(chunk);
+                            sseEmitterManager.sendToSession(sessionId, "message", chunk);
+                        } else {
+                            log.debug("STEP 7-CHUNK: 빈 응답 청크 수신 (sessionId: {})", sessionId);
+                        }
+                    })
+                    // 스트림 처리 중 에러
+                    .doOnError(error -> {
+                        log.error("STEP 7-ERROR: AI 스트리밍 중 오류 (sessionId: {}): {}", sessionId,
+                                error.getMessage(), error);
 
-                    String errorMessage;
-                    String errorType;
+                        String errorMessage;
+                        String errorType;
 
-                    // 에러 메시지 먼저 확인
-                    String message = error.getMessage() != null ? error.getMessage().toLowerCase() : "";
+                        // 에러 메시지 먼저 확인
+                        String message =
+                                error.getMessage() != null ? error.getMessage().toLowerCase() : "";
 
-                    // API 키 관련 오류 체크 (401, invalid_api_key 등)
-                    if (message.contains("401") ||
-                        message.contains("unauthorized") ||
-                        message.contains("invalid_api_key") ||
-                        message.contains("authentication_error")) {
-                        errorType = "INVALID_API_KEY";
-                        errorMessage = "올바르지 않은 API 키입니다. API 설정을 확인해주세요.";
-                        log.error("STEP 7-ERROR: API 키 오류 감지");
+                        // API 키 관련 오류 체크 (401, invalid_api_key 등)
+                        if (message.contains("401") || message.contains("unauthorized")
+                                || message.contains("invalid_api_key")
+                                || message.contains("authentication_error")) {
+                            errorType = "INVALID_API_KEY";
+                            errorMessage = "올바르지 않은 API 키입니다. API 설정을 확인해주세요.";
+                            log.error("STEP 7-ERROR: API 키 오류 감지");
 
-                    } else if (message.contains("429") || message.contains("rate_limit")) {
-                        errorType = "RATE_LIMIT_EXCEEDED";
-                        errorMessage = "API 사용량 제한을 초과했습니다.";
-                        log.error("STEP 7-ERROR: 사용량 제한 초과");
+                        } else if (message.contains("429") || message.contains("rate_limit")) {
+                            errorType = "RATE_LIMIT_EXCEEDED";
+                            errorMessage = "API 사용량 제한을 초과했습니다.";
+                            log.error("STEP 7-ERROR: 사용량 제한 초과");
 
-                    } else if (message.contains("insufficient_quota")) {
-                        errorType = "INSUFFICIENT_QUOTA";
-                        errorMessage = "API 할당량이 부족합니다.";
-                        log.error("STEP 7-ERROR: 할당량 부족");
+                        } else if (message.contains("insufficient_quota")) {
+                            errorType = "INSUFFICIENT_QUOTA";
+                            errorMessage = "API 할당량이 부족합니다.";
+                            log.error("STEP 7-ERROR: 할당량 부족");
 
-                    } else if (message.contains("message endpoint")) {
-                        errorType = "TOOL_EXECUTION_ERROR";
-                        errorMessage = "AI 도구 실행 중 오류 발생: " + error.getMessage();
-                        log.error("STEP 7-ERROR: 도구 실행 오류");
+                        } else if (message.contains("message endpoint")) {
+                            errorType = "TOOL_EXECUTION_ERROR";
+                            errorMessage = "AI 도구 실행 중 오류 발생: " + error.getMessage();
+                            log.error("STEP 7-ERROR: 도구 실행 오류");
 
-                    } else if (error instanceof NonTransientAiException) {
-                        errorType = "AI_SERVICE_ERROR";
-                        errorMessage = "AI 서비스 오류: " + error.getMessage();
-                        log.error("STEP 7-ERROR: NonTransientAiException 발생");
+                        } else if (error instanceof NonTransientAiException) {
+                            errorType = "AI_SERVICE_ERROR";
+                            errorMessage = "AI 서비스 오류: " + error.getMessage();
+                            log.error("STEP 7-ERROR: NonTransientAiException 발생");
 
-                    } else {
-                        errorType = "STREAM_ERROR";
-                        errorMessage = "스트림 처리 중 내부 오류: " + error.getMessage();
-                        log.error("STEP 7-ERROR: 기타 내부 오류 발생");
-                    }
+                        } else {
+                            errorType = "STREAM_ERROR";
+                            errorMessage = "스트림 처리 중 내부 오류: " + error.getMessage();
+                            log.error("STEP 7-ERROR: 기타 내부 오류 발생");
+                        }
 
-                    sseEmitterManager.sendToSession(sessionId, "error", errorType + "::" + errorMessage);
-                })
-                // 스트림 정상 완료
-                .doOnComplete(() -> {
-                    log.info("STEP 8: AI 스트리밍 완료 (sessionId: {}, 총 응답 길이: {})", sessionId, fullResponse.length());
-                    sseEmitterManager.sendToSession(sessionId, "complete", "[DONE]");
-                    // DB 저장
-                    try {
-                        log.info("STEP 9: DB 저장 시작");
-                        saveChat(sessionId, "user", content);
-                        saveChat(sessionId, "assistant", fullResponse.toString());
-                        log.info("STEP 9: 채팅 기록 저장 완료 (assistant) (sessionId: {})", sessionId);
-                    } catch (Exception e) {
-                        log.error("STEP 9-ERROR: 최종 응답 DB 저장 실패 (sessionId: {}): {}", sessionId, e.getMessage(), e);
-                        sseEmitterManager.sendToSession(sessionId, "error", "최종 응답 저장 중 오류 발생");
-                    }
-                })
-                .doFinally(signalType -> {
-                    log.info("STEP 10: 스트림 종료됨 (Signal: {}, sessionId: {})", signalType, sessionId);
-                    activeStreams.remove(sessionId);
-                    log.info("STEP 10: activeStreams에서 제거 완료 (sessionId: {})", sessionId);
-                })
-                .subscribe();
+                        sseEmitterManager.sendToSession(sessionId, "error",
+                                errorType + "::" + errorMessage);
+                    })
+                    // 스트림 정상 완료
+                    .doOnComplete(() -> {
+                        log.info("STEP 8: AI 스트리밍 완료 (sessionId: {}, 총 응답 길이: {})", sessionId,
+                                fullResponse.length());
+                        sseEmitterManager.sendToSession(sessionId, "complete", "[DONE]");
+                        // DB 저장
+                        try {
+                            log.info("STEP 9: DB 저장 시작");
+                            saveChat(sessionId, "user", content);
+                            saveChat(sessionId, "assistant", fullResponse.toString());
+                            log.info("STEP 9: 채팅 기록 저장 완료 (assistant) (sessionId: {})", sessionId);
+                        } catch (Exception e) {
+                            log.error("STEP 9-ERROR: 최종 응답 DB 저장 실패 (sessionId: {}): {}", sessionId,
+                                    e.getMessage(), e);
+                            sseEmitterManager.sendToSession(sessionId, "error", "최종 응답 저장 중 오류 발생");
+                        }
+                    }).doFinally(signalType -> {
+                        log.info("STEP 10: 스트림 종료됨 (Signal: {}, sessionId: {})", signalType,
+                                sessionId);
+                        activeStreams.remove(sessionId);
+                        log.info("STEP 10: activeStreams에서 제거 완료 (sessionId: {})", sessionId);
+                    }).subscribe();
 
             if (disposable != null && !disposable.isDisposed()) {
                 activeStreams.put(sessionId, disposable);
                 log.info("STEP 11: 새 스트림 구독 시작 및 activeStreams에 추가됨 (sessionId: {})", sessionId);
             } else {
-                log.warn("STEP 11-WARN: 스트림 구독 후 Disposable 객체가 null이거나 이미 취소됨 (sessionId: {})", sessionId);
+                log.warn("STEP 11-WARN: 스트림 구독 후 Disposable 객체가 null이거나 이미 취소됨 (sessionId: {})",
+                        sessionId);
             }
 
         } catch (Exception e) {
-            log.error("STEP ERROR: 채팅 처리 중 예외 발생 (sessionId: {}): {}", sessionId, e.getMessage(), e);
+            log.error("STEP ERROR: 채팅 처리 중 예외 발생 (sessionId: {}): {}", sessionId, e.getMessage(),
+                    e);
 
             String errorMessage;
             String errorType = "GENERAL_ERROR";
@@ -419,8 +365,8 @@ public class ChatService {
                 String message = nte.getMessage() != null ? nte.getMessage().toLowerCase() : "";
                 log.error("STEP ERROR: 상세 오류 메시지: {}", message);
 
-                if (message.contains("invalid_api_key") || message.contains("authentication_error") || message.contains(
-                    "401")) {
+                if (message.contains("invalid_api_key") || message.contains("authentication_error")
+                        || message.contains("401")) {
                     errorMessage = "잘못된 API 키 또는 인증 오류입니다.";
                     errorType = "INVALID_API_KEY";
                     log.error("STEP ERROR: API 키 또는 인증 오류 감지");
@@ -448,8 +394,8 @@ public class ChatService {
 
     //
     @Async
-    public CompletableFuture<String> directChat(Long userId, Long apiId, String model, String content,
-        boolean enableTools) {
+    public CompletableFuture<String> directChat(Long userId, Long apiId, String model,
+            String content, boolean enableTools) {
         APIDTO api = cachingDataService.findApiKey(userId, apiId);
         String aiModel = api.getAiModel();
         String apiKey = api.getApiKey();
@@ -460,23 +406,18 @@ public class ChatService {
         messages.add(new UserMessage(content));
 
         try {
-            return CompletableFuture.completedFuture(
-                chatClient.prompt()
-                    .messages(messages)
-                    .call()
-                    .content()
-            );
+            return CompletableFuture
+                    .completedFuture(chatClient.prompt().messages(messages).call().content());
         } catch (Exception e) {
-            return CompletableFuture.failedFuture(
-                new RuntimeException("채팅 실패: " + e.getMessage(), e)
-            );
+            return CompletableFuture
+                    .failedFuture(new RuntimeException("채팅 실패: " + e.getMessage(), e));
         }
     }
 
     // 단일 파일 분석
     @Async
-    public CompletableFuture<Map<String, Object>> generateDocumentAnalysis(Long userId, Long apiId, String model,
-        String content) {
+    public CompletableFuture<Map<String, Object>> generateDocumentAnalysis(Long userId, Long apiId,
+            String model, String content) {
         log.info("문서 분석 시작 - userId: {}, apiId: {}, model: {}", userId, apiId, model);
 
         long startTime = System.currentTimeMillis();
@@ -498,37 +439,36 @@ public class ChatService {
             String prompt = gitHubPrompts.createDocumentAnalysisPrompt(content);
 
             // AI 응답 처리
-            return processAiResponse(chatClient, prompt, aiModel)
-                .thenApply(result -> {
-                    long endTime = System.currentTimeMillis();
-                    long analysisTime = endTime - startTime;
+            return processAiResponse(chatClient, prompt, aiModel).thenApply(result -> {
+                long endTime = System.currentTimeMillis();
+                long analysisTime = endTime - startTime;
 
-                    Map<String, Object> finalResult = new HashMap<>();
-                    finalResult.put("content", result.get("content"));
-                    finalResult.put("analysisTime", analysisTime);
+                Map<String, Object> finalResult = new HashMap<>();
+                finalResult.put("content", result.get("content"));
+                finalResult.put("analysisTime", analysisTime);
 
-                    // 토큰 사용량 정보 추가
-                    if (result.containsKey("tokenUsage")) {
-                        finalResult.put("tokenUsage", result.get("tokenUsage"));
-                    }
+                // 토큰 사용량 정보 추가
+                if (result.containsKey("tokenUsage")) {
+                    finalResult.put("tokenUsage", result.get("tokenUsage"));
+                }
 
-                    log.info("문서 분석 완료 - 소요시간: {}ms", analysisTime);
-                    return finalResult;
-                })
-                .exceptionally(ex -> {
-                    long endTime = System.currentTimeMillis();
-                    long analysisTime = endTime - startTime;
+                log.info("문서 분석 완료 - 소요시간: {}ms", analysisTime);
+                return finalResult;
+            }).exceptionally(ex -> {
+                long endTime = System.currentTimeMillis();
+                long analysisTime = endTime - startTime;
 
-                    log.error("문서 분석 실패: {}", ex.getMessage(), ex);
+                log.error("문서 분석 실패: {}", ex.getMessage(), ex);
 
-                    Map<String, Object> errorResult = new HashMap<>();
-                    errorResult.put("error", true);
-                    errorResult.put("message", getErrorMessage(ex));
-                    errorResult.put("analysisTime", analysisTime);
-                    errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("error", true);
+                errorResult.put("message", getErrorMessage(ex));
+                errorResult.put("analysisTime", analysisTime);
+                errorResult.put("tokenUsage",
+                        Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
 
-                    return errorResult;
-                });
+                return errorResult;
+            });
 
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
@@ -540,7 +480,8 @@ public class ChatService {
             errorResult.put("error", true);
             errorResult.put("message", getErrorMessage(e));
             errorResult.put("analysisTime", analysisTime);
-            errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
+            errorResult.put("tokenUsage",
+                    Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
 
             return CompletableFuture.completedFuture(errorResult);
         }
@@ -548,8 +489,8 @@ public class ChatService {
 
     // 깃허브 구조 정리
     @Async
-    public CompletableFuture<Map<String, Object>> githubRepoStructure(Long userId, Long apiId, String model,
-        String repo, String githubId, String branch, Integer maxDepth) {
+    public CompletableFuture<Map<String, Object>> githubRepoStructure(Long userId, Long apiId,
+            String model, String repo, String githubId, String branch, Integer maxDepth) {
         try {
             // GitHub 접근 토큰
             String accessToken = getGithubAccessToken(githubId);
@@ -562,21 +503,22 @@ public class ChatService {
             ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
             // 프롬프트 생성
-            String prompt = gitHubPrompts.createRepoStructurePrompt(githubId, repo, branch, accessToken);
+            String prompt =
+                    gitHubPrompts.createRepoStructurePrompt(githubId, repo, branch, accessToken);
 
             // 응답 요청 및 처리
             return processAiResponse(chatClient, prompt, aiModel);
         } catch (Exception e) {
             log.error("GitHub 레포지토리 구조 분석 실패: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(
-                new RuntimeException("GitHub 레포지토리 구조 분석 실패: " + e.getMessage(), e)
-            );
+                    new RuntimeException("GitHub 레포지토리 구조 분석 실패: " + e.getMessage(), e));
         }
     }
 
+    // 깃허브 레포지토리 분석
     @Async
-    public CompletableFuture<Map<String, Object>> githubRepoStageAnalysis(Long userId, Long apiId, String model,
-        String repo, String githubId, String branch, Integer maxDepth) {
+    public CompletableFuture<Map<String, Object>> githubRepoStageAnalysis(Long userId, Long apiId,
+            String model, String repo, String githubId, String branch, Integer maxDepth) {
 
         log.info("GitHub 레포지토리 단계별 분석 시작 준비: {}/{}", githubId, repo);
 
@@ -592,7 +534,7 @@ public class ChatService {
             }
 
             // GitHub 접근 토큰
-            String accessToken = getGithubAccessToken(githubId);
+            final String accessToken = (apiId != 0) ? getGithubAccessToken(githubId) : "";
 
             // 분석 결과 저장
             Map<String, String> stageResults = new ConcurrentHashMap<>();
@@ -618,177 +560,139 @@ public class ChatService {
             startInfo.put("branch", branch);
             sseEmitterManager.sendToNamedSession(emitterId, "analysisStarted", startInfo);
 
-            Function<String, CompletableFuture<Void>> sendStageResult = (stageName) -> {
-                try {
-                    // 현재 단계 번호 계산
-                    int currentStage = 0;
-                    String displayName = "";
-
-                    switch (stageName) {
-                        case "basicInfo":
-                            currentStage = 1;
-                            displayName = "기본 정보 분석";
-                            break;
-                        case "techStack":
-                            currentStage = 2;
-                            displayName = "기술 스택 분석";
-                            break;
-                        case "codeStructure":
-                            currentStage = 3;
-                            displayName = "코드 구조 분석";
-                            break;
-                        case "configQuality":
-                            currentStage = 4;
-                            displayName = "설정 및 품질 분석";
-                            break;
-                        case "securityWorkflow":
-                            currentStage = 5;
-                            displayName = "보안 및 워크플로우 분석";
-                            break;
-                        case "conclusion":
-                            currentStage = 6;
-                            displayName = "결론 및 개선점 분석";
-                            break;
-                    }
-
-                    Map<String, Object> stageUpdate = new HashMap<>();
-                    stageUpdate.put("stage", displayName);
-                    stageUpdate.put("stageNumber", currentStage);
-                    stageUpdate.put("totalStages", 6);
-                    stageUpdate.put("result", stageResults.get(stageName));
-                    stageUpdate.put("status", "completed");
-//                    stageUpdate.put("timestamp", System.currentTimeMillis());
-
-                    // 토큰 사용량
-                    stageUpdate.put("tokenUsage", new HashMap<>(tokenUsage));
-
-                    // 프론트엔드로 전송
-                    sseEmitterManager.sendToNamedSession(emitterId, "stageComplete", stageUpdate);
-
-                    return CompletableFuture.completedFuture(null);
-                } catch (Exception e) {
-                    log.error("단계 결과 전송 실패: {}, 이미터ID: {}, 오류: {}",
-                        stageName, emitterId, e.getMessage());
-                    return CompletableFuture.failedFuture(e);
-                }
-            };
-
             // 단계 1: 기본 정보/주요 특징
-            return processStage(
-                emitterId, model, githubId, repo, branch, accessToken,
-                gitHubPrompts.createRepoBasicInfoPrompt(githubId, repo, branch, accessToken),
-                "basicInfo", 1, 6, stageResults, api, tokenUsage, limitCheckTokenUsage)
-                .thenCompose(v -> sendStageResult.apply("basicInfo"))
+            return processStage(emitterId, model, githubId, repo, branch, accessToken, gitHubPrompts
+                    .createRepoBasicInfoPrompt(githubId, repo, branch, accessToken), "basicInfo", 1,
+                    6, stageResults, api, tokenUsage, limitCheckTokenUsage).thenCompose(
+                            v -> sendStageResult("basicInfo", emitterId, stageResults, tokenUsage))
 
-                // 단계 2: 기술 스택/아키텍처
-                .thenCompose(v -> processStage(
-                    emitterId, model, githubId, repo, branch, accessToken,
-                    gitHubPrompts.createRepoTechStackPrompt(githubId, repo, branch, accessToken),
-                    "techStack", 2, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
-                .thenCompose(v -> sendStageResult.apply("techStack"))
+                            // 단계 2: 기술 스택/아키텍처
+                            .thenCompose(v -> processStage(emitterId, model, githubId, repo, branch,
+                                    accessToken,
+                                    gitHubPrompts.createRepoTechStackPrompt(githubId, repo, branch,
+                                            accessToken),
+                                    "techStack", 2, 6, stageResults, api, tokenUsage,
+                                    limitCheckTokenUsage))
+                            .thenCompose(v -> sendStageResult("techStack", emitterId, stageResults,
+                                    tokenUsage))
 
-                // 단계 3: 코드 구조/핵심 코드
-                .thenCompose(v -> processStage(
-                    emitterId, model, githubId, repo, branch, accessToken,
-                    gitHubPrompts.createRepoCodeStructurePrompt(githubId, repo, branch, accessToken),
-                    "codeStructure", 3, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
-                .thenCompose(v -> sendStageResult.apply("codeStructure"))
+                            // 단계 3: 코드 구조/핵심 코드
+                            .thenCompose(v -> processStage(emitterId, model, githubId, repo, branch,
+                                    accessToken,
+                                    gitHubPrompts.createRepoCodeStructurePrompt(githubId, repo,
+                                            branch, accessToken),
+                                    "codeStructure", 3, 6, stageResults, api, tokenUsage,
+                                    limitCheckTokenUsage))
+                            .thenCompose(v -> sendStageResult("codeStructure", emitterId,
+                                    stageResults, tokenUsage))
 
-                // 단계 4: 설정, 환경, 코드 품질
-                .thenCompose(v -> processStage(
-                    emitterId, model, githubId, repo, branch, accessToken,
-                    gitHubPrompts.createRepoConfigQualityPrompt(githubId, repo, branch, accessToken),
-                    "configQuality", 4, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
-                .thenCompose(v -> sendStageResult.apply("configQuality"))
+                            // 단계 4: 설정, 환경, 코드 품질
+                            .thenCompose(v -> processStage(emitterId, model, githubId, repo, branch,
+                                    accessToken,
+                                    gitHubPrompts.createRepoConfigQualityPrompt(githubId, repo,
+                                            branch, accessToken),
+                                    "configQuality", 4, 6, stageResults, api, tokenUsage,
+                                    limitCheckTokenUsage))
+                            .thenCompose(v -> sendStageResult("configQuality", emitterId,
+                                    stageResults, tokenUsage))
 
-                // 단계 5: 보안, 성능, 워크플로우
-                .thenCompose(v -> processStage(
-                    emitterId, model, githubId, repo, branch, accessToken,
-                    gitHubPrompts.createRepoSecurityWorkflowPrompt(githubId, repo, branch, accessToken),
-                    "securityWorkflow", 5, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
-                .thenCompose(v -> sendStageResult.apply("securityWorkflow"))
+                            // 단계 5: 보안, 성능, 워크플로우
+                            .thenCompose(v -> processStage(emitterId, model, githubId, repo, branch,
+                                    accessToken,
+                                    gitHubPrompts.createRepoSecurityWorkflowPrompt(githubId, repo,
+                                            branch, accessToken),
+                                    "securityWorkflow", 5, 6, stageResults, api, tokenUsage,
+                                    limitCheckTokenUsage))
+                            .thenCompose(v -> sendStageResult("securityWorkflow", emitterId,
+                                    stageResults, tokenUsage))
 
-                // 단계 6: 결론/개선점
-                .thenCompose(v -> processStage(
-                    emitterId, model, githubId, repo, branch, accessToken,
-                    gitHubPrompts.createRepoConclusionPrompt(githubId, repo, branch, accessToken),
-                    "conclusion", 6, 6, stageResults, api, tokenUsage, limitCheckTokenUsage))
-                .thenCompose(v -> sendStageResult.apply("conclusion"))
+                            // 단계 6: 결론/개선점
+                            .thenCompose(v -> processStage(emitterId, model, githubId, repo, branch,
+                                    accessToken,
+                                    gitHubPrompts.createRepoConclusionPrompt(githubId, repo, branch,
+                                            accessToken),
+                                    "conclusion", 6, 6, stageResults, api, tokenUsage,
+                                    limitCheckTokenUsage))
+                            .thenCompose(v -> sendStageResult("conclusion", emitterId, stageResults,
+                                    tokenUsage))
 
-                // 결과 통합
-                .thenApply(v -> {
-                    log.info("GitHub 레포지토리 단계별 분석 완료: {}/{}", githubId, repo);
+                            // 결과 통합
+                            .thenApply(v -> {
+                                log.info("GitHub 레포지토리 단계별 분석 완료: {}/{}", githubId, repo);
 
-                    // 분석 종료 시간
-                    long endTime = System.currentTimeMillis();
-                    long duration = endTime - startTime;
+                                // 분석 종료 시간
+                                long endTime = System.currentTimeMillis();
+                                long duration = endTime - startTime;
 
-                    // 분석 시간
-                    long minutes = duration / (1000 * 60);
-                    long seconds = (duration / 1000) % 60;
-                    String formattedDuration = minutes + "분 " + seconds + "초";
+                                // 분석 시간
+                                long minutes = duration / (1000 * 60);
+                                long seconds = (duration / 1000) % 60;
+                                String formattedDuration = minutes + "분 " + seconds + "초";
 
-                    // 전체 분석 결과
-                    String combinedAnalysis = combineAnalysisResults(stageResults, githubId, repo);
+                                // 전체 분석 결과
+                                String combinedAnalysis =
+                                        combineAnalysisResults(stageResults, githubId, repo);
 
-                    // 최종 결과(내용/메타데이터 분리)
-                    finalResult.put("content", combinedAnalysis);
-                    finalResult.put("sections", new HashMap<>(stageResults));
+                                // 최종 결과(내용/메타데이터 분리)
+                                finalResult.put("content", combinedAnalysis);
+                                finalResult.put("sections", new HashMap<>(stageResults));
 
-                    // 메타데이터
-                    Map<String, Object> metadata = new HashMap<>();
-                    metadata.put("analysisTime", duration);
-                    metadata.put("formattedAnalysisTime", formattedDuration);
-                    metadata.put("tokenUsage", tokenUsage);
-                    finalResult.put("metadata", metadata);
+                                // 메타데이터
+                                Map<String, Object> metadata = new HashMap<>();
+                                metadata.put("analysisTime", duration);
+                                metadata.put("formattedAnalysisTime", formattedDuration);
+                                metadata.put("tokenUsage", tokenUsage);
+                                finalResult.put("metadata", metadata);
 
-                    // 최종 결과 전송
-                    sseEmitterManager.sendToNamedSession(emitterId, "analysisComplete", finalResult);
+                                // 최종 결과 전송
+                                sseEmitterManager.sendToNamedSession(emitterId, "analysisComplete",
+                                        finalResult);
 
-                    // SSE 연결 완료 처리
-                    sseEmitterManager.completeNamedSession(emitterId);
+                                // SSE 연결 완료 처리
+                                sseEmitterManager.completeNamedSession(emitterId);
 
-                    return finalResult;
-                })
-                .exceptionally(ex -> {
-                    log.error("GitHub 레포지토리 단계별 분석 실패: {}/{}, 오류: {}",
-                        githubId, repo, ex.getMessage(), ex);
+                                return finalResult;
+                            }).exceptionally(ex -> {
+                                log.error("GitHub 레포지토리 단계별 분석 실패: {}/{}, 오류: {}", githubId, repo,
+                                        ex.getMessage(), ex);
 
-                    String errorMessage = getErrorMessage(ex);
+                                String errorMessage = getErrorMessage(ex);
 
-                    // 오류 정보 저장
-                    finalResult.put("error", true);
-                    finalResult.put("message", errorMessage);
+                                // 오류 정보 저장
+                                finalResult.put("error", true);
+                                finalResult.put("message", errorMessage);
 
-                    // 분석 종료 시간
-                    long endTime = System.currentTimeMillis();
-                    long duration = endTime - startTime;
+                                // 분석 종료 시간
+                                long endTime = System.currentTimeMillis();
+                                long duration = endTime - startTime;
 
-                    // 메타데이터
-                    Map<String, Object> metadata = new HashMap<>();
-                    metadata.put("analysisTime", duration);
-                    metadata.put("tokenUsage", tokenUsage);
-                    finalResult.put("metadata", metadata);
+                                // 메타데이터
+                                Map<String, Object> metadata = new HashMap<>();
+                                metadata.put("analysisTime", duration);
+                                metadata.put("tokenUsage", tokenUsage);
+                                finalResult.put("metadata", metadata);
 
-                    // 결과 있으면 포함
-                    if (!stageResults.isEmpty()) {
-                        String partialAnalysis = combineAnalysisResults(stageResults, githubId, repo);
-                        finalResult.put("content", partialAnalysis);
-                        finalResult.put("sections", new HashMap<>(stageResults));
-                        finalResult.put("partial", true);
-                    }
+                                // 결과 있으면 포함
+                                if (!stageResults.isEmpty()) {
+                                    String partialAnalysis =
+                                            combineAnalysisResults(stageResults, githubId, repo);
+                                    finalResult.put("content", partialAnalysis);
+                                    finalResult.put("sections", new HashMap<>(stageResults));
+                                    finalResult.put("partial", true);
+                                }
 
-                    // 초기화 오류 전송
-                    sseEmitterManager.sendToNamedSession(emitterId, "analysisError", finalResult);
+                                // 초기화 오류 전송
+                                sseEmitterManager.sendToNamedSession(emitterId, "analysisError",
+                                        finalResult);
 
-                    // SSE 연결 완료(오류 발생 시)
-                    sseEmitterManager.completeNamedSession(emitterId);
+                                // SSE 연결 완료(오류 발생 시)
+                                sseEmitterManager.completeNamedSession(emitterId);
 
-                    return finalResult;
-                });
+                                return finalResult;
+                            });
         } catch (Exception e) {
-            log.error("GitHub 레포지토리 단계별 분석 초기화 실패: {}/{}, 오류: {}",
-                githubId, repo, e.getMessage(), e);
+            log.error("GitHub 레포지토리 단계별 분석 초기화 실패: {}/{}, 오류: {}", githubId, repo, e.getMessage(),
+                    e);
 
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("error", true);
@@ -798,7 +702,8 @@ public class ChatService {
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             errorResult.put("analysisTime", duration);
-            errorResult.put("tokenUsage", Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
+            errorResult.put("tokenUsage",
+                    Map.of("totalTokens", 0, "promptTokens", 0, "completionTokens", 0));
 
             // 초기화 오류 전송
             sseEmitterManager.sendToNamedSession(emitterId, "initError", errorResult);
@@ -810,42 +715,26 @@ public class ChatService {
         }
     }
 
-    private CompletableFuture<Void> processStage(
-        String emitterId, String model, String githubId, String repo, String branch, String accessToken,
-        String prompt, String stageKey, int currentStage, int totalStages,
-        Map<String, String> stageResults, APIDTO api, Map<String, Integer> tokenUsage,
-        Map<String, Integer> limitCheckTokenUsage) {
+    private CompletableFuture<Void> processStage(String emitterId, String model, String githubId,
+            String repo, String branch, String accessToken, String prompt, String stageKey,
+            int currentStage, int totalStages, Map<String, String> stageResults, APIDTO api,
+            Map<String, Integer> tokenUsage, Map<String, Integer> limitCheckTokenUsage) {
 
-        log.info("분석 단계 {}/{} 시작: {} - {}/{}",
-            currentStage, totalStages, stageKey, githubId, repo);
+        log.info("분석 단계 {}/{} 시작: {} - {}/{}", currentStage, totalStages, stageKey, githubId, repo);
 
         String aiModel = api.getAiModel();
         String apiKey = api.getApiKey();
 
-        // 단계 시작 이벤트 전송 (추가)
-        String displayName = "";
-        switch (stageKey) {
-            case "basicInfo":
-                displayName = "기본 정보 분석";
-                break;
-            case "techStack":
-                displayName = "기술 스택 분석";
-                break;
-            case "codeStructure":
-                displayName = "코드 구조 분석";
-                break;
-            case "configQuality":
-                displayName = "설정 및 품질 분석";
-                break;
-            case "securityWorkflow":
-                displayName = "보안 및 워크플로우 분석";
-                break;
-            case "conclusion":
-                displayName = "결론 및 개선점 분석";
-                break;
-            default:
-                displayName = stageKey;
-        }
+        // 단계 시작 이벤트 전송
+        String displayName = switch (stageKey) {
+            case "basicInfo" -> "기본 정보 분석";
+            case "techStack" -> "기술 스택 분석";
+            case "codeStructure" -> "코드 구조 분석";
+            case "configQuality" -> "설정 및 품질 분석";
+            case "securityWorkflow" -> "보안 및 워크플로우 분석";
+            case "conclusion" -> "결론 및 개선점 분석";
+            default -> stageKey;
+        };
 
         Map<String, Object> stageStartInfo = new HashMap<>();
         stageStartInfo.put("stage", displayName);
@@ -853,111 +742,98 @@ public class ChatService {
         stageStartInfo.put("stageNumber", currentStage);
         stageStartInfo.put("totalStages", totalStages);
         stageStartInfo.put("status", "started");
-//        stageStartInfo.put("timestamp", System.currentTimeMillis());
+        // stageStartInfo.put("timestamp", System.currentTimeMillis());
 
         sseEmitterManager.sendToNamedSession(emitterId, "stageStarted", stageStartInfo);
 
         // CompletableFuture 생성
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        // 타임아웃(3분)
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
+        // 타임아웃(5분)
+        ScheduledFuture<?> timeoutTask = taskScheduler.schedule(() -> {
             if (!future.isDone()) {
                 future.completeExceptionally(
-                    new TimeoutException("단계 " + stageKey + " 처리 시간이 초과되었습니다.")
-                );
+                        new TimeoutException("단계 " + stageKey + " 처리 시간이 초과되었습니다."));
             }
         }, 5, TimeUnit.MINUTES);
 
-        // 비동기 실행
+        // 현재 총 토큰 사용량 확인
+        int currentLimitCheckTokens = limitCheckTokenUsage.getOrDefault("totalTokens", 0);
+
+        // 모델 TPM 기반으로 임계값 동적 계산
+        int TOKEN_THRESHOLD = resolveTokenThreshold(aiModel, model);
+        // log.info("토큰 임계값: {}", TOKEN_THRESHOLD);
+        if (currentLimitCheckTokens >= TOKEN_THRESHOLD) {
+            Map<String, Object> waitInfo = new HashMap<>();
+            waitInfo.put("stage", stageKey);
+            waitInfo.put("stageNumber", currentStage);
+            waitInfo.put("totalStages", totalStages);
+            waitInfo.put("waitingForTokens", true);
+            waitInfo.put("tokenUsage", new HashMap<>(tokenUsage));
+            waitInfo.put("message", "토큰 사용량 제한에 도달했습니다. 분석이 일시 중지되었습니다. 1분 후 자동으로 재개됩니다.");
+
+            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", waitInfo);
+
+            log.info("토큰 사용량({}개)이 임계값({}개)을 초과 1분 대기: 단계 {}", currentLimitCheckTokens,
+                    TOKEN_THRESHOLD, stageKey);
+
+            taskScheduler.schedule(() -> {
+                synchronized (limitCheckTokenUsage) {
+                    limitCheckTokenUsage.put("promptTokens", 0);
+                    limitCheckTokenUsage.put("completionTokens", 0);
+                    limitCheckTokenUsage.put("totalTokens", 0);
+                }
+                // 1분 뒤에 실제 실행 로직 실행 (60초 대기. TPM 제한 리셋 시간)
+                runAnalysisTask(emitterId, model, prompt, stageKey, currentStage, totalStages,
+                        stageResults, api, tokenUsage, limitCheckTokenUsage, future, timeoutTask);
+            }, 60, TimeUnit.SECONDS);
+        } else {
+            runAnalysisTask(emitterId, model, prompt, stageKey, currentStage, totalStages,
+                    stageResults, api, tokenUsage, limitCheckTokenUsage, future, timeoutTask);
+        }
+
+        return future;
+    }
+
+
+    private void runAnalysisTask(String emitterId, String model, String prompt, String stageKey,
+            int currentStage, int totalStages, Map<String, String> stageResults, APIDTO api,
+            Map<String, Integer> tokenUsage, Map<String, Integer> limitCheckTokenUsage,
+            CompletableFuture<Void> finalFuture, ScheduledFuture<?> timeoutTask) {
+
+        // taskExecutor 사용해 비동기 실행
         CompletableFuture.runAsync(() -> {
             try {
-                // 현재 총 토큰 사용량 확인
-                int currentLimitCheckTokens = limitCheckTokenUsage.getOrDefault("totalTokens", 0);
-
-                // 토큰 임계값
-                final int TOKEN_THRESHOLD = 20000;
-
-                if (currentLimitCheckTokens >= TOKEN_THRESHOLD) {
-                    Map<String, Object> waitInfo = new HashMap<>();
-                    waitInfo.put("stage", stageKey);
-                    waitInfo.put("stageNumber", currentStage);
-                    waitInfo.put("totalStages", totalStages);
-                    waitInfo.put("waitingForTokens", true);
-                    waitInfo.put("tokenUsage", new HashMap<>(tokenUsage));
-                    waitInfo.put("message", "토큰 사용량 제한에 도달했습니다. 분석이 일시 중지되었습니다. 잠시 후 자동으로 재개됩니다.");
-
-                    sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", waitInfo);
-
-                    log.info("토큰 사용량({}개)이 임계값({}개)을 초과하여 60초 대기 시작: 단계 {}",
-                        currentLimitCheckTokens, TOKEN_THRESHOLD, stageKey);
-
-                    // 60초 대기(TPM 제한 리셋 시간)
-                    Thread.sleep(60000);
-
-                    synchronized (limitCheckTokenUsage) {
-                        limitCheckTokenUsage.put("promptTokens", 0);
-                        limitCheckTokenUsage.put("completionTokens", 0);
-                        limitCheckTokenUsage.put("totalTokens", 0);
-                    }
-
-                    // 대기 종료 알림
-                    Map<String, Object> resumeInfo = new HashMap<>();
-                    resumeInfo.put("stage", stageKey);
-                    resumeInfo.put("stageNumber", currentStage);
-                    resumeInfo.put("totalStages", totalStages);
-                    resumeInfo.put("resuming", true);
-                    resumeInfo.put("message", "토큰 사용량 제한 대기가 완료되었습니다. 분석을 재개합니다.");
-
-                    sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", resumeInfo);
-
-                    log.info("토큰 대기 시간 종료, 분석 재개: 단계 {}", stageKey);
-                }
-
-                // ChatClient 초기화
+                String aiModel = api.getAiModel();
+                String apiKey = api.getApiKey();
                 ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
-                // 요청 메시지 구성
                 List<Message> messages = new ArrayList<>();
                 messages.add(new UserMessage(prompt));
 
-                // API 호출 시도(rate limit 오류 처리)
                 ChatResponse response = null;
                 int maxRetries = 3;
                 int retryCount = 0;
 
+                // API 호출 시도 (Rate Limit 발생 시 지연 재시도 포함)
                 while (retryCount <= maxRetries) {
                     try {
-                        // 동기식 API 호출
-                        response = chatClient.prompt()
-                            .messages(messages)
-                            .call()
-                            .chatResponse();
-                        // 성공하면 루프 종료
+                        response = chatClient.prompt().messages(messages).call().chatResponse();
                         break;
                     } catch (Exception e) {
-                        // rate_limit_exceeded 오류 확인
-                        if (e.getMessage() != null &&
-                            e.getMessage().toLowerCase().contains("rate_limit_exceeded")) {
-
+                        if (e.getMessage() != null
+                                && e.getMessage().toLowerCase().contains("rate_limit_exceeded")) {
                             retryCount++;
                             if (retryCount > maxRetries) {
-                                throw e; // 최대 재시도 횟수 초과
+                                throw e;
                             }
 
-                            // 오류 메시지에서 대기 시간 추출
-                            String waitTimeStr = null;
+                            // 대기 시간 계산
+                            long waitTime = 5000;
                             Pattern pattern = Pattern.compile("Please try again in (\\d+)ms");
                             Matcher matcher = pattern.matcher(e.getMessage());
                             if (matcher.find()) {
-                                waitTimeStr = matcher.group(1);
-                            }
-
-                            // 대기 시간 계산(최소 1초, 없으면 기본 5초)
-                            long waitTime = 5000;
-                            if (waitTimeStr != null) {
-                                waitTime = Long.parseLong(waitTimeStr) + 500;
+                                waitTime = Long.parseLong(matcher.group(1)) + 500;
                             }
 
                             // 기다려야 한다는 메시지 전송
@@ -968,32 +844,28 @@ public class ChatService {
                             rateLimitInfo.put("rateLimitWaiting", true);
                             rateLimitInfo.put("waitTime", waitTime);
                             rateLimitInfo.put("retryCount", retryCount);
-                            rateLimitInfo.put("message", String.format(
-                                "API 요청 제한에 도달했습니다. %d밀리초 후 자동으로 재시도합니다. (시도 %d/%d)",
-                                waitTime, retryCount, maxRetries));
+                            rateLimitInfo.put("message",
+                                    String.format("API 요청 제한. %dms 후 재시도합니다. (%d/%d)", waitTime,
+                                            retryCount, maxRetries));
 
-                            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", rateLimitInfo);
+                            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate",
+                                    rateLimitInfo);
 
-                            log.warn("Rate limit 도달 (단계: {}). {}ms 후 재시도 ({}/{})",
-                                stageKey, waitTime, retryCount, maxRetries);
+                            log.warn("Rate limit 도달. {}ms 후 재시도 ({}/{})", waitTime, retryCount,
+                                    maxRetries);
 
-                            // 권장된 시간만큼 대기
                             Thread.sleep(waitTime);
 
                             // 재시도 알림
                             Map<String, Object> retryInfo = new HashMap<>();
                             retryInfo.put("stage", stageKey);
-                            retryInfo.put("stageNumber", currentStage);
-                            retryInfo.put("totalStages", totalStages);
                             retryInfo.put("retrying", true);
-                            retryInfo.put("retryCount", retryCount);
-                            retryInfo.put("message", String.format(
-                                "API 요청을 재시도합니다. (시도 %d/%d)",
-                                retryCount, maxRetries));
+                            retryInfo.put("message", String.format("API 요청을 재시도합니다. (시도 %d/%d)",
+                                    retryCount, maxRetries));
 
-                            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate", retryInfo);
+                            sseEmitterManager.sendToNamedSession(emitterId, "stageUpdate",
+                                    retryInfo);
                         } else {
-                            // rate_limit_exceeded가 아닌 다른 오류는 바로 예외 발생
                             throw e;
                         }
                     }
@@ -1003,60 +875,100 @@ public class ChatService {
                 String content = response.getResult().getOutput().getText();
                 stageResults.put(stageKey, content);
 
-                log.info("분석 단계 {}/{} 완료: {} - 응답 길이: {}자",
-                    currentStage, totalStages, stageKey, content.length());
-
-                // 토큰 사용량 로깅 및 합산
+                // 토큰 사용량 업데이트
                 Usage usageInfo = response.getMetadata().getUsage();
                 if (usageInfo != null) {
-                    Integer promptTokens = usageInfo.getPromptTokens() != null ? usageInfo.getPromptTokens() : 0;
-                    Integer completionTokens =
-                        usageInfo.getCompletionTokens() != null ? usageInfo.getCompletionTokens() : 0;
-                    Integer totalTokens = usageInfo.getTotalTokens() != null ? usageInfo.getTotalTokens() : 0;
+                    int pt = usageInfo.getPromptTokens() != null ? usageInfo.getPromptTokens() : 0;
+                    int ct = usageInfo.getCompletionTokens() != null
+                            ? usageInfo.getCompletionTokens()
+                            : 0;
+                    int tt = usageInfo.getTotalTokens() != null ? usageInfo.getTotalTokens() : 0;
 
-                    // 토큰 사용량 누적 업데이트 (스레드 안전하게)
                     synchronized (tokenUsage) {
-                        tokenUsage.put("promptTokens", tokenUsage.getOrDefault("promptTokens", 0) + promptTokens);
-                        tokenUsage.put("completionTokens",
-                            tokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
-                        tokenUsage.put("totalTokens", tokenUsage.getOrDefault("totalTokens", 0) + totalTokens);
+                        tokenUsage.merge("promptTokens", pt, Integer::sum);
+                        tokenUsage.merge("completionTokens", ct, Integer::sum);
+                        tokenUsage.merge("totalTokens", tt, Integer::sum);
                     }
-
                     synchronized (limitCheckTokenUsage) {
-                        limitCheckTokenUsage.put("promptTokens",
-                            limitCheckTokenUsage.getOrDefault("promptTokens", 0) + promptTokens);
-                        limitCheckTokenUsage.put("completionTokens",
-                            limitCheckTokenUsage.getOrDefault("completionTokens", 0) + completionTokens);
-                        limitCheckTokenUsage.put("totalTokens",
-                            limitCheckTokenUsage.getOrDefault("totalTokens", 0) + totalTokens);
+                        limitCheckTokenUsage.merge("promptTokens", pt, Integer::sum);
+                        limitCheckTokenUsage.merge("completionTokens", ct, Integer::sum);
+                        limitCheckTokenUsage.merge("totalTokens", tt, Integer::sum);
                     }
-
-                    log.info("단계 {} 토큰 사용량 - 프롬프트: {}, 응답: {}, 총: {} (전체 누적: {}, 제한체크용: {})",
-                        stageKey, promptTokens, completionTokens, totalTokens,
-                        tokenUsage.get("totalTokens"), limitCheckTokenUsage.get("totalTokens"));
                 }
 
-                // 완료 처리
                 timeoutTask.cancel(false);
-                future.complete(null);
-            } catch (Exception e) {
-                log.error("단계 {} 처리 중 오류 발생: {}", stageKey, e.getMessage(), e);
-                timeoutTask.cancel(false);
-                future.completeExceptionally(e);
-            } finally {
-                // 실행 완료 후 스케줄러 종료
-                scheduler.shutdown();
-            }
-        });
+                finalFuture.complete(null);
 
-        return future;
+            } catch (Exception e) {
+                log.error("단계 {} 처리 중 오류 발생: {}", stageKey, e.getMessage());
+                timeoutTask.cancel(false);
+                finalFuture.completeExceptionally(e);
+            }
+        }, taskExecutor);
     }
 
-    private String combineAnalysisResults(Map<String, String> stageResults, String githubId, String repo) {
+    private CompletableFuture<Void> sendStageResult(String stageName, String emitterId,
+            Map<String, String> stageResults, Map<String, Integer> tokenUsage) {
+
+        try {
+            // 현재 단계 번호 및 표시 이름 계산
+            int currentStage = 0;
+            String displayName = "";
+
+            switch (stageName) {
+                case "basicInfo":
+                    currentStage = 1;
+                    displayName = "기본 정보 분석";
+                    break;
+                case "techStack":
+                    currentStage = 2;
+                    displayName = "기술 스택 분석";
+                    break;
+                case "codeStructure":
+                    currentStage = 3;
+                    displayName = "코드 구조 분석";
+                    break;
+                case "configQuality":
+                    currentStage = 4;
+                    displayName = "설정 및 품질 분석";
+                    break;
+                case "securityWorkflow":
+                    currentStage = 5;
+                    displayName = "보안 및 워크플로우 분석";
+                    break;
+                case "conclusion":
+                    currentStage = 6;
+                    displayName = "결론 및 개선점 분석";
+                    break;
+            }
+
+            Map<String, Object> stageUpdate = new HashMap<>();
+            stageUpdate.put("stage", displayName);
+            stageUpdate.put("stageKey", stageName);
+            stageUpdate.put("stageNumber", currentStage);
+            stageUpdate.put("totalStages", 6);
+            stageUpdate.put("result", stageResults.get(stageName));
+            stageUpdate.put("status", "completed");
+            stageUpdate.put("tokenUsage", new HashMap<>(tokenUsage));
+
+            // 클라이언트 전송
+            sseEmitterManager.sendToNamedSession(emitterId, "stageComplete", stageUpdate);
+
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            log.error("단계 결과 전송 실패: {}, emitterID: {}, 오류: {}", stageName, emitterId,
+                    e.getMessage());
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    private String combineAnalysisResults(Map<String, String> stageResults, String githubId,
+            String repo) {
         StringBuilder fullReport = new StringBuilder();
 
         // 보고서 제목
-        fullReport.append("# GitHub 레포지토리 분석 보고서: ").append(githubId).append("/").append(repo).append("\n\n");
+        fullReport.append("# GitHub 레포지토리 분석 보고서: ").append(githubId).append("/").append(repo)
+                .append("\n\n");
 
         // 각 단계 결과 통합 (순서대로)
         appendSectionIfAvailable(fullReport, stageResults, "basicInfo");
@@ -1083,16 +995,59 @@ public class ChatService {
             return "선택한 AI 모델을 찾을 수 없습니다.";
         } else if (message.contains("413")) {
             return "분석할 문서가 너무 큽니다.";
-        } else if (message.contains("500") || message.contains("502") ||
-            message.contains("503") || message.contains("504")) {
+        } else if (message.contains("500") || message.contains("502") || message.contains("503")
+                || message.contains("504")) {
             return "AI 서비스 서버 오류가 발생했습니다.";
         } else {
             return "문서 분석 중 오류가 발생했습니다.";
         }
     }
 
+    private int resolveTokenThreshold(String aiModel, String model) {
+        final int FALLBACK_THRESHOLD = 20000;
+        final double SAFETY_MARGIN = 0.8;
+
+        try {
+            JsonNode config = aiModelConfigService.getLatestModelConfig();
+            if (config == null) {
+                log.warn("AI 모델 설정 미로드 상태: TOKEN_THRESHOLD fallback 적용 ({})", FALLBACK_THRESHOLD);
+                return FALLBACK_THRESHOLD;
+            }
+
+            JsonNode providerNode = config.get(aiModel);
+            if (providerNode == null || providerNode.isMissingNode()) {
+                log.warn("알 수 없는 AI provider '{}': TOKEN_THRESHOLD fallback 적용", aiModel);
+                return FALLBACK_THRESHOLD;
+            }
+
+            JsonNode tokenLimits = providerNode.get("token_limits");
+            if (tokenLimits == null || !tokenLimits.has(model)) {
+                log.warn("모델 '{}' 토큰 제한 설정 없음: TOKEN_THRESHOLD fallback 적용", model);
+                return FALLBACK_THRESHOLD;
+            }
+
+            JsonNode modelLimits = tokenLimits.get(model);
+            JsonNode tpmNode = modelLimits.get("TPM");
+            if (tpmNode == null || tpmNode.isNull()) {
+                log.warn("모델 '{}' TPM 값 없음: TOKEN_THRESHOLD fallback 적용", model);
+                return FALLBACK_THRESHOLD;
+            }
+
+            int threshold = (int) (tpmNode.asInt() * SAFETY_MARGIN);
+            log.debug("TOKEN_THRESHOLD 동적 계산 완료 - model: {}, TPM: {}, threshold(80%): {}", model,
+                    tpmNode.asInt(), threshold);
+            return threshold;
+
+        } catch (Exception e) {
+            log.error("TOKEN_THRESHOLD 동적 계산 실패, fallback 적용 ({}): {}", FALLBACK_THRESHOLD,
+                    e.getMessage());
+            return FALLBACK_THRESHOLD;
+        }
+    }
+
     // 단계별 통합
-    private void appendSectionIfAvailable(StringBuilder report, Map<String, String> results, String key) {
+    private void appendSectionIfAvailable(StringBuilder report, Map<String, String> results,
+            String key) {
         if (results.containsKey(key) && !results.get(key).isEmpty()) {
             report.append(results.get(key)).append("\n\n");
         }
@@ -1105,25 +1060,17 @@ public class ChatService {
 
     // ChatClient 초기화
     private ChatClient initializeChatClient(String aiModel, String apiKey, String model) {
-        if (aiModel.equals("openai")) {
-            return openai(apiKey, model, 0.7, true);
-        } else if (aiModel.equals("anthropic")) {
-            return claude(apiKey, model, 0.7, true);
-        } else {
-            throw new RuntimeException("지원하지 않는 AI 모델: " + aiModel);
-        }
+        return chatClientManager.createClient(aiModel, apiKey, model, 0.7, true,
+                Duration.ofSeconds(300));
     }
 
     // 응답 처리
-    private CompletableFuture<Map<String, Object>> processAiResponse(ChatClient chatClient, String prompt,
-        String aiModel) {
+    private CompletableFuture<Map<String, Object>> processAiResponse(ChatClient chatClient,
+            String prompt, String aiModel) {
         List<Message> messages = new ArrayList<>();
         messages.add(new UserMessage(prompt));
 
-        ChatResponse chatResponse = chatClient.prompt()
-            .messages(messages)
-            .call()
-            .chatResponse();
+        ChatResponse chatResponse = chatClient.prompt().messages(messages).call().chatResponse();
 
         // 응답 콘텐츠 추출
         String content = chatResponse.getResult().getOutput().getText();
@@ -1199,9 +1146,13 @@ public class ChatService {
 
     // 연결 확인
     public boolean isConnected() {
-        String url = LMSTUDIO_BASE_URL + "/models";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        return response.getStatusCode().is2xxSuccessful();
+        try {
+            return restClient.get().uri(LMSTUDIO_BASE_URL + "/models").retrieve().toBodilessEntity()
+                    .getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.error("LM Studio 연결 실패: {}", e.getMessage());
+            return false;
+        }
     }
 
     // 채팅 요청
@@ -1226,37 +1177,36 @@ public class ChatService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-        ResponseEntity<String> response = restTemplate.exchange(
-            LMSTUDIO_BASE_URL + "/chat/completions", HttpMethod.POST, entity, String.class);
+
+        String responseBody = restClient.post().uri(LMSTUDIO_BASE_URL + "/chat/completions")
+                .contentType(MediaType.APPLICATION_JSON).body(payload).retrieve()
+                .body(String.class);
 
         // LM Studio 응답 저장
-        saveChat(sessionId, "assistant", extractResponseBody(response.getBody()));
-
-        return response.getBody();
+        if (responseBody != null) {
+            saveChat(sessionId, "assistant", extractResponseBody(responseBody));
+        }
+        return responseBody;
     }
 
 
     // 세션 생성
+    @Transactional
     public ConversationDTO createSession(Long noteId, String title) {
         Notes note = noteRepository.findById(noteId)
-            .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
+                .orElseThrow(() -> new IllegalArgumentException("노트 없음"));
 
-        Conversations conversations = Conversations.builder()
-            .notes(note)
-            .title(title)
-            .build();
+        Conversations conversations = Conversations.builder().notes(note).title(title).build();
 
         Conversations savedConversations = conversationRepository.save(conversations);
 
-        return ConversationDTO.builder()
-            .conversationId(savedConversations.getId())
-            .title(savedConversations.getTitle())
-            .createdAt(savedConversations.getCreatedAt())
-            .updatedAt(savedConversations.getUpdatedAt())
-            .build();
+        return ConversationDTO.builder().conversationId(savedConversations.getId())
+                .title(savedConversations.getTitle()).createdAt(savedConversations.getCreatedAt())
+                .updatedAt(savedConversations.getUpdatedAt()).build();
     }
 
     // 채팅 세션 삭제
+    @Transactional
     public void deleteSession(Long sessionId) {
         conversationRepository.deleteById(sessionId);
     }
@@ -1272,11 +1222,7 @@ public class ChatService {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(responseBody);
-            return rootNode.path("choices")
-                .get(0)
-                .path("message")
-                .path("content")
-                .asText();
+            return rootNode.path("choices").get(0).path("message").path("content").asText();
         } catch (Exception e) {
             e.printStackTrace();
             return "오류";

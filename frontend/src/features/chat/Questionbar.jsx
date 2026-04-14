@@ -25,6 +25,7 @@ const Questionbar = ({
   handleStopStreaming,
   isStoppingSse,
   availableModels,
+  isGuest,
 }) => {
   const MAX_TEXTAREA_HEIGHT = 168
 
@@ -116,7 +117,8 @@ const Questionbar = ({
     >
       <Textarea
         ref={textareaRef}
-        placeholder="질문"
+        placeholder="질문을 입력해주세요."
+        maxLength={5000}
         value={questionText}
         onChange={(e) => {
           if (!active && !isSendMessaging) setQuestionText(e.target.value)
@@ -233,14 +235,21 @@ const Questionbar = ({
               onClick={(e) => e.stopPropagation()}
               value={selectedAI || ''}
             >
-              {apiKeys && apiKeys.length > 0 ? (
-                apiKeys.map((apiKeyData) => (
-                  <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
-                    {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
-                  </option>
-                ))
+              {/* 게스트 */}
+              {isGuest ? (
+                <option value="guest-model">gpt-5.4-nano(Guest)</option>
               ) : (
-                <option disabled>사용 가능한 API 키 없음</option>
+                <>
+                  {apiKeys && apiKeys.length > 0 ? (
+                    apiKeys.map((apiKeyData) => (
+                      <option key={apiKeyData.apiId} value={apiKeyData.apiId}>
+                        {`${apiKeyData.aiModel}(${apiKeyData.apiKey})`}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>사용 가능한 API 키 없음</option>
+                  )}
+                </>
               )}
             </Select>
             <Select

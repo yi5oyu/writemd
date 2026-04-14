@@ -41,6 +41,23 @@ const SessionList = ({
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
+  const [isGuest, setIsGuest] = useState(false)
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        setIsGuest(user?.githubId?.startsWith('guest:'))
+      } catch (e) {
+        console.error('사용자 정보 파싱 오류:', e)
+        setIsGuest(false)
+      }
+    } else {
+      setIsGuest(true)
+    }
+  }, [])
+
   // 검색 기록 관리
   const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
     'session-search-history',
@@ -195,6 +212,11 @@ const SessionList = ({
             maxH="calc(100vh - 200px)"
             overflowY="auto"
             p="10px"
+            pointerEvents={isGuest ? 'none' : 'auto'}
+            userSelect={isGuest ? 'none' : 'auto'}
+            filter={isGuest ? 'blur(5px)' : 'none'}
+            opacity={isGuest ? 0.8 : 1}
+            transition="all 0.8s ease"
           >
             {filteredAndSortedSessions.map((session) => (
               <SessionBox

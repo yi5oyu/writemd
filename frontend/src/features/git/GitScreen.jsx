@@ -65,6 +65,7 @@ const GitScreen = ({
   tokenUsage,
   stages,
 }) => {
+  const [isGuest, setIsGuest] = useState(false)
   const [active, setActive] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [commit, setCommit] = useState(false)
@@ -76,6 +77,29 @@ const GitScreen = ({
 
   const scrollContainerRef = useRef(null)
   const toast = useToast()
+
+  // 게스트 판별
+  useEffect(() => {
+    const userData = localStorage.getItem('user')
+    let currentIsGuest = false
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        currentIsGuest = user?.githubId?.startsWith('guest:')
+      } catch (e) {
+        console.error('사용자 정보 파싱 오류:', e)
+      }
+    } else {
+      currentIsGuest = true
+    }
+
+    setIsGuest(currentIsGuest)
+
+    if (currentIsGuest) {
+      setGithubRepo('yi5oyu/writemd')
+    }
+  }, [])
 
   // 리스트 토글, 폴더 선택/토글
   const handleRepoClick = useCallback(
@@ -280,7 +304,18 @@ const GitScreen = ({
         />
 
         <TabPanels flex="1" overflow="hidden">
-          <TabPanel p="0" h="100%" display="flex" flexDirection="column" bg="gray.100">
+          <TabPanel
+            p="0"
+            h="100%"
+            display="flex"
+            flexDirection="column"
+            bg="gray.100"
+            pointerEvents={isGuest ? 'none' : 'auto'}
+            userSelect={isGuest ? 'none' : 'auto'}
+            filter={isGuest ? 'blur(5px)' : 'none'}
+            opacity={isGuest ? 0.8 : 1}
+            transition="all 0.8s ease"
+          >
             <Flex height="100%" flex="1" overflow="hidden">
               <Box flex="1" maxW="100%" display="flex" flexDirection="column" overflow="hidden">
                 <Box
@@ -388,6 +423,7 @@ const GitScreen = ({
               </Box>
             </Flex>
           </TabPanel>
+
           <TabPanel p="0" h="100%" display="flex" flexDirection="column" bg="gray.100">
             <Flex
               flexDirection="column"

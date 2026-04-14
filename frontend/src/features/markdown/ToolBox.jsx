@@ -42,12 +42,12 @@ const ToolBox = ({
           disabled={isApiKeyMissing}
           onClick={handleDocAnalyze}
         />
-        <UtilityBtn
+        {/* <UtilityBtn
           icon={BsEmojiSmile}
           label="이모지/뱃지"
           onClick={() => setTool(!tool)}
           setColor={tool ? true : false}
-        />
+        /> */}
         <UtilityBtn icon={BiSolidEraser} label="텍스트 삭제" onClick={onClearText} />
         <UtilityBtn icon={copied ? CheckIcon : CopyIcon} label="텍스트 복사" onClick={handleCopy} />
         <UtilityBtn

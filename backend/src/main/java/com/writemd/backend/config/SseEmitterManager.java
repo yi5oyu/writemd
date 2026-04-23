@@ -74,6 +74,10 @@ public class SseEmitterManager {
         }
     }
 
+    public SseEmitter getEmitter(Long sessionId) {
+        return emitters.get(sessionId);
+    }
+
     public void removeNamedEmitter(String emitterId) {
         SseEmitter emitter = namedEmitters.get(emitterId);
         if (emitter != null) {

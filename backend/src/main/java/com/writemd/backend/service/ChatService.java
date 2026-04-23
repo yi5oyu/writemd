@@ -179,8 +179,7 @@ public class ChatService {
     }
 
     @Async
-    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, String processedContent,
-        boolean enableTools) {
+    public void chat(Long sessionId, Long userId, Long apiId, String model, String content, String processedContent) {
         log.info("STEP 1: 채팅 처리 시작 (sessionId: {}, userId: {}, apiId: {}, model: {})", sessionId, userId, apiId, model);
 
         Disposable disposable = null;

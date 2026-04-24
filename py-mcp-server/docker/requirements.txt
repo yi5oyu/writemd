@@ -1,6 +1,6 @@
 httpx>=0.28.1
 mcp[cli]>=1.6.0
-pygithub>=2.6.1
+githubkit==0.15.3
 starlette>=0.46.2
 uvicorn>=0.34.2
 fastapi>=0.115.0

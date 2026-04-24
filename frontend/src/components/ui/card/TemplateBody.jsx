@@ -17,6 +17,7 @@ const TemplateBody = ({
           placeholder="파일명을 입력하세요."
           fontWeight="bold"
           borderRadius="none"
+          maxLength={35}
           value={selectedTemplate && selectedTemplate.title}
           onChange={(e) => {
             selectedTemplate &&

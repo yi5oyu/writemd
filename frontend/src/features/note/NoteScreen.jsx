@@ -1004,7 +1004,7 @@ const NoteScreen = ({
         toast({
           position: 'top',
           title: '저장소 확인 실패',
-          description: `저장소 확인 중 오류가 발생했습니다. (상태 코드: ${repoResponse.status})`,
+          description: `저장소 확인 중 오류가 발생했습니다.`,
           status: 'error',
           duration: 7000,
           isClosable: true,
@@ -1012,7 +1012,7 @@ const NoteScreen = ({
         setProgressSteps((prev) => {
           const newStep = {
             id: `step-${Date.now()}-${prev.length}`,
-            text: `저장소 확인 실패: ${githubId}/${repo} (상태 코드: ${repoResponse.status})`,
+            text: `저장소 확인 실패: ${githubId}/${repo}`,
             timestamp: new Date().toLocaleTimeString(),
             isLatest: true,
             status: 'error',

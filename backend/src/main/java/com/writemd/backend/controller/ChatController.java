@@ -1,5 +1,6 @@
 package com.writemd.backend.controller;
 
+import com.writemd.backend.ai.ChatManager;
 import com.writemd.backend.config.SseEmitterManager;
 import com.writemd.backend.dto.ChatDTO;
 import com.writemd.backend.dto.ConversationDTO;
@@ -41,6 +42,7 @@ public class ChatController {
     private final UserService userService;
     private final ChatService chatService;
     private final SseEmitterManager sseEmitterManager;
+    private final ChatManager chatManager;
 
     // 채팅 시작
     @PostMapping("/{userId}/{sessionId}/{apiId}")
@@ -59,7 +61,7 @@ public class ChatController {
         }
 
         try {
-            chatService.chat(sessionId, userId, apiId, model, content, processedContent, false);
+            chatManager.processChatRequest(sessionId, userId, apiId, model, content, processedContent);
             return ResponseEntity.accepted().body("채팅 시작. SSE 연결 중...");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("채팅 시작 실패: " + e.getMessage());
@@ -229,7 +231,7 @@ public class ChatController {
                             "분석 작업이 시작되었습니다.")));
 
                     // 비동기 분석 시작
-                    chatService.githubRepoStageAnalysis(userId, apiId, model, repo, userDTO.getGithubId(),
+                    chatService.githubRepoStageAnalysis(githubId, userId, apiId, model, repo, userDTO.getGithubId(),
                         branch != null ? branch : "main", maxDepth != null ? maxDepth : 3);
 
                     return ResponseEntity.ok(Map.of("status", "started", "emitterId", emitterId));
@@ -247,8 +249,8 @@ public class ChatController {
             }
         } else {
             // 스트리밍 없이 동기 방식으로 처리 (기존 코드와 동일)
-            return chatService.githubRepoStageAnalysis(userId, apiId, model, repo, userDTO.getGithubId(), branch,
-                maxDepth).thenApply(response -> {
+            return chatService.githubRepoStageAnalysis(githubId, userId, apiId, model, repo, userDTO.getGithubId(),
+                branch, maxDepth).thenApply(response -> {
                 log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자", repo,
                     response.containsKey("content") ? ((String) response.get("content")).length() : 0);
 
@@ -366,10 +368,18 @@ public class ChatController {
     // SSE 채팅
     @GetMapping(value = "/stream/{sessionId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@PathVariable Long sessionId) {
+        log.info("SSE 연결");
         SseEmitter emitter = new SseEmitter(300_000L);
         // SseEmitter 객체 등록
         try {
+            log.info("SSE 객체 등록(sseEmitterManager)");
             sseEmitterManager.addEmitter(sessionId, emitter);
+
+            chatManager.triggerPendingChat(sessionId);
+
+            emitter.send(SseEmitter.event()
+                .name("connect")
+                .data("connected_session_" + sessionId));
         } catch (Exception e) {
             log.error("{}연결 등록 실패", sessionId, e);
             emitter.completeWithError(new RuntimeException("SSE 연결 등록 실패 " + sessionId));
@@ -440,6 +450,9 @@ public class ChatController {
     @DeleteMapping("/{sessionId}")
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         chatService.deleteSession(sessionId);
+
+        sseEmitterManager.completeSession(sessionId);
+
         // 204
         return ResponseEntity.noContent().build();
     }
@@ -448,6 +461,9 @@ public class ChatController {
     @DeleteMapping("/sessions/user/{userId}")
     public ResponseEntity<Void> deleteAllUserSessions(@PathVariable Long userId) {
         chatService.deleteAllSessions(userId);
+
+        sseEmitterManager.completeNamedSession("a" + userId);
+
         // 204
         return ResponseEntity.noContent().build();
     }

@@ -1,7 +1,6 @@
-import axios from 'axios'
-import { API_URL } from '../config/api'
+import apiClient from './apiClient'
 
 export const fetchAiModelConfig = async () => {
-  const response = await axios.get(`${API_URL}/api/config/models`)
+  const response = await apiClient.get('/api/config/models')
   return response.data
 }

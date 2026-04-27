@@ -89,7 +89,8 @@ public class SecurityConfig {
                     return null;
                 })
                 .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
-                    "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse", "/api/config/**")
+                    "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse", "/api/config/**",
+                    "/api/guest/**")
                 .permitAll()
                 .requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()
                 .anyRequest().authenticated())

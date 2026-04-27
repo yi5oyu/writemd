@@ -80,6 +80,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests((requests) -> requests
                 .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
+                .requestMatchers("/api/guest/**").permitAll()
                 // 인증 권한
                 .requestMatchers("/**").access((authentication, context) -> {
                     String userKey = context.getRequest().getHeader("X-Load-Test-Key");
@@ -89,8 +90,7 @@ public class SecurityConfig {
                     return null;
                 })
                 .requestMatchers("/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html", "/v1/**",
-                    "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse", "/api/config/**",
-                    "/api/guest/**")
+                    "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/v1/**", "/sse", "/api/config/**")
                 .permitAll()
                 .requestMatchers("/profile/**", "/api/**", "/h2-console/**").authenticated()
                 .anyRequest().authenticated())

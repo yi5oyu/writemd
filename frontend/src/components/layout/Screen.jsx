@@ -11,6 +11,20 @@ import useSaveMarkdown from '../../hooks/note/useSaveMarkdown'
 import NoteList from '../../features/note/NoteList'
 import useDeleteNote from '../../hooks/note/useDeleteNote'
 
+// localStorage 읽고 없으면 sessionStorage
+const getUserFromStorage = () => {
+  const raw = localStorage.getItem('user') || sessionStorage.getItem('user')
+  return raw ? JSON.parse(raw) : null
+}
+
+const setUserToStorage = (userObj) => {
+  if (localStorage.getItem('user')) {
+    localStorage.setItem('user', JSON.stringify(userObj))
+  } else {
+    sessionStorage.setItem('user', JSON.stringify(userObj))
+  }
+}
+
 const Screen = ({
   currentScreen,
   setCurrentScreen,
@@ -85,12 +99,22 @@ const Screen = ({
         const updatedNotes = [...notes, savedNote]
         setNotes(updatedNotes)
 
-        // sessionStorage 업데이트
-        const userNote = JSON.parse(sessionStorage.getItem('user'))
-        userNote.notes = updatedNotes
-        sessionStorage.setItem('user', JSON.stringify(userNote))
+        // localStorage/sessionStorage 중 저장된 스토리지 적용
+        const storedUser = getUserFromStorage()
+        if (storedUser) {
+          storedUser.notes = updatedNotes
+          setUserToStorage(storedUser)
+        }
 
-        await saveMarkdownText(savedNote.noteId, text)
+        // 저장 실패 시 로직
+        if (text && text.trim()) {
+          try {
+            await saveMarkdownText(savedNote.noteId, text)
+          } catch (markdownError) {
+            console.error('마크다운 저장 실패 (노트는 생성됨):', markdownError)
+          }
+        }
+
         setCurrentScreen(savedNote.noteId)
       } else {
         console.error('노트 저장 후 ID를 받지 못했습니다.')
@@ -117,7 +141,7 @@ const Screen = ({
     }
 
     const preNotes = [...notes]
-    const preSessionUser = sessionStorage.getItem('user')
+    const preStoredUser = getUserFromStorage()
 
     try {
       // state 업데이트
@@ -126,11 +150,10 @@ const Screen = ({
       )
       setNotes(updatedNotes)
 
-      // sessionStorage 업데이트
-      if (preSessionUser) {
-        const userNote = JSON.parse(preSessionUser)
-        userNote.notes = updatedNotes
-        sessionStorage.setItem('user', JSON.stringify(userNote))
+      // localStorage/sessionStorage 동기화
+      if (preStoredUser) {
+        preStoredUser.notes = updatedNotes
+        setUserToStorage(preStoredUser)
       }
 
       await updateNoteName(noteId, name)
@@ -138,8 +161,8 @@ const Screen = ({
       console.log('업데이트 실패: ' + error)
 
       setNotes(preNotes)
-      if (preSessionUser) {
-        sessionStorage.setItem('user', preSessionUser)
+      if (preStoredUser) {
+        setUserToStorage(preStoredUser)
       }
 
       toast({
@@ -156,18 +179,17 @@ const Screen = ({
     if (deleteError) return
 
     const preNotes = [...notes]
-    const preSessionUser = sessionStorage.getItem('user')
+    const preStoredUser = getUserFromStorage()
 
     try {
       // state 삭제
       const updatedNotes = notes.filter((note) => note.noteId !== noteId)
       setNotes(updatedNotes)
 
-      // sessionStorage 업데이트
-      if (preSessionUser) {
-        const userNote = JSON.parse(preSessionUser)
-        userNote.notes = updatedNotes
-        sessionStorage.setItem('user', JSON.stringify(userNote))
+      // localStorage/sessionStorage 동기화
+      if (preStoredUser) {
+        preStoredUser.notes = updatedNotes
+        setUserToStorage(preStoredUser)
       }
 
       await deleteNote(noteId)
@@ -175,8 +197,8 @@ const Screen = ({
       console.log('삭제 실패: ' + error)
 
       setNotes(preNotes)
-      if (preSessionUser) {
-        sessionStorage.setItem('user', preSessionUser)
+      if (preStoredUser) {
+        setUserToStorage(preStoredUser)
       }
 
       toast({

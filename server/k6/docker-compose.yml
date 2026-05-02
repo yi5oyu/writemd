@@ -24,23 +24,26 @@ services:
   #     --summary-export=/k6-test/results/summary_test2.json
 
   # DB 부하 테스트
-  # test3:
+  test3:
+    image: grafana/k6:latest
+    environment:
+      - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
+    volumes:
+      - ./:/k6-test
+    command:
+      [
+        'run',
+        '/k6-test/scripts/test3.js',
+        '--summary-export=/k6-test/results/summary_test3(500명, 250, 30).json',
+      ]
+
+  # 레디스 부하 테스트
+  # redis-test1:
   #   image: grafana/k6:latest
   #   environment:
   #     - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
   #   volumes:
   #     - ./:/k6-test
   #   command: >
-  #     run /k6-test/scripts/test3.js
-  #     --summary-export=/k6-test/results/summary_test3.json
-
-  # 레디스 부하 테스트
-  redis-test1:
-    image: grafana/k6:latest
-    environment:
-      - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
-    volumes:
-      - ./:/k6-test
-    command: >
-      run /k6-test/scripts/redis-test1.js
-      --summary-export=/k6-test/results/summary_redis_test1.json
+  #     run /k6-test/scripts/redis-test1.js
+  #     --summary-export=/k6-test/results/summary_redis_test1.json

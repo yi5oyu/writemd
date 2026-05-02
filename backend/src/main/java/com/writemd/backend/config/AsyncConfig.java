@@ -1,9 +1,13 @@
 package com.writemd.backend.config;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -17,16 +21,31 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @Configuration
 @EnableAsync
+@RequiredArgsConstructor
 public class AsyncConfig implements AsyncConfigurer {
+
+    private final MeterRegistry meterRegistry;
+
+    @Value("${app.async.core-pool-size}")
+    private int asyncCorePoolSize;
+
+    @Value("${app.async.max-pool-size}")
+    private int asyncMaxPoolSize;
+
+    @Value("${app.async.queue-capacity}")
+    private int asyncQueueCapacity;
+
+    @Value("${app.scheduler.pool-size}")
+    private int schedulerPoolSize;
 
     @Override
     @Bean(name = "taskExecutor")
     @Primary
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(20);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(asyncCorePoolSize);
+        executor.setMaxPoolSize(asyncMaxPoolSize);
+        executor.setQueueCapacity(asyncQueueCapacity);
         executor.setThreadNamePrefix("task-async-");
 
         // TaskDecorator 설정(SecurityContext 전파)
@@ -35,13 +54,21 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         executor.initialize();
+
+        ExecutorServiceMetrics.monitor(
+            meterRegistry,
+            executor.getThreadPoolExecutor(),
+            "taskExecutor",
+            "async"
+        );
+
         return executor;
     }
 
     @Bean(name = "taskScheduler")
     public ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(10);
+        scheduler.setPoolSize(schedulerPoolSize);
         scheduler.setThreadNamePrefix("scheduler-");
 
         scheduler.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
@@ -50,6 +77,14 @@ public class AsyncConfig implements AsyncConfigurer {
         scheduler.setAwaitTerminationSeconds(60);
 
         scheduler.initialize();
+
+        ExecutorServiceMetrics.monitor(
+            meterRegistry,
+            scheduler.getScheduledThreadPoolExecutor(),
+            "taskScheduler",
+            "scheduled"
+        );
+
         return scheduler;
     }
 

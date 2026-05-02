@@ -99,10 +99,18 @@ app:
   guest:
     openai-api-key: ${GUEST_OPENAI_API_KEY}
     ai-daily-limit: 10
-    
+  async:
+    core-pool-size: 10
+    max-pool-size: 50
+    queue-capacity: 100
+    scheduler:
+      pool-size: 10
+      
 server:
   port: 8888
   tomcat:
+    mbeanregistry:
+      enabled: true
     connection-timeout: 300000 # 5분
 #  servlet:
 #    session:

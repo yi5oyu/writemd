@@ -116,7 +116,7 @@ server:
   address: 0.0.0.0 # 외부 접근 허용
   tomcat:
     threads:
-      max: 250
+      max: 200
     connection-timeout: 300000
 
 logging:

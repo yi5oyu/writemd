@@ -114,8 +114,8 @@ app:
     core-pool-size: 10
     max-pool-size: 50
     queue-capacity: 100
-    scheduler:
-      pool-size: 10
+  scheduler:
+    pool-size: 10
 
 server:
   port: 8888

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -48,7 +49,7 @@ public class SecurityConfig {
         // 도메인 허용
         configuration.addAllowedOriginPattern("https://writemd.space");
         configuration.addAllowedOriginPattern("https://www.writemd.space");
-        
+
         configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6277");
         configuration.addAllowedOriginPattern("http://127.0.0.1:5577");
@@ -121,6 +122,12 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+            .requestMatchers("/test/connected");
     }
 
     @Bean

@@ -2,26 +2,26 @@ version: '3.8'
 
 services:
   # 페이지 접속 테스트(10000명)
-  test1:
-    image: grafana/k6:latest
-    environment:
-      - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
-    volumes:
-      - ./:/k6-test
-    command: >
-      run /k6-test/scripts/test1.js
-      --summary-export=/k6-test/results/threads/summary_test1.json
-
-  # 백엔드 api 접근 테스트(1000명. DB 접근없음)
-  # test2:
+  # test1:
   #   image: grafana/k6:latest
   #   environment:
   #     - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
   #   volumes:
   #     - ./:/k6-test
   #   command: >
-  #     run /k6-test/scripts/test2.js
-  #     --summary-export=/k6-test/results/threads/summary_test2.json
+  #     run /k6-test/scripts/test1.js
+  #     --summary-export=/k6-test/results/threads/summary_test1.json
+
+  # 백엔드 api 접근 테스트(DB 접근없음)
+  test2:
+    image: grafana/k6:latest
+    environment:
+      - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
+    volumes:
+      - ./:/k6-test
+    command: >
+      run /k6-test/scripts/test2.js
+      --summary-export=/k6-test/results/threads/summary_test2.json
 
   # DB 부하 테스트
   # test3:

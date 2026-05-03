@@ -48,6 +48,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=9889
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
     restart: unless-stopped
     networks:
       - app-network
@@ -66,6 +67,9 @@ services:
       - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
       - FRONTEND_URL=${FRONTEND_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - LOAD_TEST_KEY=${LOAD_TEST_KEY}
+      - GUEST_OPENAI_API_KEY=${GUEST_OPENAI_API_KEY}
+      - MYSQL_USER_PASSWORD=${MYSQL_USER_PASSWORD}
     depends_on:
       - db
       - redis
@@ -84,6 +88,10 @@ services:
     networks:
       - app-network
     restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -92,6 +100,10 @@ services:
     networks:
       - app-network
     restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
 
 volumes:
   mysql_data:

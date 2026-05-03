@@ -1,19 +1,22 @@
 import http from 'k6/http'
 import { check, sleep } from 'k6'
+import { Rate, Trend } from 'k6/metrics'
 
 const LOAD_TEST_KEY = __ENV.MY_LOAD_TEST_KEY
 
-export let options = {
+export const errorRate = new Rate('errors')
+export const apiResponseTime = new Trend('api_response_time')
+
+export const options = {
   stages: [
     { duration: '1m', target: 500 },
-    { duration: '1m', target: 1000 },
-    { duration: '2m', target: 2000 },
+    { duration: '2m', target: 1500 },
     { duration: '2m', target: 3000 },
     { duration: '1m', target: 0 },
   ],
   thresholds: {
     http_req_duration: ['p(95)<500'],
-    http_req_failed: ['rate<0.01'],
+    errors: ['rate<0.01'],
   },
 }
 
@@ -24,12 +27,17 @@ export default function () {
     },
   }
 
-  // 백엔드 api 연결확인
+  // DB 접근이 없는 단순 API 접근
   const res = http.get('https://api.writemd.space/test/connected', params)
 
-  check(res, {
+  const success = check(res, {
     'Status 200': (r) => r.status === 200,
   })
 
-  sleep(1)
+  errorRate.add(!success)
+  if (success) {
+    apiResponseTime.add(res.timings.duration)
+  }
+
+  sleep(Math.random() * 0.5 + 0.5)
 }

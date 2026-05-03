@@ -122,7 +122,7 @@ server:
   address: 0.0.0.0 # 외부 접근 허용
   tomcat:
     threads:
-      max: 200
+      max: 50
     mbeanregistry:
       enabled: true
     connection-timeout: 300000

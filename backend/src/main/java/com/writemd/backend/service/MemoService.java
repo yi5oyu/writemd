@@ -1,8 +1,8 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.MemoDTO;
+import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Memos;
-import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.MemoRepository;
 import com.writemd.backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,12 +22,12 @@ public class MemoService {
 
     private final MemoRepository memoRepository;
     private final UserRepository userRepository;
+    private final CachingDataService cachingDataService;
 
     // 메모 저장/업데이트
     @Transactional
     public Memos saveMemo(String githubId, String text, Long memoId) {
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
+        UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
         Memos memo;
 
@@ -40,7 +40,7 @@ public class MemoService {
             // 새 메모 생성
             memo = Memos.builder()
                 .text(text)
-                .users(user)
+                .users(userRepository.getReferenceById(user.getUserId()))
                 .build();
         }
         return memoRepository.save(memo);

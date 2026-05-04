@@ -1,6 +1,7 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.NoteDTO;
+import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Texts;
 import com.writemd.backend.entity.Users;
@@ -27,8 +28,8 @@ public class NoteService {
     // 새노트 생성
     @Transactional
     public NoteDTO createNote(String githubId, String noteName) {
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
+        UserDTO cached = cachingDataService.findUserByGithubId(githubId);
+        Users user = userRepository.getReferenceById(cached.getUserId());
 
         // Notes 생성/저장
         Notes newNote = Notes.builder()
@@ -62,25 +63,20 @@ public class NoteService {
 
         notes.updateNoteName(newNoteName);
 
-        Notes updatedNote = noteRepository.save(notes);
-
         return NoteDTO.builder()
-            .noteId(updatedNote.getId())
-            .noteName(updatedNote.getNoteName())
-            .createdAt(updatedNote.getCreatedAt())
-            .updatedAt(updatedNote.getUpdatedAt())
+            .noteId(notes.getId())
+            .noteName(notes.getNoteName())
+            .createdAt(notes.getCreatedAt())
+            .updatedAt(notes.getUpdatedAt())
             .build();
     }
 
     // text 저장
     @Transactional
     public Texts saveMarkdownText(Long noteId, String markdownText) {
-        Notes note = noteRepository.findById(noteId)
-            .orElseThrow(() -> new RuntimeException("메모 찾을 수 없음"));
-
-        Texts texts = textRepository.findByNotes(note)
+        Texts texts = textRepository.findByNotesIdWithNote(noteId)
             .orElse(Texts.builder()
-                .notes(note)
+                .notes(noteRepository.getReferenceById(noteId))
                 .build());
 
         texts.updateMarkdownText(markdownText);

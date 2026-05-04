@@ -5,7 +5,6 @@ import com.writemd.backend.dto.TemplateDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Templates;
-import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.FolderRepository;
 import com.writemd.backend.repository.TemplateRepository;
 import com.writemd.backend.repository.UserRepository;
@@ -31,8 +30,7 @@ public class TemplateService {
     public Templates saveTemplate(String githubId, Long folderId, Long templateId, String folderName,
         String title, String description, String content) {
         // 유저
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
+        UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
         Folders folder;
@@ -41,7 +39,7 @@ public class TemplateService {
                 .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
         } else {
             folder = Folders.builder()
-                .users(user)
+                .users(userRepository.getReferenceById(user.getUserId()))
                 .title(folderName)
                 .build();
             folder = folderRepository.save(folder);

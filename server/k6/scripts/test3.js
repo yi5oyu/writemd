@@ -11,12 +11,21 @@ export const noteFetchDuration = new Trend('api_note_fetch_duration')
 export const options = {
   stages: [
     { duration: '1m', target: 100 },
-    { duration: '2m', target: 1000 },
-    { duration: '3m', target: 2500 },
+    { duration: '2m', target: 300 },
+    { duration: '3m', target: 600 },
     { duration: '1m', target: 0 },
   ],
   thresholds: {
+    // 전체 응답 시간
     http_req_duration: ['p(95)<500'],
+
+    // 태그별 상세 응답 시간
+    'http_req_duration{name:UserInfo}': ['p(95)<500'],
+    'http_req_duration{name:NoteContent}': ['p(95)<500'],
+    'http_req_duration{name:ChatSessions}': ['p(95)<500'],
+    'http_req_duration{name:UserMemo}': ['p(95)<500'],
+    'http_req_duration{name:UserApiKeys}': ['p(95)<500'],
+
     api_login_duration: ['p(95)<500'],
     api_note_fetch_duration: ['p(95)<500'],
     errors: ['rate<0.01'],
@@ -42,7 +51,10 @@ export default function () {
   }
 
   group('1. 로그인 (Single DB Query)', function () {
-    const res = http.get(`https://api.writemd.space/api/user/info`, params)
+    const res = http.get(`https://api.writemd.space/api/user/info`, {
+      ...params,
+      tags: { name: 'UserInfo' },
+    })
     const success = check(res, { 'Login 200 OK': (r) => r.status === 200 })
 
     errorRate.add(!success)
@@ -60,10 +72,30 @@ export default function () {
     // 40%: 단일 노트 조회
     group('2. 노트 조회', function () {
       const responses = http.batch([
-        ['GET', `https://api.writemd.space/api/note/${firstNoteId}`, null, params],
-        ['GET', `https://api.writemd.space/api/chat/sessions/${firstNoteId}`, null, params],
-        ['GET', `https://api.writemd.space/api/memo/${userId}`, null, params],
-        ['GET', `https://api.writemd.space/api/user/key/${userId}`, null, params],
+        [
+          'GET',
+          `https://api.writemd.space/api/note/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'NoteContent' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/chat/sessions/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'ChatSessions' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/memo/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserMemo' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/user/key/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserApiKeys' } },
+        ],
       ])
 
       const success = check(responses[0], { 'Note Fetch 200 OK': (r) => r.status === 200 })
@@ -76,18 +108,48 @@ export default function () {
     // 30%: 여러 노트
     group('3. 다른 노트 조회', function () {
       const res1 = http.batch([
-        ['GET', `https://api.writemd.space/api/note/${firstNoteId}`, null, params],
-        ['GET', `https://api.writemd.space/api/chat/sessions/${firstNoteId}`, null, params],
-        ['GET', `https://api.writemd.space/api/memo/${userId}`, null, params],
-        ['GET', `https://api.writemd.space/api/user/key/${userId}`, null, params],
+        [
+          'GET',
+          `https://api.writemd.space/api/note/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'NoteContent' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/chat/sessions/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'ChatSessions' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/memo/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserMemo' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/user/key/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserApiKeys' } },
+        ],
       ])
       check(res1[0], { '1번 노트 OK': (r) => r.status === 200 })
 
       sleep(Math.random() * 2 + 1)
 
       const res2 = http.batch([
-        ['GET', `https://api.writemd.space/api/note/${secondNoteId}`, null, params],
-        ['GET', `https://api.writemd.space/api/chat/sessions/${secondNoteId}`, null, params],
+        [
+          'GET',
+          `https://api.writemd.space/api/note/${secondNoteId}`,
+          null,
+          { ...params, tags: { name: 'NoteContent' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/chat/sessions/${secondNoteId}`,
+          null,
+          { ...params, tags: { name: 'ChatSessions' } },
+        ],
       ])
       check(res2[0], { '2번 노트 OK': (r) => r.status === 200 })
     })

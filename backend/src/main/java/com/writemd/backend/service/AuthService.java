@@ -26,9 +26,11 @@ public class AuthService {
 
     @Transactional
     public TokenResponseDTO issueToken(String githubId, String name, String deviceId) {
+        Users user = userRepository.findByGithubId(githubId)
+            .orElseThrow(() -> new UsernameNotFoundException("유저 없음: " + githubId));
 
         // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.createAccessToken(githubId, name);
+        String accessToken = jwtTokenProvider.createAccessToken(user);
         String refreshToken = jwtTokenProvider.createRefreshToken(githubId);
 
         // Refresh Token을 Redis에 저장
@@ -61,7 +63,7 @@ public class AuthService {
             .orElseThrow(() -> new UsernameNotFoundException("유저 없음"));
 
         // 새 토큰 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getGithubId(), user.getName());
+        String newAccessToken = jwtTokenProvider.createAccessToken(user);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getGithubId());
 
         // Redis에 새 토큰 저장(교체)

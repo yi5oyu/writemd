@@ -42,7 +42,7 @@ public class GuestService {
         log.info("새로운 게스트 계정 생성 완료: {}", guestGithubId);
 
         // accessToken, refreshToken 발급
-        String accessToken = jwtTokenProvider.createAccessToken(guestUser.getGithubId(), guestName);
+        String accessToken = jwtTokenProvider.createAccessToken(guestUser);
         String refreshToken = jwtTokenProvider.createRefreshToken(guestUser.getGithubId());
 
         // Redis에 refreshToken 저장

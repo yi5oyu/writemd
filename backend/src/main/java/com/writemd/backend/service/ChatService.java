@@ -151,7 +151,7 @@ public class ChatService {
         Chats chat = Chats.builder().conversations(conversation).role(role).content(content).build();
 
         chatRepository.save(chat);
-        conversation.setUpdatedAt(LocalDateTime.now());
+        conversation.updateUpdatedAt(LocalDateTime.now());
         conversationRepository.save(conversation);
     }
 

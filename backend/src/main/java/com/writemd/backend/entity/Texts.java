@@ -3,6 +3,7 @@ package com.writemd.backend.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,11 +22,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Table(name = "TEXTS")
 public class Texts {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id", nullable = false, unique = true)
     @JsonBackReference
     private Notes notes;

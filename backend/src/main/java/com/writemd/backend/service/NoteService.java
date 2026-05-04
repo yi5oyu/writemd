@@ -42,7 +42,7 @@ public class NoteService {
             .markdownText("")
             .build();
 
-        newNote.setTexts(text);
+        newNote.updateText(text);
 
         Notes savedNote = noteRepository.save(newNote);
 

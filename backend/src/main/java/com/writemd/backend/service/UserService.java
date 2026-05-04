@@ -126,8 +126,8 @@ public class UserService {
             // 변경사항 체크 후 업데이트
             if (!Objects.equals(cachedUser.getName(), name) || !Objects.equals(cachedUser.getAvatarUrl(), avatarUrl)) {
                 Users userToUpdate = userRepository.getReferenceById(cachedUser.getUserId());
-                userToUpdate.setName(name);
-                userToUpdate.setAvatarUrl(avatarUrl);
+                userToUpdate.updateName(name);
+                userToUpdate.updateAvatarUrl(avatarUrl);
                 Users savedUser = userRepository.save(userToUpdate);
 
                 // 캐시 업데이트(이벤트 발행)
@@ -146,15 +146,15 @@ public class UserService {
 
             // 변경사항 체크
             if (!Objects.equals(user.getName(), name)) {
-                user.setName(name);
+                user.updateName(name);
                 isUpdated = true;
             }
             if (!Objects.equals(user.getAvatarUrl(), avatarUrl)) {
-                user.setAvatarUrl(avatarUrl);
+                user.updateAvatarUrl(avatarUrl);
                 isUpdated = true;
             }
             if (!Objects.equals(user.getPrincipalName(), principalName)) {
-                user.setPrincipalName(principalName);
+                user.updatePrincipalName(principalName);
                 isUpdated = true;
             }
 
@@ -189,7 +189,7 @@ public class UserService {
         // user 찾기
         UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
-        List<Notes> notes = noteRepository.findByUsers_Id(user.getUserId());
+        List<Notes> notes = noteRepository.findNotesByUserId(user.getUserId());
 
         // note 리스트
         List<NoteDTO> note = notes.stream()

@@ -35,15 +35,13 @@ public class MemoService {
             // 업데이트
             memo = memoRepository.findById(memoId)
                 .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음"));
-            memo.setText(text);
+            memo.updateText(text);
         } else {
             // 새 메모 생성
             memo = Memos.builder()
                 .text(text)
                 .users(user)
                 .build();
-
-            user.getMemos().add(memo);
         }
         return memoRepository.save(memo);
     }

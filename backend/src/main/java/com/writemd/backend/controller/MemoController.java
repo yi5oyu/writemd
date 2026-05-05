@@ -1,6 +1,7 @@
 package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.MemoDTO;
+import com.writemd.backend.dto.MemoSummaryDTO;
 import com.writemd.backend.entity.Memos;
 import com.writemd.backend.service.MemoService;
 import java.util.List;
@@ -38,11 +39,19 @@ public class MemoController {
         return ResponseEntity.ok(savedMemo);
     }
 
-    // 메모 전체 조회
+    // 메모 목록 조회
     @GetMapping("/{userId}")
-    public ResponseEntity<List<MemoDTO>> getMemos(@PathVariable Long userId) {
-        List<MemoDTO> memos = memoService.getMemos(userId);
-        return ResponseEntity.ok(memos);
+    public ResponseEntity<List<MemoSummaryDTO>> getMemos(@PathVariable Long userId) {
+        List<MemoSummaryDTO> summaries = memoService.getMemoSummaries(userId);
+        System.out.println("메모 목록 조회");
+        return ResponseEntity.ok(summaries);
+    }
+
+    // 메모 상세 조회
+    @GetMapping("/{memoId}/content")
+    public ResponseEntity<MemoDTO> getMemoContent(@PathVariable Long memoId) {
+        MemoDTO memo = memoService.getMemoContent(memoId);
+        return ResponseEntity.ok(memo);
     }
 
 

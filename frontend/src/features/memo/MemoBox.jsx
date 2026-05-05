@@ -1,5 +1,15 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Flex, Box, Text, IconButton, Icon, Spacer, useToast, Badge } from '@chakra-ui/react'
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import {
+  Flex,
+  Box,
+  Text,
+  IconButton,
+  Icon,
+  Spacer,
+  useToast,
+  Badge,
+  Spinner,
+} from '@chakra-ui/react'
 import { RiSave3Fill, RiCloseLargeLine } from 'react-icons/ri'
 import { FiPlus } from 'react-icons/fi'
 import Draggable from 'react-draggable'
@@ -11,7 +21,7 @@ import useSearchHistory from '../../hooks/auth/useSearchHistory'
 import ScrollBox from '../../components/ui/scroll/ScrollBox'
 
 const MemoBox = ({
-  text,
+  text, // MemoSummaryDTO[] — memoId, createdAt, updatedAt
   memo,
   setMemo,
   setMemoText,
@@ -23,13 +33,16 @@ const MemoBox = ({
   setSelectedScreen,
   selectedScreen,
   memorizedData,
+  onSelectMemo, // (memoId) => Promise<{ text }> — 클릭 시 content 로드
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedMemo, setSelectedMemo] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  // { [memoId]: string } — 로드된 TEXT 로컬 캐시
+  const [contentCache, setContentCache] = useState({})
+  const [contentLoading, setContentLoading] = useState(false)
   const nodeRef = useRef(null)
 
-  // 검색 기록 관리
   const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
     'memo-search-history',
     8
@@ -37,21 +50,52 @@ const MemoBox = ({
 
   const toast = useToast()
 
-  // 검색 실행 시 기록 저장
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       addSearchHistory(searchQuery.trim())
     }
   }
 
-  // 검색 기록 선택 시
   const handleSelectHistory = (historyItem) => {
     setSearchQuery(historyItem)
     addSearchHistory(historyItem)
   }
 
+  // 메모 클릭
+  const handleMemoClick = useCallback(
+    async (memoId) => {
+      setSelectedMemo(memoId)
+      setSelectedScreen('memo')
+
+      if (contentCache[memoId] !== undefined) {
+        setMemoText(contentCache[memoId])
+        return
+      }
+
+      setContentLoading(true)
+      try {
+        const data = await onSelectMemo(memoId)
+        const loadedText = data?.text ?? ''
+        setContentCache((prev) => ({ ...prev, [memoId]: loadedText }))
+        setMemoText(loadedText)
+      } catch (err) {
+        toast({
+          title: '메모 불러오기 실패',
+          description: err.message || '다시 시도해주세요.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top',
+        })
+      } finally {
+        setContentLoading(false)
+      }
+    },
+    [contentCache, onSelectMemo, setMemoText, setSelectedScreen, toast]
+  )
+
   // 메모 저장
-  const handleSaveMemo = async (selectedMemo) => {
+  const handleSaveMemo = async (currentSelectedMemo) => {
     if (text.length >= 30) {
       toast({
         title: '메모 생성 제한',
@@ -64,8 +108,11 @@ const MemoBox = ({
       return
     }
     try {
-      const memoId = await handleSaveMemoClick(selectedMemo ? selectedMemo : null)
+      const memoId = await handleSaveMemoClick(currentSelectedMemo ? currentSelectedMemo : null)
       setSelectedMemo(memoId)
+      if (memoId && memorizedData) {
+        setContentCache((prev) => ({ ...prev, [memoId]: memorizedData }))
+      }
     } catch (error) {
       toast({
         title: '메모 저장 실패',
@@ -78,31 +125,50 @@ const MemoBox = ({
     }
   }
 
-  // 화면 전환
+  // 화면 전환 시 선택 초기화
   useEffect(() => {
     selectedScreen !== 'memo' && setSelectedMemo(null)
   }, [selectedScreen])
 
-  // 선택된 메모 데이터
-  const selectedMemoData = useMemo(() => {
+  // 삭제 시 캐시 정리 및 선택 초기화
+  const handleDelete = (memoId) => {
+    setContentCache((prev) => {
+      const next = { ...prev }
+      delete next[memoId]
+      return next
+    })
+    if (selectedMemo === memoId) {
+      setSelectedMemo(null)
+      setMemoText('<!-- 새 메모 -->')
+    }
+    handelDelMemoClick(memoId)
+  }
+
+  // 선택된 메모 메타
+  const selectedMemoMeta = useMemo(() => {
     if (!selectedMemo) return null
     return text.find((item) => item.memoId === selectedMemo)
   }, [text, selectedMemo])
 
-  // 검색, 정렬
+  // 검색 — 로드된 content에서만 텍스트 매칭
   const filteredAndSortedMemos = useMemo(() => {
     const validText = Array.isArray(text) ? text : []
 
-    const filtered = validText.filter((item) =>
-      item.text.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filtered = searchQuery
+      ? validText.filter((item) => {
+          const cached = contentCache[item.memoId]
+          return cached !== undefined
+            ? cached.toLowerCase().includes(searchQuery.toLowerCase())
+            : true
+        })
+      : validText
 
     return filtered.sort((a, b) => {
       if (a.memoId === selectedMemo && b.memoId !== selectedMemo) return -1
       if (b.memoId === selectedMemo && a.memoId !== selectedMemo) return 1
       return 0
     })
-  }, [text, selectedMemo, searchQuery])
+  }, [text, selectedMemo, searchQuery, contentCache])
 
   // 에러 토스트
   useEffect(() => {
@@ -113,8 +179,6 @@ const MemoBox = ({
         render: ({ onClose }) => <ErrorToast onClose={onClose} message={errorMessage} />,
       })
   }, [isError, toast])
-
-  // TODO 메모 날짜
 
   return (
     <Draggable
@@ -226,11 +290,15 @@ const MemoBox = ({
               variant="solid"
               fontSize="xs"
             >
-              {selectedMemoData ? '선택된 메모' : '새 메모 작성'}
+              {selectedMemoMeta ? '선택된 메모' : '새 메모 작성'}
             </Badge>
 
             <Text fontSize="sm" fontWeight="bold" color="blue.700" my="10px"></Text>
-            {selectedMemoData ? (
+            {contentLoading ? (
+              <Flex justify="center" align="center" minH="42px">
+                <Spinner size="sm" color="blue.400" />
+              </Flex>
+            ) : selectedMemoMeta ? (
               <Text fontSize="sm" noOfLines={2} color="gray.700" minH="42px">
                 {memorizedData}
               </Text>
@@ -271,17 +339,12 @@ const MemoBox = ({
               <Box key={item.memoId}>
                 <MemoList
                   id={item.memoId}
-                  text={item.text}
                   createdAt={item.createdAt}
                   updatedAt={item.updatedAt}
-                  onClick={() => {
-                    setSelectedMemo(item.memoId)
-                    setMemoText(item.text)
-                    setSelectedScreen('memo')
-                  }}
+                  onClick={() => handleMemoClick(item.memoId)}
                   selected={selectedMemo === item.memoId}
-                  handelDelMemoClick={handelDelMemoClick}
-                  isDisabled={isLoading}
+                  handelDelMemoClick={handleDelete}
+                  isDisabled={isLoading || contentLoading}
                 />
               </Box>
             ))

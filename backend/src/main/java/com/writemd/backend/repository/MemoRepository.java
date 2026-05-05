@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MemoRepository extends JpaRepository<Memos, Long> {
+public interface MemoRepository extends JpaRepository<Memos, Long>, MemoRepositoryCustom {
 
     List<Memos> findByUsers_Id(Long userId);
 }

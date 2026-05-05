@@ -1,13 +1,13 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.MemoDTO;
+import com.writemd.backend.dto.MemoSummaryDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Memos;
 import com.writemd.backend.repository.MemoRepository;
 import com.writemd.backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,18 +46,22 @@ public class MemoService {
         return memoRepository.save(memo);
     }
 
-    // 메모 전체 조회
-    public List<MemoDTO> getMemos(Long userId) {
-        List<Memos> memos = memoRepository.findByUsers_Id(userId);
+    // 메모 목록 조회
+    public List<MemoSummaryDTO> getMemoSummaries(Long userId) {
+        return memoRepository.findSummariesByUserId(userId);
+    }
 
-        return memos.stream()
-            .map(memo -> MemoDTO.builder()
-                .memoId(memo.getId())
-                .text(memo.getText())
-                .createdAt(memo.getCreatedAt())
-                .updatedAt(memo.getUpdatedAt())
-                .build())
-            .collect(Collectors.toList());
+    // 메모 상세 조회
+    public MemoDTO getMemoContent(Long memoId) {
+        Memos memo = memoRepository.findById(memoId)
+            .orElseThrow(() -> new EntityNotFoundException("메모 찾을 수 없음"));
+
+        return MemoDTO.builder()
+            .memoId(memo.getId())
+            .text(memo.getText())
+            .createdAt(memo.getCreatedAt())
+            .updatedAt(memo.getUpdatedAt())
+            .build();
     }
 
     // 메모 삭제

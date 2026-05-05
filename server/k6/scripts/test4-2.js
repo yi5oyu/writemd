@@ -17,8 +17,8 @@ const DUMMY_TEXT = '## 부하 테스트\nK6 2번 시나리오 작성 시간: ' +
 export const options = {
   stages: [
     { duration: '1m', target: 100 },
-    { duration: '2m', target: 300 },
-    { duration: '3m', target: 600 },
+    { duration: '2m', target: 500 },
+    { duration: '3m', target: 1000 },
     { duration: '1m', target: 0 },
   ],
   thresholds: {

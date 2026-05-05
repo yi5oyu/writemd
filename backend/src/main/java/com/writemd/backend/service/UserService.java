@@ -187,15 +187,9 @@ public class UserService {
 
     // user 조회
     public UserDTO userInfo(String githubId) {
-        // user 찾기
         UserDTO user = cachingDataService.findUserByGithubId(githubId);
-
-        List<Notes> notes = noteRepository.findNotesByUserId(user.getUserId());
-
-        // note 리스트
-        List<NoteDTO> note = notes.stream()
-            .map(this::convertNote)
-            .collect(Collectors.toList());
+        
+        List<NoteDTO> notes = cachingDataService.findNotesByUserId(user.getUserId());
 
         return UserDTO.builder()
             .userId(user.getUserId())
@@ -203,7 +197,7 @@ public class UserService {
             .githubId(user.getGithubId())
             .avatarUrl(user.getAvatarUrl())
             .htmlUrl(user.getHtmlUrl())
-            .notes(note)
+            .notes(notes)
             .build();
     }
 

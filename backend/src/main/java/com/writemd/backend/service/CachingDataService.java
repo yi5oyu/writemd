@@ -1,10 +1,13 @@
 package com.writemd.backend.service;
 
 import com.writemd.backend.dto.APIDTO;
+import com.writemd.backend.dto.NoteDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.APIs;
+import com.writemd.backend.entity.Notes;
 import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
+import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,10 +32,11 @@ public class CachingDataService {
     private final CacheManager cacheManager;
     private final UserRepository userRepository;
     private final ApiRepository apiRepository;
+    private final NoteRepository noteRepository;
 
     @Value("${app.guest.openai-api-key}")
     private String guestOpenaiApiKey;
-    
+
     @Cacheable(value = "template-data", key = "'my-templates'")
     public List<Map<String, String>> getMyTemplates() {
         return Collections.emptyList();
@@ -58,6 +62,30 @@ public class CachingDataService {
             .avatarUrl(user.getAvatarUrl())
             .htmlUrl(user.getHtmlUrl())
             .build();
+    }
+
+    // 노트 목록 캐시 조회
+    @Cacheable(value = "user-notes", key = "#userId")
+    public List<NoteDTO> findNotesByUserId(Long userId) {
+        log.info("DB에서 노트 목록 조회: userId={}", userId);
+        List<Notes> notes = noteRepository.findNotesByUserId(userId);
+        return notes.stream()
+            .map(n -> NoteDTO.builder()
+                .noteId(n.getId())
+                .noteName(n.getNoteName())
+                .createdAt(n.getCreatedAt())
+                .updatedAt(n.getUpdatedAt())
+                .build())
+            .collect(Collectors.toList());
+    }
+
+    // 노트 생성/수정/삭제 시 해당 유저 노트 목록 캐시 무효화
+    public void evictNoteCache(Long userId) {
+        Cache noteCache = cacheManager.getCache("user-notes");
+        if (noteCache != null) {
+            noteCache.evict(userId);
+            log.info("노트 목록 캐시 무효화: userId={}", userId);
+        }
     }
 
     // 유저 정보 저장

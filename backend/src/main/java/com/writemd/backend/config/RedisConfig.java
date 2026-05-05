@@ -1,5 +1,9 @@
 package com.writemd.backend.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +33,9 @@ public class RedisConfig {
         template.setHashKeySerializer(new StringRedisSerializer());
 
         // 값 직렬화(JSON)
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        GenericJackson2JsonRedisSerializer serializer = customJsonSerializer();
+        template.setValueSerializer(serializer);
+        template.setHashValueSerializer(serializer);
 
         template.afterPropertiesSet();
 
@@ -41,14 +46,14 @@ public class RedisConfig {
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
 
-        // 기본 캐시 설정(기본 30분)
+        // 기본 캐시 설정(기본 30분) — JavaTimeModule이 등록된 커스텀 직렬화기 사용
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofMinutes(30))
             .disableCachingNullValues()
             .serializeKeysWith(RedisSerializationContext.SerializationPair
                 .fromSerializer(new StringRedisSerializer()))
             .serializeValuesWith(RedisSerializationContext.SerializationPair
-                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                .fromSerializer(customJsonSerializer()));
 
         // 캐시별 개별 설정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
@@ -69,11 +74,32 @@ public class RedisConfig {
         cacheConfigurations.put("user-api-keys",
             defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
+        // 노트 목록 — 생성/수정/삭제 시 즉시 evict하므로 TTL은 안전망 역할
+        cacheConfigurations.put("user-notes",
+            defaultConfig.entryTtl(Duration.ofMinutes(5)));
+
         // Duration.ofDays(365), .ofHours(1), .ofMinutes(30), .ofMinutes(5)
 
         return RedisCacheManager.builder(redisConnectionFactory)
             .cacheDefaults(defaultConfig)
             .withInitialCacheConfigurations(cacheConfigurations)
             .build();
+    }
+
+    private GenericJackson2JsonRedisSerializer customJsonSerializer() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Java 8 LocalDateTime 지원 모듈 등록
+        objectMapper.registerModule(new JavaTimeModule());
+        // 날짜를 타임스탬프(배열) 형식이 아닌 ISO-8601 문자열 포맷으로 직렬화
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // Redis 역직렬화를 위해 패키지/클래스 타입 정보 저장 (기본 GenericJackson2Json 동작 유지)
+        objectMapper.activateDefaultTyping(
+            BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+            ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
+        return new GenericJackson2JsonRedisSerializer(objectMapper);
     }
 }

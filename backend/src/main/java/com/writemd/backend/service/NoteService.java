@@ -47,6 +47,9 @@ public class NoteService {
 
         Notes savedNote = noteRepository.save(newNote);
 
+        // 노트 목록 캐시 무효화
+        cachingDataService.evictNoteCache(cached.getUserId());
+
         return NoteDTO.builder()
             .noteId(savedNote.getId())
             .noteName(savedNote.getNoteName())
@@ -62,6 +65,10 @@ public class NoteService {
             .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
 
         notes.updateNoteName(newNoteName);
+
+        // 노트 이름 변경 시 캐시 무효화
+        Long userId = notes.getUsers().getId();
+        cachingDataService.evictNoteCache(userId);
 
         return NoteDTO.builder()
             .noteId(notes.getId())
@@ -87,10 +94,13 @@ public class NoteService {
     // 노트 삭제
     @Transactional
     public void deleteNote(Long noteId) {
-        // 노트 확인
-        noteRepository.findById(noteId)
+        Notes note = noteRepository.findById(noteId)
             .orElseThrow(() -> new RuntimeException("메모 찾을 수 없음"));
 
+        Long userId = note.getUsers().getId();
         noteRepository.deleteById(noteId);
+
+        // 노트 삭제 시 캐시 무효화
+        cachingDataService.evictNoteCache(userId);
     }
 }

@@ -37,7 +37,8 @@ import useDeleteFolder from '../../hooks/template/useDeleteFolder'
 import useUpdateFolderName from '../../hooks/template/useUpdateFolderName'
 // memo
 import useSaveMemo from '../../hooks/memo/useSaveMemo'
-import useGetMemo from '../../hooks/memo/useGetMemo'
+import useGetMemoSummaries from '../../hooks/memo/useGetMemoSummaries'
+import useGetMemoContent from '../../hooks/memo/useGetMemoContent'
 import useDeleteMemo from '../../hooks/memo/useDeleteMemo'
 // git
 import useGit from '../../hooks/git/useGit'
@@ -96,7 +97,6 @@ const NoteScreen = ({
   const [item, setItem] = useState('')
   const [tool, setTool] = useState(false)
   const [memo, setMemo] = useState(false)
-  const [text, setText] = useState([])
 
   const { config: modelData, loading: modelDataloading } = useAiConfig()
 
@@ -216,14 +216,26 @@ const NoteScreen = ({
 
   // 메모
   const { saveMemo, loading: saveMemoLoading, error: saveMemoError } = useSaveMemo()
-  const { memo: memoData, loading: getMemoLoading, error: getMemoError } = useGetMemo(user.userId)
+  const {
+    summaries: memoData,
+    setSummaries: setMemoSummaries,
+    loading: getMemoLoading,
+    error: getMemoError,
+  } = useGetMemoSummaries(user.userId)
+  const {
+    getMemoContent,
+    loading: getMemoContentLoading,
+    error: getMemoContentError,
+  } = useGetMemoContent()
   const { deleteMemo, loading: delMemoLoading, error: delMemoError } = useDeleteMemo()
-  const isMemoLoading = saveMemoLoading || getMemoLoading || delMemoLoading
-  const isMemoError = saveMemoError || getMemoError || delMemoError
+  const isMemoLoading = saveMemoLoading || getMemoLoading || getMemoContentLoading || delMemoLoading
+  const isMemoError = saveMemoError || getMemoError || getMemoContentError || delMemoError
   const memoErrorMessage = saveMemoError
     ? saveMemoError.message
     : getMemoError
     ? getMemoError.message
+    : getMemoContentError
+    ? getMemoContentError.message
     : delMemoError
     ? delMemoError.message
     : null
@@ -662,24 +674,21 @@ const NoteScreen = ({
         memoId
       )
       if (memoId) {
-        setText((t) =>
+        setMemoSummaries((t) =>
           t.map((memo) =>
             memo.memoId === memoId
               ? {
                   ...memo,
-                  text: response.text,
-                  createdAt: response.createdAt,
                   updatedAt: response.updatedAt,
                 }
               : memo
           )
         )
       } else {
-        setText((t) => [
+        setMemoSummaries((t) => [
           ...t,
           {
             memoId: response.id,
-            text: response.text,
             createdAt: response.createdAt,
             updatedAt: response.updatedAt,
           },
@@ -691,14 +700,10 @@ const NoteScreen = ({
     }
   }
 
-  // 메모 조회
-  useEffect(() => {
-    if (getMemoError) return
-
-    if (memoData) {
-      setText(memoData)
-    }
-  }, [memoData, getMemoError])
+  // 클릭 시 content 1건 로드 — MemoBox의 onSelectMemo 핸들러
+  const handleSelectMemoContent = async (memoId) => {
+    return getMemoContent(memoId)
+  }
 
   // 메모 삭제
   const handelDelMemoClick = async (memoId) => {
@@ -706,7 +711,7 @@ const NoteScreen = ({
 
     try {
       await deleteMemo(memoId)
-      setText((t) => t.filter((memo) => memo.memoId !== memoId))
+      setMemoSummaries((t) => t.filter((memo) => memo.memoId !== memoId))
     } catch (error) {
       console.error('메모 삭제 실패: ', error)
     }
@@ -1284,8 +1289,8 @@ const NoteScreen = ({
 
             {memo && (
               <MemoBox
-                text={text}
-                setText={setText}
+                text={memoData}
+                setText={setMemoSummaries}
                 memo={memo}
                 setMemo={setMemo}
                 setMemoText={setMemoText}
@@ -1307,6 +1312,7 @@ const NoteScreen = ({
                 isLoading={isMemoLoading}
                 isError={isMemoError}
                 errorMessage={memoErrorMessage}
+                onSelectMemo={handleSelectMemoContent}
               />
             )}
           </Box>

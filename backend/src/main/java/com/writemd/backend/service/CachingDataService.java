@@ -9,6 +9,7 @@ import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.ApiRepository;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,6 +86,41 @@ public class CachingDataService {
         if (noteCache != null) {
             noteCache.evict(userId);
             log.info("노트 목록 캐시 무효화: userId={}", userId);
+        }
+    }
+
+    // 노트 생성 시 캐시 목록에 직접 추가
+    public void addNoteToCache(Long userId, NoteDTO newNote) {
+        Cache noteCache = cacheManager.getCache("user-notes");
+        if (noteCache == null) {
+            return;
+        }
+        Cache.ValueWrapper wrapper = noteCache.get(userId);
+        if (wrapper != null) {
+            @SuppressWarnings("unchecked")
+            List<NoteDTO> list = new ArrayList<>((List<NoteDTO>) wrapper.get());
+            list.add(newNote);
+            noteCache.put(userId, list);
+            log.info("노트 목록 캐시 추가: userId={}, noteId={}", userId, newNote.getNoteId());
+        }
+    }
+
+    // 노트 이름 변경 시 캐시 내 해당 항목만 수정
+    public void updateNoteNameInCache(Long userId, Long noteId, String newName) {
+        Cache noteCache = cacheManager.getCache("user-notes");
+        if (noteCache == null) {
+            return;
+        }
+        Cache.ValueWrapper wrapper = noteCache.get(userId);
+        if (wrapper != null) {
+            @SuppressWarnings("unchecked")
+            List<NoteDTO> updated = ((List<NoteDTO>) wrapper.get()).stream()
+                .map(n -> n.getNoteId().equals(noteId)
+                    ? n.toBuilder().noteName(newName).updatedAt(LocalDateTime.now()).build()
+                    : n)
+                .collect(Collectors.toList());
+            noteCache.put(userId, updated);
+            log.info("노트 이름 캐시 갱신: userId={}, noteId={}", userId, noteId);
         }
     }
 

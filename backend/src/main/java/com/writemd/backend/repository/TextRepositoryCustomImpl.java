@@ -28,4 +28,14 @@ public class TextRepositoryCustomImpl implements TextRepositoryCustom {
 
         return Optional.ofNullable(result);
     }
+
+    @Override
+    @Transactional
+    public long updateMarkdownText(Long noteId, String markdownText) {
+        return queryFactory
+            .update(texts)
+            .set(texts.markdownText, markdownText)
+            .where(texts.notes.id.eq(noteId))
+            .execute();
+    }
 }

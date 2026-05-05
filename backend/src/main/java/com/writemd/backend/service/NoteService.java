@@ -8,6 +8,7 @@ import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,13 +32,11 @@ public class NoteService {
         UserDTO cached = cachingDataService.findUserByGithubId(githubId);
         Users user = userRepository.getReferenceById(cached.getUserId());
 
-        // Notes 생성/저장
         Notes newNote = Notes.builder()
             .users(user)
             .noteName(noteName)
             .build();
 
-        // Texts 생성/저장
         Texts text = Texts.builder()
             .notes(newNote)
             .markdownText("")
@@ -47,60 +46,53 @@ public class NoteService {
 
         Notes savedNote = noteRepository.save(newNote);
 
-        // 노트 목록 캐시 무효화
-        cachingDataService.evictNoteCache(cached.getUserId());
-
-        return NoteDTO.builder()
+        NoteDTO savedNoteDTO = NoteDTO.builder()
             .noteId(savedNote.getId())
             .noteName(savedNote.getNoteName())
             .createdAt(savedNote.getCreatedAt())
             .updatedAt(savedNote.getUpdatedAt())
             .build();
+
+        // 캐시 목록에 직접 추가 (evict → DB 재조회 방지)
+        cachingDataService.addNoteToCache(cached.getUserId(), savedNoteDTO);
+
+        return savedNoteDTO;
     }
 
     // 노트 업데이트
     @Transactional
     public NoteDTO updateNoteName(Long noteId, String newNoteName) {
-        Notes notes = noteRepository.findById(noteId)
-            .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
+        long updatedRows = noteRepository.updateNoteName(noteId, newNoteName);
 
-        notes.updateNoteName(newNoteName);
+        if (updatedRows == 0) {
+            throw new RuntimeException("노트 찾을 수 없음");
+        }
 
-        // 노트 이름 변경 시 캐시 무효화
-        Long userId = notes.getUsers().getId();
-        cachingDataService.evictNoteCache(userId);
+        Long userId = noteRepository.findUserIdByNoteId(noteId)
+            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+
+        cachingDataService.updateNoteNameInCache(userId, noteId, newNoteName);
 
         return NoteDTO.builder()
-            .noteId(notes.getId())
-            .noteName(notes.getNoteName())
-            .createdAt(notes.getCreatedAt())
-            .updatedAt(notes.getUpdatedAt())
+            .noteId(noteId)
+            .noteName(newNoteName)
+            .updatedAt(LocalDateTime.now())
             .build();
     }
 
     // text 저장
     @Transactional
-    public Texts saveMarkdownText(Long noteId, String markdownText) {
-        Texts texts = textRepository.findByNotesIdWithNote(noteId)
-            .orElse(Texts.builder()
-                .notes(noteRepository.getReferenceById(noteId))
-                .build());
-
-        texts.updateMarkdownText(markdownText);
-
-        return textRepository.save(texts);
+    public void saveMarkdownText(Long noteId, String markdownText) {
+        textRepository.updateMarkdownText(noteId, markdownText);
     }
 
     // 노트 삭제
     @Transactional
     public void deleteNote(Long noteId) {
-        Notes note = noteRepository.findById(noteId)
-            .orElseThrow(() -> new RuntimeException("메모 찾을 수 없음"));
+        Long userId = noteRepository.findUserIdByNoteId(noteId)
+            .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
 
-        Long userId = note.getUsers().getId();
         noteRepository.deleteById(noteId);
-
-        // 노트 삭제 시 캐시 무효화
         cachingDataService.evictNoteCache(userId);
     }
 }

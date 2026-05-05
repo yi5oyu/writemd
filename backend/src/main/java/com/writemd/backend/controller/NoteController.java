@@ -2,7 +2,6 @@ package com.writemd.backend.controller;
 
 import com.writemd.backend.dto.ConversationDTO;
 import com.writemd.backend.dto.NoteDTO;
-import com.writemd.backend.entity.Texts;
 import com.writemd.backend.service.ChatService;
 import com.writemd.backend.service.NoteService;
 import com.writemd.backend.service.UserService;
@@ -62,13 +61,12 @@ public class NoteController {
         return userService.noteContent(noteId);
     }
 
-    // 노트 markdownText 생성
+    // 노트 markdownText 저장
     @PutMapping("/{noteId}")
-    public ResponseEntity<Texts> updateMarkdownText(@PathVariable Long noteId,
+    public ResponseEntity<Void> updateMarkdownText(@PathVariable Long noteId,
         @RequestBody Map<String, Object> requestPayload) {
-        Texts updatedTexts =
-            noteService.saveMarkdownText(noteId, (String) requestPayload.get("markdownText"));
-        return ResponseEntity.ok(updatedTexts);
+        noteService.saveMarkdownText(noteId, (String) requestPayload.get("markdownText"));
+        return ResponseEntity.noContent().build();
     }
 
     // 노트 삭제

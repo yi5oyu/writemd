@@ -6,4 +6,6 @@ import java.util.Optional;
 public interface TextRepositoryCustom {
 
     Optional<Texts> findByNotesIdWithNote(Long noteId);
+
+    long updateMarkdownText(Long noteId, String markdownText);
 }

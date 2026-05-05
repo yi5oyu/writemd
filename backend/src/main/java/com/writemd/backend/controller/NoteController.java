@@ -66,7 +66,7 @@ public class NoteController {
     public ResponseEntity<Void> updateMarkdownText(@PathVariable Long noteId,
         @RequestBody Map<String, Object> requestPayload) {
         noteService.saveMarkdownText(noteId, (String) requestPayload.get("markdownText"));
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 
     // 노트 삭제

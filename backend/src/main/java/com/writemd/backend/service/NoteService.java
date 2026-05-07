@@ -8,9 +8,11 @@ import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.NoteRepository;
 import com.writemd.backend.repository.TextRepository;
 import com.writemd.backend.repository.UserRepository;
+import com.writemd.backend.stream.NoteStreamProducer;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,34 +26,26 @@ public class NoteService {
     private final CachingDataService cachingDataService;
     private final TextRepository textRepository;
     private final UserRepository userRepository;
+    private final NoteStreamProducer noteStreamProducer;
 
 
     // 새노트 생성
     @Transactional
-    public NoteDTO createNote(String githubId, String noteName) {
+    public NoteDTO createNote(String githubId, String noteName, String markdownText) {
         UserDTO cached = cachingDataService.findUserByGithubId(githubId);
         Users user = userRepository.getReferenceById(cached.getUserId());
 
-        Notes newNote = Notes.builder()
-            .users(user)
-            .noteName(noteName)
-            .build();
+        Notes newNote = Notes.builder().users(user).noteName(noteName).build();
 
-        Texts text = Texts.builder()
-            .notes(newNote)
-            .markdownText("")
-            .build();
+        Texts text = Texts.builder().notes(newNote).markdownText("").build();
 
         newNote.updateText(text);
 
         Notes savedNote = noteRepository.save(newNote);
 
-        NoteDTO savedNoteDTO = NoteDTO.builder()
-            .noteId(savedNote.getId())
-            .noteName(savedNote.getNoteName())
-            .createdAt(savedNote.getCreatedAt())
-            .updatedAt(savedNote.getUpdatedAt())
-            .build();
+        NoteDTO savedNoteDTO = NoteDTO.builder().noteId(savedNote.getId())
+                .noteName(savedNote.getNoteName()).createdAt(savedNote.getCreatedAt())
+                .updatedAt(savedNote.getUpdatedAt()).build();
 
         // 캐시 목록에 직접 추가 (evict → DB 재조회 방지)
         cachingDataService.addNoteToCache(cached.getUserId(), savedNoteDTO);
@@ -59,7 +53,7 @@ public class NoteService {
         return savedNoteDTO;
     }
 
-    // 노트 업데이트
+    // 노트 이름 업데이트
     @Transactional
     public NoteDTO updateNoteName(Long noteId, String newNoteName) {
         long updatedRows = noteRepository.updateNoteName(noteId, newNoteName);
@@ -69,28 +63,29 @@ public class NoteService {
         }
 
         Long userId = noteRepository.findUserIdByNoteId(noteId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
+                .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음"));
 
         cachingDataService.updateNoteNameInCache(userId, noteId, newNoteName);
 
-        return NoteDTO.builder()
-            .noteId(noteId)
-            .noteName(newNoteName)
-            .updatedAt(LocalDateTime.now())
-            .build();
+        return NoteDTO.builder().noteId(noteId).noteName(newNoteName).updatedAt(LocalDateTime.now())
+                .build();
     }
 
     // text 저장
-    @Transactional
     public void saveMarkdownText(Long noteId, String markdownText) {
-        textRepository.updateMarkdownText(noteId, markdownText);
+        try {
+            noteStreamProducer.publishSave(noteId, markdownText);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis 연결 실패. DB 직접 쓰기. noteId={}", noteId);
+            textRepository.updateMarkdownText(noteId, markdownText);
+        }
     }
 
     // 노트 삭제
     @Transactional
     public void deleteNote(Long noteId) {
         Long userId = noteRepository.findUserIdByNoteId(noteId)
-            .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
+                .orElseThrow(() -> new RuntimeException("노트 찾을 수 없음"));
 
         noteRepository.deleteById(noteId);
         cachingDataService.evictNoteCache(userId);

@@ -39,6 +39,13 @@ spring:
       host: localhost
       port: 6380
       password: ${REDIS_PASSWORD}
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 16   # 최대 활성 커넥션
+          max-idle: 8
+          min-idle: 2
+          max-wait: 1000ms # 커넥션 대기 타임아웃
 
   # 보안
   security:
@@ -94,6 +101,9 @@ management:
       show-details: always
 
 app:
+  stream:
+    note-update:
+      max-len: 10000
   test:
     load-test-key: ${LOAD_TEST_KEY:}
   guest:

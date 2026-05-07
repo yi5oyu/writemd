@@ -34,7 +34,8 @@ public class NoteController {
     @PostMapping("/create/{githubId}")
     public ResponseEntity<NoteDTO> createNote(@PathVariable String githubId,
         @RequestBody Map<String, Object> requestPayload) {
-        NoteDTO savedNote = noteService.createNote(githubId, (String) requestPayload.get("noteName"));
+        NoteDTO savedNote = noteService.createNote(githubId, (String) requestPayload.get("noteName"),
+            (String) requestPayload.get("markdownText"));
 
         return ResponseEntity.ok(savedNote);
     }
@@ -66,7 +67,7 @@ public class NoteController {
     public ResponseEntity<Void> updateMarkdownText(@PathVariable Long noteId,
         @RequestBody Map<String, Object> requestPayload) {
         noteService.saveMarkdownText(noteId, (String) requestPayload.get("markdownText"));
-        return ResponseEntity.ok().build();
+        return ResponseEntity.accepted().build();
     }
 
     // 노트 삭제

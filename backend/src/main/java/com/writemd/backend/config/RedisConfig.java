@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +40,21 @@ public class RedisConfig {
 
         template.afterPropertiesSet();
 
+        return template;
+    }
+
+    // Stream 전용 템플릿 — 필드/값 모두 String, GenericJackson2Json 이중 인코딩 방지
+    @Bean
+    @Qualifier("streamRedisTemplate")
+    public RedisTemplate<String, String> streamRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        StringRedisSerializer str = new StringRedisSerializer();
+        template.setKeySerializer(str);
+        template.setValueSerializer(str);
+        template.setHashKeySerializer(str);
+        template.setHashValueSerializer(str);
+        template.afterPropertiesSet();
         return template;
     }
 

@@ -1,0 +1,317 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "0. 로그인": {
+                "path": "::0. 로그인",
+                "id": "9c20ddaa225f498b1f351a367dfb2c73",
+                "groups": {},
+                "checks": {
+                        "Login 200 OK": {
+                            "id": "bab98ff0b7acfb5ed17c4c80f18c73ab",
+                            "passes": 26229,
+                            "fails": 0,
+                            "name": "Login 200 OK",
+                            "path": "::0. 로그인::Login 200 OK"
+                        }
+                    },
+                "name": "0. 로그인"
+            },
+            "3-2. 노트 생성": {
+                "name": "3-2. 노트 생성",
+                "path": "::3-2. 노트 생성",
+                "id": "72dc18a4ee6621bc59a4165919561916",
+                "groups": {},
+                "checks": {
+                        "Create Note 200 OK": {
+                            "fails": 0,
+                            "name": "Create Note 200 OK",
+                            "path": "::3-2. 노트 생성::Create Note 200 OK",
+                            "id": "ba47437ea7c99c91180afd32003b6440",
+                            "passes": 794
+                        }
+                    }
+            },
+            "3-1. 노트 수정": {
+                "name": "3-1. 노트 수정",
+                "path": "::3-1. 노트 수정",
+                "id": "10d0058999b2395373a5b1a3155be69c",
+                "groups": {},
+                "checks": {
+                        "Write 202 OK": {
+                            "fails": 0,
+                            "name": "Write 202 OK",
+                            "path": "::3-1. 노트 수정::Write 202 OK",
+                            "id": "deed32c9b79810dfdadcf834ca6d7433",
+                            "passes": 3250
+                        }
+                    }
+            },
+            "2. 여러 노트 조회": {
+                "path": "::2. 여러 노트 조회",
+                "id": "208186e35690fcea4da5feb607fbef81",
+                "groups": {},
+                "checks": {
+                        "1번 노트 OK": {
+                            "name": "1번 노트 OK",
+                            "path": "::2. 여러 노트 조회::1번 노트 OK",
+                            "id": "fa6dc2b0f8e4fe6af5e1f7aa041ce8e6",
+                            "passes": 7820,
+                            "fails": 0
+                        },
+                        "2번 노트 OK": {
+                            "id": "f4341f06a55b97fd05f903f87623b4bf",
+                            "passes": 7820,
+                            "fails": 0,
+                            "name": "2번 노트 OK",
+                            "path": "::2. 여러 노트 조회::2번 노트 OK"
+                        }
+                    },
+                "name": "2. 여러 노트 조회"
+            },
+            "1. 단일 노트 조회": {
+                "path": "::1. 단일 노트 조회",
+                "id": "4e823889cdfa46a1031ec9b152f28b6b",
+                "groups": {},
+                "checks": {
+                        "Note Fetch 200 OK": {
+                            "name": "Note Fetch 200 OK",
+                            "path": "::1. 단일 노트 조회::Note Fetch 200 OK",
+                            "id": "6f3f3dc4ac00b18e3b50edd022c7eafd",
+                            "passes": 10322,
+                            "fails": 0
+                        }
+                    },
+                "name": "1. 단일 노트 조회"
+            },
+            "5. 메모 조회 및 생성": {
+                "name": "5. 메모 조회 및 생성",
+                "path": "::5. 메모 조회 및 생성",
+                "id": "91e0047f31204b8d3492cc113cd50c8a",
+                "groups": {},
+                "checks": {
+                        "Memo Created 200": {
+                            "name": "Memo Created 200",
+                            "path": "::5. 메모 조회 및 생성::Memo Created 200",
+                            "id": "3e617f7da4a8c9d9c955987678ed49af",
+                            "passes": 659,
+                            "fails": 0
+                        }
+                    }
+            },
+            "4. 템플릿 조회 및 생성": {
+                "name": "4. 템플릿 조회 및 생성",
+                "path": "::4. 템플릿 조회 및 생성",
+                "id": "bd511d982590a2bb254303c92f1387a8",
+                "groups": {},
+                "checks": {
+                        "Template Created 201": {
+                            "fails": 0,
+                            "name": "Template Created 201",
+                            "path": "::4. 템플릿 조회 및 생성::Template Created 201",
+                            "id": "f439fb656ae520b18a4ebb50f419a4ee",
+                            "passes": 651
+                        }
+                    }
+            }
+        },
+        "checks": {}
+    },
+    "metrics": {
+        "api_note_write_duration": {
+            "p(90)": 123.6843201,
+            "p(95)": 140.36806479999998,
+            "avg": 103.85591464707674,
+            "min": 74.372877,
+            "med": 97.310731,
+            "max": 604.030601,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "vus": {
+            "value": 2,
+            "min": 2,
+            "max": 600
+        },
+        "vus_max": {
+            "value": 600,
+            "min": 600,
+            "max": 600
+        },
+        "errors": {
+            "fails": 41905,
+            "passes": 0,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_sending": {
+            "p(90)": 0.139928,
+            "p(95)": 0.18886999999999998,
+            "avg": 0.08118569586465794,
+            "min": 0.009669,
+            "med": 0.060086,
+            "max": 1.992502
+        },
+        "http_reqs": {
+            "count": 104151,
+            "rate": 244.83380213039393
+        },
+        "iteration_duration": {
+            "avg": 4858.410120177421,
+            "min": 2131.297744,
+            "med": 4675.24783,
+            "max": 9180.836213,
+            "p(90)": 6778.131277,
+            "p(95)": 7335.9767716
+        },
+        "api_note_create_duration": {
+            "med": 291.7642745,
+            "max": 789.946214,
+            "p(90)": 439.69819980000005,
+            "p(95)": 480.67500649999994,
+            "avg": 302.35326693828694,
+            "min": 103.675842,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_connecting": {
+            "avg": 0.24861231537863313,
+            "min": 0,
+            "med": 0,
+            "max": 110.41795,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "checks": {
+            "passes": 57545,
+            "fails": 0,
+            "value": 1
+        },
+        "api_note_fetch_duration": {
+            "avg": 105.46124004669602,
+            "min": 75.479842,
+            "med": 99.67408900000001,
+            "max": 499.51413,
+            "p(90)": 126.51224780000001,
+            "p(95)": 141.26579369999982,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_blocked": {
+            "avg": 0.5341913536788282,
+            "min": 0.00004,
+            "med": 0.00019,
+            "max": 160.247476,
+            "p(90)": 0.00038,
+            "p(95)": 0.000411
+        },
+        "group_duration": {
+            "avg": 452.26913310174007,
+            "min": 74.472804,
+            "med": 110.700551,
+            "max": 3474.534758,
+            "p(90)": 1936.7982776,
+            "p(95)": 2577.2834814
+        },
+        "data_sent": {
+            "count": 9947862,
+            "rate": 23385.01672118813
+        },
+        "api_template_create_duration": {
+            "avg": 286.40387042549935,
+            "min": 111.78739,
+            "med": 274.514985,
+            "max": 980.747229,
+            "p(90)": 407.293031,
+            "p(95)": 442.328585,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "iterations": {
+            "count": 26229,
+            "rate": 61.658033010514565
+        },
+        "api_login_duration": {
+            "avg": 113.43966756155274,
+            "min": 76.185261,
+            "med": 103.2609,
+            "max": 2599.567026,
+            "p(90)": 139.3139118,
+            "p(95)": 169.89310259999993,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_receiving": {
+            "min": 0.009729,
+            "med": 0.166514,
+            "max": 310.295794,
+            "p(90)": 3.845928,
+            "p(95)": 4.7686955,
+            "avg": 1.5921028237462727
+        },
+        "http_req_duration": {
+            "avg": 111.81709328143903,
+            "min": 73.812568,
+            "med": 101.240172,
+            "max": 2599.567026,
+            "p(90)": 134.876606,
+            "p(95)": 170.4797605,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "api_memo_create_duration": {
+            "avg": 284.31391513050113,
+            "min": 101.894464,
+            "med": 279.220729,
+            "max": 676.196614,
+            "p(90)": 406.0447526000001,
+            "p(95)": 461.35505870000003,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 2599.567026,
+            "p(90)": 134.876606,
+            "p(95)": 170.4797605,
+            "avg": 111.81709328143903,
+            "min": 73.812568,
+            "med": 101.240172
+        },
+        "http_req_waiting": {
+            "p(95)": 165.9903125,
+            "avg": 110.14380476182559,
+            "min": 73.665205,
+            "med": 99.862967,
+            "max": 2596.253274,
+            "p(90)": 132.492016
+        },
+        "data_received": {
+            "count": 589677128,
+            "rate": 1386188.2581787114
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0.28384133528242633,
+            "min": 0,
+            "med": 0,
+            "max": 83.44059,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 104151,
+            "value": 0
+        }
+    }
+}

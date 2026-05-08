@@ -5,10 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -18,14 +16,11 @@ public class RedisStreamInitializer implements ApplicationRunner {
 
     @Qualifier("streamRedisTemplate")
     private final RedisTemplate<String, String> streamRedisTemplate;
-    private final StreamMessageListenerContainer<String, MapRecord<String, String, String>> noteStreamContainer;
 
-    // 메시지 수신 셋업
     @Override
     public void run(ApplicationArguments args) {
         initStream(StreamKey.NOTE_UPDATE);
-        noteStreamContainer.start();
-        log.info("Redis Stream Consumer 기동 완료.");
+        log.info("Redis Stream 초기화 완료.");
     }
 
     // 스트림에 대한 컨슈머 그룹 생성

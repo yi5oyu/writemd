@@ -104,6 +104,8 @@ app:
   stream:
     note-update:
       max-len: 10000
+      batch-size: 100
+      batch-delay: 200
   test:
     load-test-key: ${LOAD_TEST_KEY:}
   guest:

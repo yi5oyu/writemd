@@ -113,6 +113,8 @@ app:
   stream:
     note-update:
       max-len: 10000  # Stream 최대 보존 메시지 수
+      batch-size: 100
+      batch-delay: 200
   frontend:
     url: ${FRONTEND_URL}
   test:

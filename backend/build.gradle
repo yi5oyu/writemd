@@ -99,6 +99,10 @@ dependencies {
 
     // GraphQL
     implementation 'org.springframework.boot:spring-boot-starter-graphql'
+
+    // 캐시
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 }
 
 dependencyManagement {

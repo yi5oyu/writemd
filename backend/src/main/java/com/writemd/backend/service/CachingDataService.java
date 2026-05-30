@@ -24,12 +24,18 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CachingDataService {
 
+    private final ObjectMapper objectMapper;
     private final CacheManager cacheManager;
     private final UserRepository userRepository;
     private final ApiRepository apiRepository;
@@ -38,14 +44,30 @@ public class CachingDataService {
     @Value("${app.guest.openai-api-key}")
     private String guestOpenaiApiKey;
 
-    @Cacheable(value = "template-data", key = "'my-templates'")
+    @Cacheable(value = "template-data", key = "'my-templates'", cacheManager = "localCacheManager", sync = true)
     public List<Map<String, String>> getMyTemplates() {
-        return Collections.emptyList();
+        log.info("로컬 캐시 Miss: 파일로부터 '내 템플릿' 데이터 동적 로딩 및 적재 (Pull)");
+        return loadTemplateDataFromFile("data/template.json");
     }
 
-    @Cacheable(value = "template-data", key = "'git-templates'")
+    @Cacheable(value = "template-data", key = "'git-templates'", cacheManager = "localCacheManager", sync = true)
     public List<Map<String, String>> getGitTemplates() {
-        return Collections.emptyList();
+        log.info("로컬 캐시 Miss: 파일로부터 '깃 템플릿' 데이터 동적 로딩 및 적재 (Pull)");
+        return loadTemplateDataFromFile("data/git_template.json");
+    }
+
+    private List<Map<String, String>> loadTemplateDataFromFile(String filePath) {
+        try {
+            Resource resource = new ClassPathResource(filePath);
+            List<Map<String, String>> rawData = objectMapper.readValue(
+                resource.getInputStream(),
+                new TypeReference<List<Map<String, String>>>() {}
+            );
+            return rawData.stream().map(Map::copyOf).toList();
+        } catch (IOException e) {
+            log.error("템플릿 정적 파일 로딩 실패. path={}", filePath, e);
+            return Collections.emptyList();
+        }
     }
 
     // 유저 정보 찾기

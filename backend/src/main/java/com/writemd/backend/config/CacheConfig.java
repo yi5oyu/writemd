@@ -4,14 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -22,7 +26,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @EnableCaching
-public class RedisConfig {
+public class CacheConfig {
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -60,6 +64,7 @@ public class RedisConfig {
 
     // 자동 캐싱 설정
     @Bean
+    @Primary
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
 
         // 기본 캐시 설정(기본 30분) — JavaTimeModule이 등록된 커스텀 직렬화기 사용
@@ -73,10 +78,6 @@ public class RedisConfig {
 
         // 캐시별 개별 설정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-
-        // 템플릿 데이터 캐시(1년)
-        cacheConfigurations.put("template-data",
-            defaultConfig.entryTtl(Duration.ofDays(365)));
 
         // 유저 캐시
         cacheConfigurations.put("user",
@@ -94,12 +95,28 @@ public class RedisConfig {
         cacheConfigurations.put("user-notes",
             defaultConfig.entryTtl(Duration.ofMinutes(5)));
 
+//        cacheConfigurations.put("template-data",
+//            defaultConfig.entryTtl(Duration.ofDays(365)));
+
         // Duration.ofDays(365), .ofHours(1), .ofMinutes(30), .ofMinutes(5)
 
         return RedisCacheManager.builder(redisConnectionFactory)
             .cacheDefaults(defaultConfig)
             .withInitialCacheConfigurations(cacheConfigurations)
             .build();
+    }
+
+    // 로컬 캐시 (Caffeine)
+    @Bean(name = "localCacheManager")
+    public CacheManager localCacheManager() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+            .initialCapacity(10)
+            .maximumSize(50)
+            .expireAfterWrite(Duration.ofHours(12))
+        );
+        cacheManager.setCacheNames(List.of("template-data"));
+        return cacheManager;
     }
 
     private GenericJackson2JsonRedisSerializer customJsonSerializer() {

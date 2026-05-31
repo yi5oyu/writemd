@@ -679,6 +679,7 @@ const NoteScreen = ({
             memo.memoId === memoId
               ? {
                   ...memo,
+                  title: response.title,
                   updatedAt: response.updatedAt,
                 }
               : memo
@@ -689,6 +690,7 @@ const NoteScreen = ({
           ...t,
           {
             memoId: response.id,
+            title: response.title,
             createdAt: response.createdAt,
             updatedAt: response.updatedAt,
           },

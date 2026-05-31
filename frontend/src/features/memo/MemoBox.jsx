@@ -43,6 +43,20 @@ const MemoBox = ({
   const [contentLoading, setContentLoading] = useState(false)
   const nodeRef = useRef(null)
 
+  // 날짜 포맷 헬퍼 함수
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    try {
+      const date = new Date(dateString)
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+        date.getHours()
+      )}:${pad(date.getMinutes())}`
+    } catch (e) {
+      return '날짜 오류'
+    }
+  }
+
   const { searchHistory, addSearchHistory, removeSearchHistory } = useSearchHistory(
     'memo-search-history',
     8
@@ -215,13 +229,13 @@ const MemoBox = ({
           <Spacer />
           <IconButton
             variant="ghost"
-            size="sm"
+            size="md"
             onClick={() => {
               setSelectedMemo(null)
               setMemoText('<!-- 새 메모 -->')
               setSelectedScreen('memo')
             }}
-            icon={<Icon as={FiPlus} />}
+            icon={<Icon as={FiPlus} boxSize="20px" />}
             aria-label="새 메모 추가"
             isDisabled={isLoading}
             mr="5px"
@@ -231,7 +245,7 @@ const MemoBox = ({
           />
           <IconButton
             variant="ghost"
-            size="sm"
+            size="md"
             onClick={() => {
               !memorizedData || !memorizedData.trim()
                 ? toast({
@@ -246,7 +260,7 @@ const MemoBox = ({
                   setSelectedScreen('memo'),
                   setMemoText(memorizedData))
             }}
-            icon={<Icon as={RiSave3Fill} />}
+            icon={<Icon as={RiSave3Fill} boxSize="20px" />}
             aria-label="저장"
             isDisabled={isLoading}
             mr="5px"
@@ -257,8 +271,8 @@ const MemoBox = ({
           <IconButton
             onClick={() => setMemo(!memo)}
             variant="ghost"
-            size="sm"
-            icon={<Icon as={RiCloseLargeLine} />}
+            size="md"
+            icon={<Icon as={RiCloseLargeLine} boxSize="18px" />}
             isDisabled={isLoading}
             aria-label="닫기"
             _hover={{ color: 'red' }}
@@ -266,10 +280,10 @@ const MemoBox = ({
           />
         </Flex>
 
-        <ScrollBox p="5px" flex="1">
+        <Box p="5px">
           <Box
             mb="12px"
-            p="5px 12px 12px 12px"
+            p="12px"
             bg="blue.50"
             borderRadius="md"
             border="1px"
@@ -293,17 +307,16 @@ const MemoBox = ({
               {selectedMemoMeta ? '선택된 메모' : '새 메모 작성'}
             </Badge>
 
-            <Text fontSize="sm" fontWeight="bold" color="blue.700" my="10px"></Text>
             {contentLoading ? (
-              <Flex justify="center" align="center" minH="42px">
+              <Flex justify="center" align="center" minH="42px" mt="10px">
                 <Spinner size="sm" color="blue.400" />
               </Flex>
             ) : selectedMemoMeta ? (
-              <Text fontSize="sm" noOfLines={2} color="gray.700" minH="42px">
+              <Text fontSize="sm" noOfLines={2} color="gray.700" minH="42px" mt="10px">
                 {memorizedData}
               </Text>
             ) : (
-              <Text fontSize="sm" noOfLines={2} color="gray.500" minH="42px">
+              <Text fontSize="sm" noOfLines={2} color="gray.500" minH="42px" mt="10px">
                 {memorizedData
                   ? memorizedData
                   : '메모 목록에서 선택하거나, 내용을 입력하고 저장 버튼을 누르세요.'}
@@ -333,12 +346,15 @@ const MemoBox = ({
                 : `메모 ${text.length}개`}
             </Text>
           )}
+        </Box>
 
+        <ScrollBox px="10px" pb="10px" maxH="360px" overflowY="auto">
           {filteredAndSortedMemos.length > 0 ? (
             filteredAndSortedMemos.map((item) => (
               <Box key={item.memoId}>
                 <MemoList
                   id={item.memoId}
+                  title={item.title}
                   createdAt={item.createdAt}
                   updatedAt={item.updatedAt}
                   onClick={() => handleMemoClick(item.memoId)}

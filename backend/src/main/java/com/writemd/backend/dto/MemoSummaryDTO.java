@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class MemoSummaryDTO {
 
     private Long memoId;
+    private String title;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

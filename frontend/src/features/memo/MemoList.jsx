@@ -6,6 +6,7 @@ import { FaTrashAlt } from 'react-icons/fa'
 
 const MemoList = ({
   id,
+  title, // title 추가 수신
   handelDelMemoClick,
   isDisabled,
   onClick,
@@ -27,36 +28,43 @@ const MemoList = ({
   return (
     <Box
       position="relative"
-      p="22px 12px 12px 12px"
+      p="12px 40px 12px 12px" // 우측 삭제 버튼 영역(40px) 확보
       mb={2}
       bg={selected ? '#ede6c2' : '#fff7d1'}
       borderRadius="md"
       cursor="pointer"
       _hover={{ backgroundColor: '#ede6c2' }}
-      maxH="60px"
       title="불러오기"
       onClick={onClick}
-      boxShadow={selected && 'md'}
+      boxShadow={selected ? 'md' : 'sm'}
+      transition="all 0.2s ease"
     >
-      {/* 날짜만 표시 — text는 클릭 시 로드 */}
-      <Text fontSize="13px" color="gray.600" noOfLines={1}>
+      {/* 요약 제목 표시 */}
+      <Text fontSize="14px" fontWeight="bold" color="gray.800" noOfLines={1} mb="4px">
+        {title || '새 메모'}
+      </Text>
+
+      {/* 날짜 표시 */}
+      <Text fontSize="11px" color="gray.500" noOfLines={1}>
         {formatDate(updatedAt ? updatedAt : createdAt)}
       </Text>
 
       <IconButton
         icon={<FaTrashAlt />}
-        right="2"
-        top="2"
+        right="3"
+        top="55%"
+        transform="translateY(-50%)"
         position="absolute"
         bg="transparent"
-        size="60px"
+        size="sm"
         onClick={(e) => {
           e.stopPropagation()
           !isDisabled && handelDelMemoClick(id)
         }}
-        color="gray.300"
+        color="gray.400"
         _hover={{
-          color: 'red.400',
+          color: 'red.500',
+          bg: 'blackAlpha.50',
         }}
         aria-label="삭제"
         title="삭제"

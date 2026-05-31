@@ -28,6 +28,8 @@ public class QMemos extends EntityPathBase<Memos> {
 
     public final StringPath text = createString("text");
 
+    public final StringPath title = createString("title");
+
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
     public final QUsers users;

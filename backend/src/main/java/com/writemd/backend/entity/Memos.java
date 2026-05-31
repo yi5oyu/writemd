@@ -10,6 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -36,6 +38,8 @@ public class Memos {
     @Column(columnDefinition = "TEXT")
     private String text;
 
+    private String title;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference
@@ -51,5 +55,23 @@ public class Memos {
 
     public void updateText(String text) {
         this.text = text;
+        this.title = extractTitle(text);
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void autoExtractTitle() {
+        this.title = extractTitle(this.text);
+    }
+
+    private String extractTitle(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return "새 메모";
+        }
+        String firstLine = text.split("\n")[0].trim();
+        if (firstLine.isEmpty()) {
+            return "새 메모";
+        }
+        return firstLine.length() > 50 ? firstLine.substring(0, 50) : firstLine;
     }
 }

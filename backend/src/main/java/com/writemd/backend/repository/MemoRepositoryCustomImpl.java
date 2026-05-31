@@ -23,6 +23,7 @@ public class MemoRepositoryCustomImpl implements MemoRepositoryCustom {
         return queryFactory
             .select(Projections.constructor(MemoSummaryDTO.class,
                 memos.id,
+                memos.title,
                 memos.createdAt,
                 memos.updatedAt))
             .from(memos)

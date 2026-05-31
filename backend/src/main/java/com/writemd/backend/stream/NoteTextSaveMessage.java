@@ -1,12 +1,16 @@
 package com.writemd.backend.stream;
 
-import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 public record NoteTextSaveMessage(long noteId, String markdownText, String requestedAt) {
 
     public static NoteTextSaveMessage of(long noteId, String markdownText) {
-        return new NoteTextSaveMessage(noteId, markdownText, Instant.now().toString());
+        return new NoteTextSaveMessage(noteId, markdownText,
+            ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     public Map<String, String> toMap() {

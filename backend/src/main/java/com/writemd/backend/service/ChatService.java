@@ -193,8 +193,8 @@ public class ChatService {
                 return;
             }
 
-            String aiModel = api.getAiModel();
-            String apiKey = api.getApiKey();
+            String aiModel = api.aiModel();
+            String apiKey = api.apiKey();
             log.info("STEP 2: API 키 조회 완료 (aiModel: {})", aiModel);
 
             // ChatClient 생성
@@ -380,8 +380,8 @@ public class ChatService {
     public CompletableFuture<String> directChat(Long userId, Long apiId, String model, String content,
         boolean enableTools) {
         APIDTO api = cachingDataService.findApiKey(userId, apiId);
-        String aiModel = api.getAiModel();
-        String apiKey = api.getApiKey();
+        String aiModel = api.aiModel();
+        String apiKey = api.apiKey();
 
         ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
@@ -410,8 +410,8 @@ public class ChatService {
                 throw new IllegalArgumentException("API 키 정보를 찾을 수 없습니다.");
             }
 
-            String aiModel = api.getAiModel();
-            String apiKey = api.getApiKey();
+            String aiModel = api.aiModel();
+            String apiKey = api.apiKey();
 
             // ChatClient 초기화
             ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
@@ -477,8 +477,8 @@ public class ChatService {
 
             // API 키/ChatClient 초기화
             APIDTO api = cachingDataService.findApiKey(userId, apiId);
-            String aiModel = api.getAiModel();
-            String apiKey = api.getApiKey();
+            String aiModel = api.aiModel();
+            String apiKey = api.apiKey();
 
             ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
@@ -675,8 +675,8 @@ public class ChatService {
 
         log.info("분석 단계 {}/{} 시작: {} - {}/{}", currentStage, totalStages, stageKey);
 
-        String aiModel = api.getAiModel();
-        String apiKey = api.getApiKey();
+        String aiModel = api.aiModel();
+        String apiKey = api.apiKey();
 
         // 단계 시작 이벤트 전송
         String displayName = switch (stageKey) {
@@ -757,8 +757,8 @@ public class ChatService {
         // taskExecutor 사용해 비동기 실행
         CompletableFuture.runAsync(() -> {
             try {
-                String aiModel = api.getAiModel();
-                String apiKey = api.getApiKey();
+                String aiModel = api.aiModel();
+                String apiKey = api.apiKey();
                 ChatClient chatClient = initializeChatClient(aiModel, apiKey, model);
 
                 List<Message> messages = new ArrayList<>();

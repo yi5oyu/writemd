@@ -33,7 +33,7 @@ public class NoteService {
     @Transactional
     public NoteDTO createNote(String githubId, String noteName, String markdownText) {
         UserDTO cached = cachingDataService.findUserByGithubId(githubId);
-        Users user = userRepository.getReferenceById(cached.getUserId());
+        Users user = userRepository.getReferenceById(cached.userId());
 
         Notes newNote = Notes.builder().users(user).noteName(noteName).build();
 
@@ -48,7 +48,7 @@ public class NoteService {
                 .updatedAt(savedNote.getUpdatedAt()).build();
 
         // 캐시 목록에 직접 추가 (evict → DB 재조회 방지)
-        cachingDataService.addNoteToCache(cached.getUserId(), savedNoteDTO);
+        cachingDataService.addNoteToCache(cached.userId(), savedNoteDTO);
 
         return savedNoteDTO;
     }

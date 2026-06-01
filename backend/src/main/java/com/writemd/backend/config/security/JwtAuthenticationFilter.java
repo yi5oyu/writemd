@@ -79,7 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // 사용자 정보 추출/인증 설정 (Stateless)
                 UserDTO userDTO = jwtTokenProvider.getUserDTO(token);
-                String githubId = userDTO.getGithubId();
+                String githubId = userDTO.githubId();
 
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(

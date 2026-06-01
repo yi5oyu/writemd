@@ -88,8 +88,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         */
 
         response.sendRedirect(frontendUrl + "/login-success" +
-            "?accessToken=" + tokens.getAccessToken() +
-            "&refreshToken=" + tokens.getRefreshToken() +
+            "?accessToken=" + tokens.accessToken() +
+            "&refreshToken=" + tokens.refreshToken() +
             "&deviceId=" + deviceId);
     }
 

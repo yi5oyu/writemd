@@ -34,7 +34,7 @@ public class UserController {
 
     @GetMapping("/info")
     public UserDTO getUserInfo(@AuthenticationPrincipal UserDTO userDTO) {
-        return userService.userInfo(userDTO.getGithubId());
+        return userService.userInfo(userDTO.githubId());
     }
 
     @GetMapping("/current-user")
@@ -59,7 +59,7 @@ public class UserController {
     public ResponseEntity<?> saveAPIKey(@PathVariable Long userId, @PathVariable String githubId,
         @RequestBody APIDTO apidto) {
         try {
-            APIDTO savedApiDTO = apiService.saveAPIKey(userId, githubId, apidto.getAiModel(), apidto.getApiKey());
+            APIDTO savedApiDTO = apiService.saveAPIKey(userId, githubId, apidto.aiModel(), apidto.apiKey());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedApiDTO);
         } catch (Exception e) {

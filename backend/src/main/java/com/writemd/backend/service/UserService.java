@@ -125,8 +125,8 @@ public class UserService {
         // 캐시 히트
         if (cachedUser != null) {
             // 변경사항 체크 후 업데이트
-            if (!Objects.equals(cachedUser.getName(), name) || !Objects.equals(cachedUser.getAvatarUrl(), avatarUrl)) {
-                Users userToUpdate = userRepository.getReferenceById(cachedUser.getUserId());
+            if (!Objects.equals(cachedUser.name(), name) || !Objects.equals(cachedUser.avatarUrl(), avatarUrl)) {
+                Users userToUpdate = userRepository.getReferenceById(cachedUser.userId());
                 userToUpdate.updateName(name);
                 userToUpdate.updateAvatarUrl(avatarUrl);
                 Users savedUser = userRepository.save(userToUpdate);
@@ -189,14 +189,14 @@ public class UserService {
     public UserDTO userInfo(String githubId) {
         UserDTO user = cachingDataService.findUserByGithubId(githubId);
         
-        List<NoteDTO> notes = cachingDataService.findNotesByUserId(user.getUserId());
+        List<NoteDTO> notes = cachingDataService.findNotesByUserId(user.userId());
 
         return UserDTO.builder()
-            .userId(user.getUserId())
-            .name(user.getName())
-            .githubId(user.getGithubId())
-            .avatarUrl(user.getAvatarUrl())
-            .htmlUrl(user.getHtmlUrl())
+            .userId(user.userId())
+            .name(user.name())
+            .githubId(user.githubId())
+            .avatarUrl(user.avatarUrl())
+            .htmlUrl(user.htmlUrl())
             .notes(notes)
             .build();
     }

@@ -39,7 +39,7 @@ public class TemplateService {
                 .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
         } else {
             folder = Folders.builder()
-                .users(userRepository.getReferenceById(user.getUserId()))
+                .users(userRepository.getReferenceById(user.userId()))
                 .title(folderName)
                 .build();
             folder = folderRepository.save(folder);
@@ -78,7 +78,7 @@ public class TemplateService {
         UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
-        List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user.getUserId());
+        List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user.userId());
 
         List<FolderDTO> folderDTOs = new ArrayList<>();
 

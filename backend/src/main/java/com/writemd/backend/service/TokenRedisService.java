@@ -47,7 +47,7 @@ public class TokenRedisService {
         }
 
         // 토큰 문자열 추출
-        String storedToken = storedData.getToken();
+        String storedToken = storedData.token();
 
         // 일치 확인(클라이언트가 보낸 토큰 - 서버에 저장된 토큰)
         return refreshToken.equals(storedToken);

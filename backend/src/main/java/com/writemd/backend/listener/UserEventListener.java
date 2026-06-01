@@ -81,12 +81,12 @@ public class UserEventListener {
     @EventListener
     public void handleUserUpdatedEvent(UserUpdatedEvent event) {
         UserDTO userDto = event.getUserDto();
-        log.info("유저 캐시 업데이트 시작: {}", userDto.getGithubId());
+        log.info("유저 캐시 업데이트 시작: {}", userDto.githubId());
         try {
-            cachingDataService.updateUserCache(userDto.getGithubId(), userDto);
-            log.info("유저 캐시 업데이트 완료: {}", userDto.getGithubId());
+            cachingDataService.updateUserCache(userDto.githubId(), userDto);
+            log.info("유저 캐시 업데이트 완료: {}", userDto.githubId());
         } catch (Exception e) {
-            log.error("유저 캐시 업데이트 오류: {}", userDto.getGithubId(), e);
+            log.error("유저 캐시 업데이트 오류: {}", userDto.githubId(), e);
         }
     }
 }

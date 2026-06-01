@@ -123,7 +123,7 @@ public class CachingDataService {
             List<NoteDTO> list = new ArrayList<>((List<NoteDTO>) wrapper.get());
             list.add(newNote);
             noteCache.put(userId, list);
-            log.info("노트 목록 캐시 추가: userId={}, noteId={}", userId, newNote.getNoteId());
+            log.info("노트 목록 캐시 추가: userId={}, noteId={}", userId, newNote.noteId());
         }
     }
 
@@ -137,7 +137,7 @@ public class CachingDataService {
         if (wrapper != null) {
             @SuppressWarnings("unchecked")
             List<NoteDTO> updated = ((List<NoteDTO>) wrapper.get()).stream()
-                .map(n -> n.getNoteId().equals(noteId)
+                .map(n -> n.noteId().equals(noteId)
                     ? n.toBuilder().noteName(newName).updatedAt(LocalDateTime.now()).build()
                     : n)
                 .collect(Collectors.toList());
@@ -200,7 +200,7 @@ public class CachingDataService {
     public void handleApiKeySaved(Long userId, APIDTO savedApiDto) {
         Cache apiKeyCache = cacheManager.getCache("api-key");
         if (apiKeyCache != null) {
-            String key = userId + ":" + savedApiDto.getApiId();
+            String key = userId + ":" + savedApiDto.apiId();
             apiKeyCache.put(key, savedApiDto);
             log.info("개별 API 키 캐시 추가: key={}", key);
         }
@@ -242,7 +242,7 @@ public class CachingDataService {
                 List<APIDTO> cachedList = (List<APIDTO>) wrapper.get();
                 if (cachedList != null) {
                     List<APIDTO> updatedList = cachedList.stream()
-                        .filter(api -> !api.getApiId().equals(apiId))
+                        .filter(api -> !api.apiId().equals(apiId))
                         .collect(Collectors.toList());
                     userApiKeysCache.put(userId, updatedList);
                     log.info("캐시 업데이트 완료: userId={}, 총 개수={}", userId, updatedList.size());

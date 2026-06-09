@@ -382,6 +382,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                   <Heading as="h5" size="sm">
                     시스템
                   </Heading>
+{/*                   
                   <FormControl display="flex" alignItems="center" w="auto">
                     <FormLabel
                       htmlFor="remember-me"
@@ -398,7 +399,8 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                       onChange={handleRememberMeChange}
                       colorScheme="blue"
                     />
-                  </FormControl>
+                  </FormControl> */}
+                  
                 </Flex>
                 <Flex direction="column" mt="auto">
                   <Flex justify="space-between" align="center" mb="10px">
@@ -597,7 +599,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                         <Heading as="h6" size="xs" mb="10px">
                           OpenAI(ChatGPT)
                         </Heading>
-                        <Flex gap={2}>
+                        <Flex gap={2} wrap="wrap">
                           {config?.openai?.model?.map((m, index) => (
                             <Badge variant="outline" colorScheme="green" key={index}>
                               {m}

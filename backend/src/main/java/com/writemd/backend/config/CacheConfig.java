@@ -1,5 +1,6 @@
 package com.writemd.backend.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
@@ -128,9 +129,11 @@ public class CacheConfig {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         // Redis 역직렬화를 위해 패키지/클래스 타입 정보 저장 (기본 GenericJackson2Json 동작 유지)
+        // record(final class) 타입 정보가 누락되지 않도록 EVERYTHING 설정
         objectMapper.activateDefaultTyping(
             BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-            ObjectMapper.DefaultTyping.NON_FINAL
+            ObjectMapper.DefaultTyping.EVERYTHING,
+            JsonTypeInfo.As.PROPERTY
         );
 
         return new GenericJackson2JsonRedisSerializer(objectMapper);

@@ -80,6 +80,10 @@ jwt:
   refresh-token-validity: 604800000 # 7일
   guest-refresh-token-validity: 86400000 # 1일
 
+cookie:
+  secure: true
+  same-site: Lax
+
 management:
   endpoints:
     web:

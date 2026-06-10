@@ -87,7 +87,7 @@ public class SecurityConfig {
 
                 // 인증 권한
                 .requestMatchers(
-                    "/api/guest/**", "/api/config/**",
+                    "/api/guest/**", "/api/config/**", "/api/auth/**",
                     "/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html",
                     "/v1/**", "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/sse"
                 ).permitAll()

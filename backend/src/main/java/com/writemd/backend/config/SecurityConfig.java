@@ -47,8 +47,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOriginPattern(frontendUrl);
         // 도메인 허용
-        configuration.addAllowedOriginPattern("https://writemd.space");
-        configuration.addAllowedOriginPattern("https://www.writemd.space");
+        configuration.addAllowedOriginPattern("https://writemdai.xyz");
+        configuration.addAllowedOriginPattern("https://www.writemdai.xyz");
 
         configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6277");

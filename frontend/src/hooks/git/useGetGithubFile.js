@@ -33,6 +33,8 @@ function useGetGithubFile() {
 
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')
+          
+          window.isBypassingBeforeUnload = true
           window.location.href = '/login'
         } else if (err.message === 'Network Error') {
           toast({

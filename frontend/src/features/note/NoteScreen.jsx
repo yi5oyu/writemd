@@ -275,7 +275,7 @@ const NoteScreen = ({
   // const aiModel = 'exaone-3.5-7.8b-instruct'
   //  'llama-3.2-korean-blossom-3b'
 
-  const { markdownText, characterInfo, saveInfo, handleTextChange, handleManualSave } =
+  const { markdownText, characterInfo, saveInfo, handleTextChange, handleManualSave, isLocalCacheRestored } =
     useNoteAutoSave(noteId, note?.texts?.markdownText || '')
 
   const toast = useToast()
@@ -295,6 +295,20 @@ const NoteScreen = ({
       })
     }
   }, [error, toast])
+
+  // 로컬 캐시 복구 토스트
+  useEffect(() => {
+    if (isLocalCacheRestored) {
+      toast({
+        position: 'top',
+        duration: 3000,
+        isClosable: true,
+        title: '미저장 내용 복구됨',
+        description: '이전에 저장되지 않은 내용이 복구되었습니다.',
+        status: 'warning',
+      })
+    }
+  }, [isLocalCacheRestored, toast])
 
   // 노트 클릭시 초기화
   useEffect(() => {

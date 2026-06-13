@@ -2,6 +2,11 @@ let isSessionExpiredToastShown = false
 let sessionExpiredTimeout = null
 
 export const handleSessionExpiry = (toast, error) => {
+  // 이미 로그아웃이 진행 중이거나 경고창 우회 플래그가 활성화된 경우 세션 만료 오류를 건너뜀
+  if (window.isLoggingOut || window.isBypassingBeforeUnload) {
+    return
+  }
+
   const isSessionError =
     error.message?.includes('Failed to fetch') ||
     error.message?.includes('Network Error') ||
@@ -28,6 +33,7 @@ export const handleSessionExpiry = (toast, error) => {
     }
 
     sessionExpiredTimeout = setTimeout(() => {
+      window.isBypassingBeforeUnload = true
       window.location.href = '/'
     }, 1000)
   }

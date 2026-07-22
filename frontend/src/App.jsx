@@ -1,13 +1,12 @@
-import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { Spinner, Center } from '@chakra-ui/react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import LoginSuccess from './pages/LoginSuccess'
 import Home from './pages/Home'
 import apiClient from './api/apiClient'
+import { refreshAccessToken } from './api/authRefresh'
 import { tokenManager } from './utils/tokenManager'
 import { useAiConfig } from './context/AiConfigContext'
-import { API_URL } from './config/api'
 
 const App = () => {
   const [user, setUser] = useState(null)
@@ -26,14 +25,7 @@ const App = () => {
     const validateSession = async () => {
       try {
         // 조건 없이 무조건 Silent Refresh 시도 — 인증 여부 판단을 서버에 위임
-        // 쿠키가 유효하면 새 Access Token 반환, 없거나 만료되면 즉시 401 반환
-        // apiClient를 사용하면 인터셉터가 또다시 401을 발화시켜 무한루프 발생 — axios 직접 호출
-        const refreshResponse = await axios.post(`${API_URL}/api/auth/refresh`, {
-          deviceId: tokenManager.getDeviceId(),
-        }, { withCredentials: true })
-
-        const { accessToken } = refreshResponse.data
-        tokenManager.setAccessToken(accessToken)
+        await refreshAccessToken()
 
         // Refresh 성공 시에만 사용자 정보 조회 (인증 상태 확정)
         const response = await apiClient.get('/api/user/info')
@@ -41,7 +33,7 @@ const App = () => {
 
         localStorage.setItem('user', JSON.stringify(freshUser))
         setUser(freshUser)
-      } catch (error) {
+      } catch {
         // 401: 쿠키 없음 또는 만료 → 미인증 상태로 조용히 처리
         // 단, LoginSuccess.jsx가 이미 토큰을 설정한 경우에는 상태를 건드리지 않음
         if (!tokenManager.hasTokens()) {

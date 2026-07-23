@@ -163,13 +163,6 @@ const LoginForm = ({ isOpen, onClose }) => {
               </VStack>
             </HStack>
 
-            {/* 시작하기 섹션 */}
-            <Box textAlign="center" w="full">
-              <Text fontSize="sm" color="gray.600" lineHeight="1.5" fontWeight="medium">
-                GitHub 계정으로 간편하고 안전하게 로그인
-              </Text>
-            </Box>
-
             {/* GitHub 로그인 버튼 */}
             <Button
               w="full"

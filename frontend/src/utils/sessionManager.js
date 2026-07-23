@@ -25,7 +25,7 @@ export const handleSessionExpiry = (toast, error) => {
       isClosable: true,
     })
 
-    sessionStorage.removeItem('user')
+    localStorage.removeItem('user')
 
     // 타임아웃 취소
     if (sessionExpiredTimeout) {

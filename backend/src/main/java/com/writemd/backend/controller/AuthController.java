@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,8 +44,7 @@ public class AuthController {
     public ResponseEntity<TokenResponseDTO> refreshToken(
         @CookieValue(value = "REFRESH_TOKEN", required = false) String refreshToken,
         @RequestBody(required = false) Map<String, String> request,
-        HttpServletResponse response,
-        HttpServletRequest httpRequest) {
+        HttpServletResponse response, HttpServletRequest httpRequest) {
 
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -54,7 +54,14 @@ public class AuthController {
             ? request.get("deviceId")
             : extractDeviceId(httpRequest);
 
-        TokenResponseDTO tokens = authService.refreshToken(refreshToken, deviceId);
+        // 토큰 검증 실패(만료/불일치/유저 없음) 401 반환
+        TokenResponseDTO tokens;
+        try {
+            tokens = authService.refreshToken(refreshToken, deviceId);
+        } catch (IllegalArgumentException | UsernameNotFoundException e) {
+            log.warn("리프레시 토큰 검증 실패 - 사유: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         // 새 Refresh Token 쿠키 재발급
         ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", tokens.refreshToken())
@@ -74,8 +81,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(
         @RequestHeader(value = "Authorization", required = false) String authHeader,
-        HttpServletResponse response,
-        HttpServletRequest request) {
+        HttpServletResponse response, HttpServletRequest request) {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String accessToken = authHeader.substring(7);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { API_URL } from '../../config/api'
+import { tokenManager } from '../../utils/tokenManager'
 
 const useSseConnection = (sessionId, enabled = false) => {
   const [streamingContent, setStreamingContent] = useState('')
@@ -32,8 +33,8 @@ const useSseConnection = (sessionId, enabled = false) => {
         eventSourceRef.current.close()
       }
 
-      // JWT 토큰
-      const token = localStorage.getItem('accessToken')
+      // JWT 토큰 (인메모리 tokenManager에서 조회 — localStorage 미저장)
+      const token = tokenManager.getAccessToken()
 
       // 토큰없으면 인증 오류
       if (!token) {

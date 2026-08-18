@@ -135,6 +135,9 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
 
   const confirmDeleteAuth = async () => {
     try {
+      // 계정 삭제 후 자동 로그아웃/리다이렉션 과정에서 이탈 경고창이 뜨지 않도록 설정
+      window.isBypassingBeforeUnload = true
+
       await deleteUser(user.githubId)
       toast({
         title: '계정 삭제 완료',
@@ -144,6 +147,9 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
       onDeleteClose()
       logout()
     } catch (err) {
+      // 실패 시 플래그를 복원, 경고창이 다시 작동하도록 처리
+      window.isBypassingBeforeUnload = false
+
       toast({
         title: '계정 삭제 실패',
         description: '계정 삭제 중 오류가 발생했습니다.',
@@ -382,6 +388,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                   <Heading as="h5" size="sm">
                     시스템
                   </Heading>
+{/*                   
                   <FormControl display="flex" alignItems="center" w="auto">
                     <FormLabel
                       htmlFor="remember-me"
@@ -398,7 +405,8 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                       onChange={handleRememberMeChange}
                       colorScheme="blue"
                     />
-                  </FormControl>
+                  </FormControl> */}
+                  
                 </Flex>
                 <Flex direction="column" mt="auto">
                   <Flex justify="space-between" align="center" mb="10px">
@@ -597,7 +605,7 @@ const LogInfoForm = ({ isOpen, onClose, user, selectedAI, setSelectedAI, onDataD
                         <Heading as="h6" size="xs" mb="10px">
                           OpenAI(ChatGPT)
                         </Heading>
-                        <Flex gap={2}>
+                        <Flex gap={2} wrap="wrap">
                           {config?.openai?.model?.map((m, index) => (
                             <Badge variant="outline" colorScheme="green" key={index}>
                               {m}

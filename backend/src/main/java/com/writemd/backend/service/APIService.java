@@ -64,9 +64,9 @@ public class APIService {
 
         return apiKeys.stream()
             .map(dto -> APIDTO.builder()
-                .apiId(dto.getApiId())
-                .aiModel(dto.getAiModel())
-                .apiKey(maskApiKey(dto.getApiKey()))
+                .apiId(dto.apiId())
+                .aiModel(dto.aiModel())
+                .apiKey(maskApiKey(dto.apiKey()))
                 .build())
             .collect(Collectors.toList());
     }

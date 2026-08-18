@@ -1,8 +1,7 @@
 package com.writemd.backend.config.security;
 
 import com.writemd.backend.dto.UserDTO;
-import com.writemd.backend.entity.Users;
-import com.writemd.backend.repository.UserRepository;
+import com.writemd.backend.service.CachingDataService;
 import com.writemd.backend.service.TokenRedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRedisService tokenRedisService;
-    private final UserRepository userRepository;
+    private final CachingDataService cachingDataService;
 
     @Value("${app.test.load-test-key:}")
     private String loadTestKey;
@@ -44,25 +43,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (loadTestKey != null && loadTestKey.equals(userKey) && testUserId != null) {
             try {
-                // 테스트용 유저 ID(githubId)로 실제 DB 유저 조회
-                Users user = userRepository.findByGithubId(testUserId)
-                    .orElseThrow(() -> new UsernameNotFoundException("테스트 유저 없음: " + testUserId));
+                // 테스트용 유저 ID(githubId)로 유저 캐시/DB 조회
+                UserDTO userDTO = cachingDataService.findUserByGithubId(testUserId);
 
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                        UserDTO.builder()
-                            .userId(user.getId())
-                            .githubId(user.getGithubId())
-                            .name(user.getName())
-                            .htmlUrl(user.getHtmlUrl())
-                            .avatarUrl(user.getAvatarUrl())
-                            .build(),
+                        userDTO,
                         null,
                         Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
                     );
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("부하 테스트 인증 성공 - userId: {}, URI: {}", testUserId, request.getRequestURI());
+                log.debug("부하 테스트 인증 성공 - userId: {}, URI: {}", testUserId, request.getRequestURI());
 
                 // 인증 성공 시 기존 JWT 로직 생략
                 filterChain.doFilter(request, response);
@@ -85,20 +77,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new SecurityException("토큰 취소(블랙리스트 확인)");
                 }
 
-                // 사용자 정보 추출/인증 설정
-                String githubId = jwtTokenProvider.getGithubId(token);
-                Users user = userRepository.findByGithubId(githubId)
-                    .orElseThrow(() -> new UsernameNotFoundException("유저 없음: " + githubId));
+                // 사용자 정보 추출/인증 설정 (Stateless)
+                UserDTO userDTO = jwtTokenProvider.getUserDTO(token);
+                String githubId = userDTO.githubId();
 
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                        UserDTO.builder()
-                            .userId(user.getId())
-                            .githubId(user.getGithubId())
-                            .name(user.getName())
-                            .htmlUrl(user.getHtmlUrl())
-                            .avatarUrl(user.getAvatarUrl())
-                            .build(),
+                        userDTO,
                         null,
                         Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
                     );
@@ -106,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 인증 정보 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                log.info("JWT 인증 성공 - githubId: {}, URI: {}", githubId, request.getRequestURI());
+                log.debug("JWT 인증 성공 - githubId: {}, URI: {}", githubId, request.getRequestURI());
 
             } catch (Exception e) {
                 log.error("JWT 검증 실패", e);

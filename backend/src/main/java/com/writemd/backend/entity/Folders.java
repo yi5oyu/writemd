@@ -18,21 +18,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "FOLDERS")
 public class Folders {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference
     private Users users;
@@ -43,4 +42,8 @@ public class Folders {
     @Builder.Default
     @JsonManagedReference
     private List<Templates> templates = new ArrayList<>();
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
 }

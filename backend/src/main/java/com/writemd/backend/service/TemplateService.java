@@ -5,7 +5,6 @@ import com.writemd.backend.dto.TemplateDTO;
 import com.writemd.backend.dto.UserDTO;
 import com.writemd.backend.entity.Folders;
 import com.writemd.backend.entity.Templates;
-import com.writemd.backend.entity.Users;
 import com.writemd.backend.repository.FolderRepository;
 import com.writemd.backend.repository.TemplateRepository;
 import com.writemd.backend.repository.UserRepository;
@@ -31,8 +30,7 @@ public class TemplateService {
     public Templates saveTemplate(String githubId, Long folderId, Long templateId, String folderName,
         String title, String description, String content) {
         // 유저
-        Users user = userRepository.findByGithubId(githubId)
-            .orElseThrow(() -> new RuntimeException("유저 찾을 수 없음: " + githubId));
+        UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
         Folders folder;
@@ -41,11 +39,10 @@ public class TemplateService {
                 .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
         } else {
             folder = Folders.builder()
-                .users(user)
+                .users(userRepository.getReferenceById(user.userId()))
                 .title(folderName)
                 .build();
             folder = folderRepository.save(folder);
-            user.getFolders().add(folder);
         }
 
         // 템플릿
@@ -55,17 +52,12 @@ public class TemplateService {
                 .orElseThrow(() -> new RuntimeException("템플릿 찾을 수 없음"));
             // 템플릿 폴더 이동
             if (template.getFolders() != null && !template.getFolders().equals(folder)) {
-                Folders oldFolder = template.getFolders();
-
-                oldFolder.getTemplates().remove(template);
-
-                template.setFolders(folder);
-                folder.getTemplates().add(template);
+                template.updateFolders(folder);
             }
             // 내용 업데이트
-            template.setTitle(title);
-            template.setDescription(description);
-            template.setContent(content);
+            template.updateTitle(title);
+            template.updateDescription(description);
+            template.updateContent(content);
             templateRepository.save(template);
         } else {
             // 새 템플릿 생성
@@ -76,18 +68,17 @@ public class TemplateService {
                 .content(content)
                 .build();
             templateRepository.save(template);
-            folder.getTemplates().add(template);
         }
 
         return template;
     }
-    
+
     public List<FolderDTO> getTemplates(String githubId) {
         // 유저
         UserDTO user = cachingDataService.findUserByGithubId(githubId);
 
         // 폴더
-        List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user.getUserId());
+        List<Folders> userFolders = folderRepository.findByUsersWithTemplates(user.userId());
 
         List<FolderDTO> folderDTOs = new ArrayList<>();
 
@@ -123,11 +114,6 @@ public class TemplateService {
         Templates template = templateRepository.findById(templateId)
             .orElseThrow(() -> new RuntimeException("템플릿 찾을 수 없음"));
 
-        Folders folder = template.getFolders();
-        if (folder != null) {
-            folder.getTemplates().remove(template);
-        }
-
         templateRepository.deleteById(templateId);
     }
 
@@ -135,11 +121,6 @@ public class TemplateService {
     public void deleteFolder(Long folderId) {
         Folders folder = folderRepository.findById(folderId)
             .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
-
-        Users user = folder.getUsers();
-        if (user != null) {
-            user.getFolders().remove(folder);
-        }
 
         folderRepository.deleteById(folderId);
     }
@@ -149,7 +130,7 @@ public class TemplateService {
         Folders folder = folderRepository.findById(folderId)
             .orElseThrow(() -> new RuntimeException("폴더 찾을 수 없음"));
 
-        folder.setTitle(newTitle);
+        folder.updateTitle(newTitle);
 
         return folderRepository.save(folder);
     }

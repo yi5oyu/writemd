@@ -1,5 +1,8 @@
 package com.writemd.backend.config.security;
 
+import com.writemd.backend.dto.UserDTO;
+import com.writemd.backend.entity.Users;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -30,17 +33,20 @@ public class JwtTokenProvider {
     }
 
     // 토큰 생성
-    public String createAccessToken(String githubId, String name) {
+    public String createAccessToken(Users user) {
         // 토큰 유효 기간 설정(현재 시간, 만료 시간)
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidity);
 
         return Jwts.builder()
-            // Header는 라이브러리가 만들어줌(추가 가능)
-            // Payload 설정(subject(subject 클레임): 토큰 주인 식별, claim(Private  클레임): key/value로 저장해 토큰 검증때 사용)
-            .subject(githubId)
-            .claim("name", name)
-            // 표준 클레임(Registered Claims) 설정(issuedAt: 토큰 발행일, expiration: 만료일)
+            // Header는 라이브러리가 자동 생성
+            // Payload 설정
+            .subject(user.getGithubId())
+            .claim("userId", user.getId())
+            .claim("name", user.getName())
+            .claim("htmlUrl", user.getHtmlUrl())
+            .claim("avatarUrl", user.getAvatarUrl())
+            // 표준 클레임(Registered Claims)
             .issuedAt(now)
             .expiration(validity)
 
@@ -111,6 +117,26 @@ public class JwtTokenProvider {
             .getPayload()
             // Payload에서 subject 클레임 값(GitHub ID) 반환
             .getSubject();
+    }
+
+    // 토큰에서 사용자 DTO 직접 추출(인증용)
+    public UserDTO getUserDTO(String token) {
+        Claims claims = Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
+
+        Number userIdNumber = claims.get("userId", Number.class);
+        Long userId = (userIdNumber != null) ? userIdNumber.longValue() : null;
+
+        return UserDTO.builder()
+            .userId(userId)
+            .githubId(claims.getSubject())
+            .name(claims.get("name", String.class))
+            .htmlUrl(claims.get("htmlUrl", String.class))
+            .avatarUrl(claims.get("avatarUrl", String.class))
+            .build();
     }
 
     // 토큰 남은 유효 시간(ms)

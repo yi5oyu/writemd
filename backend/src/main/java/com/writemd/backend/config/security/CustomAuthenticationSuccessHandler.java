@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -37,6 +39,17 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
+
+    // 쿠키 maxAge 계산 시 초 단위로 환산 필수 (ms)
+    @Value("${jwt.refresh-token-validity}")
+    private long refreshTokenValidity;
+
+    // 환경별 쿠키 보안 설정
+    @Value("${cookie.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${cookie.same-site:Lax}")
+    private String cookieSameSite;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -71,25 +84,21 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         TokenResponseDTO tokens = authService.issueToken(githubId, name, deviceId);
 
-        /*
-         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+        // Refresh Token은 HttpOnly 쿠키로 발급 — JS 접근 불가로 XSS 탈취 차단
+        // path를 /api/auth로 한정하여 불필요한 요청에 쿠키가 실리지 않도록 노출 범위 최소화
+        ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", tokens.refreshToken())
+            .path("/api/auth")
+            .secure(cookieSecure)
+            .httpOnly(true)
+            .sameSite(cookieSameSite)
+            .maxAge(refreshTokenValidity / 1000) // ms → s 변환
+            .build();
 
-         String principalName = oauthToken.getName();
-         String githubId = oauthToken.getPrincipal().getAttribute("login");
-         System.out.println("id: " + principalName);
-         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
-         oauthToken.getAuthorizedClientRegistrationId(), principalName);
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-         if (client != null) {
-         githubService.saveGitInfo(githubId, principalName);
-         } else {
-         System.out.println("OAuth2AuthorizedClient 값 없음 : " + principalName);
-         }
-        */
-
+        // refreshToken은 URL에서 제거 — 브라우저 히스토리/로그 노출 방지
         response.sendRedirect(frontendUrl + "/login-success" +
-            "?accessToken=" + tokens.getAccessToken() +
-            "&refreshToken=" + tokens.getRefreshToken() +
+            "?accessToken=" + tokens.accessToken() +
             "&deviceId=" + deviceId);
     }
 

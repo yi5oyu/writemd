@@ -1,32 +1,28 @@
-// 토큰 localStorage에 저장/조회/삭제
+// 인메모리 Access Token 저장소 — 외부에서 직접 접근 불가 (모듈 스코프 격리)
+// localStorage에 저장하지 않으므로 XSS 스크립트로 탈취 불가능
+let _accessToken = null
+
 export const tokenManager = {
-  // Access Token 저장
+  // Access Token 메모리 저장
   setAccessToken: (token) => {
-    localStorage.setItem('accessToken', token)
+    _accessToken = token
   },
 
-  // Refresh Token 저장
-  setRefreshToken: (token) => {
-    localStorage.setItem('refreshToken', token)
-  },
-
-  // 토큰 저장
-  setTokens: (accessToken, refreshToken) => {
-    tokenManager.setAccessToken(accessToken)
-    tokenManager.setRefreshToken(refreshToken)
-  },
-
-  // Access Token 조회
+  // Access Token 메모리 조회
   getAccessToken: () => {
-    return localStorage.getItem('accessToken')
+    return _accessToken
   },
 
-  // Refresh Token 조회
-  getRefreshToken: () => {
-    return localStorage.getItem('refreshToken')
+  // Refresh Token은 HttpOnly 쿠키로 관리 — 프론트엔드에서 직접 접근 불가
+  setRefreshToken: () => {},
+  getRefreshToken: () => null,
+
+  // 토큰 일괄 설정 (소셜/게스트 로그인 콜백용)
+  setTokens: (accessToken) => {
+    tokenManager.setAccessToken(accessToken)
   },
 
-  // Device ID 생성/조회
+  // Device ID 생성/조회 (localStorage 유지 — 기기 식별 목적이므로 영속성 필요)
   getDeviceId: () => {
     let deviceId = localStorage.getItem('deviceId')
     if (!deviceId) {
@@ -36,14 +32,13 @@ export const tokenManager = {
     return deviceId
   },
 
-  // 토큰 삭제
+  // Access Token 메모리 초기화 (로그아웃 시 호출)
   clearTokens: () => {
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
+    _accessToken = null
   },
 
-  // 토큰 존재 여부 확인
+  // Access Token 존재 여부 확인 (메모리 상태 기반)
   hasTokens: () => {
-    return !!(tokenManager.getAccessToken() && tokenManager.getRefreshToken())
+    return !!_accessToken
   },
 }

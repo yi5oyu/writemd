@@ -126,7 +126,7 @@ public class ChatController {
 
 //        String principalName = userDTO.getGithubId();
 
-        return chatService.githubRepoStructure(userId, apiId, model, repo, userDTO.getGithubId(), branch, maxDepth)
+        return chatService.githubRepoStructure(userId, apiId, model, repo, userDTO.githubId(), branch, maxDepth)
             .thenApply(response -> {
                 log.info("GitHub 레포지토리 구조 응답 완료: repo={}", repo);
                 return ResponseEntity.ok(response);
@@ -231,7 +231,7 @@ public class ChatController {
                             "분석 작업이 시작되었습니다.")));
 
                     // 비동기 분석 시작
-                    chatService.githubRepoStageAnalysis(githubId, userId, apiId, model, repo, userDTO.getGithubId(),
+                    chatService.githubRepoStageAnalysis(githubId, userId, apiId, model, repo, userDTO.githubId(),
                         branch != null ? branch : "main", maxDepth != null ? maxDepth : 3);
 
                     return ResponseEntity.ok(Map.of("status", "started", "emitterId", emitterId));
@@ -249,7 +249,7 @@ public class ChatController {
             }
         } else {
             // 스트리밍 없이 동기 방식으로 처리 (기존 코드와 동일)
-            return chatService.githubRepoStageAnalysis(githubId, userId, apiId, model, repo, userDTO.getGithubId(),
+            return chatService.githubRepoStageAnalysis(githubId, userId, apiId, model, repo, userDTO.githubId(),
                 branch, maxDepth).thenApply(response -> {
                 log.info("GitHub 레포지토리 단계별 분석 응답 완료: repo={}, 내용 길이: {} 자", repo,
                     response.containsKey("content") ? ((String) response.get("content")).length() : 0);

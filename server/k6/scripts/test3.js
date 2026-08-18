@@ -1,18 +1,34 @@
 import http from 'k6/http'
-import { check, sleep } from 'k6'
+import { check, sleep, group } from 'k6'
+import { Rate, Trend } from 'k6/metrics'
 
 const LOAD_TEST_KEY = __ENV.MY_LOAD_TEST_KEY
 
+export const errorRate = new Rate('errors')
+export const loginDuration = new Trend('api_login_duration')
+export const noteFetchDuration = new Trend('api_note_fetch_duration')
+
 export const options = {
   stages: [
-    { duration: '1m', target: 200 },
-    { duration: '2m', target: 500 },
-    // { duration: '3m', target: 1000 },
+    { duration: '1m', target: 100 },
+    { duration: '2m', target: 300 },
+    { duration: '3m', target: 600 },
     { duration: '1m', target: 0 },
   ],
   thresholds: {
+    // 전체 응답 시간
     http_req_duration: ['p(95)<500'],
-    http_req_failed: ['rate<0.01'],
+
+    // 태그별 상세 응답 시간
+    'http_req_duration{name:UserInfo}': ['p(95)<500'],
+    'http_req_duration{name:NoteContent}': ['p(95)<500'],
+    'http_req_duration{name:ChatSessions}': ['p(95)<500'],
+    'http_req_duration{name:UserMemo}': ['p(95)<500'],
+    'http_req_duration{name:UserApiKeys}': ['p(95)<500'],
+
+    api_login_duration: ['p(95)<500'],
+    api_note_fetch_duration: ['p(95)<500'],
+    errors: ['rate<0.01'],
   },
 }
 
@@ -34,44 +50,108 @@ export default function () {
     },
   }
 
-  // 최초 로그인
-  let infoRes = http.get(`https://api.writemd.space/api/user/info`, params)
-  check(infoRes, { 'Common. User Info OK': (r) => r.status === 200 })
+  group('1. 로그인 ', function () {
+    const res = http.get(`https://api.writemd.space/api/user/info`, {
+      ...params,
+      tags: { name: 'UserInfo' },
+    })
+    const success = check(res, { 'Login 200 OK': (r) => r.status === 200 })
 
-  sleep(0.5)
+    errorRate.add(!success)
+    if (success) loginDuration.add(res.timings.duration)
+  })
 
-  const randomVal = Math.random()
+  // 사용자가 화면을 읽는 시간
+  sleep(Math.random() * 2 + 1)
 
-  if (randomVal < 0.3) {
-    // 아무것도 안함
-  } else if (randomVal < 0.7) {
-    // 노트 클릭
-    let firstBatch = http.batch([
-      ['GET', `https://api.writemd.space/api/note/${firstNoteId}`, null, params],
-      ['GET', `https://api.writemd.space/api/chat/sessions/${firstNoteId}`, null, params],
-      ['GET', `https://api.writemd.space/api/memo/${userId}`, null, params],
-      ['GET', `https://api.writemd.space/api/user/key/${userId}`, null, params],
-    ])
-    check(firstBatch[0], { 'G1. First Note OK': (r) => r.status === 200 })
+  const rand = Math.random()
 
-    sleep(2)
+  if (rand < 0.3) {
+    // 30%: 로그인 후 아무 행동 없이 종료
+  } else if (rand < 0.7) {
+    // 40%: 단일 노트 조회
+    group('2. 노트 조회', function () {
+      const responses = http.batch([
+        [
+          'GET',
+          `https://api.writemd.space/api/note/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'NoteContent' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/chat/sessions/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'ChatSessions' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/memo/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserMemo' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/user/key/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserApiKeys' } },
+        ],
+      ])
+
+      const success = check(responses[0], { 'Note Fetch 200 OK': (r) => r.status === 200 })
+      errorRate.add(!success)
+      if (success) noteFetchDuration.add(responses[0].timings.duration)
+    })
+
+    sleep(Math.random() * 2 + 1)
   } else {
-    // 다른 노트 클릭
-    let firstBatch = http.batch([
-      ['GET', `https://api.writemd.space/api/note/${firstNoteId}`, null, params],
-      ['GET', `https://api.writemd.space/api/chat/sessions/${firstNoteId}`, null, params],
-      ['GET', `https://api.writemd.space/api/memo/${userId}`, null, params],
-      ['GET', `https://api.writemd.space/api/user/key/${userId}`, null, params],
-    ])
+    // 30%: 여러 노트
+    group('3. 다른 노트 조회', function () {
+      const res1 = http.batch([
+        [
+          'GET',
+          `https://api.writemd.space/api/note/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'NoteContent' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/chat/sessions/${firstNoteId}`,
+          null,
+          { ...params, tags: { name: 'ChatSessions' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/memo/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserMemo' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/user/key/${userId}`,
+          null,
+          { ...params, tags: { name: 'UserApiKeys' } },
+        ],
+      ])
+      check(res1[0], { '1번 노트 OK': (r) => r.status === 200 })
 
-    sleep(Math.random() * 3 + 2)
+      sleep(Math.random() * 2 + 1)
 
-    let secondBatch = http.batch([
-      ['GET', `https://api.writemd.space/api/note/${secondNoteId}`, null, params],
-      ['GET', `https://api.writemd.space/api/chat/sessions/${secondNoteId}`, null, params],
-    ])
-    check(secondBatch[0], { 'G2. Second Note OK': (r) => r.status === 200 })
-
-    sleep(2)
+      const res2 = http.batch([
+        [
+          'GET',
+          `https://api.writemd.space/api/note/${secondNoteId}`,
+          null,
+          { ...params, tags: { name: 'NoteContent' } },
+        ],
+        [
+          'GET',
+          `https://api.writemd.space/api/chat/sessions/${secondNoteId}`,
+          null,
+          { ...params, tags: { name: 'ChatSessions' } },
+        ],
+      ])
+      check(res2[0], { '2번 노트 OK': (r) => r.status === 200 })
+    })
   }
 }

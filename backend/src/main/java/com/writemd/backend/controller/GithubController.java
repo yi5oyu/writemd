@@ -60,7 +60,7 @@ public class GithubController {
                 .body(Collections.singletonMap("error", "인증 필요")));
         }
 
-        String principalName = userDTO.getGithubId();
+        String principalName = userDTO.githubId();
         log.info("GitHub API 요청. githubId: {}, 인증된 사용자: {}", githubId, principalName);
 
         return githubService.getGitInfo(githubId)

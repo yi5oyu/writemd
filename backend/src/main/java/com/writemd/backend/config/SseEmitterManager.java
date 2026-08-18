@@ -94,7 +94,12 @@ public class SseEmitterManager {
     // SSE 이벤트(chunk) 전송
     public void sendToSession(Long sessionId, String eventName, Object data) {
         SseEmitter emitter = emitters.get(sessionId);
-        if (emitter != null) {
+        if (emitter == null) {
+            log.warn("활성 Emitter 없음 - 이벤트 전송 불가 {}, {}", eventName, sessionId);
+            return;
+        }
+        
+        synchronized (emitter) {
             try {
                 Object processedData = data;
                 if ("message".equals(eventName) && data instanceof String) {
@@ -121,8 +126,6 @@ public class SseEmitterManager {
                 log.error("이벤트 전송 중 예상치 못한 오류 {}, {}, {}", eventName, sessionId, e.getMessage(), e);
                 removeEmitterInternal(sessionId, emitter, "전송 에러");
             }
-        } else {
-            log.warn("활성 Emitter 없음 - 이벤트 전송 불가 {}, {}", eventName, sessionId);
         }
     }
 
@@ -198,7 +201,12 @@ public class SseEmitterManager {
     // 문자열 식별자로 SSE 이벤트(chunk) 전송
     public void sendToNamedSession(String emitterId, String eventName, Object data) {
         SseEmitter emitter = namedEmitters.get(emitterId);
-        if (emitter != null) {
+        if (emitter == null) {
+            log.warn("활성 Named Emitter 없음 - 이벤트 전송 불가 {}, {}", eventName, emitterId);
+            return;
+        }
+        
+        synchronized (emitter) {
             try {
                 emitter.send(event().name(eventName).data(data));
                 log.debug("Named 이벤트 전송 성공 {}, {}", eventName, emitterId);
@@ -211,8 +219,6 @@ public class SseEmitterManager {
                 log.error("Named 이벤트 전송 중 예상치 못한 오류 {}, {}, {}", eventName, emitterId, e.getMessage(), e);
                 removeNamedEmitterInternal(emitterId, emitter, "전송 에러");
             }
-        } else {
-            log.warn("활성 Named Emitter 없음 - 이벤트 전송 불가 {}, {}", eventName, emitterId);
         }
     }
 
@@ -246,16 +252,18 @@ public class SseEmitterManager {
         for (Map.Entry<Long, SseEmitter> entry : emitters.entrySet()) {
             Long sessionId = entry.getKey();
             SseEmitter emitter = entry.getValue();
-            try {
-                emitter.send(SseEmitter.event().comment(heartbeatContent));
-                log.debug("하트비트 전송 성공 {}", sessionId);
-                count++;
-            } catch (IOException | IllegalStateException e) {
-                log.warn("하트비트 전송 실패 {}, {}, Emitter 제거", sessionId, e.getMessage());
-                removeEmitterInternal(sessionId, emitter, "heartbeat 실패");
-            } catch (Exception e) {
-                log.error("하트비트 전송 중 예상치 못한 오류 {}, {}", sessionId, e.getMessage(), e);
-                removeEmitterInternal(sessionId, emitter, "heartbeat 에러");
+            synchronized (emitter) {
+                try {
+                    emitter.send(SseEmitter.event().comment(heartbeatContent));
+                    log.debug("하트비트 전송 성공 {}", sessionId);
+                    count++;
+                } catch (IOException | IllegalStateException e) {
+                    log.warn("하트비트 전송 실패 {}, {}, Emitter 제거", sessionId, e.getMessage());
+                    removeEmitterInternal(sessionId, emitter, "heartbeat 실패");
+                } catch (Exception e) {
+                    log.error("하트비트 전송 중 예상치 못한 오류 {}, {}", sessionId, e.getMessage(), e);
+                    removeEmitterInternal(sessionId, emitter, "heartbeat 에러");
+                }
             }
         }
 
@@ -263,16 +271,18 @@ public class SseEmitterManager {
         for (Map.Entry<String, SseEmitter> entry : namedEmitters.entrySet()) {
             String emitterId = entry.getKey();
             SseEmitter emitter = entry.getValue();
-            try {
-                emitter.send(SseEmitter.event().comment(heartbeatContent));
-                log.debug("Named 하트비트 전송 성공 {}", emitterId);
-                count++;
-            } catch (IOException | IllegalStateException e) {
-                log.warn("Named 하트비트 전송 실패 {}, {}, Emitter 제거", emitterId, e.getMessage());
-                removeNamedEmitterInternal(emitterId, emitter, "heartbeat 실패");
-            } catch (Exception e) {
-                log.error("Named 하트비트 전송 중 예상치 못한 오류 {}, {}", emitterId, e.getMessage(), e);
-                removeNamedEmitterInternal(emitterId, emitter, "heartbeat 에러");
+            synchronized (emitter) {
+                try {
+                    emitter.send(SseEmitter.event().comment(heartbeatContent));
+                    log.debug("Named 하트비트 전송 성공 {}", emitterId);
+                    count++;
+                } catch (IOException | IllegalStateException e) {
+                    log.warn("Named 하트비트 전송 실패 {}, {}, Emitter 제거", emitterId, e.getMessage());
+                    removeNamedEmitterInternal(emitterId, emitter, "heartbeat 실패");
+                } catch (Exception e) {
+                    log.error("Named 하트비트 전송 중 예상치 못한 오류 {}, {}", emitterId, e.getMessage(), e);
+                    removeNamedEmitterInternal(emitterId, emitter, "heartbeat 에러");
+                }
             }
         }
 

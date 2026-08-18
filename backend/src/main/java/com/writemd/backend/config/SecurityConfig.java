@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -46,9 +47,9 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOriginPattern(frontendUrl);
         // 도메인 허용
-        configuration.addAllowedOriginPattern("https://writemd.space");
-        configuration.addAllowedOriginPattern("https://www.writemd.space");
-        
+        configuration.addAllowedOriginPattern("https://writemdai.xyz");
+        configuration.addAllowedOriginPattern("https://www.writemdai.xyz");
+
         configuration.addAllowedOriginPattern("http://127.0.0.1:6274");
         configuration.addAllowedOriginPattern("http://127.0.0.1:6277");
         configuration.addAllowedOriginPattern("http://127.0.0.1:5577");
@@ -86,7 +87,7 @@ public class SecurityConfig {
 
                 // 인증 권한
                 .requestMatchers(
-                    "/api/guest/**", "/api/config/**",
+                    "/api/guest/**", "/api/config/**", "/api/auth/**",
                     "/redis/**", "/mcp/**", "/error", "/oauth2/**", "swagger-ui.html",
                     "/v1/**", "/swagger-ui/**", "/login/oauth2/**", "/actuator/**", "/logout", "/sse"
                 ).permitAll()
@@ -121,6 +122,12 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+            .requestMatchers("/test/connected");
     }
 
     @Bean

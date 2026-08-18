@@ -8,6 +8,7 @@ const useNoteAutoSave = (noteId, initialText = '') => {
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState('saved') // 'saved', 'saving', 'dirty', 'error'
+  const [isLocalCacheRestored, setIsLocalCacheRestored] = useState(false)
 
   const typingTimeoutRef = useRef(null)
   const { saveMarkdownText } = useSaveMarkdown()
@@ -46,6 +47,13 @@ const useNoteAutoSave = (noteId, initialText = '') => {
         setIsDirty(false)
         setSaveStatus('saved')
         console.log('서버 저장 완료:', new Date().toLocaleTimeString())
+
+        // 서버에 보낸 text와 localStorage의 현재값이 동일할 때만 캐시 무효화
+        if (localStorage.getItem(String(noteId)) === text) {
+          localStorage.removeItem(String(noteId))
+          setIsLocalCacheRestored(false)
+        }
+
         return true
       } catch (error) {
         console.error('서버 저장 실패:', error)
@@ -151,40 +159,61 @@ const useNoteAutoSave = (noteId, initialText = '') => {
   // 초기 로컬 데이터 로드
   useEffect(() => {
     if (noteId) {
-      const savedText = localStorage.getItem(noteId)
+      const savedText = localStorage.getItem(String(noteId))
       if (savedText !== null && savedText !== initialText) {
+        // 서버(DB)와 다른 로컬 캐시 존재할 경우 미저장 데이터 복구
         setMarkdownText(savedText)
         setIsDirty(true)
         setSaveStatus('dirty')
-      } else if (initialText) {
-        setMarkdownText(initialText)
+        setIsLocalCacheRestored(true)
+      } else {
+        // 로컬 캐시 없거나 서버와 동일한 내용일 경우
+        if (savedText !== null) {
+          localStorage.removeItem(String(noteId))
+        }
+        if (initialText) {
+          setMarkdownText(initialText)
+        }
         setSaveStatus('saved')
+        setIsLocalCacheRestored(false)
       }
     }
   }, [noteId, initialText])
 
   useEffect(() => {
-    // 진행 중인 자동저장 즉시 실행
-    const handleBeforeUnload = async (event) => {
+    const handleBeforeUnload = (event) => {
+      // 의도된 이탈(로그아웃/계정삭제/세션만료)일 경우 경고창/저장 생략
+      if (window.isBypassingBeforeUnload) {
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current)
+          typingTimeoutRef.current = null
+        }
+        return
+      }
+
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
         typingTimeoutRef.current = null
       }
 
-      if (isDirty && markdownTextRef.current) {
+      // isDirty 상태면 브라우저 이탈 경고창만 표시 (실제 저장은 localStorage)
+      if (isDirty) {
         event.preventDefault()
-        await saveToServer(markdownTextRef.current)
       }
     }
 
-    // 숨겨질때 탭 꺼짐 자동저장
+    // 탭 전환/모바일 백그라운드 처리
     const handleVisibilityChange = () => {
-      if (document.hidden && isDirty && markdownTextRef.current) {
+      // 계정 삭제 리다이렉트 중 탭 숨김으로 삭제된 계정에 저장 API 호출되는 것을 방지
+      if (window.isBypassingBeforeUnload) {
+        return
+      }
+
+      if (document.hidden && isDirty) {
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current)
           typingTimeoutRef.current = null
         }
-        saveToServer(markdownTextRef.current)
       }
     }
 
@@ -195,7 +224,7 @@ const useNoteAutoSave = (noteId, initialText = '') => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [isDirty, saveToServer])
+  }, [isDirty])
 
   // 최초 타이머
   useEffect(() => {
@@ -234,6 +263,7 @@ const useNoteAutoSave = (noteId, initialText = '') => {
     saveToServer,
     setSaveStatus,
     setMarkdownText: handleTextChange,
+    isLocalCacheRestored,
   }
 }
 

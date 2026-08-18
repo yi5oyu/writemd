@@ -23,7 +23,7 @@ public class GuestService {
     @Value("${jwt.guest-refresh-token-validity}")
     private long guestRefreshTokenValidity;
 
-    public Map<String, String> loginGuest() {
+    public Map<String, Object> loginGuest() {
         // guest:<UUID> 생성
         String shortUuid = UUID.randomUUID().toString().substring(0, 8);
         String guestGithubId = "guest:" + shortUuid;
@@ -42,17 +42,20 @@ public class GuestService {
         log.info("새로운 게스트 계정 생성 완료: {}", guestGithubId);
 
         // accessToken, refreshToken 발급
-        String accessToken = jwtTokenProvider.createAccessToken(guestUser.getGithubId(), guestName);
+        String accessToken = jwtTokenProvider.createAccessToken(guestUser);
         String refreshToken = jwtTokenProvider.createRefreshToken(guestUser.getGithubId());
 
         // Redis에 refreshToken 저장
         tokenRedisService.saveRefreshToken(guestUser.getGithubId(), refreshToken, deviceId, guestRefreshTokenValidity);
 
-        Map<String, String> result = new HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         result.put("accessToken", accessToken);
         result.put("refreshToken", refreshToken);
         result.put("deviceId", deviceId);
+        // 쿠키 maxAge (ms -> s 변환)
+        result.put("cookieMaxAge", guestRefreshTokenValidity / 1000);
 
         return result;
     }
+
 }

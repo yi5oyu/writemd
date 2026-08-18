@@ -14,9 +14,6 @@ import {
   Box,
   Icon,
   Flex,
-  Switch,
-  FormControl,
-  FormLabel,
   useToast,
   Divider,
 } from '@chakra-ui/react'
@@ -28,12 +25,10 @@ import { authApi } from '../../api/authApi'
 import { tokenManager } from '../../utils/tokenManager'
 
 const LoginForm = ({ isOpen, onClose }) => {
-  const [rememberMe, setRememberMe] = useState(true)
   const [isGuestLoading, setIsGuestLoading] = useState(false)
   const toast = useToast()
 
   const gitOauthClick = () => {
-    localStorage.setItem('rememberMe', rememberMe)
     window.location.href = `${API_URL}/oauth2/authorization/github`
   }
 
@@ -42,17 +37,19 @@ const LoginForm = ({ isOpen, onClose }) => {
       setIsGuestLoading(true)
       const data = await authApi.guestLogin()
 
-      // 발급받은 토큰/디바이스 ID 저장
-      tokenManager.setTokens(data.accessToken, data.refreshToken)
+      // Refresh Token은 HttpOnly 쿠키로 수신 — 프론트엔드에서 접근 불가
+      // Access Token만 메모리에 저장
+      tokenManager.setAccessToken(data.accessToken)
       if (data.deviceId) {
         localStorage.setItem('deviceId', data.deviceId)
       }
-      localStorage.setItem('rememberMe', rememberMe)
+      // rememberMe → sessionStorage 분기 제거
+      // 영속성 제어는 REFRESH_TOKEN 쿠키 maxAge가 담당하며
+      // sessionStorage 사용 시 탭 격리로 인한 세션 소실 버그 동일 발생
       localStorage.setItem('isGuest', 'true')
 
       const userResponse = await apiClient.get('/api/user/info')
-      const storage = rememberMe ? localStorage : sessionStorage
-      storage.setItem('user', JSON.stringify(userResponse.data))
+      localStorage.setItem('user', JSON.stringify(userResponse.data))
 
       onClose()
 
@@ -70,6 +67,7 @@ const LoginForm = ({ isOpen, onClose }) => {
       setIsGuestLoading(false)
     }
   }
+
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="sm">
@@ -164,28 +162,6 @@ const LoginForm = ({ isOpen, onClose }) => {
                 </Text>
               </VStack>
             </HStack>
-
-            {/* 시작하기 섹션 */}
-            <Box textAlign="center" w="full">
-              <Text fontSize="sm" color="gray.600" lineHeight="1.5" fontWeight="medium">
-                GitHub 계정으로 간편하고 안전하게 로그인
-              </Text>
-            </Box>
-
-            {/* 로그인 상태 유지 스위치 */}
-            <FormControl display="flex" alignItems="center" justifyContent="center">
-              <FormLabel htmlFor="remember-me" mb="0" mr="3">
-                <Text fontSize="sm" color="gray.700" fontWeight="medium">
-                  로그인 상태 유지
-                </Text>
-              </FormLabel>
-              <Switch
-                id="remember-me"
-                isChecked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                colorScheme="blue"
-              />
-            </FormControl>
 
             {/* GitHub 로그인 버튼 */}
             <Button

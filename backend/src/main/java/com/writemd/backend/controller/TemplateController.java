@@ -34,14 +34,14 @@ public class TemplateController {
         @PathVariable String githubId,
         @RequestBody FolderDTO folderDTO
     ) {
-        Long folderId = folderDTO.getFolderId();
-        String folderName = folderDTO.getTitle();
+        Long folderId = folderDTO.folderId();
+        String folderName = folderDTO.title();
 
-        TemplateDTO templateDTO = folderDTO.getTemplate().get(0);
-        Long templateId = templateDTO.getTemplateId();
-        String title = templateDTO.getTitle();
-        String description = templateDTO.getDescription();
-        String content = templateDTO.getContent();
+        TemplateDTO templateDTO = folderDTO.template().get(0);
+        Long templateId = templateDTO.templateId();
+        String title = templateDTO.title();
+        String description = templateDTO.description();
+        String content = templateDTO.content();
 
         Templates template = templateService.saveTemplate(
             githubId, folderId, templateId, folderName, title, description, content);

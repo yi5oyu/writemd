@@ -1,5 +1,6 @@
 import apiClient from './apiClient'
 import { tokenManager } from '../utils/tokenManager'
+import { refreshAccessToken } from './authRefresh'
 
 export const authApi = {
   // 게스트 로그인
@@ -9,12 +10,9 @@ export const authApi = {
   },
 
   // 토큰 갱신
-  refreshToken: async (refreshToken) => {
-    const response = await apiClient.post('/api/auth/refresh', {
-      refreshToken,
-      deviceId: tokenManager.getDeviceId(),
-    })
-    return response.data
+  refreshToken: async () => {
+    const accessToken = await refreshAccessToken()
+    return { accessToken }
   },
 
   // 로그아웃

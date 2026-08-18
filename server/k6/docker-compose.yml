@@ -10,9 +10,9 @@ services:
   #     - ./:/k6-test
   #   command: >
   #     run /k6-test/scripts/test1.js
-  #     --summary-export=/k6-test/results/summary_test1.json
+  #     --summary-export=/k6-test/results/threads/summary_test1.json
 
-  # 백엔드 api 접근 테스트(1000명. DB 접근없음)
+  # 백엔드 api 접근 테스트(DB 접근없음)
   # test2:
   #   image: grafana/k6:latest
   #   environment:
@@ -21,10 +21,24 @@ services:
   #     - ./:/k6-test
   #   command: >
   #     run /k6-test/scripts/test2.js
-  #     --summary-export=/k6-test/results/summary_test2.json
+  #     --summary-export=/k6-test/results/threads/summary_test2.json
 
-  # DB 부하 테스트
-  test3:
+  # DB 부하 테스트 (읽기)
+  # test3:
+  #   image: grafana/k6:latest
+  #   environment:
+  #     - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
+  #   volumes:
+  #     - ./:/k6-test
+  #   command:
+  #     [
+  #       'run',
+  #       '/k6-test/scripts/test3.js',
+  #       '--summary-export=/k6-test/results/threads/summary_test3.json',
+  #     ]
+
+  # DB 읽기/쓰기 부하 테스트
+  test4:
     image: grafana/k6:latest
     environment:
       - MY_LOAD_TEST_KEY=${LOAD_TEST_KEY}
@@ -33,8 +47,8 @@ services:
     command:
       [
         'run',
-        '/k6-test/scripts/test3.js',
-        '--summary-export=/k6-test/results/summary_test3(500명, 250, 30).json',
+        '/k6-test/scripts/test4-2.js',
+        '--summary-export=/k6-test/results/threads/summary_test4.json',
       ]
 
   # 레디스 부하 테스트

@@ -9,6 +9,10 @@ const useLogout = () => {
 
   const performLogout = useCallback(
     async (logoutFn, successTitle, successMessage) => {
+      // 로그아웃 시 타 비동기 요청 실패로 인한 세션만료 오작동 방지
+      window.isBypassingBeforeUnload = true
+      window.isLoggingOut = true
+
       setIsLoading(true)
       setError(null)
 
@@ -43,6 +47,7 @@ const useLogout = () => {
 
         // 페이지 새로고침 UI 초기화
         await new Promise((resolve) => setTimeout(resolve, 800))
+        window.isBypassingBeforeUnload = true
         window.location.replace('/')
       }
     },
